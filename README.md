@@ -5,6 +5,10 @@ post](http://blog.adacore.com/many-more-low-hanging-bugs).
 
 # 1. Code structure
 
+* The adacheck folder contains the framework used to design new lightweight
+  checkers
+* The checkers folder contains a set of predefined checks based on adacheck
+
 # 2. List of checkers
 
 # 3. License
