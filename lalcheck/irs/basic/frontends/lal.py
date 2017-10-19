@@ -1,0 +1,238 @@
+"""
+Provides a libadalang frontend for the Basic IR.
+"""
+
+import libadalang as lal
+
+from lalcheck.irs.basic import ast as bast
+from lalcheck import defs as bdefs
+from lalcheck import domains
+
+
+_lal_op_type_2_symbol = {
+    (lal.OpLt, 2): bast.bin_ops['<'],
+    (lal.OpLte, 2): bast.bin_ops['<='],
+    (lal.OpEq, 2): bast.bin_ops['=='],
+    (lal.OpNeq, 2): bast.bin_ops['!='],
+    (lal.OpGte, 2): bast.bin_ops['>='],
+    (lal.OpGt, 2): bast.bin_ops['>'],
+    (lal.OpPlus, 2): bast.bin_ops['+'],
+    (lal.OpMinus, 2): bast.bin_ops['-'],
+    (lal.OpMinus, 1): bast.un_ops['-'],
+    (lal.OpNot, 1): bast.un_ops['!'],
+}
+
+
+def _gen_ir(subp):
+    var_decls = {}
+
+    def prepare_sem_query(node):
+        def closest_xref_entrypoint(n):
+            if n.p_xref_entry_point:
+                return n
+            elif n.parent is not None:
+                return closest_xref_entrypoint(n.parent)
+            else:
+                return None
+
+        closest = closest_xref_entrypoint(node)
+
+        if closest is not None and not hasattr(closest, "is_resolved"):
+            closest.p_resolve_names
+            closest.is_resolved = True
+
+    def ref_val(node):
+        prepare_sem_query(node)
+        return node.p_ref_val
+
+    def type_val(node):
+        prepare_sem_query(node)
+        return node.p_type_val
+
+    def transform_operator(lal_op, arity):
+        return _lal_op_type_2_symbol[type(lal_op), arity]
+
+    def unimplemented(node):
+        raise NotImplementedError(
+            'Cannot transform "{}" ({})'.format(node.text, type(node))
+        )
+
+    def transform_expr(expr):
+        if expr.is_a(lal.ParenExpr):
+            return transform_expr(expr.f_expr)
+        if expr.is_a(lal.BinOp):
+            return bast.BinExpr(
+                transform_expr(expr.f_left),
+                transform_operator(expr.f_op, 2),
+                transform_expr(expr.f_right),
+                type_hint=type_val(expr)
+            )
+        elif expr.is_a(lal.UnOp):
+            return bast.UnExpr(
+                transform_operator(expr.f_op, 1),
+                transform_expr(expr.f_expr),
+                type_hint=type_val(expr)
+            )
+        elif expr.is_a(lal.Identifier):
+            ref = ref_val(expr)
+            if ref.is_a(lal.ObjectDecl):
+                return var_decls[ref, expr.text]
+            elif ref.is_a(lal.EnumLiteralDecl):
+                return bast.Lit(
+                    expr.text,
+                    type_hint=ref.parent.parent
+                )
+        elif expr.is_a(lal.IntLiteral):
+            return bast.Lit(
+                int(expr.f_tok.text),
+                type_hint=type_val(expr)
+            )
+
+        unimplemented(expr)
+
+    def transform_decl(decl):
+        if decl.is_a(lal.TypeDecl):
+            return []
+        if decl.is_a(lal.ObjectDecl):
+            tdecl = decl.f_type_expr.p_designated_type_decl
+
+            for var_id in decl.f_ids:
+                var_decls[decl, var_id.text] = bast.Identifier(
+                    var_id.text,
+                    type_hint=tdecl
+                )
+
+            if decl.f_default_expr is None:
+                return [bast.ReadStmt(var_decls[decl, var_id.text])
+                        for var_id in decl.f_ids]
+            else:
+                default_val = transform_expr(decl.f_default_expr)
+                return [bast.Assign(var_decls[decl, var_id.text], default_val)
+                        for var_id in decl.f_ids]
+
+        unimplemented(decl)
+
+    def transform_stmt(stmt):
+        if stmt.is_a(lal.AssignStmt):
+            return [bast.Assign(
+                var_decls[ref_val(stmt.f_dest), stmt.f_dest.text],
+                transform_expr(stmt.f_expr)
+            )]
+
+        elif stmt.is_a(lal.IfStmt):
+            cond = transform_expr(stmt.f_cond_expr)
+            not_cond = bast.UnExpr(
+                bast.un_ops['!'],
+                cond,
+                type_hint=cond.data.type_hint
+            )
+
+            then_stmts = [bast.AssumeStmt(cond)]
+            else_stmts = [bast.AssumeStmt(not_cond)]
+
+            then_stmts.extend(transform_stmts(stmt.f_then_stmts))
+            else_stmts.extend(transform_stmts(stmt.f_else_stmts))
+
+            # todo
+            # for sub in stmt.f_alternatives:
+            #    traverse_branch(sub, nulls, neg_cond=stmt.f_cond_expr)
+
+            return [bast.SplitStmt(then_stmts, else_stmts)]
+
+        elif stmt.is_a(lal.CaseStmt):
+            # todo
+            return []
+
+        elif stmt.is_a(lal.LoopStmt):
+            return [bast.LoopStmt(transform_stmts(stmt.f_stmts))]
+
+        elif stmt.is_a(lal.WhileLoopStmt):
+
+            cond = transform_expr(stmt.f_spec.f_expr)
+            stmts = [bast.AssumeStmt(cond)] + transform_stmts(stmt.f_stmts)
+
+            return [bast.LoopStmt(stmts)]
+
+        elif stmt.is_a(lal.ForLoopStmt):
+            # todo
+            return []
+
+        elif stmt.is_a(lal.ExceptionHandler):
+            # todo ?
+            return []
+
+        unimplemented(stmt)
+
+    def transform_decls(decls):
+        res = []
+        for decl in decls:
+            res.extend(transform_decl(decl))
+        return res
+
+    def transform_stmts(stmts):
+        res = []
+        for stmt in stmts:
+            res.extend(transform_stmt(stmt))
+        return res
+
+    return bast.Program(
+        transform_decls(subp.f_decls.f_decls) +
+        transform_stmts(subp.f_stmts.f_stmts)
+    )
+
+
+def default_type_gen(type_hint, defs):
+    if type_hint.f_type_id.text == 'Boolean':
+        return bdefs.Boolean
+    elif type_hint.is_a(lal.TypeDecl):
+        if type_hint.f_type_def.is_a(lal.SignedIntTypeDef):
+            rng = type_hint.f_type_def.f_range.f_range
+            left_bound = int(rng.f_left.text)
+            right_bound = int(rng.f_right.text)
+            dom = domains.Intervals(left_bound, right_bound)
+            defs.register_new_interval_int(dom)
+            return dom
+
+    return None
+
+
+def new_context():
+    """
+    Creates a new program extraction context.
+
+    Programs extracted with the same context have compatible standard types.
+
+    Note that the context must be kept alive as long as long as the
+    programs that were extracted with this context are intended to be used.
+    """
+    return lal.AnalysisContext()
+
+
+def extract_programs(ctx, ada_file):
+    """
+    Given a context and the path to a file containing an Ada program, extracts
+    all the functions and procedures present file as an iterable of
+    Basic IR Programs.
+    """
+    unit = ctx.get_from_file(ada_file)
+
+    if unit.root is None:
+        print('Could not parse {}:'.format(ada_file))
+        for diag in unit.diagnostics:
+            print('   {}'.format(diag))
+            return
+
+    unit.populate_lexical_env()
+
+    # std = c.get_from_file('standard.ads')
+    # print(std.root)
+
+    progs = [
+        _gen_ir(subp)
+        for subp in unit.root.findall((
+            lal.SubpBody,
+            lal.ExprFunction
+        ))
+    ]
+
+    return progs
