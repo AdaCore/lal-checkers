@@ -52,37 +52,37 @@ class ImplicitVisitor(Visitor):
             child.visit(self, *args)
 
     def visit_program(self, prgm, *args):
-        return self.visit_children(prgm, *args)
+        self.visit_children(prgm, *args)
 
     def visit_ident(self, ident, *args):
-        return self.visit_children(ident, *args)
+        self.visit_children(ident, *args)
 
     def visit_assign(self, assign, *args):
-        return self.visit_children(assign, *args)
+        self.visit_children(assign, *args)
 
     def visit_split(self, splitstmt, *args):
-        return self.visit_children(splitstmt, *args)
+        self.visit_children(splitstmt, *args)
 
     def visit_loop(self, loopstmt, *args):
-        return self.visit_children(loopstmt, *args)
+        self.visit_children(loopstmt, *args)
 
     def visit_assume(self, assumestmt, *args):
-        return self.visit_children(assumestmt, *args)
+        self.visit_children(assumestmt, *args)
 
     def visit_read(self, read, *args):
-        return self.visit_children(read, *args)
+        self.visit_children(read, *args)
 
     def visit_use(self, use, *args):
-        return self.visit_children(use, *args)
+        self.visit_children(use, *args)
 
     def visit_binexpr(self, binexpr, *args):
-        return self.visit_children(binexpr, *args)
+        self.visit_children(binexpr, *args)
 
     def visit_unexpr(self, unexpr, *args):
-        return self.visit_children(unexpr, *args)
+        self.visit_children(unexpr, *args)
 
     def visit_lit(self, lit, *args):
-        return self.visit_children(lit, *args)
+        self.visit_children(lit, *args)
 
 
 class CFGNodeVisitor(Visitor):

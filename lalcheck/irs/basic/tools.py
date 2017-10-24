@@ -3,7 +3,7 @@ Provides tools for using the Basic IR.
 """
 
 from lalcheck.utils import KeyCounter
-from lalcheck.cfg import CFG
+from lalcheck.digraph import Digraph
 from lalcheck import defs, domains
 from ast import bin_ops, un_ops, Identifier
 import visitors
@@ -30,50 +30,50 @@ class CFGBuilder(visitors.ImplicitVisitor):
         self.nodes = []
         self.edges = []
 
-        start = CFG.Node(name="start")
+        start = Digraph.Node(name="start")
         self.visit_stmts(prgm.stmts, start)
 
-        return CFG(self.nodes + [start], self.edges, start)
+        return Digraph(self.nodes + [start], self.edges)
 
     def visit_split(self, splitstmt, start):
         end_fst = self.visit_stmts(splitstmt.fst_stmts, start)
         end_snd = self.visit_stmts(splitstmt.snd_stmts, start)
 
-        join = CFG.Node(name=self.fresh("split_join"))
+        join = Digraph.Node(name=self.fresh("split_join"))
         self.register_and_link([end_fst, end_snd], join)
 
         return join
 
     def visit_loop(self, loopstmt, start):
-        loop_start = CFG.Node(
+        loop_start = Digraph.Node(
             name=self.fresh("loop_start"),
             widening_point=True
         )
 
         end = self.visit_stmts(loopstmt.stmts, loop_start)
-        join = CFG.Node(name=self.fresh("loop_join"))
+        join = Digraph.Node(name=self.fresh("loop_join"))
 
         self.register_and_link([start, end], loop_start)
         self.register_and_link([loop_start], join)
         return join
 
     def visit_assign(self, assign, start):
-        n = CFG.Node(name=self.fresh("assign"), node=assign)
+        n = Digraph.Node(name=self.fresh("assign"), node=assign)
         self.register_and_link([start], n)
         return n
 
     def visit_read(self, read, start):
-        n = CFG.Node(name=self.fresh("read"), node=read)
+        n = Digraph.Node(name=self.fresh("read"), node=read)
         self.register_and_link([start], n)
         return n
 
     def visit_use(self, use, start):
-        n = CFG.Node(name=self.fresh("use"), node=use)
+        n = Digraph.Node(name=self.fresh("use"), node=use)
         self.register_and_link([start], n)
         return n
 
     def visit_assume(self, assume, start):
-        n = CFG.Node(name=self.fresh("assume"), node=assume)
+        n = Digraph.Node(name=self.fresh("assume"), node=assume)
         self.register_and_link([start], n)
         return n
 
@@ -85,7 +85,7 @@ class CFGBuilder(visitors.ImplicitVisitor):
     def register_and_link(self, froms, new_node):
         self.nodes.append(new_node)
         for f in froms:
-            self.edges.append(CFG.Edge(f, new_node))
+            self.edges.append(Digraph.Edge(f, new_node))
 
 
 class Typer(object):
@@ -141,7 +141,7 @@ class Typer(object):
         return self.type_of[item]
 
 
-class ExprEvaluator(visitors.ImplicitVisitor):
+class ExprEvaluator(visitors.Visitor):
     """
     Can be used to evaluate expressions in the Basic IR.
     """
@@ -184,7 +184,7 @@ class ExprEvaluator(visitors.ImplicitVisitor):
         return self.typer[lit].build(lit.val)
 
 
-class TrivialIntervalCS(visitors.ImplicitVisitor):
+class TrivialIntervalCS(visitors.Visitor):
     """
     A simple constraint solver that works on Interval domains.
     Solves exactly constraints of the form:

@@ -2,11 +2,6 @@ from itertools import chain, combinations
 from collections import defaultdict
 
 
-class UniqueObject:
-    def __init__(self):
-        pass
-
-
 class Bunch(dict):
     """
     Represents a bunch of data. Unlike a standard dict, the attribute notation

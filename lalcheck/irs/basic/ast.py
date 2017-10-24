@@ -6,7 +6,7 @@ from abc import abstractmethod
 from lalcheck.utils import Bunch
 
 
-def visitable(name):
+def _visitable(name):
     """
     A class decorator that adds to a node class an entry point for visitors of
     this node. The given method name will be called on the visitor with the
@@ -47,7 +47,7 @@ class Node(object):
         return
 
 
-@visitable("visit_program")
+@_visitable("visit_program")
 class Program(Node):
     """
     The node which represents a "program".
@@ -67,7 +67,7 @@ class Program(Node):
         return "Program:\n{}".format(pretty_print_stmts(self.stmts, opts))
 
 
-@visitable("visit_ident")
+@_visitable("visit_ident")
 class Identifier(Node):
     """
     An identifier, like "x", "True", etc.
@@ -90,28 +90,28 @@ class Stmt(Node):
     pass
 
 
-@visitable("visit_assign")
-class Assign(Stmt):
+@_visitable("visit_assign")
+class AssignStmt(Stmt):
     """
     Represents the assign statement, i.e. [identifier] = [expr].
     """
-    def __init__(self, lhs, rhs, **data):
+    def __init__(self, var, expr, **data):
         Node.__init__(self, **data)
-        self.lhs = lhs
-        self.rhs = rhs
+        self.var = var
+        self.expr = expr
 
     def children(self):
-        yield self.lhs
-        yield self.rhs
+        yield self.var
+        yield self.expr
 
     def pretty_print(self, opts):
         return "{} = {}".format(
-            self.lhs.pretty_print(opts),
-            self.rhs.pretty_print(opts)
+            self.var.pretty_print(opts),
+            self.expr.pretty_print(opts)
         )
 
 
-@visitable("visit_split")
+@_visitable("visit_split")
 class SplitStmt(Stmt):
     """
     A control-flow statement representing a nondeterministic choice of
@@ -135,7 +135,7 @@ class SplitStmt(Stmt):
         )
 
 
-@visitable("visit_loop")
+@_visitable("visit_loop")
 class LoopStmt(Stmt):
     """
     Represents a nondeterministic loop.
@@ -152,7 +152,7 @@ class LoopStmt(Stmt):
         return "loop:\n{}".format(pretty_print_stmts(self.stmts, opts))
 
 
-@visitable("visit_read")
+@_visitable("visit_read")
 class ReadStmt(Stmt):
     """
     Represents the havoc operation on a variable.
@@ -168,7 +168,7 @@ class ReadStmt(Stmt):
         return "read({})".format(self.var.pretty_print(opts))
 
 
-@visitable("visit_use")
+@_visitable("visit_use")
 class UseStmt(Stmt):
     """
     Represents the fact that a variable was used at this point.
@@ -184,7 +184,7 @@ class UseStmt(Stmt):
         return "use({})".format(self.var.pretty_print(opts))
 
 
-@visitable("visit_assume")
+@_visitable("visit_assume")
 class AssumeStmt(Stmt):
     """
     Represents the fact that an expression is assumed to be true at this point.
@@ -207,7 +207,7 @@ class Expr(Node):
     pass
 
 
-@visitable("visit_binexpr")
+@_visitable("visit_binexpr")
 class BinExpr(Expr):
     """
     Represents a binary operation, i.e. ([expr] [op] [expr])
@@ -230,7 +230,7 @@ class BinExpr(Expr):
         )
 
 
-@visitable("visit_unexpr")
+@_visitable("visit_unexpr")
 class UnExpr(Expr):
     """
     Represents an unary operation, i.e. ([op] [expr])
@@ -250,7 +250,7 @@ class UnExpr(Expr):
         )
 
 
-@visitable("visit_lit")
+@_visitable("visit_lit")
 class Lit(Expr):
     """
     Represents a literal value.

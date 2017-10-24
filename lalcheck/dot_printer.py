@@ -38,21 +38,21 @@ class _Color(object):
                                             int(self.blue))
 
 
-WHITE = _Color(255, 255, 255)
-BLUE_AQUA = _Color(0, 128, 255)
+_WHITE = _Color(255, 255, 255)
+_BLUE_AQUA = _Color(0, 128, 255)
 
-BACKGROUND = WHITE * 0.1
-LINES = WHITE * 0.3
-TITLE = WHITE * 0.2 + BLUE_AQUA * 0.4
-REGULAR_LABEL = WHITE * 0.5
-OTHER_LABEL = WHITE * 0.3
+_BACKGROUND = _WHITE * 0.1
+_LINES = _WHITE * 0.3
+_TITLE = _WHITE * 0.2 + _BLUE_AQUA * 0.4
+_REGULAR_LABEL = _WHITE * 0.5
+_OTHER_LABEL = _WHITE * 0.3
 
 
 def _edge(node, child):
     return '{} -> {} [color="{}"];'.format(
         id(node),
         id(child),
-        LINES
+        _LINES
     )
 
 
@@ -64,29 +64,63 @@ def _table(title, rows):
     result = [
         '<table color="#404040" cellborder="0">',
         '<tr><td colspan="2"><b>{}</b></td></tr>'.format(
-            _colored(title, TITLE)
+            _colored(title, _TITLE)
         )
     ]
     for row in rows:
         if len(row) == 1:
             result.append(
                 '<hr/><tr><td align="center" colspan="2">{}</td></tr>'.format(
-                    _colored(row[0], REGULAR_LABEL)
+                    _colored(row[0], _REGULAR_LABEL)
                 )
             )
         elif len(row) == 2:
             result.append(
                 ('<hr/><tr><td align="left">{}</td>'
                  '<td align="left">{}</td></tr>').format(
-                    _colored(row[0], REGULAR_LABEL),
-                    _colored(row[1], REGULAR_LABEL)
+                    _colored(row[0], _REGULAR_LABEL),
+                    _colored(row[1], _REGULAR_LABEL)
                 )
             )
     result.append('</table>')
     return ''.join(result)
 
 
-def gen_dot(cfg, data_printers):
+class DataPrinter(object):
+    """
+    See gen_dot for explanations.
+    """
+    def __init__(self, data_key, printer):
+        """
+        Constructs a new DataPrinter object from a key string and a
+        printer function.
+        """
+        self.data_key = data_key
+        self.printer = printer
+
+    def test(self, node):
+        """
+        Tests whether the given node contains this DataPrinter's key in its
+        data.
+        """
+        return hasattr(node.data, self.data_key)
+
+    def __call__(self, node):
+        """
+        Given a digraph node, returns a string representation of the value
+        associated to this DataPrinter's key inside this node's data.
+        """
+        return self.printer(node.data[self.data_key])
+
+
+def gen_dot(digraph, data_printers):
+    """
+    Generates a DOT representation of the given digraph. Since nodes in a
+    digraph can contain arbitrary data, displaying them is done through the
+    user of data printers.
+    When rendering a node, data printers will check for the existence of the
+    data key inside the node and render its value accordingly.
+    """
     visited = set()
     result = []
 
@@ -104,7 +138,7 @@ def gen_dot(cfg, data_printers):
 
         label.extend(_table(node.name, rows))
 
-        for succ in cfg.successors(node):
+        for succ in digraph.successors(node):
             to_dot(succ)
             result.append(_edge(node, succ))
 
@@ -115,11 +149,16 @@ def gen_dot(cfg, data_printers):
             )
         )
 
-    to_dot(cfg.start_node)
+    while True:
+        left = set(digraph.nodes) - visited
+        if len(left) > 0:
+            to_dot(left.pop())
+        else:
+            break
 
     return ('digraph g {' +
             'graph [rangkdir="LR", ' +
             'splines=true, bgcolor="{}", fontname="Sans"];'.format(
-                BACKGROUND
+                _BACKGROUND
             ) +
             '\n'.join(result) + '}')

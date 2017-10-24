@@ -107,14 +107,16 @@ def _gen_ir(subp):
                         for var_id in decl.f_ids]
             else:
                 default_val = transform_expr(decl.f_default_expr)
-                return [bast.Assign(var_decls[decl, var_id.text], default_val)
-                        for var_id in decl.f_ids]
+                return [
+                    bast.AssignStmt(var_decls[decl, var_id.text], default_val)
+                    for var_id in decl.f_ids
+                ]
 
         unimplemented(decl)
 
     def transform_stmt(stmt):
         if stmt.is_a(lal.AssignStmt):
-            return [bast.Assign(
+            return [bast.AssignStmt(
                 var_decls[ref_val(stmt.f_dest), stmt.f_dest.text],
                 transform_expr(stmt.f_expr)
             )]

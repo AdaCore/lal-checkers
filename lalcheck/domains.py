@@ -3,10 +3,8 @@ Provides some basic abstract domains.
 """
 
 from abc import abstractmethod
-from utils import UniqueObject, powerset
+from utils import powerset
 import collections
-
-INT_INF = 2 << 32 - 1
 
 
 class AbstractDomain(object):
@@ -166,12 +164,13 @@ class Intervals(AbstractDomain):
     An abstract domain used to represent sets of integers.
     """
     def __init__(self, m_inf, inf):
-        self.bot = UniqueObject()
         """
         Constructs a new abstract domain of intervals in the range of the two
         given values, which are considered by said domain as
         -infinity and +infinity.
         """
+        assert(m_inf <= inf)
+        self.bot = object()
         self.top = (m_inf, inf)
 
     def build(self, *args):
@@ -193,13 +192,21 @@ class Intervals(AbstractDomain):
               self.top[0] <= args[0] <= args[1] <= self.top[1]):
             return args[0], args[1]
 
-    def left_unbounded(self, inf):
-        if inf <= self.top[1]:
-            return self.top[0], inf
+    def left_unbounded(self, x):
+        """
+        Returns the element representing the set of integers that lie between
+        -infinity (according to this domain) and the given value.
+        """
+        if x <= self.top[1]:
+            return self.top[0], x
 
-    def right_unbounded(self, m_inf):
-        if m_inf >= self.top[0]:
-            return m_inf, self.top[1]
+    def right_unbounded(self, x):
+        """
+        Returns the element representing the set of integers that lie between
+        the given value and +infinity (according to this domain).
+        """
+        if x >= self.top[0]:
+            return x, self.top[1]
 
     def join(self, a, b):
         if a == self.bot:
@@ -326,12 +333,20 @@ class Set(AbstractDomain):
         self.dom = dom
         self.merge_predicate = actual_predicate
         self.bot = []
-        self.top = UniqueObject()
+        self.top = object()
 
     def build(self, elems):
-        return self.reduce(list(elems), self.dom.join)
+        """
+        Creates a new set which contains the given iterable of elements.
+        """
+        return self._reduce(list(elems), self.dom.join)
 
-    def reduce(self, xs, merger):
+    def _reduce(self, xs, merger):
+        """
+        Reduces the given element, that is, merges its values that it
+        considers equal according to the merge predicate.
+        """
+
         if xs is self.top:
             return self.top
 
@@ -351,10 +366,10 @@ class Set(AbstractDomain):
         return list(reduced)
 
     def join(self, a, b):
-        return self.reduce(a + b, self.dom.join)
+        return self._reduce(a + b, self.dom.join)
 
     def meet(self, a, b):
-        return self.reduce([
+        return self._reduce([
             x for x in a if any(
                 self.merge_predicate(x, y)
                 for y in b
@@ -362,7 +377,7 @@ class Set(AbstractDomain):
         ], self.dom.join)
 
     def update(self, a, b, widen=False):
-        return self.reduce(
+        return self._reduce(
             a + b,
             lambda e_a, e_b: self.dom.update(e_a, e_b, widen)
         )
@@ -389,7 +404,7 @@ class FiniteLattice(AbstractDomain):
     "less than" relation.
     """
     @staticmethod
-    def relations_count(lts):
+    def _relations_count(lts):
         """
         Returns the total number of elements in the relation given as a dict
         from element to iterable of elements.
@@ -397,7 +412,7 @@ class FiniteLattice(AbstractDomain):
         return len(lts) + sum(len(e) for x, e in lts.iteritems())
 
     @staticmethod
-    def transitive_closure(lts):
+    def _transitive_closure(lts):
         """
         Computes the transitive closure of the relation.
         """
@@ -405,18 +420,18 @@ class FiniteLattice(AbstractDomain):
         closed_lts.update(lts)
 
         while True:
-            init_size = FiniteLattice.relations_count(closed_lts)
+            init_size = FiniteLattice._relations_count(closed_lts)
             for k, lts in closed_lts.items():
                 closed_lts[k].add(k)
                 for r in lts:
                     closed_lts[r].add(r)
                     closed_lts[k].update(closed_lts[r])
 
-            if FiniteLattice.relations_count(closed_lts) == init_size:
+            if FiniteLattice._relations_count(closed_lts) == init_size:
                 return closed_lts
 
     @staticmethod
-    def inverse(lts):
+    def _inverse(lts):
         """
         Computes the inverse of the given relation.
         """
@@ -440,15 +455,22 @@ class FiniteLattice(AbstractDomain):
         )
 
     def __init__(self, lts):
-        self.lts = FiniteLattice.transitive_closure(lts)
-        self.inv_lts = FiniteLattice.inverse(self.lts)
+        """
+        Constructs a new finite lattice from the given "less than" relation.
+        The "bot" and "top" elements are inferred automatically, which means
+        that they must exist.
+        """
+        self.lts = FiniteLattice._transitive_closure(lts)
+        self.inv_lts = FiniteLattice._inverse(self.lts)
         self.bot = self.lowest_among(self.lts.keys())
         self.top = self.greatest_among(self.lts.keys())
 
     def build(self, elem):
-        r = frozenset(elem)
-        assert(r in self.lts)
-        return r
+        """
+        Returns the given element
+        """
+        assert(elem in self.lts)
+        return elem
 
     def join(self, a, b):
         return self.lowest_among(self.lts[a] & self.lts[b])

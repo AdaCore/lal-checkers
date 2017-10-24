@@ -226,10 +226,10 @@ def boolean_or(x, y):
 Boolean = domains.FiniteLattice.of_subsets({'True', 'False'})
 Int32 = domains.Intervals(-2147483648, 2147483647)
 
-bool_none = Boolean.build({})
-bool_false = Boolean.build({'False'})
-bool_true = Boolean.build({'True'})
-bool_both = Boolean.build({'True', 'False'})
+bool_none = Boolean.build(frozenset([]))
+bool_false = Boolean.build(frozenset(['False']))
+bool_true = Boolean.build(frozenset(['True']))
+bool_both = Boolean.build(frozenset(['True', 'False']))
 
 
 class Definitions(object):

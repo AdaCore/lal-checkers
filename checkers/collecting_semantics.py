@@ -11,7 +11,7 @@ from lalcheck.irs.basic.tools import (
 from lalcheck.irs.basic.ast import Identifier, PrettyPrintOpts
 from lalcheck.irs.basic import visitors
 from lalcheck.utils import KeyCounter
-from lalcheck.cfg import CFG
+from lalcheck.digraph import Digraph
 from lalcheck import domains
 from lalcheck import dot_printer
 
@@ -38,7 +38,7 @@ class VarTracker(visitors.CFGNodeVisitor):
 
     def visit_assign(self, assign, state):
         env = self.state_to_env(state)
-        env[assign.lhs] = self.evaluator.eval(assign.rhs, env)
+        env[assign.var] = self.evaluator.eval(assign.expr, env)
         return self.env_to_state(env)
 
     def visit_assume(self, assume, state):
@@ -118,11 +118,11 @@ def html_render_node(node):
 def save_cfg_to(file_name, cfg):
     with open(file_name, 'w') as f:
         f.write(dot_printer.gen_dot(cfg, [
-            CFG.DataPrinter(
+            dot_printer.DataPrinter(
                 'node',
                 lambda node: (html_render_node(node),)
             ),
-            CFG.DataPrinter(
+            dot_printer.DataPrinter(
                 'widening_point',
                 lambda _: (escape('<widening_point>'),)
             )
@@ -139,7 +139,7 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
     for node, state in results.iteritems():
         for trace, values in state:
             paths[frozenset(trace)].append(
-                CFG.Node(
+                Digraph.Node(
                     node.name,
                     ___orig=node,
                     **{v.name: values[i] for v, i in vars_idx.iteritems()}
@@ -158,19 +158,11 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
             ]
 
             for pred in predecessors:
-                edges.append(CFG.Edge(pred, node))
+                edges.append(Digraph.Edge(pred, node))
 
-    new_start_node = next(
-        n
-        for _, nodes in paths.iteritems()
-        for n in nodes
-        if n.data.___orig is cfg.start_node
-    )
-
-    res_graph = CFG(
+    res_graph = Digraph(
         [n for _, nodes in paths.iteritems() for n in nodes],
-        edges,
-        new_start_node
+        edges
     )
 
     def print_orig(orig):
@@ -182,9 +174,9 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
 
     with open(file_name, 'w') as f:
         f.write(dot_printer.gen_dot(res_graph, [
-            CFG.DataPrinter('___orig', lambda orig: print_orig(orig))
+            dot_printer.DataPrinter('___orig', lambda orig: print_orig(orig))
         ] + [
-            CFG.DataPrinter(v.name, (
+            dot_printer.DataPrinter(v.name, (
                 lambda name: lambda value: (name, str(value),)
             )("{} &isin;".format(v.name)))
             for v, _ in vars_idx.iteritems()
@@ -193,10 +185,12 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
 
 def collect_semantics(
         prog, typer, merge_pred_builder,
-        output_cfg, output_res):
+        output_cfg=None, output_res=None):
 
     cfg = prog.visit(CFGBuilder())
-    save_cfg_to(output_cfg, cfg)
+
+    if output_cfg:
+        save_cfg_to(output_cfg, cfg)
 
     var_set = set(visitors.findall(prog, lambda n: isinstance(n, Identifier)))
     vars_idx = {v: i for i, v in enumerate(var_set)}
@@ -267,12 +261,13 @@ def collect_semantics(
     while result != last:
         last, result = result, it(result)
 
-    build_resulting_graph(
-        output_res,
-        cfg,
-        result,
-        trace_domain,
-        vars_idx
-    )
+    if output_res:
+        build_resulting_graph(
+            output_res,
+            cfg,
+            result,
+            trace_domain,
+            vars_idx
+        )
 
     return result
