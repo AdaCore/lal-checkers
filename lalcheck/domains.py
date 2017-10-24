@@ -2,7 +2,6 @@
 Provides some basic abstract domains.
 """
 
-from abc import abstractmethod
 from utils import powerset
 import collections
 
@@ -34,12 +33,11 @@ class AbstractDomain(object):
     Its best abstraction is "[0, 2]".
     """
 
-    @abstractmethod
     def build(self, *args):
         """
         Builds a new element of this abstract domain.
         """
-        return
+        raise NotImplementedError
 
     def is_empty(self, x):
         """
@@ -52,7 +50,6 @@ class AbstractDomain(object):
         """
         return self.eq(x, self.bot)
 
-    @abstractmethod
     def join(self, a, b):
         """
         Returns the LUB (Least Upper Bound) of two elements belonging to this
@@ -66,15 +63,14 @@ class AbstractDomain(object):
         "(-2, 2)", which represents {-2, -1, 0, 1, 2}. However, the union of
         {-2, -1} and {1, 2} is {-2, -1, 1, 2}, which does not contain 0.
         """
-        return
+        raise NotImplementedError
 
-    @abstractmethod
     def meet(self, a, b):
         """
         Returns the GLB (Greatest Lower Bound) of two elements belonging to
         this abstract domain.
         """
-        return
+        raise NotImplementedError
 
     def update(self, a, b, widen=False):
         """
@@ -89,22 +85,20 @@ class AbstractDomain(object):
         """
         return self.join(a, b)
 
-    @abstractmethod
     def lt(self, a, b):
         """
         Returns True if the first element is less than the second element,
         that is, if the first element represents a smaller set of concrete
         values than the second one.
         """
-        return
+        raise NotImplementedError
 
-    @abstractmethod
     def eq(self, a, b):
         """
         Returns True if the two elements are equal, that is, if they
         represent the same set of concrete values.
         """
-        return
+        raise NotImplementedError
 
     def le(self, a, b):
         """

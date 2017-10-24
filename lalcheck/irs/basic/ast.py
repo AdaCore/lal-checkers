@@ -2,7 +2,6 @@
 Provides the AST constructors of the "Basic" intermediate representation.
 """
 
-from abc import abstractmethod
 from lalcheck.utils import Bunch
 
 
@@ -32,19 +31,17 @@ class Node(object):
         """
         self.data = Bunch(**data)
 
-    @abstractmethod
     def children(self):
         """
         Returns a iterable of the children of this node.
         """
-        return
+        raise NotImplementedError
 
-    @abstractmethod
     def pretty_print(self, opts):
         """
         Returns a human-readable string representation of this node.
         """
-        return
+        raise NotImplementedError
 
 
 @_visitable("visit_program")
