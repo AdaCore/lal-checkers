@@ -4,22 +4,22 @@ Provides a libadalang frontend for the Basic IR.
 
 import libadalang as lal
 
-from lalcheck.irs.basic import ast as bast
+from lalcheck.irs.basic import tree as irt
 from lalcheck import defs as bdefs
 from lalcheck import domains
 
 
 _lal_op_type_2_symbol = {
-    (lal.OpLt, 2): bast.bin_ops['<'],
-    (lal.OpLte, 2): bast.bin_ops['<='],
-    (lal.OpEq, 2): bast.bin_ops['=='],
-    (lal.OpNeq, 2): bast.bin_ops['!='],
-    (lal.OpGte, 2): bast.bin_ops['>='],
-    (lal.OpGt, 2): bast.bin_ops['>'],
-    (lal.OpPlus, 2): bast.bin_ops['+'],
-    (lal.OpMinus, 2): bast.bin_ops['-'],
-    (lal.OpMinus, 1): bast.un_ops['-'],
-    (lal.OpNot, 1): bast.un_ops['!'],
+    (lal.OpLt, 2): irt.bin_ops['<'],
+    (lal.OpLte, 2): irt.bin_ops['<='],
+    (lal.OpEq, 2): irt.bin_ops['=='],
+    (lal.OpNeq, 2): irt.bin_ops['!='],
+    (lal.OpGte, 2): irt.bin_ops['>='],
+    (lal.OpGt, 2): irt.bin_ops['>'],
+    (lal.OpPlus, 2): irt.bin_ops['+'],
+    (lal.OpMinus, 2): irt.bin_ops['-'],
+    (lal.OpMinus, 1): irt.un_ops['-'],
+    (lal.OpNot, 1): irt.un_ops['!'],
 }
 
 
@@ -61,14 +61,14 @@ def _gen_ir(subp):
         if expr.is_a(lal.ParenExpr):
             return transform_expr(expr.f_expr)
         if expr.is_a(lal.BinOp):
-            return bast.BinExpr(
+            return irt.BinExpr(
                 transform_expr(expr.f_left),
                 transform_operator(expr.f_op, 2),
                 transform_expr(expr.f_right),
                 type_hint=type_val(expr)
             )
         elif expr.is_a(lal.UnOp):
-            return bast.UnExpr(
+            return irt.UnExpr(
                 transform_operator(expr.f_op, 1),
                 transform_expr(expr.f_expr),
                 type_hint=type_val(expr)
@@ -78,12 +78,12 @@ def _gen_ir(subp):
             if ref.is_a(lal.ObjectDecl):
                 return var_decls[ref, expr.text]
             elif ref.is_a(lal.EnumLiteralDecl):
-                return bast.Lit(
+                return irt.Lit(
                     expr.text,
                     type_hint=ref.parent.parent
                 )
         elif expr.is_a(lal.IntLiteral):
-            return bast.Lit(
+            return irt.Lit(
                 int(expr.f_tok.text),
                 type_hint=type_val(expr)
             )
@@ -97,18 +97,18 @@ def _gen_ir(subp):
             tdecl = decl.f_type_expr.p_designated_type_decl
 
             for var_id in decl.f_ids:
-                var_decls[decl, var_id.text] = bast.Identifier(
+                var_decls[decl, var_id.text] = irt.Identifier(
                     var_id.text,
                     type_hint=tdecl
                 )
 
             if decl.f_default_expr is None:
-                return [bast.ReadStmt(var_decls[decl, var_id.text])
+                return [irt.ReadStmt(var_decls[decl, var_id.text])
                         for var_id in decl.f_ids]
             else:
                 default_val = transform_expr(decl.f_default_expr)
                 return [
-                    bast.AssignStmt(var_decls[decl, var_id.text], default_val)
+                    irt.AssignStmt(var_decls[decl, var_id.text], default_val)
                     for var_id in decl.f_ids
                 ]
 
@@ -116,21 +116,21 @@ def _gen_ir(subp):
 
     def transform_stmt(stmt):
         if stmt.is_a(lal.AssignStmt):
-            return [bast.AssignStmt(
+            return [irt.AssignStmt(
                 var_decls[ref_val(stmt.f_dest), stmt.f_dest.text],
                 transform_expr(stmt.f_expr)
             )]
 
         elif stmt.is_a(lal.IfStmt):
             cond = transform_expr(stmt.f_cond_expr)
-            not_cond = bast.UnExpr(
-                bast.un_ops['!'],
+            not_cond = irt.UnExpr(
+                irt.un_ops['!'],
                 cond,
                 type_hint=cond.data.type_hint
             )
 
-            then_stmts = [bast.AssumeStmt(cond)]
-            else_stmts = [bast.AssumeStmt(not_cond)]
+            then_stmts = [irt.AssumeStmt(cond)]
+            else_stmts = [irt.AssumeStmt(not_cond)]
 
             then_stmts.extend(transform_stmts(stmt.f_then_stmts))
             else_stmts.extend(transform_stmts(stmt.f_else_stmts))
@@ -139,21 +139,21 @@ def _gen_ir(subp):
             # for sub in stmt.f_alternatives:
             #    traverse_branch(sub, nulls, neg_cond=stmt.f_cond_expr)
 
-            return [bast.SplitStmt(then_stmts, else_stmts)]
+            return [irt.SplitStmt(then_stmts, else_stmts)]
 
         elif stmt.is_a(lal.CaseStmt):
             # todo
             return []
 
         elif stmt.is_a(lal.LoopStmt):
-            return [bast.LoopStmt(transform_stmts(stmt.f_stmts))]
+            return [irt.LoopStmt(transform_stmts(stmt.f_stmts))]
 
         elif stmt.is_a(lal.WhileLoopStmt):
 
             cond = transform_expr(stmt.f_spec.f_expr)
-            stmts = [bast.AssumeStmt(cond)] + transform_stmts(stmt.f_stmts)
+            stmts = [irt.AssumeStmt(cond)] + transform_stmts(stmt.f_stmts)
 
-            return [bast.LoopStmt(stmts)]
+            return [irt.LoopStmt(stmts)]
 
         elif stmt.is_a(lal.ForLoopStmt):
             # todo
@@ -177,7 +177,7 @@ def _gen_ir(subp):
             res.extend(transform_stmt(stmt))
         return res
 
-    return bast.Program(
+    return irt.Program(
         transform_decls(subp.f_decls.f_decls) +
         transform_stmts(subp.f_stmts.f_stmts)
     )

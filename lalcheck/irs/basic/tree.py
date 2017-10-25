@@ -1,5 +1,5 @@
 """
-Provides the AST constructors of the "Basic" intermediate representation.
+Provides the tree constructors of the Basic intermediate representation.
 """
 
 from lalcheck.utils import Bunch
@@ -23,7 +23,7 @@ def _visitable(name):
 
 class Node(object):
     """
-    The base class for any AST node.
+    The base class for any Basic tree node.
     """
     def __init__(self, **data):
         """

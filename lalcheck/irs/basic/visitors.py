@@ -1,5 +1,5 @@
 """
-Defines the interface for Basic AST visitors,
+Defines the interface for Basic IR tree visitors,
 as well as a few abstract visitors.
 """
 

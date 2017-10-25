@@ -5,7 +5,7 @@ Provides tools for using the Basic IR.
 from lalcheck.utils import KeyCounter
 from lalcheck.digraph import Digraph
 from lalcheck import defs, domains
-from ast import bin_ops, un_ops, Identifier
+from tree import bin_ops, un_ops, Identifier
 import visitors
 
 
@@ -15,7 +15,7 @@ class CFGBuilder(visitors.ImplicitVisitor):
     program as an instance of a Digraph. Nodes of the resulting control-flow
     graph will have the following data attached to it:
     - 'widening_point': "True" iff the node can be used as a widening point.
-    - 'node': the corresponding AST node which this CFG node was built from,
+    - 'node': the corresponding IR node which this CFG node was built from,
       or None.
     """
     def __init__(self):

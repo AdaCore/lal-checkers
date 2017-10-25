@@ -8,7 +8,7 @@ from lalcheck.irs.basic.tools import (
     TrivialIntervalCS
 )
 
-from lalcheck.irs.basic.ast import Identifier, PrettyPrintOpts
+from lalcheck.irs.basic.tree import Identifier, PrettyPrintOpts
 from lalcheck.irs.basic import visitors
 from lalcheck.utils import KeyCounter
 from lalcheck.digraph import Digraph
