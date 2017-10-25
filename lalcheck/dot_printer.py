@@ -103,7 +103,7 @@ class DataPrinter(object):
         Tests whether the given node contains this DataPrinter's key in its
         data.
         """
-        return hasattr(node.data, self.data_key)
+        return self.data_key in node.data
 
     def __call__(self, node):
         """

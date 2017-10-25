@@ -15,7 +15,7 @@ def _visitable(name):
         return getattr(visitor, name)(node, *args)
 
     def wrapper(cls):
-        setattr(cls, "visit", enter_visitor)
+        cls.visit = enter_visitor
         return cls
 
     return wrapper

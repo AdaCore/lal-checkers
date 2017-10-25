@@ -129,7 +129,7 @@ class Typer(object):
         """
         to_type = visitors.findall(
             program,
-            lambda n: hasattr(n.data, 'type_hint')
+            lambda n: 'type_hint' in n.data
         )
 
         for node in to_type:

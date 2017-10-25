@@ -170,15 +170,18 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
             return (
                 '<i>{}</i>'.format(html_render_node(orig.data.node)),
             )
-        return tuple()
+        return ()
+
+    def print_result_builder(name):
+        return lambda value: (name, str(value))
 
     with open(file_name, 'w') as f:
         f.write(dot_printer.gen_dot(res_graph, [
-            dot_printer.DataPrinter('___orig', lambda orig: print_orig(orig))
+            dot_printer.DataPrinter('___orig', print_orig)
         ] + [
-            dot_printer.DataPrinter(v.name, (
-                lambda name: lambda value: (name, str(value),)
-            )("{} &isin;".format(v.name)))
+            dot_printer.DataPrinter(v.name, print_result_builder(
+                "{} &isin;".format(v.name)
+            ))
             for v, _ in vars_idx.iteritems()
         ]))
 
