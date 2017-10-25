@@ -116,16 +116,16 @@ def html_render_node(node):
 
 
 def save_cfg_to(file_name, cfg):
+    def render_node(node):
+        return (html_render_node(node),) if node is not None else ()
+
+    def render_widening_point(is_widening_point):
+        return (escape('<widening_point>'),) if is_widening_point else ()
+
     with open(file_name, 'w') as f:
         f.write(dot_printer.gen_dot(cfg, [
-            dot_printer.DataPrinter(
-                'node',
-                lambda node: (html_render_node(node),)
-            ),
-            dot_printer.DataPrinter(
-                'widening_point',
-                lambda _: (escape('<widening_point>'),)
-            )
+            dot_printer.DataPrinter('node', render_node),
+            dot_printer.DataPrinter('is_widening_point', render_widening_point)
         ]))
 
 
@@ -166,7 +166,7 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
     )
 
     def print_orig(orig):
-        if hasattr(orig.data, 'node'):
+        if orig.data.node is not None:
             return (
                 '<i>{}</i>'.format(html_render_node(orig.data.node)),
             )
@@ -243,12 +243,12 @@ def collect_semantics(
                 for trace, values in res
                 for updated_val in [
                     node.data.node.visit(do_stmt, values)
-                    if hasattr(node.data, 'node') else values
+                    if node.data.node is not None else values
                 ]
                 if not vars_domain.is_empty(updated_val)
             ])
 
-            if hasattr(node.data, 'widening_point'):
+            if node.data.is_widening_point:
                 if do_widen(widening_counter.get_incr(node)):
                     res = lat.update(new_states[node], res, True)
 

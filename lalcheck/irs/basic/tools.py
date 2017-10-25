@@ -13,9 +13,10 @@ class CFGBuilder(visitors.ImplicitVisitor):
     """
     A visitor that can be used to build the control-flow graph of the given
     program as an instance of a Digraph. Nodes of the resulting control-flow
-    graph may have the following data attached to it:
-    - 'widening_point' if the node can be used as a widening point.
-    - 'node' if the cfg node was built from an AST node.
+    graph will have the following data attached to it:
+    - 'widening_point': "True" iff the node can be used as a widening point.
+    - 'node': the corresponding AST node which this CFG node was built from,
+      or None.
     """
     def __init__(self):
         self.nodes = None
@@ -30,7 +31,7 @@ class CFGBuilder(visitors.ImplicitVisitor):
         self.nodes = []
         self.edges = []
 
-        start = Digraph.Node(name="start")
+        start = self.build_node("start")
         self.visit_stmts(prgm.stmts, start)
 
         return Digraph(self.nodes + [start], self.edges)
@@ -39,41 +40,38 @@ class CFGBuilder(visitors.ImplicitVisitor):
         end_fst = self.visit_stmts(splitstmt.fst_stmts, start)
         end_snd = self.visit_stmts(splitstmt.snd_stmts, start)
 
-        join = Digraph.Node(name=self.fresh("split_join"))
+        join = self.build_node("split_join")
         self.register_and_link([end_fst, end_snd], join)
 
         return join
 
     def visit_loop(self, loopstmt, start):
-        loop_start = Digraph.Node(
-            name=self.fresh("loop_start"),
-            widening_point=True
-        )
+        loop_start = self.build_node("loop_start", is_widening_point=True)
 
         end = self.visit_stmts(loopstmt.stmts, loop_start)
-        join = Digraph.Node(name=self.fresh("loop_join"))
+        join = self.build_node("loop_join")
 
         self.register_and_link([start, end], loop_start)
         self.register_and_link([loop_start], join)
         return join
 
     def visit_assign(self, assign, start):
-        n = Digraph.Node(name=self.fresh("assign"), node=assign)
+        n = self.build_node("assign", orig_node=assign)
         self.register_and_link([start], n)
         return n
 
     def visit_read(self, read, start):
-        n = Digraph.Node(name=self.fresh("read"), node=read)
+        n = self.build_node("read", orig_node=read)
         self.register_and_link([start], n)
         return n
 
     def visit_use(self, use, start):
-        n = Digraph.Node(name=self.fresh("use"), node=use)
+        n = self.build_node("use", orig_node=use)
         self.register_and_link([start], n)
         return n
 
     def visit_assume(self, assume, start):
-        n = Digraph.Node(name=self.fresh("assume"), node=assume)
+        n = self.build_node("assume", orig_node=assume)
         self.register_and_link([start], n)
         return n
 
@@ -81,6 +79,13 @@ class CFGBuilder(visitors.ImplicitVisitor):
         for stmt in stmts:
             cur = stmt.visit(self, cur)
         return cur
+
+    def build_node(self, name, is_widening_point=False, orig_node=None):
+        return Digraph.Node(
+            name=self.fresh(name),
+            is_widening_point=is_widening_point,
+            node=orig_node
+        )
 
     def register_and_link(self, froms, new_node):
         self.nodes.append(new_node)
