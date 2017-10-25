@@ -250,7 +250,7 @@ def collect_semantics(
 
             if hasattr(node.data, 'widening_point'):
                 if do_widen(widening_counter.get_incr(node)):
-                    res = lat.update(states[node], res, True)
+                    res = lat.update(new_states[node], res, True)
 
             new_states[node] = res
 

@@ -333,46 +333,56 @@ class Set(AbstractDomain):
         """
         Creates a new set which contains the given iterable of elements.
         """
-        return self._reduce(list(elems), self.dom.join)
+        return self._reduce(elems)
 
-    def _reduce(self, xs, merger):
+    def _reduce(self, xs):
         """
         Reduces the given element, that is, merges its values that it
         considers equal according to the merge predicate.
         """
 
-        if xs is self.top:
+        return self._merge([], list(xs), self.dom.join)
+
+    def _merge(self, a, b, merger):
+        """
+        Merges two instances of this domain together using the merge predicate.
+
+        """
+        if a is self.top or b is self.top:
             return self.top
 
-        reduced = {x for x in xs}
-        old_size = 0
-        while len(reduced) != old_size:
-            new_reduced = set()
-            old_size = len(reduced)
-            while len(reduced) > 0:
-                x = reduced.pop()
-                to_merge = {y for y in reduced if self.merge_predicate(x, y)}
-                reduced -= to_merge
-                new_reduced.add(reduce(merger, to_merge, x))
+        res = [x for x in a]
+        changed = False
 
-            reduced = new_reduced
+        for y in b:
+            do_add = True
+            for i, x in enumerate(res):
+                if self.merge_predicate(x, y):
+                    do_add = False
+                    res[i] = merger(x, y)
+                    if not self.dom.eq(x, res[i]):
+                        changed = True
+                    break
 
-        return list(reduced)
+            if do_add:
+                res.append(y)
+
+        return self._merge([], res, merger) if changed else res
 
     def join(self, a, b):
-        return self._reduce(a + b, self.dom.join)
+        return self._merge(a, b, self.dom.join)
 
     def meet(self, a, b):
-        return self._reduce([
+        return self._reduce(
             x for x in a if any(
                 self.merge_predicate(x, y)
                 for y in b
             )
-        ], self.dom.join)
+        )
 
     def update(self, a, b, widen=False):
-        return self._reduce(
-            a + b,
+        return self._merge(
+            a, b,
             lambda e_a, e_b: self.dom.update(e_a, e_b, widen)
         )
 
