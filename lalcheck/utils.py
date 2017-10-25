@@ -5,12 +5,18 @@ from collections import defaultdict
 class Bunch(dict):
     """
     Represents a bunch of data. Unlike a standard dict, the attribute notation
-    can be used to set or get keys.
+    can be used to get keys. Once constructed, the object is immutable.
     """
     def __init__(self, **kw):
+        kw['_hash'] = tuple(sorted(self.iteritems())).__hash__()
         dict.__init__(self, kw)
         self.__dict__.update(kw)
-        self._hash = tuple(sorted(self.iteritems())).__hash__()
+
+    def __setattr__(self, key, value):
+        raise TypeError("Bunch does not support assignment")
+
+    def __setitem__(self, key, value):
+        raise TypeError("Bunch does not support assignment")
 
     def __hash__(self):
         return self._hash
