@@ -3,7 +3,7 @@ Provides the Definitions class, which instances can be used to hold the set of
 operations that are well defined in the context of a program or a set of
 programs.
 
-Also provides a collection of predefined types and operations on these types.
+Also provides a collection of predefined domains and operations on them.
 """
 
 from collections import defaultdict
@@ -242,19 +242,19 @@ class Definitions(object):
         """
         self.ops = defaultdict(dict)
 
-    def register(self, name, tps, fun):
+    def register(self, name, doms, fun):
         """
         Registers a new operation of the given name, acting on the given
-        types tps, and which semantics are given by fun.
+        domains doms, and which semantics are given by fun.
         """
-        self.ops[name][tps] = fun
+        self.ops[name][doms] = fun
 
-    def lookup(self, name, tps):
+    def lookup(self, name, doms):
         """
         Finds the semantics of the operation of the given name, which acts
-        on the given types.
+        on the given domains.
         """
-        return self.ops[name][tps]
+        return self.ops[name][doms]
 
     def register_new_interval_int(self, dom):
         """
@@ -278,7 +278,7 @@ class Definitions(object):
     def default():
         """
         Creates a Definitions object containing operations that act on the
-        universal Boolean type.
+        universal Boolean domain.
         """
         defs = Definitions()
         defs.register('!', (Boolean, Boolean), boolean_not)

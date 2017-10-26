@@ -93,70 +93,69 @@ class CFGBuilder(visitors.ImplicitVisitor):
             self.edges.append(Digraph.Edge(f, new_node))
 
 
-class Typer(object):
+class DomainCollector(object):
     """
-    Once constructed, a Typer object can be used to type any amount of
-    Programs. Expressions inside these programs can then be run against
-    the Typer that typed them to retrieve their types.
+    Once constructed, a DomainCollector object can be used to collect domains
+    of any amount of Programs. Expressions inside these programs can then be
+    tested against the DomainCollector that traversed them to retrieve the
+    domain they were assigned.
 
-    A Typer also stores definitions that were introduced during the typing
-    of each program.
+    A DomainCollector also stores definitions that were introduced during the
+    domain collection of each program inside its public 'defs' attribute.
     """
-    def __init__(self, type_gen):
+    def __init__(self, domain_gen):
         """
-        Constructs a Typer object with the given type generator.
-        A type generator is a function that, given a type hint held by a node
-        and a Definitions object, will return an appropriate type for that
+        Constructs a DomainCollector object with the given domain generator.
+        A domain generator is a function that, given a type hint held by a node
+        and a Definitions object, will return an appropriate domain for that
         node, and fill the Definitions object with the relevant definitions
         if needed.
         """
-        self.type_of = {}
+        self.domain_of = {}
         self.type_map = {}
         self.defs = defs.Definitions.default()
-        self.type_gen = type_gen
+        self.domain_gen = domain_gen
 
-    def type_programs(self, programs):
+    def collect_domains(self, *programs):
         """
-        Types each of the given programs.
-        """
-        for p in programs:
-            self.type_program(p)
-
-    def type_program(self, program):
-        """
-        Associates a type to any node in the given program that has a
+        Associates a domain to any node in the given programs that has a
         'type_hint' data key.
         """
-        to_type = visitors.findall(
-            program,
-            lambda n: 'type_hint' in n.data
-        )
+        for program in programs:
+            to_assign = visitors.findall(
+                program,
+                lambda n: 'type_hint' in n.data
+            )
 
-        for node in to_type:
-            type_hint = node.data.type_hint
-            if type_hint not in self.type_map:
-                self.type_map[type_hint] = self.type_gen(type_hint, self.defs)
-            self.type_of[node] = self.type_map[type_hint]
+            for node in to_assign:
+                type_hint = node.data.type_hint
+                if type_hint not in self.type_map:
+                    self.type_map[type_hint] = self.domain_gen(
+                        type_hint,
+                        self.defs
+                    )
+                self.domain_of[node] = self.type_map[type_hint]
 
     def __getitem__(self, item):
         """
-        Returns the type of the given node.
-        Raises a KeyError if the given node was never typed by this Typer.
+        Returns the domain of the given node.
+        Raises a KeyError if the given node was never assigned a domain by
+        this DomainCollector.
         """
-        return self.type_of[item]
+        return self.domain_of[item]
 
 
 class ExprEvaluator(visitors.Visitor):
     """
     Can be used to evaluate expressions in the Basic IR.
     """
-    def __init__(self, typer):
+    def __init__(self, dom_col):
         """
-        Constructs an ExprEvaluator given a Typer object. The given typer must
-        have been used to type any expression that are to be evaluated by this
-        ExprEvaluator.
+        Constructs an ExprEvaluator given a DomainCollector object. The given
+        domain collector must have been used to assign domains to any
+        expression that are to be evaluated by this ExprEvaluator.
         """
-        self.typer = typer
+        self.dom_col = dom_col
 
     def eval(self, expr, env):
         """
@@ -173,20 +172,20 @@ class ExprEvaluator(visitors.Visitor):
         rhs = binexpr.rhs.visit(self, env)
         op = binexpr.bin_op.sym
         tpe = (
-            self.typer[binexpr.lhs],
-            self.typer[binexpr.rhs],
-            self.typer[binexpr]
+            self.dom_col[binexpr.lhs],
+            self.dom_col[binexpr.rhs],
+            self.dom_col[binexpr]
         )
-        return self.typer.defs.lookup(op, tpe)(lhs, rhs)
+        return self.dom_col.defs.lookup(op, tpe)(lhs, rhs)
 
     def visit_unexpr(self, unexpr, env):
         expr = unexpr.expr.visit(self, env)
         op = unexpr.un_op.sym
-        tpe = (self.typer[unexpr.expr], self.typer[unexpr])
-        return self.typer.defs.lookup(op, tpe)(expr)
+        tpe = (self.dom_col[unexpr.expr], self.dom_col[unexpr])
+        return self.dom_col.defs.lookup(op, tpe)(expr)
 
     def visit_lit(self, lit, env):
-        return self.typer[lit].build(lit.val)
+        return self.dom_col[lit].build(lit.val)
 
 
 class TrivialIntervalCS(visitors.Visitor):
@@ -219,15 +218,15 @@ class TrivialIntervalCS(visitors.Visitor):
         bin_ops['>']: bin_ops['<']
     }
 
-    def __init__(self, typer, evaluator):
+    def __init__(self, dom_col, evaluator):
         """
         Constructs a new solver.
         """
-        self.typer = typer
+        self.dom_col = dom_col
         self.evaluator = evaluator
 
     def build_constraint(self, var, op, val, val_dom):
-        if not (isinstance(self.typer[var], domains.Intervals) and
+        if not (isinstance(self.dom_col[var], domains.Intervals) and
                 isinstance(val_dom, domains.Intervals)):
             return None
         if op not in TrivialIntervalCS.AllowedBinOps:
@@ -243,7 +242,7 @@ class TrivialIntervalCS(visitors.Visitor):
 
     def solve_constraints(self, constraints, env):
         for (var, rel_op, val) in constraints:
-            domain = self.typer[var]
+            domain = self.dom_col[var]
 
             if rel_op is bin_ops['<']:
                 itvs = [domain.left_unbounded(val - 1)]
@@ -266,8 +265,8 @@ class TrivialIntervalCS(visitors.Visitor):
         return env
 
     def do_binexpr(self, lhs, op, rhs, env):
-        lhs_dom, lhs_val = self.typer[lhs], self.evaluator.eval(lhs, env)
-        rhs_dom, rhs_val = self.typer[rhs], self.evaluator.eval(rhs, env)
+        lhs_dom, lhs_val = self.dom_col[lhs], self.evaluator.eval(lhs, env)
+        rhs_dom, rhs_val = self.dom_col[rhs], self.evaluator.eval(rhs, env)
 
         attempts = [
             (lhs, op, rhs_val, rhs_dom),

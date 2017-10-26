@@ -183,7 +183,7 @@ def _gen_ir(subp):
     )
 
 
-def default_type_gen(type_hint, defs):
+def default_domain_gen(type_hint, defs):
     if type_hint.f_type_id.text == 'Boolean':
         return bdefs.Boolean
     elif type_hint.is_a(lal.TypeDecl):
