@@ -32,7 +32,7 @@ class VarTracker(visitors.CFGNodeVisitor):
 
     def env_to_state(self, env):
         if len(env) == 0:
-            return self.vars_domain.bot
+            return self.vars_domain.bottom
         else:
             return tuple(env[v] for v in self.vars)
 
@@ -235,7 +235,7 @@ def collect_semantics(
 
         for node in cfg.nodes:
             inputs = [new_states[anc] for anc in cfg.ancestors(node)]
-            res = (lat.build([(trace_domain.bot, vars_domain.top)])
+            res = (lat.build([(trace_domain.bottom, vars_domain.top)])
                    if len(inputs) == 0 else reduce(lat.join, inputs))
 
             res = lat.build([
@@ -259,7 +259,7 @@ def collect_semantics(
 
         return new_states
 
-    result = {n: lat.bot for n in cfg.nodes}
+    result = {n: lat.bottom for n in cfg.nodes}
     last = None
     while result != last:
         last, result = result, it(result)

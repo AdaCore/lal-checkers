@@ -233,7 +233,7 @@ class TrivialIntervalCS(visitors.Visitor):
             return None
         elif not isinstance(var, Identifier):
             return None
-        elif val_dom.eq(val, val_dom.bot):
+        elif val_dom.eq(val, val_dom.bottom):
             return None
         elif val[0] != val[1]:
             return None

@@ -11,7 +11,7 @@ class AbstractDomain(object):
     Provides an interface for abstract domains, to guarantee the existence of
     basic operations.
 
-    Abstract domains are also expected to provide a "bot" element,
+    Abstract domains are also expected to provide a "bottom" element,
     which is less than any other element.
     Typically, abstract domains also provide a "top" element (but are not
     required to), which is greater than any other element.
@@ -26,7 +26,7 @@ class AbstractDomain(object):
 
     The "Intervals(-2, 2)" domain can be used to represent subsets of the
     following set of concrete values: {-2, -1, 0, 1, 2}.
-    - The "bot" element represents the subset {}.
+    - The "bottom" element represents the subset {}.
     - The "[0, 2]" element represents the subset {0, 1, 2}
     - The "top" element is [-2, 2] and represents the subset {-2, -1, 0, 1, 2}.
     Note how the subset {0, 2} does not have a perfect abstraction.
@@ -44,11 +44,11 @@ class AbstractDomain(object):
         Returns True if the given element represents an empty set of
         concrete values.
 
-        Generally, the "bot" element represents an empty set of
+        Generally, the "bottom" element represents an empty set of
         concrete values, but this may not always be true.
         If it is not the case, this behavior should be overriden.
         """
-        return self.eq(x, self.bot)
+        return self.eq(x, self.bottom)
 
     def join(self, a, b):
         """
@@ -164,13 +164,13 @@ class Intervals(AbstractDomain):
         -infinity and +infinity.
         """
         assert(m_inf <= inf)
-        self.bot = object()
+        self.bottom = object()
         self.top = (m_inf, inf)
 
     def build(self, *args):
         """
         Creates a new interval.
-        - If no argument is given, returns the "bot" element representing
+        - If no argument is given, returns the "bottom" element representing
           the empty set of integers.
         - If one argument is given, returns the element representing
           the singleton set containing the given concrete value.
@@ -179,7 +179,7 @@ class Intervals(AbstractDomain):
           these two values are inside this domain's range.
         """
         if len(args) == 0:
-            return self.bot
+            return self.bottom
         elif len(args) == 1:
             return args[0], args[0]
         elif (len(args) == 2 and
@@ -203,26 +203,26 @@ class Intervals(AbstractDomain):
             return x, self.top[1]
 
     def join(self, a, b):
-        if a == self.bot:
+        if a == self.bottom:
             return b
-        elif b == self.bot:
+        elif b == self.bottom:
             return a
         else:
             return min(a[0], b[0]), max(a[1], b[1])
 
     def meet(self, a, b):
-        if a == self.bot:
+        if a == self.bottom:
             return a
-        elif b == self.bot:
+        elif b == self.bottom:
             return b
         elif a[1] < b[0] or b[1] < a[0]:
-            return self.bot
+            return self.bottom
         else:
             return max(a[0], b[0]), min(a[1], b[1])
 
     def update(self, a, b, widen=False):
         if widen:
-            return b if a == self.bot else (
+            return b if a == self.bottom else (
                 a[0] if a[0] <= b[0] else self.top[0],
                 a[1] if a[1] >= b[1] else self.top[1]
             )
@@ -230,9 +230,9 @@ class Intervals(AbstractDomain):
             return self.join(a, b)
 
     def lt(self, a, b):
-        if a == self.bot:
-            return b != self.bot
-        elif b == self.bot:
+        if a == self.bottom:
+            return b != self.bottom
+        elif b == self.bottom:
             return False
         else:
             return (a[0] >= b[0] and a[1] <= b[1] and
@@ -256,7 +256,7 @@ class Product(AbstractDomain):
         domains.
         """
         self.domains = list(domains)
-        self.bot = tuple(d.bot for d in domains)
+        self.bottom = tuple(d.bottom for d in domains)
         self.top = tuple(d.top for d in domains)
 
     def build(self, *args):
@@ -326,7 +326,7 @@ class Set(AbstractDomain):
 
         self.dom = dom
         self.merge_predicate = actual_predicate
-        self.bot = []
+        self.bottom = []
         self.top = object()
 
     def build(self, elems):
@@ -461,12 +461,12 @@ class FiniteLattice(AbstractDomain):
     def __init__(self, lts):
         """
         Constructs a new finite lattice from the given "less than" relation.
-        The "bot" and "top" elements are inferred automatically, which means
+        The "bottom" and "top" elements are inferred automatically, which means
         that they must exist.
         """
         self.lts = FiniteLattice._transitive_closure(lts)
         self.inv_lts = FiniteLattice._inverse(self.lts)
-        self.bot = self.lowest_among(self.lts.keys())
+        self.bottom = self.lowest_among(self.lts.keys())
         self.top = self.greatest_among(self.lts.keys())
 
     def build(self, elem):
@@ -503,7 +503,7 @@ class FiniteSubsetLattice(AbstractDomain):
     However, the different operations (may or) may not perform as fast.
     """
     def __init__(self, elems):
-        self.bot = frozenset()
+        self.bottom = frozenset()
         self.top = frozenset(elems)
 
     def build(self, elems):

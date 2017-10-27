@@ -20,8 +20,8 @@ def interval_add_no_wraparound(domain):
     Note that overflow is represented by an unknown result (-inf, inf).
     """
     def do(x, y):
-        if domain.eq(x, domain.bot) or domain.eq(y, domain.bot):
-            return domain.bot
+        if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
+            return domain.bottom
 
         frm, to = x[0] + y[0], x[1] + y[1]
         if frm >= domain.top[0] and to <= domain.top[1]:
@@ -42,8 +42,8 @@ def interval_sub_no_wraparound(domain):
     Note that overflow is represented by an unknown result (-inf, inf).
     """
     def do(x, y):
-        if domain.eq(x, domain.bot) or domain.eq(y, domain.bot):
-            return domain.bot
+        if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
+            return domain.bottom
 
         frm, to = x[0] - y[1], x[1] - y[0]
         if frm >= domain.top[0] and to <= domain.top[1]:
@@ -62,8 +62,8 @@ def interval_inverse(domain):
     given interval.
     """
     def do(x):
-        if domain.eq(x, domain.bot):
-            return domain.bot
+        if domain.eq(x, domain.bottom):
+            return domain.bottom
 
         a, b = -x[0], -x[1]
         return domain.build(min(a, b), max(a, b))
@@ -80,11 +80,11 @@ def interval_eq(domain):
     manner.
     """
     def do(x, y):
-        if domain.eq(x, domain.bot) or domain.eq(y, domain.bot):
+        if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
             return bool_none
         elif x[0] == y[0] == x[1] == y[1]:
             return bool_true
-        elif domain.eq(domain.meet(x, y), domain.bot):
+        elif domain.eq(domain.meet(x, y), domain.bottom):
             return bool_false
         else:
             return bool_both
@@ -117,7 +117,7 @@ def interval_lt(domain):
     pairwise manner.
     """
     def do(x, y):
-        if domain.eq(x, domain.bot) or domain.eq(y, domain.bot):
+        if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
             return bool_none
         elif x[1] < y[0]:
             return bool_true
