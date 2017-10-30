@@ -5,7 +5,7 @@ Provides a libadalang frontend for the Basic IR.
 import libadalang as lal
 
 from lalcheck.irs.basic import tree as irt
-from lalcheck import defs as bdefs
+from lalcheck.domain_ops import boolean_ops
 from lalcheck import domains
 
 
@@ -185,7 +185,7 @@ def _gen_ir(subp):
 
 def default_domain_gen(type_hint, defs):
     if type_hint.f_type_id.text == 'Boolean':
-        return bdefs.Boolean
+        return boolean_ops.Boolean
     elif type_hint.is_a(lal.TypeDecl):
         if type_hint.f_type_def.is_a(lal.SignedIntTypeDef):
             rng = type_hint.f_type_def.f_range.f_range

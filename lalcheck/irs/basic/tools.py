@@ -4,6 +4,7 @@ Provides tools for using the Basic IR.
 
 from lalcheck.utils import KeyCounter
 from lalcheck.digraph import Digraph
+from lalcheck.domain_ops import boolean_ops
 from lalcheck import defs, domains
 from tree import bin_ops, un_ops, Identifier
 import visitors
@@ -300,10 +301,10 @@ class TrivialIntervalCS(visitors.Visitor):
         containing True.
         """
         value = self.evaluator.eval(expr, env)
-        if defs.Boolean.eq(value, defs.bool_true):
+        if boolean_ops.Boolean.eq(value, boolean_ops.bool_true):
             return env
-        elif defs.Boolean.eq(value, defs.bool_false):
+        elif boolean_ops.Boolean.eq(value, boolean_ops.bool_false):
             return {}
-        elif defs.Boolean.eq(value, defs.bool_both):
+        elif boolean_ops.Boolean.eq(value, boolean_ops.bool_both):
             constraints = expr.visit(self, env, False)
             return self.solve_constraints(constraints, env)
