@@ -7,6 +7,7 @@ import libadalang as lal
 from lalcheck.irs.basic import tree as irt
 from lalcheck.domain_ops import boolean_ops
 from lalcheck import domains
+from lalcheck import types
 
 
 _lal_op_type_2_symbol = {
@@ -196,6 +197,28 @@ def default_domain_gen(type_hint, defs):
             return dom
 
     return None
+
+
+@types.typer
+def boolean_typer(hint):
+    if hint.f_type_id.text == 'Boolean':
+        return types.Boolean()
+
+
+@types.typer
+def int_range_typer(hint):
+    if hint.is_a(lal.TypeDecl):
+        if hint.f_type_def.is_a(lal.SignedIntTypeDef):
+            rng = hint.f_type_def.f_range.f_range
+            frm = int(rng.f_left.text)
+            to = int(rng.f_right.text)
+            return types.IntRange(frm, to)
+
+
+@types.delegating_typer
+def default_typer():
+    return (boolean_typer |
+            int_range_typer)
 
 
 def new_context():
