@@ -187,7 +187,7 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
 
 
 def collect_semantics(
-        prog, dom_col, merge_pred_builder,
+        prog, model, merge_pred_builder,
         output_cfg=None, output_res=None):
 
     cfg = prog.visit(CFGBuilder())
@@ -197,11 +197,11 @@ def collect_semantics(
 
     var_set = set(visitors.findall(prog, lambda n: isinstance(n, Identifier)))
     vars_idx = {v: i for i, v in enumerate(var_set)}
-    vars_domain = domains.Product(*(dom_col[v] for v in var_set))
+    vars_domain = domains.Product(*(model[v].domain for v in var_set))
     trace_domain = SimpleTraceLattice(cfg.nodes)
 
-    evaluator = ExprEvaluator(dom_col)
-    tcs = TrivialIntervalCS(dom_col, evaluator)
+    evaluator = ExprEvaluator(model)
+    tcs = TrivialIntervalCS(model, evaluator)
 
     widening_counter = KeyCounter()
     widening_delay = 10

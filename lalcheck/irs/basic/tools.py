@@ -5,7 +5,7 @@ Provides tools for using the Basic IR.
 from lalcheck.utils import KeyCounter, Bunch
 from lalcheck.digraph import Digraph
 from lalcheck.domain_ops import boolean_ops
-from lalcheck import defs, domains
+from lalcheck import domains
 from tree import bin_ops, un_ops, Identifier
 import visitors
 
@@ -94,58 +94,6 @@ class CFGBuilder(visitors.ImplicitVisitor):
         self.nodes.append(new_node)
         for f in froms:
             self.edges.append(Digraph.Edge(f, new_node))
-
-
-class DomainCollector(object):
-    """
-    Once constructed, a DomainCollector object can be used to collect domains
-    of any amount of Programs. Expressions inside these programs can then be
-    tested against the DomainCollector that traversed them to retrieve the
-    domain they were assigned.
-
-    A DomainCollector also stores definitions that were introduced during the
-    domain collection of each program inside its public 'defs' attribute.
-    """
-    def __init__(self, domain_gen):
-        """
-        Constructs a DomainCollector object with the given domain generator.
-        A domain generator is a function that, given a type hint held by a node
-        and a Definitions object, will return an appropriate domain for that
-        node, and fill the Definitions object with the relevant definitions
-        if needed.
-        """
-        self.domain_of = {}
-        self.type_map = {}
-        self.defs = defs.Definitions.default()
-        self.domain_gen = domain_gen
-
-    def collect_domains(self, *programs):
-        """
-        Associates a domain to any node in the given programs that has a
-        'type_hint' data key.
-        """
-        for program in programs:
-            to_assign = visitors.findall(
-                program,
-                lambda n: 'type_hint' in n.data
-            )
-
-            for node in to_assign:
-                type_hint = node.data.type_hint
-                if type_hint not in self.type_map:
-                    self.type_map[type_hint] = self.domain_gen(
-                        type_hint,
-                        self.defs
-                    )
-                self.domain_of[node] = self.type_map[type_hint]
-
-    def __getitem__(self, item):
-        """
-        Returns the domain of the given node.
-        Raises a KeyError if the given node was never assigned a domain by
-        this DomainCollector.
-        """
-        return self.domain_of[item]
 
 
 class Models(visitors.Visitor):
@@ -248,13 +196,13 @@ class ExprEvaluator(visitors.Visitor):
     """
     Can be used to evaluate expressions in the Basic IR.
     """
-    def __init__(self, dom_col):
+    def __init__(self, model):
         """
-        Constructs an ExprEvaluator given a DomainCollector object. The given
-        domain collector must have been used to assign domains to any
-        expression that are to be evaluated by this ExprEvaluator.
+        Constructs an ExprEvaluator given a model. The expression evaluator
+        must only be invoked to evaluate expression which nodes have a meaning
+        in the given model.
         """
-        self.dom_col = dom_col
+        self.model = model
 
     def eval(self, expr, env):
         """
@@ -269,22 +217,14 @@ class ExprEvaluator(visitors.Visitor):
     def visit_binexpr(self, binexpr, env):
         lhs = binexpr.lhs.visit(self, env)
         rhs = binexpr.rhs.visit(self, env)
-        op = binexpr.bin_op.sym
-        tpe = (
-            self.dom_col[binexpr.lhs],
-            self.dom_col[binexpr.rhs],
-            self.dom_col[binexpr]
-        )
-        return self.dom_col.defs.lookup(op, tpe)(lhs, rhs)
+        return self.model[binexpr].definition(lhs, rhs)
 
     def visit_unexpr(self, unexpr, env):
         expr = unexpr.expr.visit(self, env)
-        op = unexpr.un_op.sym
-        tpe = (self.dom_col[unexpr.expr], self.dom_col[unexpr])
-        return self.dom_col.defs.lookup(op, tpe)(expr)
+        return self.model[unexpr].definition(expr)
 
     def visit_lit(self, lit, env):
-        return self.dom_col[lit].build(lit.val)
+        return self.model[lit].domain.build(lit.val)
 
 
 class TrivialIntervalCS(visitors.Visitor):
@@ -317,15 +257,15 @@ class TrivialIntervalCS(visitors.Visitor):
         bin_ops['>']: bin_ops['<']
     }
 
-    def __init__(self, dom_col, evaluator):
+    def __init__(self, model, evaluator):
         """
         Constructs a new solver.
         """
-        self.dom_col = dom_col
+        self.model = model
         self.evaluator = evaluator
 
     def build_constraint(self, var, op, val, val_dom):
-        if not (isinstance(self.dom_col[var], domains.Intervals) and
+        if not (isinstance(self.model[var].domain, domains.Intervals) and
                 isinstance(val_dom, domains.Intervals)):
             return None
         if op not in TrivialIntervalCS.AllowedBinOps:
@@ -341,7 +281,7 @@ class TrivialIntervalCS(visitors.Visitor):
 
     def solve_constraints(self, constraints, env):
         for (var, rel_op, val) in constraints:
-            domain = self.dom_col[var]
+            domain = self.model[var].domain
 
             if rel_op is bin_ops['<']:
                 itvs = [domain.left_unbounded(val - 1)]
@@ -364,8 +304,10 @@ class TrivialIntervalCS(visitors.Visitor):
         return env
 
     def do_binexpr(self, lhs, op, rhs, env):
-        lhs_dom, lhs_val = self.dom_col[lhs], self.evaluator.eval(lhs, env)
-        rhs_dom, rhs_val = self.dom_col[rhs], self.evaluator.eval(rhs, env)
+        lhs_dom = self.model[lhs].domain
+        rhs_dom = self.model[rhs].domain
+        lhs_val = self.evaluator.eval(lhs, env)
+        rhs_val = self.evaluator.eval(rhs, env)
 
         attempts = [
             (lhs, op, rhs_val, rhs_dom),

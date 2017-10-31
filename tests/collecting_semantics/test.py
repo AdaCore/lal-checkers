@@ -1,5 +1,6 @@
 import lalcheck.irs.basic.frontends.lal as lal2basic
-from lalcheck.irs.basic.tools import DomainCollector
+from lalcheck.irs.basic.tools import Models
+from lalcheck.interpretations import default_type_interpreter
 from checkers.collecting_semantics import (
     collect_semantics,
     MergePredicateBuilder
@@ -14,12 +15,12 @@ def do(test_name, merge_predicate, idx=None):
         '{}.adb'.format(test_name)
     )
 
-    dom_col = DomainCollector(lal2basic.default_domain_gen)
-    dom_col.collect_domains(*progs)
+    model_builder = Models(lal2basic.default_typer, default_type_interpreter)
+    model = model_builder.of(*progs)
 
     collect_semantics(
         progs[0],
-        dom_col,
+        model,
         merge_predicate,
         'output/{}_cfg.dot'.format(test_name),
         'output/{}{}_res.dot'.format(test_name, '' if idx is None else idx)
