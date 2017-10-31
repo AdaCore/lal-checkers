@@ -2,7 +2,8 @@
 This file defines the Typer interface as well as a collection of common types.
 
 Typically, a typer is used to convert type hints provided by the frontend to
-these middle-end types that are supported straightaway by lalcheck.
+these middle-end types that are supported straightaway by lalcheck, i.e. that
+already have a default interpretation (see interpretations.py).
 """
 
 
