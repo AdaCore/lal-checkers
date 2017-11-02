@@ -2,12 +2,14 @@
 Provides tools for using the Basic IR.
 """
 
-from lalcheck.utils import KeyCounter
+from lalcheck.utils import KeyCounter, Bunch
 from lalcheck.digraph import Digraph
 from lalcheck.domain_ops import boolean_ops
 from lalcheck import defs, domains
 from tree import bin_ops, un_ops, Identifier
 import visitors
+
+from funcy.calc import memoize
 
 
 class CFGBuilder(visitors.ImplicitVisitor):
@@ -144,6 +146,102 @@ class DomainCollector(object):
         this DomainCollector.
         """
         return self.domain_of[item]
+
+
+class Models(visitors.Visitor):
+    """
+    A Models object is constructed from a typer and a type interpreter.
+    With these two components, it can derive the interpretation of a type
+    from the type hint provided by the frontend.
+
+    It can then be used to build models of the given programs. A model
+    can be queried for information about a node of a program. Such information
+    includes the domain used to represent the value computed by that node (if
+    relevant), how an operation must be interpreted (i.e. a binary addition),
+    etc.
+    """
+    def __init__(self, typer, type_interpreter):
+        """
+        Creates a Models object from a typer (that maps type hints to types)
+        and a type interpreter (that maps types to interpretations).
+        """
+        self.typer = typer
+        self.type_interpreter = type_interpreter
+
+    @memoize
+    def _hint_to_type(self, hint):
+        # Memoization is required to get the same type instances
+        # for each identical hint
+        return self.typer.from_hint(hint)
+
+    @memoize
+    def _type_to_interp(self, tpe):
+        # Memoization is required to get the same interpretations
+        # for each identical type
+        return self.type_interpreter.from_type(tpe)
+
+    def _typeable_to_interp(self, node):
+        return self._type_to_interp(self._hint_to_type(node.data.type_hint))
+
+    def visit_unexpr(self, unexpr, node_domains, defs):
+        dom = node_domains[unexpr]
+        expr_dom = node_domains[unexpr.expr]
+        tpe = (expr_dom, dom)
+
+        return Bunch(
+            domain=dom,
+            definition=defs[unexpr.un_op.sym, tpe]
+        )
+
+    def visit_binexpr(self, binexpr, node_domains, defs):
+        dom = node_domains[binexpr]
+        lhs_dom = node_domains[binexpr.lhs]
+        rhs_dom = node_domains[binexpr.rhs]
+        tpe = (lhs_dom, rhs_dom, dom)
+
+        return Bunch(
+            domain=dom,
+            definition=defs[binexpr.bin_op.sym, tpe]
+        )
+
+    def visit_ident(self, ident, node_domains, defs):
+        return Bunch(
+            domain=node_domains[ident]
+        )
+
+    def visit_lit(self, lit, node_domains, defs):
+        return Bunch(
+            domain=node_domains[lit]
+        )
+
+    @staticmethod
+    def _has_type_hint(node):
+        return 'type_hint' in node.data
+
+    def of(self, *programs):
+        """
+        Returns a model of the given programs, that is, a dictionary that has
+        an entry for any node in the given programs that has a type hint.
+        This entry associates to the node valuable information, such as the
+        domain used to represent the value it computes, the referenced
+        definition if any, etc.
+        """
+        model = {}
+        node_domains = {}
+        defs = {}
+
+        for prog in programs:
+            typeable = visitors.findall(prog, self._has_type_hint)
+
+            for node in typeable:
+                node_domain, node_defs = self._typeable_to_interp(node)
+                node_domains[node] = node_domain
+                defs.update(node_defs)
+
+        for node in node_domains.keys():
+            model[node] = node.visit(self, node_domains, defs)
+
+        return model
 
 
 class ExprEvaluator(visitors.Visitor):
