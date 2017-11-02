@@ -131,7 +131,7 @@ class Models(visitors.Visitor):
     def _typeable_to_interp(self, node):
         return self._type_to_interp(self._hint_to_type(node.data.type_hint))
 
-    def visit_unexpr(self, unexpr, node_domains, defs):
+    def visit_unexpr(self, unexpr, node_domains, defs, builders):
         dom = node_domains[unexpr]
         expr_dom = node_domains[unexpr.expr]
         tpe = (expr_dom, dom)
@@ -141,7 +141,7 @@ class Models(visitors.Visitor):
             definition=defs[unexpr.un_op.sym, tpe]
         )
 
-    def visit_binexpr(self, binexpr, node_domains, defs):
+    def visit_binexpr(self, binexpr, node_domains, defs, builders):
         dom = node_domains[binexpr]
         lhs_dom = node_domains[binexpr.lhs]
         rhs_dom = node_domains[binexpr.rhs]
@@ -152,14 +152,16 @@ class Models(visitors.Visitor):
             definition=defs[binexpr.bin_op.sym, tpe]
         )
 
-    def visit_ident(self, ident, node_domains, defs):
+    def visit_ident(self, ident, node_domains, defs, builders):
         return Bunch(
             domain=node_domains[ident]
         )
 
-    def visit_lit(self, lit, node_domains, defs):
+    def visit_lit(self, lit, node_domains, defs, builders):
+        dom = node_domains[lit]
         return Bunch(
-            domain=node_domains[lit]
+            domain=dom,
+            builder=builders[dom]
         )
 
     @staticmethod
@@ -177,17 +179,21 @@ class Models(visitors.Visitor):
         model = {}
         node_domains = {}
         defs = {}
+        builders = {}
 
         for prog in programs:
             typeable = visitors.findall(prog, self._has_type_hint)
 
             for node in typeable:
-                node_domain, node_defs = self._typeable_to_interp(node)
-                node_domains[node] = node_domain
-                defs.update(node_defs)
+                interp = self._typeable_to_interp(node)
+                domain, domain_defs, domain_builder = interp
+
+                node_domains[node] = domain
+                defs.update(domain_defs)
+                builders[domain] = domain_builder
 
         for node in node_domains.keys():
-            model[node] = node.visit(self, node_domains, defs)
+            model[node] = node.visit(self, node_domains, defs, builders)
 
         return model
 
@@ -224,7 +230,7 @@ class ExprEvaluator(visitors.Visitor):
         return self.model[unexpr].definition(expr)
 
     def visit_lit(self, lit, env):
-        return self.model[lit].domain.build(lit.val)
+        return self.model[lit].builder(lit.val)
 
 
 class TrivialIntervalCS(visitors.Visitor):

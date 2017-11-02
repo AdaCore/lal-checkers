@@ -175,4 +175,15 @@ def interval_ge(domain):
     return do
 
 
+def interval_lit(domain):
+    """
+    Given an interval domain, returns a function which returns the smallest
+    interval containing the given concrete value.
+    """
+    def do(lit):
+        return domain.build(lit)
+
+    return do
+
+
 Int32 = domains.Intervals(-2147483648, 2147483647)

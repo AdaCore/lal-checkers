@@ -52,6 +52,17 @@ def boolean_or(x, y):
         return bool_both
 
 
+def boolean_lit(lit):
+    """
+    Returns the smallest abstract element containing the given concrete
+    boolean value.
+    """
+    if lit == 'True':
+        return bool_true
+    elif lit == 'False':
+        return bool_false
+
+
 Boolean = domains.FiniteLattice.of_subsets({'True', 'False'})
 
 bool_none = Boolean.build(frozenset([]))

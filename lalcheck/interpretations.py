@@ -11,15 +11,16 @@ from lalcheck import domains
 class TypeInterpreter(object):
     """
     A TypeInterpreter is used to determine how a type is interpreted in the
-    backend. It must provide the domain used as well as a set of definitions
-    that are available on this new domain.
+    backend. It must provide the domain used, a set of definitions that are
+    available on this new domain, as well as a builder function to build
+    elements of this domain from literal values.
     """
     def from_type(self, tpe):
         """
         Given a type, returns the domain that this TypeInterpreter would use to
-        represent the type as well as a dictionary of definitions. Returns
-        None if this interpreter does not provide any interpretation for the
-        given type.
+        represent the type, a dictionary of definitions, as well as a builder
+        for this domain. Returns None if this interpreter does not provide any
+        interpretation for the given type.
         """
         raise NotImplementedError
 
@@ -64,7 +65,9 @@ def default_boolean_interpreter(tpe):
             ('||', bin_fun_dom): boolean_ops.boolean_or
         }
 
-        return bool_dom, defs
+        builder = boolean_ops.boolean_lit
+
+        return bool_dom, defs, builder
 
 
 @type_interpreter
@@ -91,7 +94,9 @@ def default_int_range_interpreter(tpe):
             ('-', unary_fun_dom): interval_ops.interval_inverse(int_dom),
         }
 
-        return int_dom, defs
+        builder = interval_ops.interval_lit(int_dom)
+
+        return int_dom, defs, builder
 
 
 default_type_interpreter = (
