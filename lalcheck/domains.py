@@ -44,7 +44,7 @@ class AbstractDomain(object):
         Returns True if the given element represents an empty set of
         concrete values.
 
-        Generally, the "bottom" element represents an empty set of
+        Often, the "bottom" element represents an empty set of
         concrete values, but this may not always be true.
         If it is not the case, this behavior should be overriden.
         """
@@ -455,8 +455,8 @@ class FiniteLattice(AbstractDomain):
         """
         sets = powerset(xs)
         return FiniteLattice({
-            k: {v for v in sets if k.issubset(v)} for k in sets}
-        )
+            k: {v for v in sets if k.issubset(v)} for k in sets
+        })
 
     def __init__(self, lts):
         """
@@ -475,6 +475,9 @@ class FiniteLattice(AbstractDomain):
         """
         assert(elem in self.lts)
         return elem
+
+    def is_empty(self, x):
+        return len(x) == 0
 
     def join(self, a, b):
         return self.lowest_among(self.lts[a] & self.lts[b])
