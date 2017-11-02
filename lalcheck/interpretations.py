@@ -3,7 +3,11 @@ Defines the TypeInterpreter interface, as well as a few common
 TypeInterpreters.
 """
 
-from lalcheck.domain_ops import boolean_ops, interval_ops
+from lalcheck.domain_ops import (
+    boolean_ops,
+    interval_ops,
+    finite_lattice_ops
+)
 from lalcheck import types
 from lalcheck import domains
 
@@ -62,7 +66,10 @@ def default_boolean_interpreter(tpe):
         defs = {
             ('!', un_fun_dom): boolean_ops.boolean_not,
             ('&&', bin_fun_dom): boolean_ops.boolean_and,
-            ('||', bin_fun_dom): boolean_ops.boolean_or
+            ('||', bin_fun_dom): boolean_ops.boolean_or,
+
+            ('==', bin_fun_dom):
+                finite_lattice_ops.finite_lattice_eq(boolean_ops.Boolean)
         }
 
         builder = boolean_ops.boolean_lit
@@ -99,7 +106,25 @@ def default_int_range_interpreter(tpe):
         return int_dom, defs, builder
 
 
+@type_interpreter
+def default_enum_interpreter(tpe):
+    if tpe.is_a(types.Enum):
+        enum_dom = domains.FiniteLattice.of_subsets(set(tpe.lits))
+        bool_dom = boolean_ops.Boolean
+        binary_rel_dom = (enum_dom, enum_dom, bool_dom)
+
+        defs = {
+            ('==', binary_rel_dom):
+                finite_lattice_ops.finite_lattice_eq(enum_dom)
+        }
+
+        builder = finite_lattice_ops.finite_lattice_lit(enum_dom)
+
+        return enum_dom, defs, builder
+
+
 default_type_interpreter = (
     default_boolean_interpreter |
-    default_int_range_interpreter
+    default_int_range_interpreter |
+    default_enum_interpreter
 )

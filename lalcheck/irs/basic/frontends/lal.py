@@ -90,7 +90,7 @@ def _gen_ir(subp):
         unimplemented(expr)
 
     def transform_decl(decl):
-        if decl.is_a(lal.TypeDecl):
+        if decl.is_a(lal.TypeDecl, lal.EnumTypeDecl):
             return []
         if decl.is_a(lal.ObjectDecl):
             tdecl = decl.f_type_expr.p_designated_type_decl
@@ -192,6 +192,13 @@ def int_range_typer(hint):
             return types.IntRange(frm, to)
 
 
+@types.typer
+def enum_typer(hint):
+    if hint.is_a(lal.EnumTypeDecl):
+        literals = hint.findall(lal.EnumLiteralDecl)
+        return types.Enum([lit.f_enum_identifier.text for lit in literals])
+
+
 def standard_typer_of(ctx):
     def decl_finder(kind, name):
         def find_node(n):
@@ -258,6 +265,7 @@ def default_typer(ctx):
     @types.delegating_typer
     def typer():
         return (standard_typer |
-                int_range_typer)
+                int_range_typer |
+                enum_typer)
 
     return typer
