@@ -15,7 +15,11 @@ def do(test_name, merge_predicate, idx=None):
         '{}.adb'.format(test_name)
     )
 
-    model_builder = Models(lal2basic.default_typer, default_type_interpreter)
+    model_builder = Models(
+        lal2basic.default_typer(ctx),
+        default_type_interpreter
+    )
+
     model = model_builder.of(*progs)
 
     collect_semantics(

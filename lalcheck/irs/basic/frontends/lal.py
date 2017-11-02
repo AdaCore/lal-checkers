@@ -183,12 +183,6 @@ def _gen_ir(subp):
 
 
 @types.typer
-def boolean_typer(hint):
-    if hint.f_type_id.text == 'Boolean':
-        return types.Boolean()
-
-
-@types.typer
 def int_range_typer(hint):
     if hint.is_a(lal.TypeDecl):
         if hint.f_type_def.is_a(lal.SignedIntTypeDef):
@@ -198,10 +192,25 @@ def int_range_typer(hint):
             return types.IntRange(frm, to)
 
 
-@types.delegating_typer
-def default_typer():
-    return (boolean_typer |
-            int_range_typer)
+def standard_typer_of(ctx):
+    def decl_finder(kind, name):
+        def find_node(n):
+            return n.is_a(kind) and n.f_type_id.text == name
+
+        return find_node
+
+    std = ctx.get_from_file('standard.ads')
+    bool_decl = std.root.find(decl_finder(lal.EnumTypeDecl, 'Boolean'))
+    integer_decl = std.root.find(decl_finder(lal.TypeDecl, 'Integer'))
+
+    @types.typer
+    def typer(hint):
+        if hint == bool_decl:
+            return types.Boolean()
+        elif hint == integer_decl:
+            return types.IntRange(-2 ** 31, 2 ** 31 - 1)
+
+    return typer
 
 
 def new_context():
@@ -232,9 +241,6 @@ def extract_programs(ctx, ada_file):
 
     unit.populate_lexical_env()
 
-    # std = c.get_from_file('standard.ads')
-    # print(std.root)
-
     progs = [
         _gen_ir(subp)
         for subp in unit.root.findall((
@@ -244,3 +250,14 @@ def extract_programs(ctx, ada_file):
     ]
 
     return progs
+
+
+def default_typer(ctx):
+    standard_typer = standard_typer_of(ctx)
+
+    @types.delegating_typer
+    def typer():
+        return (standard_typer |
+                int_range_typer)
+
+    return typer
