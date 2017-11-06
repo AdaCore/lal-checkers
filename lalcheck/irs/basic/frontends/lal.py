@@ -89,6 +89,11 @@ def _gen_ir(subp):
                 int(expr.f_tok.text),
                 type_hint=_type_val(expr)
             )
+        elif expr.is_a(lal.NullLiteral):
+            return irt.Lit(
+                'null',
+                type_hint=_type_val(expr)
+            )
 
         unimplemented(expr)
 
@@ -202,6 +207,18 @@ def enum_typer(hint):
         return types.Enum([lit.f_enum_identifier.text for lit in literals])
 
 
+def access_typer(inner_typer):
+    @types.typer
+    def typer(hint):
+        if hint.p_is_access_type:
+            accessed_type = hint.f_type_def.f_subtype_indication.f_name
+            tpe = inner_typer.from_hint(_ref_val(accessed_type))
+            if tpe:
+                return types.Pointer(tpe)
+
+    return typer
+
+
 def standard_typer_of(ctx):
     def decl_finder(kind, name):
         def find_node(n):
@@ -269,6 +286,7 @@ def default_typer(ctx):
     def typer():
         return (standard_typer |
                 int_range_typer |
-                enum_typer)
+                enum_typer |
+                access_typer(typer))
 
     return typer

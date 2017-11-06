@@ -148,8 +148,31 @@ def default_enum_interpreter(tpe):
         return enum_dom, defs, inv_defs, builder
 
 
+@type_interpreter
+def simple_access_interpreter(tpe):
+    if tpe.is_a(types.Pointer):
+        ptr_dom = domains.FiniteLattice.of_subsets({'null', 'not_null'})
+        bool_dom = boolean_ops.Boolean
+        bin_rel_dom = (ptr_dom, ptr_dom, bool_dom)
+
+        defs = {
+            ('==', bin_rel_dom): finite_lattice_ops.eq(ptr_dom),
+            ('!=', bin_rel_dom): finite_lattice_ops.neq(ptr_dom)
+        }
+
+        inv_defs = {
+            ('==', bin_rel_dom): finite_lattice_ops.inv_eq(ptr_dom),
+            ('!=', bin_rel_dom): finite_lattice_ops.inv_neq(ptr_dom)
+        }
+
+        builder = finite_lattice_ops.lit(ptr_dom)
+
+        return ptr_dom, defs, inv_defs, builder
+
+
 default_type_interpreter = (
     default_boolean_interpreter |
     default_int_range_interpreter |
-    default_enum_interpreter
+    default_enum_interpreter |
+    simple_access_interpreter
 )
