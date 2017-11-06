@@ -7,7 +7,7 @@ from lalcheck import domains
 import boolean_ops
 
 
-def interval_add_no_wraparound(domain):
+def add_no_wraparound(domain):
     """
     Given an interval domain, returns a function which, given two sets of
     integers represented by elements of this interval domain, returns the
@@ -29,7 +29,7 @@ def interval_add_no_wraparound(domain):
     return do
 
 
-def interval_sub_no_wraparound(domain):
+def sub_no_wraparound(domain):
     """
     Given an interval domain, returns a function which, given two sets of
     integers represented by elements of this interval domain, returns the
@@ -51,7 +51,7 @@ def interval_sub_no_wraparound(domain):
     return do
 
 
-def interval_inverse(domain):
+def inverse(domain):
     """
     Given an interval domain, returns a function which, given a set of
     integers represented by an element of this interval domain, returns the
@@ -68,7 +68,7 @@ def interval_inverse(domain):
     return do
 
 
-def interval_eq(domain):
+def eq(domain):
     """
     Given an interval domain, returns a function which, given a set of
     integers represented by elements of this interval domain, returns the
@@ -78,18 +78,18 @@ def interval_eq(domain):
     """
     def do(x, y):
         if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
-            return boolean_ops.bool_none
+            return boolean_ops.none
         elif x[0] == y[0] == x[1] == y[1]:
-            return boolean_ops.bool_true
+            return boolean_ops.true
         elif domain.eq(domain.meet(x, y), domain.bottom):
-            return boolean_ops.bool_false
+            return boolean_ops.false
         else:
-            return boolean_ops.bool_both
+            return boolean_ops.both
 
     return do
 
 
-def interval_neq(domain):
+def neq(domain):
     """
     Given an interval domain, returns a function which, given a set of
     integers represented by elements of this interval domain, returns the
@@ -97,15 +97,15 @@ def interval_neq(domain):
     result from testing inequality between integers of each set in a pairwise
     manner.
     """
-    eq = interval_eq(domain)
+    do_eq = eq(domain)
 
     def do(x, y):
-        return boolean_ops.boolean_not(eq(x, y))
+        return boolean_ops.not_(do_eq(x, y))
 
     return do
 
 
-def interval_lt(domain):
+def lt(domain):
     """
     Given an interval domain, returns a function which, given a set of
     integers represented by elements of this interval domain, returns the
@@ -115,18 +115,18 @@ def interval_lt(domain):
     """
     def do(x, y):
         if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
-            return boolean_ops.bool_none
+            return boolean_ops.none
         elif x[1] < y[0]:
-            return boolean_ops.bool_true
+            return boolean_ops.true
         elif x[0] >= y[1]:
-            return boolean_ops.bool_false
+            return boolean_ops.false
         else:
-            return boolean_ops.bool_both
+            return boolean_ops.both
 
     return do
 
 
-def interval_le(domain):
+def le(domain):
     """
     Given an interval domain, returns a function which, given a set of
     integers represented by elements of this interval domain, returns the
@@ -134,16 +134,16 @@ def interval_le(domain):
     result from testing "is less than or equal" between integers of each set
     in a pairwise manner.
     """
-    lt = interval_lt(domain)
-    eq = interval_eq(domain)
+    do_lt = lt(domain)
+    do_eq = eq(domain)
 
     def do(x, y):
-        return boolean_ops.boolean_or(lt(x, y), eq(x, y))
+        return boolean_ops.or_(do_lt(x, y), do_eq(x, y))
 
     return do
 
 
-def interval_gt(domain):
+def gt(domain):
     """
     Given an interval domain, returns a function which, given a set of
     integers represented by elements of this interval domain, returns the
@@ -151,15 +151,15 @@ def interval_gt(domain):
     result from testing "is greater than" between integers of each set in a
     pairwise manner.
     """
-    lt = interval_lt(domain)
+    do_lt = lt(domain)
 
     def do(x, y):
-        return lt(y, x)
+        return do_lt(y, x)
 
     return do
 
 
-def interval_ge(domain):
+def ge(domain):
     """
     Given an interval domain, returns a function which, given a set of
     integers represented by an element of this interval domain, returns the
@@ -167,21 +167,21 @@ def interval_ge(domain):
     result from testing "is greater than or equal" between integers of each
     set in a pairwise manner.
     """
-    le = interval_le(domain)
+    do_le = le(domain)
 
     def do(x, y):
-        return le(y, x)
+        return do_le(y, x)
 
     return do
 
 
-def interval_lit(domain):
+def lit(domain):
     """
     Given an interval domain, returns a function which returns the smallest
     interval containing the given concrete value.
     """
-    def do(lit):
-        return domain.build(lit)
+    def do(val):
+        return domain.build(val)
 
     return do
 

@@ -6,7 +6,7 @@ Provides a collection of common useful operations on finite lattices.
 import boolean_ops
 
 
-def finite_lattice_eq(domain):
+def eq(domain):
     """"
     Given an finite lattice domain, returns a function which, given two sets of
     concrete values represented by elements of this domain, returns the
@@ -16,23 +16,23 @@ def finite_lattice_eq(domain):
     """
     def do(x, y):
         if domain.is_empty(x) or domain.is_empty(y):
-            return boolean_ops.bool_none
+            return boolean_ops.none
         elif all(all(a == b for a in x) for b in y):
-            return boolean_ops.bool_true
+            return boolean_ops.true
         elif not any(any(a == b for a in x) for b in y):
-            return boolean_ops.bool_false
+            return boolean_ops.false
         else:
-            return boolean_ops.bool_both
+            return boolean_ops.both
 
     return do
 
 
-def finite_lattice_lit(domain):
+def lit(domain):
     """
     Given a finite lattice domain, returns a function which, given a concrete
     value, returns the smallest element in the domain containing it.
     """
-    def do(lit):
-        return domain.build(frozenset([lit]))
+    def do(val):
+        return domain.build(frozenset([val]))
 
     return do

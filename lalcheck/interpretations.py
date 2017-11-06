@@ -64,15 +64,14 @@ def default_boolean_interpreter(tpe):
         bin_fun_dom = (bool_dom, bool_dom, bool_dom)
 
         defs = {
-            ('!', un_fun_dom): boolean_ops.boolean_not,
-            ('&&', bin_fun_dom): boolean_ops.boolean_and,
-            ('||', bin_fun_dom): boolean_ops.boolean_or,
+            ('!', un_fun_dom): boolean_ops.not_,
+            ('&&', bin_fun_dom): boolean_ops.and_,
+            ('||', bin_fun_dom): boolean_ops.or_,
 
-            ('==', bin_fun_dom):
-                finite_lattice_ops.finite_lattice_eq(boolean_ops.Boolean)
+            ('==', bin_fun_dom): finite_lattice_ops.eq(boolean_ops.Boolean)
         }
 
-        builder = boolean_ops.boolean_lit
+        builder = boolean_ops.lit
 
         return bool_dom, defs, builder
 
@@ -87,21 +86,19 @@ def default_int_range_interpreter(tpe):
         binary_rel_dom = (int_dom, int_dom, bool_dom)
 
         defs = {
-            ('+', binary_fun_dom):
-                interval_ops.interval_add_no_wraparound(int_dom),
-            ('-', binary_fun_dom):
-                interval_ops.interval_sub_no_wraparound(int_dom),
+            ('+', binary_fun_dom): interval_ops.add_no_wraparound(int_dom),
+            ('-', binary_fun_dom): interval_ops.sub_no_wraparound(int_dom),
 
-            ('<', binary_rel_dom): interval_ops.interval_lt(int_dom),
-            ('<=', binary_rel_dom): interval_ops.interval_le(int_dom),
-            ('==', binary_rel_dom): interval_ops.interval_eq(int_dom),
-            ('!=', binary_rel_dom): interval_ops.interval_neq(int_dom),
-            ('>=', binary_rel_dom): interval_ops.interval_ge(int_dom),
-            ('>', binary_rel_dom): interval_ops.interval_gt(int_dom),
-            ('-', unary_fun_dom): interval_ops.interval_inverse(int_dom),
+            ('<', binary_rel_dom): interval_ops.lt(int_dom),
+            ('<=', binary_rel_dom): interval_ops.le(int_dom),
+            ('==', binary_rel_dom): interval_ops.eq(int_dom),
+            ('!=', binary_rel_dom): interval_ops.neq(int_dom),
+            ('>=', binary_rel_dom): interval_ops.ge(int_dom),
+            ('>', binary_rel_dom): interval_ops.gt(int_dom),
+            ('-', unary_fun_dom): interval_ops.inverse(int_dom),
         }
 
-        builder = interval_ops.interval_lit(int_dom)
+        builder = interval_ops.lit(int_dom)
 
         return int_dom, defs, builder
 
@@ -115,10 +112,10 @@ def default_enum_interpreter(tpe):
 
         defs = {
             ('==', binary_rel_dom):
-                finite_lattice_ops.finite_lattice_eq(enum_dom)
+                finite_lattice_ops.eq(enum_dom)
         }
 
-        builder = finite_lattice_ops.finite_lattice_lit(enum_dom)
+        builder = finite_lattice_ops.lit(enum_dom)
 
         return enum_dom, defs, builder
 

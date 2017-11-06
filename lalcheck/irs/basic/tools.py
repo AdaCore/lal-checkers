@@ -347,10 +347,10 @@ class TrivialIntervalCS(visitors.Visitor):
         containing True.
         """
         value = self.evaluator.eval(expr, env)
-        if boolean_ops.Boolean.eq(value, boolean_ops.bool_true):
+        if boolean_ops.Boolean.eq(value, boolean_ops.true):
             return env
-        elif boolean_ops.Boolean.eq(value, boolean_ops.bool_false):
+        elif boolean_ops.Boolean.eq(value, boolean_ops.false):
             return {}
-        elif boolean_ops.Boolean.eq(value, boolean_ops.bool_both):
+        elif boolean_ops.Boolean.eq(value, boolean_ops.both):
             constraints = expr.visit(self, env, False)
             return self.solve_constraints(constraints, env)
