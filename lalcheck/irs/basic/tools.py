@@ -136,8 +136,8 @@ class Models(visitors.Visitor):
 
         return Bunch(
             domain=dom,
-            definition=defs[unexpr.un_op.sym, tpe],
-            inverse=inv_defs[unexpr.un_op.sym, tpe]
+            definition=defs(unexpr.un_op.sym, tpe),
+            inverse=inv_defs(unexpr.un_op.sym, tpe)
         )
 
     def visit_binexpr(self, binexpr, node_domains, defs, inv_defs, builders):
@@ -148,8 +148,8 @@ class Models(visitors.Visitor):
 
         return Bunch(
             domain=dom,
-            definition=defs[binexpr.bin_op.sym, tpe],
-            inverse=inv_defs[binexpr.bin_op.sym, tpe]
+            definition=defs(binexpr.bin_op.sym, tpe),
+            inverse=inv_defs(binexpr.bin_op.sym, tpe)
         )
 
     def visit_ident(self, ident, node_domains, defs, inv_defs, builders):
@@ -168,6 +168,19 @@ class Models(visitors.Visitor):
     def _has_type_hint(node):
         return 'type_hint' in node.data
 
+    @staticmethod
+    def _aggregate_provider(providers):
+        def f(name, signature):
+            for provider in providers:
+                definition = provider(name, signature)
+                if definition:
+                    return definition
+            raise LookupError("No provider for '{}' {}".format(
+                name, signature
+            ))
+
+        return f
+
     def of(self, *programs):
         """
         Returns a model of the given programs, that is, a dictionary that has
@@ -178,8 +191,8 @@ class Models(visitors.Visitor):
         """
         model = {}
         node_domains = {}
-        defs = {}
-        inv_defs = {}
+        def_providers = set()
+        inv_def_providers = set()
         builders = {}
 
         for prog in programs:
@@ -190,13 +203,17 @@ class Models(visitors.Visitor):
                 domain, domain_defs, domain_inv_defs, domain_builder = interp
 
                 node_domains[node] = domain
-                defs.update(domain_defs)
-                inv_defs.update(domain_inv_defs)
+                def_providers.add(domain_defs)
+                inv_def_providers.add(domain_inv_defs)
                 builders[domain] = domain_builder
 
         for node in node_domains.keys():
             model[node] = node.visit(
-                self, node_domains, defs, inv_defs, builders
+                self,
+                node_domains,
+                Models._aggregate_provider(def_providers),
+                Models._aggregate_provider(inv_def_providers),
+                builders
             )
 
         return model

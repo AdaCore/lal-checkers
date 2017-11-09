@@ -47,13 +47,25 @@ def type_interpreter(fun):
     """
     A useful decorator to use on a function to turn it into an TypeInterpreter.
     The decorated function must receive a type as parameter and return
-    an TypeInterpreter instance.
+    a type interpretation.
     """
     class AnonymousInterpreter(TypeInterpreter):
         def from_type(self, tpe):
             return fun(tpe)
 
     return AnonymousInterpreter()
+
+
+def dict_to_provider(def_dict):
+    """
+    Converts a dictionnary of definitions indexed by their names and domain
+    signatures to a provider function.
+    """
+    def provider(name, signature):
+        if (name, signature) in def_dict:
+            return def_dict[name, signature]
+
+    return provider
 
 
 @type_interpreter
@@ -83,7 +95,12 @@ def default_boolean_interpreter(tpe):
 
         builder = boolean_ops.lit
 
-        return bool_dom, defs, inv_defs, builder
+        return (
+            bool_dom,
+            dict_to_provider(defs),
+            dict_to_provider(inv_defs),
+            builder
+        )
 
 
 @type_interpreter
@@ -123,7 +140,12 @@ def default_int_range_interpreter(tpe):
 
         builder = interval_ops.lit(int_dom)
 
-        return int_dom, defs, inv_defs, builder
+        return (
+            int_dom,
+            dict_to_provider(defs),
+            dict_to_provider(inv_defs),
+            builder
+        )
 
 
 @type_interpreter
@@ -145,7 +167,12 @@ def default_enum_interpreter(tpe):
 
         builder = finite_lattice_ops.lit(enum_dom)
 
-        return enum_dom, defs, inv_defs, builder
+        return (
+            enum_dom,
+            dict_to_provider(defs),
+            dict_to_provider(inv_defs),
+            builder
+        )
 
 
 @type_interpreter
@@ -167,7 +194,12 @@ def simple_access_interpreter(tpe):
 
         builder = finite_lattice_ops.lit(ptr_dom)
 
-        return ptr_dom, defs, inv_defs, builder
+        return (
+            ptr_dom,
+            dict_to_provider(defs),
+            dict_to_provider(inv_defs),
+            builder
+        )
 
 
 default_type_interpreter = (
