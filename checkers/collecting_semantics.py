@@ -5,7 +5,7 @@ An analyzer that collects semantics at each program point.
 from lalcheck.irs.basic.tools import (
     CFGBuilder,
     ExprEvaluator,
-    TrivialIntervalCS
+    ExprSolver
 )
 
 from lalcheck.irs.basic.tree import Identifier, PrettyPrintOpts
@@ -201,7 +201,7 @@ def collect_semantics(
     trace_domain = SimpleTraceLattice(cfg.nodes)
 
     evaluator = ExprEvaluator(model)
-    tcs = TrivialIntervalCS(model, evaluator)
+    solver = ExprSolver(model)
 
     widening_counter = KeyCounter()
     widening_delay = 10
@@ -210,7 +210,7 @@ def collect_semantics(
         # will widen when counter == widen_delay, then narrow
         return counter == widening_delay
 
-    do_stmt = VarTracker(var_set, vars_domain, vars_idx, evaluator, tcs)
+    do_stmt = VarTracker(var_set, vars_domain, vars_idx, evaluator, solver)
 
     lat = domains.Set(
         domains.Product(

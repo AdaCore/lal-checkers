@@ -5,8 +5,6 @@ Provides tools for using the Basic IR.
 from lalcheck.utils import KeyCounter, Bunch
 from lalcheck.digraph import Digraph
 from lalcheck.domain_ops import boolean_ops
-from lalcheck import domains
-from tree import bin_ops, un_ops, Identifier
 import visitors
 
 from funcy.calc import memoize
@@ -239,124 +237,63 @@ class ExprEvaluator(visitors.Visitor):
         return self.model[lit].builder(lit.val)
 
 
-class TrivialIntervalCS(visitors.Visitor):
+class ExprSolver(visitors.Visitor):
     """
-    A simple constraint solver that works on Interval domains.
-    Solves exactly constraints of the form:
-    - "expr", if expr is free of variables
-    - "[not] x OP expr" or "[not] expr OP x", if expr is free of variables,
-      OP is a binary operator among {<, <=, ==, !=, =>, >}, and x an
-      Identifier.
+    Can be used to solve expressions in the Basic IR.
     """
-
-    AllowedBinOps = {
-        bin_ops[op] for op in ('<', '<=', '==', '!=', '>=', '>')
-    }
-    NotOp = {
-        bin_ops['<']: bin_ops['>='],
-        bin_ops['<=']: bin_ops['>'],
-        bin_ops['==']: bin_ops['!='],
-        bin_ops['!=']: bin_ops['=='],
-        bin_ops['>=']: bin_ops['<'],
-        bin_ops['>']: bin_ops['<=']
-    }
-    OppOp = {
-        bin_ops['<']: bin_ops['>'],
-        bin_ops['<=']: bin_ops['>='],
-        bin_ops['==']: bin_ops['=='],
-        bin_ops['!=']: bin_ops['!='],
-        bin_ops['>=']: bin_ops['<='],
-        bin_ops['>']: bin_ops['<']
-    }
-
-    def __init__(self, model, evaluator):
+    def __init__(self, model):
         """
-        Constructs a new solver.
+        Constructs an ExprSolver given a model. The expression solver must
+        only be invoked to solve expressions which nodes have a meaning in
+        the given model.
         """
         self.model = model
-        self.evaluator = evaluator
-
-    def build_constraint(self, var, op, val, val_dom):
-        if not (isinstance(self.model[var].domain, domains.Intervals) and
-                isinstance(val_dom, domains.Intervals)):
-            return None
-        if op not in TrivialIntervalCS.AllowedBinOps:
-            return None
-        elif not isinstance(var, Identifier):
-            return None
-        elif val_dom.eq(val, val_dom.bottom):
-            return None
-        elif val[0] != val[1]:
-            return None
-        else:
-            return var, op, val[0]
-
-    def solve_constraints(self, constraints, env):
-        for (var, rel_op, val) in constraints:
-            domain = self.model[var].domain
-
-            if rel_op is bin_ops['<']:
-                itvs = [domain.left_unbounded(val - 1)]
-            elif rel_op is bin_ops['<=']:
-                itvs = [domain.left_unbounded(val)]
-            elif rel_op is bin_ops['==']:
-                itvs = [domain.build(val)]
-            elif rel_op is bin_ops['!=']:
-                itvs = []
-            elif rel_op is bin_ops['>=']:
-                itvs = [domain.right_unbounded(val)]
-            elif rel_op is bin_ops['>']:
-                itvs = [domain.right_unbounded(val + 1)]
-            else:
-                itvs = []
-
-            for itv in itvs:
-                env[var] = domain.meet(env[var], itv)
-
-        return env
-
-    def do_binexpr(self, lhs, op, rhs, env):
-        lhs_dom = self.model[lhs].domain
-        rhs_dom = self.model[rhs].domain
-        lhs_val = self.evaluator.eval(lhs, env)
-        rhs_val = self.evaluator.eval(rhs, env)
-
-        attempts = [
-            (lhs, op, rhs_val, rhs_dom),
-            (rhs, TrivialIntervalCS.OppOp[op], lhs_val, lhs_dom)
-        ]
-        constraints = []
-
-        for attempt in attempts:
-            constraint = self.build_constraint(*attempt)
-            if constraint is not None:
-                constraints.append(constraint)
-
-        return constraints
-
-    def visit_binexpr(self, binexpr, env, inversed):
-        op = (TrivialIntervalCS.NotOp[binexpr.bin_op] if inversed
-              else binexpr.bin_op)
-        return self.do_binexpr(binexpr.lhs, op, binexpr.rhs, env)
-
-    def visit_unexpr(self, unexpr, env, inversed):
-        if unexpr.un_op == un_ops['!']:
-            return unexpr.expr.visit(self, env, not inversed)
-
-        raise NotImplementedError("Unsupported constraint")
+        self.eval = ExprEvaluator(model).eval
 
     def solve(self, expr, env):
         """
-        Given an environment, returns a subset of this environment that
-        attempts to be the closest possible to the biggest environment for
-        which evaluating the given expression returns the singleton set
-        containing True.
+        Given an environment (a map from Identifier to value), solves
+        the given predicate expression (i.e. of boolean type), that is,
+        constructs a new environment for which the given expression evaluates
+        to true.
+
+        The new environment may in fact not evaluate to True because it is an
+        over-approximation of the optimal solution. However, it should
+        never constructs a solution that does not contain the optimal one,
+        thus making it sound for abstract interpretation.
         """
-        value = self.evaluator.eval(expr, env)
-        if boolean_ops.Boolean.eq(value, boolean_ops.true):
-            return env
-        elif boolean_ops.Boolean.eq(value, boolean_ops.false):
+        new_env = env.copy()
+        if not expr.visit(self, new_env, boolean_ops.true):
             return {}
-        elif boolean_ops.Boolean.eq(value, boolean_ops.both):
-            constraints = expr.visit(self, env, False)
-            return self.solve_constraints(constraints, env)
+        return new_env
+
+    def visit_ident(self, ident, env, expected):
+        dom = self.model[ident].domain
+        env[ident] = dom.meet(env[ident], expected)
+        return True
+
+    def visit_binexpr(self, binexpr, env, expected):
+        lhs_val = self.eval(binexpr.lhs, env)
+        rhs_val = self.eval(binexpr.rhs, env)
+        inv_res = self.model[binexpr].inverse(
+            expected, lhs_val, rhs_val
+        )
+
+        if inv_res is None:
+            return False
+
+        expected_lhs, expected_rhs = inv_res
+        return (binexpr.lhs.visit(self, env, expected_lhs) and
+                binexpr.rhs.visit(self, env, expected_rhs))
+
+    def visit_unexpr(self, unexpr, env, expected):
+        expr_val = self.eval(unexpr.expr, env)
+        expected_expr = self.model[unexpr].inverse(expected, expr_val)
+        if expected_expr is None:
+            return False
+        return unexpr.expr.visit(self, env, expected_expr)
+
+    def visit_lit(self, lit, env, expected):
+        lit_dom = self.model[lit].domain
+        lit_val = self.eval(lit, env)
+        return not lit_dom.is_empty(lit_dom.meet(expected, lit_val))
