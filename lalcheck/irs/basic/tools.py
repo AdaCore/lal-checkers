@@ -131,17 +131,18 @@ class Models(visitors.Visitor):
     def _typeable_to_interp(self, node):
         return self._type_to_interp(self._hint_to_type(node.data.type_hint))
 
-    def visit_unexpr(self, unexpr, node_domains, defs, builders):
+    def visit_unexpr(self, unexpr, node_domains, defs, inv_defs, builders):
         dom = node_domains[unexpr]
         expr_dom = node_domains[unexpr.expr]
         tpe = (expr_dom, dom)
 
         return Bunch(
             domain=dom,
-            definition=defs[unexpr.un_op.sym, tpe]
+            definition=defs[unexpr.un_op.sym, tpe],
+            inverse=inv_defs[unexpr.un_op.sym, tpe]
         )
 
-    def visit_binexpr(self, binexpr, node_domains, defs, builders):
+    def visit_binexpr(self, binexpr, node_domains, defs, inv_defs, builders):
         dom = node_domains[binexpr]
         lhs_dom = node_domains[binexpr.lhs]
         rhs_dom = node_domains[binexpr.rhs]
@@ -149,15 +150,16 @@ class Models(visitors.Visitor):
 
         return Bunch(
             domain=dom,
-            definition=defs[binexpr.bin_op.sym, tpe]
+            definition=defs[binexpr.bin_op.sym, tpe],
+            inverse=inv_defs[binexpr.bin_op.sym, tpe]
         )
 
-    def visit_ident(self, ident, node_domains, defs, builders):
+    def visit_ident(self, ident, node_domains, defs, inv_defs, builders):
         return Bunch(
             domain=node_domains[ident]
         )
 
-    def visit_lit(self, lit, node_domains, defs, builders):
+    def visit_lit(self, lit, node_domains, defs, inv_defs, builders):
         dom = node_domains[lit]
         return Bunch(
             domain=dom,
@@ -179,6 +181,7 @@ class Models(visitors.Visitor):
         model = {}
         node_domains = {}
         defs = {}
+        inv_defs = {}
         builders = {}
 
         for prog in programs:
@@ -186,14 +189,17 @@ class Models(visitors.Visitor):
 
             for node in typeable:
                 interp = self._typeable_to_interp(node)
-                domain, domain_defs, domain_builder = interp
+                domain, domain_defs, domain_inv_defs, domain_builder = interp
 
                 node_domains[node] = domain
                 defs.update(domain_defs)
+                inv_defs.update(domain_inv_defs)
                 builders[domain] = domain_builder
 
         for node in node_domains.keys():
-            model[node] = node.visit(self, node_domains, defs, builders)
+            model[node] = node.visit(
+                self, node_domains, defs, inv_defs, builders
+            )
 
         return model
 
