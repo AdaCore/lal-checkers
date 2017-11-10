@@ -133,13 +133,32 @@ def _gen_ir(subp):
             ))
 
         elif expr.is_a(lal.ExplicitDeref):
-            return transform_expr(expr.f_prefix, lambda prefix: ctx(
-                irt.UnExpr(
-                    irt.un_ops['*'],
+            def prefix_ctx(prefix):
+                assumed_expr = irt.BinExpr(
                     prefix,
-                    type_hint=_type_val(expr)
+                    irt.bin_ops['!='],
+                    irt.Lit(
+                        'null',
+                        type_hint=_type_val(expr.f_prefix)
+                    ),
+                    type_hint=expr.p_bool_type
                 )
-            ))
+                assume_stmt = irt.AssumeStmt(
+                    assumed_expr,
+                    purpose={
+                        'kind': 'deref_check',
+                        'obj': prefix
+                    }
+                )
+                return [assume_stmt] + ctx(
+                    irt.UnExpr(
+                        irt.un_ops['*'],
+                        prefix,
+                        type_hint=_type_val(expr)
+                    )
+                )
+
+            return transform_expr(expr.f_prefix, prefix_ctx)
 
         elif expr.is_a(lal.AttributeRef):
             if expr.f_attribute.text == 'Access':
