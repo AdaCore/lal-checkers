@@ -59,54 +59,73 @@ def _gen_ir(subp):
             'Cannot transform "{}" ({})'.format(node.text, type(node))
         )
 
-    def transform_expr(expr):
+    def transform_expr(expr, ctx):
         if expr.is_a(lal.ParenExpr):
-            return transform_expr(expr.f_expr)
+            return transform_expr(expr.f_expr, ctx)
+
         if expr.is_a(lal.BinOp):
-            return irt.BinExpr(
-                transform_expr(expr.f_left),
-                transform_operator(expr.f_op, 2),
-                transform_expr(expr.f_right),
-                type_hint=_type_val(expr)
-            )
+            def lhs_ctx(lhs):
+                def rhs_ctx(rhs):
+                    return ctx(irt.BinExpr(
+                        lhs,
+                        transform_operator(expr.f_op, 2),
+                        rhs,
+                        type_hint=_type_val(expr)
+                    ))
+
+                return transform_expr(expr.f_right, rhs_ctx)
+
+            return transform_expr(expr.f_left, lhs_ctx)
+
         elif expr.is_a(lal.UnOp):
-            return irt.UnExpr(
-                transform_operator(expr.f_op, 1),
-                transform_expr(expr.f_expr),
-                type_hint=_type_val(expr)
-            )
+            return transform_expr(expr.f_expr, lambda operand: ctx(
+                irt.UnExpr(
+                    transform_operator(expr.f_op, 1),
+                    operand,
+                    type_hint=_type_val(expr)
+                )
+            ))
+
         elif expr.is_a(lal.Identifier):
             ref = _ref_val(expr)
             if ref.is_a(lal.ObjectDecl):
-                return var_decls[ref, expr.text]
+                return ctx(var_decls[ref, expr.text])
             elif ref.is_a(lal.EnumLiteralDecl):
-                return irt.Lit(
+                return ctx(irt.Lit(
                     expr.text,
                     type_hint=ref.parent.parent
-                )
+                ))
+
         elif expr.is_a(lal.IntLiteral):
-            return irt.Lit(
+            return ctx(irt.Lit(
                 int(expr.f_tok.text),
                 type_hint=_type_val(expr)
-            )
+            ))
+
         elif expr.is_a(lal.NullLiteral):
-            return irt.Lit(
+            return ctx(irt.Lit(
                 'null',
                 type_hint=_type_val(expr)
-            )
+            ))
+
         elif expr.is_a(lal.ExplicitDeref):
-            return irt.UnExpr(
-                irt.un_ops['*'],
-                transform_expr(expr.f_prefix),
-                type_hint=_type_val(expr)
-            )
-        elif expr.is_a(lal.AttributeRef):
-            if expr.f_attribute.text == 'Access':
-                return irt.UnExpr(
-                    irt.un_ops['&'],
-                    transform_expr(expr.f_prefix),
+            return transform_expr(expr.f_prefix, lambda prefix: ctx(
+                irt.UnExpr(
+                    irt.un_ops['*'],
+                    prefix,
                     type_hint=_type_val(expr)
                 )
+            ))
+
+        elif expr.is_a(lal.AttributeRef):
+            if expr.f_attribute.text == 'Access':
+                return transform_expr(expr.f_prefix, lambda prefix: ctx(
+                    irt.UnExpr(
+                        irt.un_ops['&'],
+                        prefix,
+                        type_hint=_type_val(expr)
+                    )
+                ))
 
         unimplemented(expr)
 
@@ -126,40 +145,42 @@ def _gen_ir(subp):
                 return [irt.ReadStmt(var_decls[decl, var_id.text])
                         for var_id in decl.f_ids]
             else:
-                default_val = transform_expr(decl.f_default_expr)
-                return [
-                    irt.AssignStmt(var_decls[decl, var_id.text], default_val)
+                return transform_expr(decl.f_default_expr, lambda def_val: [
+                    irt.AssignStmt(var_decls[decl, var_id.text], def_val)
                     for var_id in decl.f_ids
-                ]
+                ])
 
         unimplemented(decl)
 
     def transform_stmt(stmt):
         if stmt.is_a(lal.AssignStmt):
-            return [irt.AssignStmt(
-                var_decls[_ref_val(stmt.f_dest), stmt.f_dest.text],
-                transform_expr(stmt.f_expr)
-            )]
+            return transform_expr(stmt.f_expr, lambda expr: [
+                irt.AssignStmt(
+                    var_decls[_ref_val(stmt.f_dest), stmt.f_dest.text], expr
+                )
+            ])
 
         elif stmt.is_a(lal.IfStmt):
-            cond = transform_expr(stmt.f_cond_expr)
-            not_cond = irt.UnExpr(
-                irt.un_ops['!'],
-                cond,
-                type_hint=cond.data.type_hint
-            )
+            def cond_ctx(cond):
+                not_cond = irt.UnExpr(
+                    irt.un_ops['!'],
+                    cond,
+                    type_hint=cond.data.type_hint
+                )
 
-            then_stmts = [irt.AssumeStmt(cond)]
-            else_stmts = [irt.AssumeStmt(not_cond)]
+                then_stmts = [irt.AssumeStmt(cond)]
+                else_stmts = [irt.AssumeStmt(not_cond)]
 
-            then_stmts.extend(transform_stmts(stmt.f_then_stmts))
-            else_stmts.extend(transform_stmts(stmt.f_else_stmts))
+                then_stmts.extend(transform_stmts(stmt.f_then_stmts))
+                else_stmts.extend(transform_stmts(stmt.f_else_stmts))
 
-            # todo
-            # for sub in stmt.f_alternatives:
-            #    traverse_branch(sub, nulls, neg_cond=stmt.f_cond_expr)
+                # todo
+                # for sub in stmt.f_alternatives:
+                #    traverse_branch(sub, nulls, neg_cond=stmt.f_cond_expr)
 
-            return [irt.SplitStmt(then_stmts, else_stmts)]
+                return [irt.SplitStmt(then_stmts, else_stmts)]
+
+            return transform_expr(stmt.f_cond_expr, cond_ctx)
 
         elif stmt.is_a(lal.CaseStmt):
             # todo
@@ -169,11 +190,11 @@ def _gen_ir(subp):
             return [irt.LoopStmt(transform_stmts(stmt.f_stmts))]
 
         elif stmt.is_a(lal.WhileLoopStmt):
-
-            cond = transform_expr(stmt.f_spec.f_expr)
-            stmts = [irt.AssumeStmt(cond)] + transform_stmts(stmt.f_stmts)
-
-            return [irt.LoopStmt(stmts)]
+            return transform_expr(stmt.f_spec.f_expr, lambda cond: [
+                irt.LoopStmt(
+                    [irt.AssumeStmt(cond)] + transform_stmts(stmt.f_stmts)
+                )
+            ])
 
         elif stmt.is_a(lal.ForLoopStmt):
             # todo
