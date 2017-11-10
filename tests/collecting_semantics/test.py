@@ -43,4 +43,5 @@ do('test_simple_while', le_trace_eq_vals)
 
 do('test_simple_enum', MergePredicateBuilder.Always, '_always')
 
-do('test_ptr', le_trace_eq_vals)
+do('test_ptr', MergePredicateBuilder.Always, '_always')
+do('test_ptr', le_trace_eq_vals, '_le_t_eq_v')

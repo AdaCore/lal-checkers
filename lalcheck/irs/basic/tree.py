@@ -288,7 +288,9 @@ bin_ops = {
 
 un_ops = {
     '!': Operator('!'),
-    '-': Operator('-')
+    '-': Operator('-'),
+    '*': Operator('*'),
+    '&': Operator('&')
 }
 
 

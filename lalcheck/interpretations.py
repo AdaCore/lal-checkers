@@ -193,11 +193,58 @@ def simple_access_interpreter(tpe):
         }
 
         builder = finite_lattice_ops.lit(ptr_dom)
+        null = builder('null')
+        notnull = builder('not_null')
+
+        def def_provider(name, sig):
+            if (name, sig) in defs:
+                return defs[name, sig]
+            elif name == '*' and len(sig) == 2 and sig[0] == ptr_dom:
+                elem_dom = sig[1]
+
+                def deref(ptr):
+                    return elem_dom.bottom if ptr == null else elem_dom.top
+
+                return deref
+            elif name == '&' and len(sig) == 2 and sig[1] == ptr_dom:
+                elem_dom = sig[0]
+
+                def address(elem):
+                    return notnull
+
+                return address
+
+        def inv_def_provider(name, sig):
+            if (name, sig) in defs:
+                return inv_defs[name, sig]
+            elif name == '*' and len(sig) == 2 and sig[0] == ptr_dom:
+                elem_dom = sig[1]
+
+                def inv_deref(elem, e_constr):
+                    if ptr_dom.is_empty(e_constr) or elem_dom.is_empty(elem):
+                        return None
+
+                    if ptr_dom.le(notnull, e_constr):
+                        return notnull
+
+                    return None
+
+                return inv_deref
+            elif name == '&' and len(sig) == 2 and sig[1] == ptr_dom:
+                elem_dom = sig[0]
+
+                def inv_address(ptr, e_constr):
+                    if ptr_dom.is_empty(ptr) or elem_dom.is_empty(e_constr):
+                        return None
+
+                    return e_constr
+
+                return inv_address
 
         return (
             ptr_dom,
-            dict_to_provider(defs),
-            dict_to_provider(inv_defs),
+            def_provider,
+            inv_def_provider,
             builder
         )
 

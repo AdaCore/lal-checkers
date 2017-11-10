@@ -94,6 +94,19 @@ def _gen_ir(subp):
                 'null',
                 type_hint=_type_val(expr)
             )
+        elif expr.is_a(lal.ExplicitDeref):
+            return irt.UnExpr(
+                irt.un_ops['*'],
+                transform_expr(expr.f_prefix),
+                type_hint=_type_val(expr)
+            )
+        elif expr.is_a(lal.AttributeRef):
+            if expr.f_attribute.text == 'Access':
+                return irt.UnExpr(
+                    irt.un_ops['&'],
+                    transform_expr(expr.f_prefix),
+                    type_hint=_type_val(expr)
+                )
 
         unimplemented(expr)
 
