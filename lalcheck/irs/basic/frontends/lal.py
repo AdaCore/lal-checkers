@@ -86,6 +86,30 @@ def _gen_ir(subp):
                 )
             ))
 
+        elif expr.is_a(lal.IfExpr):
+            def cond_ctx(cond):
+                def then_ctx(thn):
+                    def else_ctx(els):
+                        not_cond = irt.UnExpr(
+                            irt.un_ops['!'],
+                            cond,
+                            type_hint=cond.data.type_hint
+                        )
+
+                        then_stmts = [irt.AssumeStmt(cond)]
+                        else_stmts = [irt.AssumeStmt(not_cond)]
+
+                        then_stmts.extend(ctx(thn))
+                        else_stmts.extend(ctx(els))
+
+                        return [irt.SplitStmt(then_stmts, else_stmts)]
+
+                    return transform_expr(expr.f_else_expr, else_ctx)
+
+                return transform_expr(expr.f_then_expr, then_ctx)
+
+            return transform_expr(expr.f_cond_expr, cond_ctx)
+
         elif expr.is_a(lal.Identifier):
             ref = _ref_val(expr)
             if ref.is_a(lal.ObjectDecl):

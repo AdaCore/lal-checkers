@@ -39,6 +39,9 @@ le_trace_eq_vals = (
 do('test_simple_if', MergePredicateBuilder.Always, '_always')
 do('test_simple_if', le_trace_eq_vals, '_le_t_eq_v')
 
+do('test_simple_if_expr', MergePredicateBuilder.Always, '_always')
+do('test_simple_if_expr', le_trace_eq_vals, '_le_t_eq_v')
+
 do('test_simple_while', le_trace_eq_vals)
 
 do('test_simple_enum', MergePredicateBuilder.Always, '_always')
