@@ -5,6 +5,8 @@ Provides a libadalang frontend for the Basic IR.
 import libadalang as lal
 
 from lalcheck.irs.basic import tree as irt
+from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
+from lalcheck.utils import Bunch
 from lalcheck import types
 
 
@@ -267,6 +269,61 @@ def _gen_ir(subp):
     )
 
 
+class ConvertUniversalTypes(IRImplicitVisitor):
+    def __init__(self):
+        super(ConvertUniversalTypes, self).__init__()
+
+    def visit_assign(self, assign):
+        assign.expr.visit(self, assign.var.data.type_hint),
+
+    def visit_assume(self, assume):
+        assume.expr.visit(self, assume.expr.data.type_hint)
+
+    def visit_binexpr(self, binexpr, expected_type):
+        univ_int = binexpr.data.type_hint.p_universal_int_type
+
+        if binexpr.data.type_hint == univ_int:
+            new_data = dict(**binexpr.data)
+            new_data['type_hint'] = expected_type
+            binexpr.data = Bunch(**new_data)
+
+        lhs_hint = binexpr.lhs.data.type_hint
+        rhs_hint = binexpr.rhs.data.type_hint
+
+        if lhs_hint == rhs_hint == univ_int:
+            in_expected_type = binexpr.data.type_hint
+        else:
+            in_expected_type = lhs_hint if rhs_hint == univ_int else rhs_hint
+
+        binexpr.lhs.visit(self, in_expected_type)
+        binexpr.rhs.visit(self, in_expected_type)
+
+    def visit_unexpr(self, unexpr, expected_type):
+        univ_int = unexpr.data.type_hint.p_universal_int_type
+
+        if unexpr.data.type_hint == univ_int:
+            new_data = dict(**unexpr.data)
+            new_data['type_hint'] = expected_type
+            unexpr.data = Bunch(**new_data)
+
+        e_hint = unexpr.expr.data.type_hint
+
+        if e_hint == univ_int:
+            in_expected_type = unexpr.data.type_hint
+        else:
+            in_expected_type = e_hint
+
+        unexpr.expr.visit(self, in_expected_type)
+
+    def visit_lit(self, lit, expected_type):
+        univ_int = lit.data.type_hint.p_universal_int_type
+
+        if lit.data.type_hint == univ_int:
+            new_data = dict(**lit.data)
+            new_data['type_hint'] = expected_type
+            lit.data = Bunch(**new_data)
+
+
 @types.typer
 def int_range_typer(hint):
     if hint.is_a(lal.TypeDecl):
@@ -352,6 +409,10 @@ def extract_programs(ctx, ada_file):
             lal.ExprFunction
         ))
     ]
+
+    converter = ConvertUniversalTypes()
+    for prog in progs:
+        prog.visit(converter)
 
     return progs
 
