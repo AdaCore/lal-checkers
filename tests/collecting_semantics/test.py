@@ -22,11 +22,9 @@ def do(test_name, merge_predicate, idx=None):
 
     model = model_builder.of(*progs)
 
-    collect_semantics(
-        progs[0],
-        model,
-        merge_predicate,
-        'output/{}_cfg.dot'.format(test_name),
+    analysis = collect_semantics(progs[0], model, merge_predicate)
+    analysis.save_cfg_to_file('output/{}_cfg.dot'.format(test_name))
+    analysis.save_results_to_file(
         'output/{}{}_res.dot'.format(test_name, '' if idx is None else idx)
     )
 

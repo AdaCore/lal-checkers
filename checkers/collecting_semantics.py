@@ -133,16 +133,23 @@ def repr_trace(trace):
     return tuple(p.name for p in trace)
 
 
-def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
+def build_resulting_graph(file_name, cfg, results, trace_domain):
     paths = defaultdict(list)
 
+    var_set = {
+        v
+        for node, state in results.iteritems()
+        for trace, values in state.iteritems()
+        for v, _ in values.iteritems()
+    }
+
     for node, state in results.iteritems():
-        for trace, values in state:
+        for trace, values in state.iteritems():
             paths[frozenset(trace)].append(
                 Digraph.Node(
                     node.name,
                     ___orig=node,
-                    **{v.name: values[i] for v, i in vars_idx.iteritems()}
+                    **{v.name: value for v, value in values.iteritems()}
                 )
             )
 
@@ -182,18 +189,54 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, vars_idx):
             dot_printer.DataPrinter(v.name, print_result_builder(
                 "{} &isin;".format(v.name)
             ))
-            for v, _ in vars_idx.iteritems()
+            for v in var_set
         ]))
 
 
-def collect_semantics(
-        prog, model, merge_pred_builder,
-        output_cfg=None, output_res=None):
+class AnalysisResults(object):
+    """
+    Contains the results of the collecting semantics analysis.
+    """
+    def __init__(self, cfg, semantics, trace_domain, vars_domain,
+                 evaluator):
+        self.cfg = cfg
+        self.semantics = semantics
+        self.trace_domain = trace_domain
+        self.vars_domain = vars_domain
+        self.evaluator = evaluator
+
+    def save_cfg_to_file(self, file_name):
+        """
+        Prints the control-flow graph as a DOT file to the given file name.
+        """
+        save_cfg_to(file_name, self.cfg)
+
+    def save_results_to_file(self, file_name):
+        """
+        Prints the resulting graph as a DOT file to the given file name.
+        Displays the state of each variable at each program point.
+        """
+        build_resulting_graph(
+            file_name,
+            self.cfg,
+            self.semantics,
+            self.trace_domain
+        )
+
+    def eval_at(self, node, expr):
+        """
+        Given a program point, evaluates for each program trace available at
+        this program point the given expression.
+        """
+        return {
+            trace: self.evaluator.eval(expr, env)
+            for trace, env in self.semantics[node].iteritems()
+        }
+
+
+def collect_semantics(prog, model, merge_pred_builder):
 
     cfg = prog.visit(CFGBuilder())
-
-    if output_cfg:
-        save_cfg_to(output_cfg, cfg)
 
     var_set = set(visitors.findall(prog, lambda n: isinstance(n, Identifier)))
     vars_idx = {v: i for i, v in enumerate(var_set)}
@@ -264,13 +307,20 @@ def collect_semantics(
     while result != last:
         last, result = result, it(result)
 
-    if output_res:
-        build_resulting_graph(
-            output_res,
-            cfg,
-            result,
-            trace_domain,
-            vars_idx
-        )
+    formatted_results = {
+        node: {
+            trace: {
+                v: values[vars_idx[v]] for v in var_set
+            }
+            for trace, values in state
+        }
+        for node, state in result.iteritems()
+    }
 
-    return result
+    return AnalysisResults(
+        cfg,
+        formatted_results,
+        trace_domain,
+        vars_domain,
+        evaluator
+    )
