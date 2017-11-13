@@ -22,31 +22,34 @@ _lal_op_type_2_symbol = {
 }
 
 
+def _prepare_sem_query(node):
+    def closest_xref_entrypoint(n):
+        if n.p_xref_entry_point:
+            return n
+        elif n.parent is not None:
+            return closest_xref_entrypoint(n.parent)
+        else:
+            return None
+
+    closest = closest_xref_entrypoint(node)
+
+    if closest is not None and not hasattr(closest, "is_resolved"):
+        closest.p_resolve_names
+        closest.is_resolved = True
+
+
+def _ref_val(node):
+    _prepare_sem_query(node)
+    return node.p_ref_val
+
+
+def _type_val(node):
+    _prepare_sem_query(node)
+    return node.p_type_val
+
+
 def _gen_ir(subp):
     var_decls = {}
-
-    def prepare_sem_query(node):
-        def closest_xref_entrypoint(n):
-            if n.p_xref_entry_point:
-                return n
-            elif n.parent is not None:
-                return closest_xref_entrypoint(n.parent)
-            else:
-                return None
-
-        closest = closest_xref_entrypoint(node)
-
-        if closest is not None and not hasattr(closest, "is_resolved"):
-            closest.p_resolve_names
-            closest.is_resolved = True
-
-    def ref_val(node):
-        prepare_sem_query(node)
-        return node.p_ref_val
-
-    def type_val(node):
-        prepare_sem_query(node)
-        return node.p_type_val
 
     def transform_operator(lal_op, arity):
         return _lal_op_type_2_symbol[type(lal_op), arity]
@@ -64,16 +67,16 @@ def _gen_ir(subp):
                 transform_expr(expr.f_left),
                 transform_operator(expr.f_op, 2),
                 transform_expr(expr.f_right),
-                type_hint=type_val(expr)
+                type_hint=_type_val(expr)
             )
         elif expr.is_a(lal.UnOp):
             return irt.UnExpr(
                 transform_operator(expr.f_op, 1),
                 transform_expr(expr.f_expr),
-                type_hint=type_val(expr)
+                type_hint=_type_val(expr)
             )
         elif expr.is_a(lal.Identifier):
-            ref = ref_val(expr)
+            ref = _ref_val(expr)
             if ref.is_a(lal.ObjectDecl):
                 return var_decls[ref, expr.text]
             elif ref.is_a(lal.EnumLiteralDecl):
@@ -84,7 +87,7 @@ def _gen_ir(subp):
         elif expr.is_a(lal.IntLiteral):
             return irt.Lit(
                 int(expr.f_tok.text),
-                type_hint=type_val(expr)
+                type_hint=_type_val(expr)
             )
 
         unimplemented(expr)
@@ -116,7 +119,7 @@ def _gen_ir(subp):
     def transform_stmt(stmt):
         if stmt.is_a(lal.AssignStmt):
             return [irt.AssignStmt(
-                var_decls[ref_val(stmt.f_dest), stmt.f_dest.text],
+                var_decls[_ref_val(stmt.f_dest), stmt.f_dest.text],
                 transform_expr(stmt.f_expr)
             )]
 
