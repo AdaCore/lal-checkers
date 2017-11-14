@@ -1,6 +1,7 @@
 import collecting_semantics
 import lalcheck.irs.basic.tree as irt
 from lalcheck.digraph import Digraph
+from lalcheck.constants import lits
 from lalcheck import dot_printer
 
 from xml.sax.saxutils import escape
@@ -138,7 +139,7 @@ def check_derefs(prog, model, merge_pred_builder):
     null_derefs = [
         (trace, derefed, len(value) == 1)
         for trace, derefed, value in derefed_values
-        if 'null' in value
+        if lits.Null in value
     ]
 
     return AnalysisResult(analysis, null_derefs)

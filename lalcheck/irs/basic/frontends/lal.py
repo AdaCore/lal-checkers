@@ -7,20 +7,21 @@ import libadalang as lal
 from lalcheck.irs.basic import tree as irt
 from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
 from lalcheck.utils import Bunch
+from lalcheck.constants import ops, lits
 from lalcheck import types
 
 
 _lal_op_type_2_symbol = {
-    (lal.OpLt, 2): irt.bin_ops['<'],
-    (lal.OpLte, 2): irt.bin_ops['<='],
-    (lal.OpEq, 2): irt.bin_ops['=='],
-    (lal.OpNeq, 2): irt.bin_ops['!='],
-    (lal.OpGte, 2): irt.bin_ops['>='],
-    (lal.OpGt, 2): irt.bin_ops['>'],
-    (lal.OpPlus, 2): irt.bin_ops['+'],
-    (lal.OpMinus, 2): irt.bin_ops['-'],
-    (lal.OpMinus, 1): irt.un_ops['-'],
-    (lal.OpNot, 1): irt.un_ops['!'],
+    (lal.OpLt, 2): irt.bin_ops[ops.Lt],
+    (lal.OpLte, 2): irt.bin_ops[ops.Le],
+    (lal.OpEq, 2): irt.bin_ops[ops.Eq],
+    (lal.OpNeq, 2): irt.bin_ops[ops.Neq],
+    (lal.OpGte, 2): irt.bin_ops[ops.Ge],
+    (lal.OpGt, 2): irt.bin_ops[ops.Gt],
+    (lal.OpPlus, 2): irt.bin_ops[ops.Plus],
+    (lal.OpMinus, 2): irt.bin_ops[ops.Minus],
+    (lal.OpMinus, 1): irt.un_ops[ops.Neg],
+    (lal.OpNot, 1): irt.un_ops[ops.Not],
 }
 
 
@@ -93,7 +94,7 @@ def _gen_ir(subp):
                 def then_ctx(thn):
                     def else_ctx(els):
                         not_cond = irt.UnExpr(
-                            irt.un_ops['!'],
+                            irt.un_ops[ops.Not],
                             cond,
                             type_hint=cond.data.type_hint
                         )
@@ -130,7 +131,7 @@ def _gen_ir(subp):
 
         elif expr.is_a(lal.NullLiteral):
             return ctx(irt.Lit(
-                'null',
+                lits.Null,
                 type_hint=_type_val(expr)
             ))
 
@@ -138,9 +139,9 @@ def _gen_ir(subp):
             def prefix_ctx(prefix):
                 assumed_expr = irt.BinExpr(
                     prefix,
-                    irt.bin_ops['!='],
+                    irt.bin_ops[ops.Neq],
                     irt.Lit(
-                        'null',
+                        lits.Null,
                         type_hint=_type_val(expr.f_prefix)
                     ),
                     type_hint=expr.p_bool_type
@@ -154,7 +155,7 @@ def _gen_ir(subp):
                 )
                 return [assume_stmt] + ctx(
                     irt.UnExpr(
-                        irt.un_ops['*'],
+                        irt.un_ops[ops.Deref],
                         prefix,
                         type_hint=_type_val(expr)
                     )
@@ -166,7 +167,7 @@ def _gen_ir(subp):
             if expr.f_attribute.text == 'Access':
                 return transform_expr(expr.f_prefix, lambda prefix: ctx(
                     irt.UnExpr(
-                        irt.un_ops['&'],
+                        irt.un_ops[ops.Address],
                         prefix,
                         type_hint=_type_val(expr)
                     )
@@ -208,7 +209,7 @@ def _gen_ir(subp):
         elif stmt.is_a(lal.IfStmt):
             def cond_ctx(cond):
                 not_cond = irt.UnExpr(
-                    irt.un_ops['!'],
+                    irt.un_ops[ops.Not],
                     cond,
                     type_hint=cond.data.type_hint
                 )

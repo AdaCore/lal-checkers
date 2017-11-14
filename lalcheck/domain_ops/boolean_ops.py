@@ -5,14 +5,15 @@ common useful operations.
 
 
 from lalcheck import domains
+from lalcheck.constants import lits
 
 
-Boolean = domains.FiniteLattice.of_subsets({'True', 'False'})
+Boolean = domains.FiniteLattice.of_subsets({lits.True, lits.False})
 
 none = Boolean.build(frozenset([]))
-false = Boolean.build(frozenset(['False']))
-true = Boolean.build(frozenset(['True']))
-both = Boolean.build(frozenset(['True', 'False']))
+false = Boolean.build(frozenset([lits.False]))
+true = Boolean.build(frozenset([lits.True]))
+both = Boolean.build(frozenset([lits.True, lits.False]))
 
 
 def not_(x):
@@ -130,7 +131,7 @@ def lit(val):
     Returns the smallest abstract element containing the given concrete
     boolean value.
     """
-    if val == 'True':
+    if val == lits.True:
         return true
-    elif val == 'False':
+    elif val == lits.False:
         return false

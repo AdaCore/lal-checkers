@@ -3,6 +3,7 @@ Provides the tree constructors of the Basic intermediate representation.
 """
 
 from lalcheck.utils import Bunch
+from lalcheck.constants import ops
 
 
 def _visitable(name):
@@ -276,21 +277,21 @@ class Operator(object):
 
 
 bin_ops = {
-    '+': Operator('+'),
-    '-': Operator('-'),
-    '<': Operator('<'),
-    '<=': Operator('<='),
-    '==': Operator('=='),
-    '!=': Operator('!='),
-    '>=': Operator('>='),
-    '>': Operator('>')
+    ops.Plus: Operator(ops.Plus),
+    ops.Minus: Operator(ops.Minus),
+    ops.Lt: Operator(ops.Lt),
+    ops.Le: Operator(ops.Le),
+    ops.Eq: Operator(ops.Eq),
+    ops.Neq: Operator(ops.Neq),
+    ops.Ge: Operator(ops.Ge),
+    ops.Gt: Operator(ops.Gt)
 }
 
 un_ops = {
-    '!': Operator('!'),
-    '-': Operator('-'),
-    '*': Operator('*'),
-    '&': Operator('&')
+    ops.Not: Operator(ops.Not),
+    ops.Neg: Operator(ops.Neg),
+    ops.Address: Operator(ops.Address),
+    ops.Deref: Operator(ops.Deref)
 }
 
 
