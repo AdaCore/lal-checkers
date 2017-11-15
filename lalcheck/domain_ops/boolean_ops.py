@@ -18,8 +18,14 @@ both = Boolean.build(frozenset([lits.True, lits.False]))
 
 def not_(x):
     """
-    Given a set of booleans, returns the smallest set of boolean values
-    containing the result of negating each boolean value of the given set.
+    :param frozenset[str] x: A set of booleans represented by an element of
+        the Boolean domain.
+
+    :return: The smallest set of boolean values containing the
+        result of negating each boolean value in x, represented by an element
+        of the Boolean domain.
+
+    :rtype: frozenset[str]
     """
     if Boolean.eq(x, both) or Boolean.eq(x, none):
         return x
@@ -31,9 +37,17 @@ def not_(x):
 
 def and_(x, y):
     """
-    Given two sets of booleans, returns the smallest set of boolean values
-    containing all possible results of applying conjunction between booleans
-    of each set in a pairwise manner.
+    :param frozenset[str] x: A set of booleans represented by an element of
+        the Boolean domain.
+
+    :param frozenset[str] y: A set of booleans represented by an element of
+        the Boolean domain.
+
+    :return: The smallest set of boolean values containing all possible
+        results of applying conjunction between booleans of each set in a
+        pairwise manner, represented by an element of the Boolean domain.
+
+    :rtype: frozenset[str]
     """
     if Boolean.eq(x, none) or Boolean.eq(y, none):
         return none
@@ -47,9 +61,17 @@ def and_(x, y):
 
 def or_(x, y):
     """
-    Given two sets of booleans, returns the smallest set of boolean values
-    containing all possible results of applying disjunction between booleans
-    of each set in a pairwise manner.
+    :param frozenset[str] x: A set of booleans represented by an element of
+        the Boolean domain.
+
+    :param frozenset[str] y: A set of booleans represented by an element of
+        the Boolean domain.
+
+    :return: The smallest set of boolean values containing all possible
+        results of applying disjunction between booleans of each set in a
+        pairwise manner, represented by an element of the Boolean domain.
+
+    :rtype: frozenset[str]
     """
     if Boolean.eq(x, none) or Boolean.eq(y, none):
         return none
@@ -63,8 +85,18 @@ def or_(x, y):
 
 def inv_not(res, e_constr):
     """"
-    The inverse of the not function, which result is constrained by the second
-    argument.
+    :param frozenset[str] res: A set of booleans corresponding to an output of
+        the not operation, represented by an element of the Boolean domain.
+
+    :param frozenset[str] e_constr: A constraint on the input value of the not
+        operation, as an element of the Boolean domain.
+
+    :return: A set of booleans describing all the possible inputs of the not
+        operation which can result in the given output, represented by an
+        element of the Boolean domain. Returns None if the constraint cannot
+        be satisfied.
+
+    :rtype: frozenset[str] | None
     """
     if Boolean.is_empty(e_constr) or Boolean.eq(res, none):
         return None
@@ -78,8 +110,21 @@ def inv_not(res, e_constr):
 
 def inv_and(res, l_constr, r_constr):
     """
-    The inverse of the and function, which results are constrained by the
-    second and third arguments.
+    :param frozenset[str] res: A set of booleans corresponding to an output of
+        a conjunction, represented by an element of the Boolean domain.
+
+    :param frozenset[str] l_constr: A constraint on the left input value of
+        a conjunction, as an element of the Boolean domain.
+
+    :param frozenset[str] r_constr: A constraint on the right input value of
+        a conjunction, as an element of the Boolean domain.
+
+    :return: Two sets of booleans describing all the possible inputs of a
+        conjunction operation which can result in the given output,
+        represented by an element of the Boolean domain. Returns None if the
+        constraints cannot be satisfied.
+
+    :rtype: (frozenset[str], frozenset[str]) | None
     """
     if (Boolean.is_empty(l_constr) or Boolean.is_empty(r_constr) or
             Boolean.eq(res, none)):
@@ -103,8 +148,21 @@ def inv_and(res, l_constr, r_constr):
 
 def inv_or(res, l_constr, r_constr):
     """
-    The inverse of the or function, which results are constrained by the second
-    and third arguments.
+    :param frozenset[str] res: A set of booleans corresponding to an output of
+        a disjunction, represented by an element of the Boolean domain.
+
+    :param frozenset[str] l_constr: A constraint on the left input value of
+        a disjunction, as an element of the Boolean domain.
+
+    :param frozenset[str] r_constr: A constraint on the right input value of
+        a disjunction, as an element of the Boolean domain.
+
+    :return: Two sets of booleans describing all the possible inputs of a
+        disjunction operation which can result in the given output,
+        represented by an element of the Boolean domain. Returns None if the
+        constraints cannot be satisfied.
+
+    :rtype: (frozenset[str], frozenset[str]) | None
     """
     if (Boolean.is_empty(l_constr) or Boolean.is_empty(r_constr) or
             Boolean.eq(res, none)):
@@ -128,8 +186,13 @@ def inv_or(res, l_constr, r_constr):
 
 def lit(val):
     """
-    Returns the smallest abstract element containing the given concrete
-    boolean value.
+    :param str val: A concrete element of the Boolean domain, i.e. 'True' or
+        'False'.
+
+    :return: The singleton set of booleans containing the given concrete
+        boolean value, represented by an element of the Boolean domain.
+
+    :rtype: frozenset[str]
     """
     if val == lits.True:
         return true

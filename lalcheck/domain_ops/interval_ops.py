@@ -9,14 +9,29 @@ import boolean_ops
 
 def add_no_wraparound(domain):
     """
-    Given an interval domain, returns a function which, given two sets of
-    integers represented by elements of this interval domain, returns the
-    smallest interval which contains all possible results of adding integers
-    of each set in a pairwise manner.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the addition between two intervals.
+
+    :rtype: ((int, int), (int, int)) -> (int, int)
 
     Note that overflow is represented by an unknown result (-inf, inf).
     """
     def do(x, y):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :param (int, int) y: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of integers which contains all the possible values
+            that can result from the addition between concrete values of
+            each given set in a pairwise manner, represented by an element
+            of the interval domain.
+
+        :rtype: (int, int)
+        """
         if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
             return domain.bottom
 
@@ -31,14 +46,29 @@ def add_no_wraparound(domain):
 
 def sub_no_wraparound(domain):
     """
-    Given an interval domain, returns a function which, given two sets of
-    integers represented by elements of this interval domain, returns the
-    smallest interval which contains all possible results of subtracting
-    integers of each set in a pairwise manner.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the subtraction between two intervals.
+
+    :rtype: ((int, int), (int, int)) -> (int, int)
 
     Note that overflow is represented by an unknown result (-inf, inf).
     """
     def do(x, y):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :param (int, int) y: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of integers which contains all the possible values
+            that can result from the subtraction between concrete values of
+            each given set in a pairwise manner, represented by an element
+            of the interval domain.
+
+        :rtype: (int, int)
+        """
         if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
             return domain.bottom
 
@@ -53,12 +83,23 @@ def sub_no_wraparound(domain):
 
 def inverse(domain):
     """
-    Given an interval domain, returns a function which, given a set of
-    integers represented by an element of this interval domain, returns the
-    smallest interval which contains the inverses of all the integers in the
-    given interval.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the inverse of an interval.
+
+    :rtype: ((int, int)) -> (int, int)
     """
     def do(x):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of integers which contains all the possible values
+            that can result from the inversing the concrete values of the given
+            set of integers, represented by an element of the interval domain.
+
+        :rtype: (int, int)
+        """
         if domain.eq(x, domain.bottom):
             return domain.bottom
 
@@ -70,13 +111,27 @@ def inverse(domain):
 
 def eq(domain):
     """
-    Given an interval domain, returns a function which, given a set of
-    integers represented by elements of this interval domain, returns the
-    smallest set which contains all the possible boolean values that can
-    result from testing equality between integers of each set in a pairwise
-    manner.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the equality between two intervals.
+
+    :rtype: ((int, int), (int, int)) -> frozenset[str]
     """
     def do(x, y):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :param (int, int) y: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of booleans which contains all the possible values
+            that can result from testing equality between concrete values of
+            each given set in a pairwise manner, represented by an element
+            of the Boolean domain.
+
+        :rtype: frozenset[str]
+        """
         if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
             return boolean_ops.none
         elif x[0] == y[0] == x[1] == y[1]:
@@ -91,15 +146,29 @@ def eq(domain):
 
 def neq(domain):
     """
-    Given an interval domain, returns a function which, given a set of
-    integers represented by elements of this interval domain, returns the
-    smallest set which contains all the possible boolean values that can
-    result from testing inequality between integers of each set in a pairwise
-    manner.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the inequality between two intervals.
+
+    :rtype: ((int, int), (int, int)) -> frozenset[str]
     """
     do_eq = eq(domain)
 
     def do(x, y):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :param (int, int) y: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of booleans which contains all the possible values
+            that can result from testing inequality between concrete values of
+            each given set in a pairwise manner, represented by an element
+            of the Boolean domain.
+
+        :rtype: frozenset[str]
+        """
         return boolean_ops.not_(do_eq(x, y))
 
     return do
@@ -107,13 +176,27 @@ def neq(domain):
 
 def lt(domain):
     """
-    Given an interval domain, returns a function which, given a set of
-    integers represented by elements of this interval domain, returns the
-    smallest set which contains all the possible boolean values that can
-    result from testing "is less than" between integers of each set in a
-    pairwise manner.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the "less than" between two intervals.
+
+    :rtype: ((int, int), (int, int)) -> frozenset[str]
     """
     def do(x, y):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :param (int, int) y: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of booleans which contains all the possible values
+            that can result from testing "is less than" between concrete values
+            of each given set in a pairwise manner, represented by an element
+            of the Boolean domain.
+
+        :rtype: frozenset[str]
+        """
         if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
             return boolean_ops.none
         elif x[1] < y[0]:
@@ -128,16 +211,31 @@ def lt(domain):
 
 def le(domain):
     """
-    Given an interval domain, returns a function which, given a set of
-    integers represented by elements of this interval domain, returns the
-    smallest set which contains all the possible boolean values that can
-    result from testing "is less than or equal" between integers of each set
-    in a pairwise manner.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the "less than or equal" between two
+        intervals.
+
+    :rtype: ((int, int), (int, int)) -> frozenset[str]
     """
     do_lt = lt(domain)
     do_eq = eq(domain)
 
     def do(x, y):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :param (int, int) y: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of booleans which contains all the possible values
+            that can result from testing "is less than or equal to" between
+            concrete values of each given set in a pairwise manner, represented
+            by an element of the Boolean domain.
+
+        :rtype: frozenset[str]
+        """
         return boolean_ops.or_(do_lt(x, y), do_eq(x, y))
 
     return do
@@ -145,15 +243,30 @@ def le(domain):
 
 def gt(domain):
     """
-    Given an interval domain, returns a function which, given a set of
-    integers represented by elements of this interval domain, returns the
-    smallest set which contains all the possible boolean values that can
-    result from testing "is greater than" between integers of each set in a
-    pairwise manner.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the "greater than" between two
+        intervals.
+
+    :rtype: ((int, int), (int, int)) -> frozenset[str]
     """
     do_lt = lt(domain)
 
     def do(x, y):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :param (int, int) y: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of booleans which contains all the possible values
+            that can result from testing "is greater than" between concrete
+            values of each given set in a pairwise manner, represented by an
+            element of the Boolean domain.
+
+        :rtype: frozenset[str]
+        """
         return do_lt(y, x)
 
     return do
@@ -161,15 +274,30 @@ def gt(domain):
 
 def ge(domain):
     """
-    Given an interval domain, returns a function which, given a set of
-    integers represented by an element of this interval domain, returns the
-    smallest set which contains all the possible boolean values that can
-    result from testing "is greater than or equal" between integers of each
-    set in a pairwise manner.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the "greater than or equal" between two
+        intervals.
+
+    :rtype: ((int, int), (int, int)) -> frozenset[str]
     """
     do_le = le(domain)
 
     def do(x, y):
+        """
+        :param (int, int) x: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :param (int, int) y: A set of concrete integers, represented by
+            an element of the interval domain.
+
+        :return: A set of booleans which contains all the possible values
+            that can result from testing "is greater than or equal to" between
+            concrete values of each given set in a pairwise manner, represented
+            by an element of the Boolean domain.
+
+        :rtype: frozenset[str]
+        """
         return do_le(y, x)
 
     return do
@@ -177,12 +305,33 @@ def ge(domain):
 
 def inv_add_no_wraparound(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the add_no_wraparound function, which results are constrained by its
-    second and third arguments.
-    """
+    :param lalcheck.domains.Intervals domain: An intervals domain.
 
+    :return: A function which computes the inverse of the addition operation
+        between two intervals.
+
+    :rtype: ((int, int), (int, int), (int, int))
+                -> (((int, int), (int, int)) | None)
+    """
     def do(res, l_constr, r_constr):
+        """
+        :param (int, int) res: A set of integers corresponding to an output
+            of the addition operation, represented by an element of the
+            interval domain.
+
+        :param (int, int) l_constr: A constraint on the left input value of
+            the addition operation, as an element of the interval domain.
+
+        :param (int, int) l_constr: A constraint on the right input value of
+            the addition operation, as an element of the interval domain.
+
+        :return: Two sets of integers describing all the possible inputs
+            of the addition operation which can result in the given output,
+            represented by elements of the interval domain. Returns None
+            if the constraints cannot be satisfied.
+
+        :rtype: ((int, int), (int, int)) | None
+        """
         if (domain.is_empty(l_constr) or domain.is_empty(r_constr) or
                 domain.is_empty(res)):
             return None
@@ -208,12 +357,33 @@ def inv_add_no_wraparound(domain):
 
 def inv_sub_no_wraparound(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the sub_no_wraparound function, which results are constrained by its
-    second and third arguments.
-    """
+    :param lalcheck.domains.Intervals domain: An intervals domain.
 
+    :return: A function which computes the inverse of the subtraction operation
+        between two intervals.
+
+    :rtype: ((int, int), (int, int), (int, int))
+                -> (((int, int), (int, int)) | None)
+    """
     def do(res, l_constr, r_constr):
+        """
+        :param (int, int) res: A set of integers corresponding to an output
+            of the subtraction operation, represented by an element of the
+            interval domain.
+
+        :param (int, int) l_constr: A constraint on the left input value of
+            the subtraction operation, as an element of the interval domain.
+
+        :param (int, int) l_constr: A constraint on the right input value of
+            the subtraction operation, as an element of the interval domain.
+
+        :return: Two sets of integers describing all the possible inputs
+            of the subtraction operation which can result in the given output,
+            represented by elements of the interval domain. Returns None
+            if the constraints cannot be satisfied.
+
+        :rtype: ((int, int), (int, int)) | None
+        """
         if (domain.is_empty(l_constr) or domain.is_empty(r_constr) or
                 domain.is_empty(res)):
             return None
@@ -239,13 +409,31 @@ def inv_sub_no_wraparound(domain):
 
 def inv_inverse(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the inverse function, which results are constrained by its second argument.
-    """
+    :param lalcheck.domains.Intervals domain: An intervals domain.
 
+    :return: A function which computes the inverse of the "inverse" operation
+        on an interval.
+
+    :rtype: ((int, int), (int, int)) -> ((int, int) | None)
+    """
     do_inverse = inverse(domain)
 
     def do(res, constr):
+        """
+        :param (int, int) res: A set of integers corresponding to an output
+            of the inverse operation, represented by an element of the
+            interval domain.
+
+        :param (int, int) constr: A constraint on the input value of the
+            inverse operation, as an element of the interval domain.
+
+        :return: A set of integers describing all the possible inputs
+            of the inverse operation which can result in the given output,
+            represented by an element of the interval domain. Returns None
+            if the constraint cannot be satisfied.
+
+        :rtype: (int, int) | None
+        """
         ret = domain.meet(constr, do_inverse(res))
         if domain.is_empty(ret):
             return None
@@ -256,12 +444,33 @@ def inv_inverse(domain):
 
 def inv_eq(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the eq function, which results are constrained by its second and third
-    arguments.
-    """
+    :param lalcheck.domains.Intervals domain: An intervals domain.
 
+    :return: A function which computes the inverse of the equality test
+        between two intervals.
+
+    :rtype: (frozenset[str], (int, int), (int, int))
+                -> (((int, int), (int, int)) | None)
+    """
     def do(res, l_constr, r_constr):
+        """
+        :param frozenset[str] res: A set of booleans corresponding to an output
+            of the equality test, represented by an element of the Boolean
+            domain.
+
+        :param (int, int) l_constr: A constraint on the left input value of
+            the equality test, as an element of the interval domain.
+
+        :param (int, int) l_constr: A constraint on the right input value of
+            the equality test, as an element of the interval domain.
+
+        :return: Two sets of integers describing all the possible inputs
+            of the equality test which can result in the given output,
+            represented by elements of the interval domain. Returns None
+            if the constraints cannot be satisfied.
+
+        :rtype: ((int, int), (int, int)) | None
+        """
         if (domain.is_empty(l_constr) or domain.is_empty(r_constr) or
                 boolean_ops.Boolean.eq(res, boolean_ops.none)):
             return None
@@ -296,14 +505,35 @@ def inv_eq(domain):
 
 def inv_neq(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the neq function, which results are constrained by its second and third
-    arguments.
-    """
+    :param lalcheck.domains.Intervals domain: An intervals domain.
 
+    :return: A function which computes the inverse of the inequality test
+        between two intervals.
+
+    :rtype: (frozenset[str], (int, int), (int, int))
+                -> (((int, int), (int, int)) | None)
+    """
     do_inv_eq = inv_eq(domain)
 
     def do(res, l_constr, r_constr):
+        """
+        :param frozenset[str] res: A set of booleans corresponding to an output
+            of the inequality test, represented by an element of the Boolean
+            domain.
+
+        :param (int, int) l_constr: A constraint on the left input value of
+            the inequality test, as an element of the interval domain.
+
+        :param (int, int) l_constr: A constraint on the right input value of
+            the inequality test, as an element of the interval domain.
+
+        :return: Two sets of integers describing all the possible inputs
+            of the inequality test which can result in the given output,
+            represented by elements of the interval domain. Returns None
+            if the constraints cannot be satisfied.
+
+        :rtype: ((int, int), (int, int)) | None
+        """
         return do_inv_eq(boolean_ops.not_(res), l_constr, r_constr)
 
     return do
@@ -311,12 +541,33 @@ def inv_neq(domain):
 
 def inv_lt(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the lt function, which results are constrained by its second and third
-    arguments.
-    """
+    :param lalcheck.domains.Intervals domain: An intervals domain.
 
+    :return: A function which computes the inverse of the "is less than" test
+        between two intervals.
+
+    :rtype: (frozenset[str], (int, int), (int, int))
+                -> (((int, int), (int, int)) | None)
+    """
     def do(res, l_constr, r_constr):
+        """
+        :param frozenset[str] res: A set of booleans corresponding to an output
+            of the "is less than" test, represented by an element of the
+            Boolean domain.
+
+        :param (int, int) l_constr: A constraint on the left input value of
+            the "is less than" test, as an element of the interval domain.
+
+        :param (int, int) l_constr: A constraint on the right input value of
+            the "is less than" test, as an element of the interval domain.
+
+        :return: Two sets of integers describing all the possible inputs
+            of the "is less than"  test which can result in the given output,
+            represented by elements of the interval domain. Returns None
+            if the constraints cannot be satisfied.
+
+        :rtype: ((int, int), (int, int)) | None
+        """
         if (domain.is_empty(l_constr) or domain.is_empty(r_constr) or
                 boolean_ops.Boolean.eq(res, boolean_ops.none)):
             return None
@@ -343,12 +594,36 @@ def inv_lt(domain):
 
 def inv_le(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the le function, which results are constrained by its second and third
-    arguments.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the inverse of the "is less than or
+        equal" test between two intervals.
+
+    :rtype: (frozenset[str], (int, int), (int, int))
+                -> (((int, int), (int, int)) | None)
     """
 
     def do(res, l_constr, r_constr):
+        """
+        :param frozenset[str] res: A set of booleans corresponding to an output
+            of the "is less than or equal" test, represented by an element of
+            the Boolean domain.
+
+        :param (int, int) l_constr: A constraint on the left input value of
+            the "is less than or equal" test, as an element of the interval
+            domain.
+
+        :param (int, int) l_constr: A constraint on the right input value of
+            the "is less than or equal" test, as an element of the interval
+            domain.
+
+        :return: Two sets of integers describing all the possible inputs
+            of the "is less than or equal" test which can result in the given
+            output, represented by elements of the interval domain. Returns
+            None if the constraints cannot be satisfied.
+
+        :rtype: ((int, int), (int, int)) | None
+        """
         if (domain.is_empty(l_constr) or domain.is_empty(r_constr) or
                 boolean_ops.Boolean.eq(res, boolean_ops.none)):
             return None
@@ -375,14 +650,36 @@ def inv_le(domain):
 
 def inv_gt(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the gt function, which results are constrained by its second and third
-    arguments.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the inverse of the "is greater than"
+        test between two intervals.
+
+    :rtype: (frozenset[str], (int, int), (int, int))
+                -> (((int, int), (int, int)) | None)
     """
 
     do_inv_le = inv_le(domain)
 
     def do(res, l_constr, r_constr):
+        """
+        :param frozenset[str] res: A set of booleans corresponding to an output
+            of the "is greater than" test, represented by an element of the
+            Boolean domain.
+
+        :param (int, int) l_constr: A constraint on the left input value of
+            the "is greater than" test, as an element of the interval domain.
+
+        :param (int, int) l_constr: A constraint on the right input value of
+            the "is greater than" test, as an element of the interval domain.
+
+        :return: Two sets of integers describing all the possible inputs
+            of the "is greater than" test which can result in the given
+            output, represented by elements of the interval domain. Returns
+            None if the constraints cannot be satisfied.
+
+        :rtype: ((int, int), (int, int)) | None
+        """
         return do_inv_le(boolean_ops.not_(res), l_constr, r_constr)
 
     return do
@@ -390,14 +687,38 @@ def inv_gt(domain):
 
 def inv_ge(domain):
     """
-    Given an interval domain, returns a function which computes the inverse of
-    the ge function, which results are constrained by its second and third
-    arguments.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which computes the inverse of the "is greater than or
+        equal" test between two intervals.
+
+    :rtype: (frozenset[str], (int, int), (int, int))
+                -> (((int, int), (int, int)) | None)
     """
 
     do_inv_lt = inv_lt(domain)
 
     def do(res, l_constr, r_constr):
+        """
+        :param frozenset[str] res: A set of booleans corresponding to an output
+            of the "is greater than or equal" test, represented by an element
+            of the Boolean domain.
+
+        :param (int, int) l_constr: A constraint on the left input value of
+            the "is greater than or equal" test, as an element of the interval
+            domain.
+
+        :param (int, int) l_constr: A constraint on the right input value of
+            the "is greater than or equal" test, as an element of the interval
+            domain.
+
+        :return: Two sets of integers describing all the possible inputs
+            of the "is greater than or equal" test which can result in the
+            given output, represented by elements of the interval domain.
+            Returns None if the constraints cannot be satisfied.
+
+        :rtype: ((int, int), (int, int)) | None
+        """
         return do_inv_lt(boolean_ops.not_(res), l_constr, r_constr)
 
     return do
@@ -405,10 +726,21 @@ def inv_ge(domain):
 
 def lit(domain):
     """
-    Given an interval domain, returns a function which returns the smallest
-    interval containing the given concrete value.
+    :param lalcheck.domains.Intervals domain: An intervals domain.
+
+    :return: A function which can be used to build singleton elements of the
+        given interval domain.
+
+    :rtype: (int) -> (int, int)
     """
     def do(val):
+        """
+        :param int val: The concrete integer to represent.
+
+        :return: The singleton interval containing the given value
+
+        :rtype: (int, int)
+        """
         return domain.build(val)
 
     return do
