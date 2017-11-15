@@ -26,6 +26,16 @@ _lal_op_type_2_symbol = {
 
 
 def _gen_ir(subp):
+    """
+    Generates Basic intermediate representation from a lal subprogram body.
+
+    :param lal.SubpBody subp: The subprogram body from which to generate IR.
+
+    :return: a Basic Program.
+
+    :rtype: irt.Program
+    """
+
     var_decls = {}
 
     def transform_operator(lal_op, arity):
@@ -246,6 +256,11 @@ def _gen_ir(subp):
 
 
 class ConvertUniversalTypes(IRImplicitVisitor):
+    """
+    Visitor that mutates the given IR tree so as to remove references to
+    universal types from in node data's type hints.
+    """
+
     def __init__(self):
         super(ConvertUniversalTypes, self).__init__()
 
@@ -302,6 +317,11 @@ class ConvertUniversalTypes(IRImplicitVisitor):
 
 @types.typer
 def int_range_typer(hint):
+    """
+    :param lal.BaseTypeDecl hint: the lal type.
+    :return: The corresponding lalcheck type.
+    :rtype: types.IntRange
+    """
     if hint.is_a(lal.TypeDecl):
         if hint.f_type_def.is_a(lal.SignedIntTypeDef):
             rng = hint.f_type_def.f_range.f_range
@@ -312,14 +332,33 @@ def int_range_typer(hint):
 
 @types.typer
 def enum_typer(hint):
+    """
+    :param lal.BaseTypeDecl hint: the lal type.
+    :return: The corresponding lalcheck type.
+    :rtype: types.Enum
+    """
     if hint.is_a(lal.EnumTypeDecl):
         literals = hint.findall(lal.EnumLiteralDecl)
         return types.Enum([lit.f_enum_identifier.text for lit in literals])
 
 
 def access_typer(inner_typer):
+    """
+    :param types.Typer[lal.BaseTypeDecl] inner_typer: A typer for elements
+        being accessed.
+
+    :return: A Typer for Ada's access types.
+
+    :rtype: types.Typer[lal.BaseTypeDecl]
+    """
+
     @types.typer
     def typer(hint):
+        """
+        :param lal.BaseTypeDecl hint: the lal type.
+        :return: The corresponding lalcheck type.
+        :rtype: types.Pointer
+        """
         if hint.p_is_access_type:
             accessed_type = hint.f_type_def.f_subtype_indication.f_name
             tpe = inner_typer.from_hint(accessed_type.p_referenced_decl)
@@ -330,12 +369,22 @@ def access_typer(inner_typer):
 
 
 def standard_typer_of(ctx):
+    """
+    :param lal.AnalysisContext ctx: The lal analysis context.
+    :return: A Typer for Ada's standard types.
+    :rtype: types.Typer[lal.BaseTypeDecl]
+    """
     node = ctx.get_from_file('standard.ads').root
     bool_type = node.p_bool_type
     int_type = node.p_int_type
 
     @types.typer
     def typer(hint):
+        """
+        :param lal.BaseTypeDecl hint: the lal type.
+        :return: The corresponding lalcheck type.
+        :rtype: types.Boolean | types.IntRange
+        """
         if hint == bool_type:
             return types.Boolean()
         elif hint == int_type:
@@ -352,15 +401,25 @@ def new_context():
 
     Note that the context must be kept alive as long as long as the
     programs that were extracted with this context are intended to be used.
+
+    :return: A new libadalang analysis context.
+
+    :rtype: lal.AnalysisContext
     """
     return lal.AnalysisContext()
 
 
 def extract_programs(ctx, ada_file):
     """
-    Given a context and the path to a file containing an Ada program, extracts
-    all the functions and procedures present file as an iterable of
-    Basic IR Programs.
+    :param lal.AnalysisContext ctx: The libadalang context.
+
+    :param str ada_file: A path to the Ada source file from which to extract
+        programs.
+
+    :return: a Basic IR Program for each subprogram body that exists in the
+        given source code.
+
+    :rtype: iterable[irt.Program]
     """
     unit = ctx.get_from_file(ada_file)
 
@@ -388,10 +447,19 @@ def extract_programs(ctx, ada_file):
 
 
 def default_typer(ctx):
+    """
+    :param lal.AnalysisContext ctx: The lal analysis context.
+    :return: The default Typer for the Ada language.
+    :rtype: types.Typer[lal.BaseTypeDecl]
+    """
+
     standard_typer = standard_typer_of(ctx)
 
     @types.delegating_typer
     def typer():
+        """
+        :rtype: types.Typer[lal.BaseTypeDecl]
+        """
         return (standard_typer |
                 int_range_typer |
                 enum_typer |

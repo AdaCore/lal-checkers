@@ -129,8 +129,14 @@ class CFGNodeVisitor(Visitor):
 
 def findall(node, predicate):
     """
-    Traverses the given node and eturns an iterable containing any child
-    node that satisfies the predicate.
+    :param tree.Node node: The base parent node.
+
+    :param tree.Node -> bool predicate: The filtering predicate.
+
+    :return: All the child nodes of the given node that satisfy the given
+        predicate.
+
+    :rtype: list[tree.Node]
     """
     res = [node] if predicate(node) else []
     for x in node.children():

@@ -11,11 +11,33 @@ def _visitable(name):
     A class decorator that adds to a node class an entry point for visitors of
     this node. The given method name will be called on the visitor with the
     visited node.
+
+    :param str name: The name of the method used to visit this type of node.
+
+    :return: A function which can be called on a class to augment it with
+        visiting capabilities.
+
+    :rtype: type -> type
     """
     def enter_visitor(node, visitor, *args):
+        """
+        :param Node node: The visited node.
+        :param visitors.Visitor visitor: The node visitor.
+        :param *object args: Additional arguments for the visitor.
+        :return: Whatever the visitor returns.
+        :rtype: object
+        """
         return getattr(visitor, name)(node, *args)
 
     def wrapper(cls):
+        """
+        :param type cls: The class being augmented with visiting capabilities.
+
+        :return: The same class, with an additional method allowing visitors
+            to visit its instances.
+
+        :rtype: type
+        """
         cls.visit = enter_visitor
         return cls
 
@@ -29,18 +51,23 @@ class Node(object):
     def __init__(self, **data):
         """
         Initializes the node with the given user data.
+
+        :param **object data: User-defined data.
         """
         self.data = Bunch(**data)
 
     def children(self):
         """
-        Returns a iterable of the children of this node.
+        :return: The children of this node.
+        :rtype: iterable[Node]
         """
         raise NotImplementedError
 
     def pretty_print(self, opts):
         """
-        Returns a human-readable string representation of this node.
+        :param PrettyPrintOpts opts: The pretty printing options.
+        :return: A human-readable string representation of this node.
+        :rtype: str
         """
         raise NotImplementedError
 
@@ -54,6 +81,12 @@ class Program(Node):
     the other.
     """
     def __init__(self, stmts, **data):
+        """
+        :param list[Stmt] stmts: The list of statements this program consists
+            of.
+
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.stmts = stmts
 
@@ -71,6 +104,10 @@ class Identifier(Node):
     An identifier, like "x", "True", etc.
     """
     def __init__(self, name, **data):
+        """
+        :param str name: The name of this identifier.
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.name = name
 
@@ -94,6 +131,11 @@ class AssignStmt(Stmt):
     Represents the assign statement, i.e. [identifier] = [expr].
     """
     def __init__(self, var, expr, **data):
+        """
+        :param Identifier var: The identifier being assigned.
+        :param Expr expr: The expression assigned to the identifier.
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.var = var
         self.expr = expr
@@ -116,6 +158,15 @@ class SplitStmt(Stmt):
     execution path, i.e. the two branches are visited.
     """
     def __init__(self, fst_stmts, snd_stmts, **data):
+        """
+        :param list[Stmt] fst_stmts: The list of the statements appearing in
+            the first branch.
+
+        :param list[Stmt] snd_stmts: The list of statements appearing in
+            the second branch.
+
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.fst_stmts = fst_stmts
         self.snd_stmts = snd_stmts
@@ -139,6 +190,12 @@ class LoopStmt(Stmt):
     Represents a nondeterministic loop.
     """
     def __init__(self, stmts, **data):
+        """
+        :param list[Stmt] stmts: The list of statements appearing in the body
+            of this loop.
+
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.stmts = stmts
 
@@ -156,6 +213,10 @@ class ReadStmt(Stmt):
     Represents the havoc operation on a variable.
     """
     def __init__(self, var, **data):
+        """
+        :param Identifier var: The variable being read.
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.var = var
 
@@ -172,6 +233,10 @@ class UseStmt(Stmt):
     Represents the fact that a variable was used at this point.
     """
     def __init__(self, var, **data):
+        """
+        :param Identifier var: The variable being used.
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.var = var
 
@@ -188,6 +253,10 @@ class AssumeStmt(Stmt):
     Represents the fact that an expression is assumed to be true at this point.
     """
     def __init__(self, expr, **data):
+        """
+        :param Expr expr: The expression being assumed.
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.expr = expr
 
@@ -211,6 +280,12 @@ class BinExpr(Expr):
     Represents a binary operation, i.e. ([expr] [op] [expr])
     """
     def __init__(self, lhs, bin_op, rhs, **data):
+        """
+        :param Expr lhs: The left-hand side of the binary expression.
+        :param Operator bin_op: The binary operator.
+        :param Expr rhs: The right-hand side of the binary expression.
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.lhs = lhs
         self.bin_op = bin_op
@@ -234,6 +309,14 @@ class UnExpr(Expr):
     Represents an unary operation, i.e. ([op] [expr])
     """
     def __init__(self, un_op, expr, **data):
+        """
+        :param Operator un_op: The unary operator
+
+        :param Expr expr: The expression which the unary operator is applied
+            on.
+
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.un_op = un_op
         self.expr = expr
@@ -254,6 +337,10 @@ class Lit(Expr):
     Represents a literal value.
     """
     def __init__(self, val, **data):
+        """
+        :param object val: Any value.
+        :param **object data: User-defined data.
+        """
         Node.__init__(self, **data)
         self.val = val
 
@@ -270,9 +357,16 @@ class Operator(object):
     operator that is held, unlike its string representation.
     """
     def __init__(self, sym):
+        """
+        :param object sym: The symbol associated with this operator.
+        """
         self.sym = sym
 
     def pretty_print(self, _):
+        """
+        :return: A representation of the operator.
+        :rtype: str
+        """
         return str(self.sym)
 
 
@@ -297,8 +391,14 @@ un_ops = {
 
 def pretty_print_stmts(stmts, opts):
     """
-    Returns a human-readable string representation of the iterable of
-    statements.
+    :param list[Stmt] stmts: The list of statements to pretty print.
+
+    :param PrettyPrintOpts opts: The pretty printing options.
+
+    :return: A human-readable string representation of the iterable of
+        statements.
+
+    :rtype: str
     """
     indents = opts.indents(1)
     return "\n".join(map(
@@ -312,10 +412,27 @@ class PrettyPrintOpts(object):
     An object that holds the pretty-printing context.
     """
     def __init__(self, indent):
+        """
+        :param int indent: The indentation count.
+        """
         self.indent = indent
 
     def indents(self, offset=0):
+        """
+        :param int offset: An additional indentation value.
+
+        :return: A string filled with whitespaces, to prepend at the start of
+            an indented line.
+
+        :rtype: str
+        """
         return "  " * (self.indent + offset)
 
     def indented(self):
+        """
+        :return: A new pretty printing options instance where an incremented
+            "indent" field.
+
+        :rtype: PrettyPrintOpts
+        """
         return PrettyPrintOpts(self.indent + 1)

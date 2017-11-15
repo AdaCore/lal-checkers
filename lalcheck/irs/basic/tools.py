@@ -108,25 +108,45 @@ class Models(visitors.Visitor):
     """
     def __init__(self, typer, type_interpreter):
         """
-        Creates a Models object from a typer (that maps type hints to types)
-        and a type interpreter (that maps types to interpretations).
+        :param lalcheck.types.Typer[T] typer: The typer that maps type hints
+            to lalcheck types.
+
+        :param lalcheck.types.TypeInterpreter type_interpreter: The type
+            interpreter that maps lalcheck types to interpretations.
         """
         self.typer = typer
         self.type_interpreter = type_interpreter
 
     @memoize
     def _hint_to_type(self, hint):
-        # Memoization is required to get the same type instances
-        # for each identical hint
+        """
+        :param T hint: The type hint.
+
+        :return: The corresponding lalcheck type.
+
+        :rtype: lalcheck.types.Type
+
+        Note: requires memoization so that any two identical hints map to the
+        same lalcheck type.
+        """
         return self.typer.from_hint(hint)
 
     @memoize
     def _type_to_interp(self, tpe):
-        # Memoization is required to get the same interpretations
-        # for each identical type
+        """
+        :param lalcheck.types.Type tpe: The lalcheck type.
+
+        :return: The corresponding type interpretation.
+        """
         return self.type_interpreter.from_type(tpe)
 
     def _typeable_to_interp(self, node):
+        """
+        :param tree.Node node: The expression node for which to retrieve the
+            interpretation.
+
+        :return: The associated interpretation
+        """
         return self._type_to_interp(self._hint_to_type(node.data.type_hint))
 
     def visit_unexpr(self, unexpr, node_domains, defs, inv_defs, builders):
@@ -166,6 +186,11 @@ class Models(visitors.Visitor):
 
     @staticmethod
     def _has_type_hint(node):
+        """
+        :param tree.Node node: A IR node.
+        :return: True if the given node has a type hint.
+        :rtype: bool
+        """
         return 'type_hint' in node.data
 
     @staticmethod
@@ -183,12 +208,17 @@ class Models(visitors.Visitor):
 
     def of(self, *programs):
         """
-        Returns a model of the given programs, that is, a dictionary that has
-        an entry for any node in the given programs that has a type hint.
-        This entry associates to the node valuable information, such as the
-        domain used to represent the value it computes, the referenced
-        definition if any, etc.
+        :param iterable[irt.Program] programs: Programs for which to build
+            a model.
+
+        :return: A dictionary that has an entry for any node in the given
+            programs that has a type hint. This entry associates to the node
+            valuable information, such as the domain used to represent the
+            value it computes, the referenced definition if any, etc.
+
+        :rtype: dict[tree.Node, Bunch]
         """
+
         model = {}
         node_domains = {}
         def_providers = set()
@@ -225,16 +255,21 @@ class ExprEvaluator(visitors.Visitor):
     """
     def __init__(self, model):
         """
-        Constructs an ExprEvaluator given a model. The expression evaluator
-        must only be invoked to evaluate expression which nodes have a meaning
-        in the given model.
+        :param dict[tree.Node, Bunch] model: A model that must have an entry
+            for each node that needs be evaluated by this evaluator.
         """
         self.model = model
 
     def eval(self, expr, env):
         """
-        Given an environment (a map from Identifier to value), evaluates
-        the given expression.
+        :param tree.Expr expr: The expression to evaluate.
+
+        :param dict[tree.Identifier, object] env: The environment, containing
+            an entry for each identifier traversed during evaluation.
+
+        :return: The value this expression evaluates to.
+
+        :rtype: object
         """
         return expr.visit(self, env)
 
@@ -260,25 +295,30 @@ class ExprSolver(visitors.Visitor):
     """
     def __init__(self, model):
         """
-        Constructs an ExprSolver given a model. The expression solver must
-        only be invoked to solve expressions which nodes have a meaning in
-        the given model.
+        :param dict[tree.Node, Bunch] model: A model that must have an entry
+            for each node that needs be solved by this solver.
         """
         self.model = model
         self.eval = ExprEvaluator(model).eval
 
     def solve(self, expr, env):
         """
-        Given an environment (a map from Identifier to value), solves
-        the given predicate expression (i.e. of boolean type), that is,
-        constructs a new environment for which the given expression evaluates
-        to true.
+        :param tree.Expr expr: The predicate expression to solve.
 
-        The new environment may in fact not evaluate to True because it is an
-        over-approximation of the optimal solution. However, it should
+        :param dict[tree.Identifier, object] env: The environment, containing
+            an entry for each identifier traversed while solving.
+
+        :return: A new environment for which evaluating the given expression
+            returns boolean_ops.True
+
+        :rtype: dict[tree.Identifier, object]
+
+        Note: The new environment may in fact not evaluate to True because it
+        is an over-approximation of the optimal solution. However, it should
         never constructs a solution that does not contain the optimal one,
         thus making it sound for abstract interpretation.
         """
+
         new_env = env.copy()
         if not expr.visit(self, new_env, boolean_ops.true):
             return {}
