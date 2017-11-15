@@ -25,32 +25,6 @@ _lal_op_type_2_symbol = {
 }
 
 
-def _prepare_sem_query(node):
-    def closest_xref_entrypoint(n):
-        if n.p_xref_entry_point:
-            return n
-        elif n.parent is not None:
-            return closest_xref_entrypoint(n.parent)
-        else:
-            return None
-
-    closest = closest_xref_entrypoint(node)
-
-    if closest is not None and not hasattr(closest, "is_resolved"):
-        closest.p_resolve_names
-        closest.is_resolved = True
-
-
-def _ref_val(node):
-    _prepare_sem_query(node)
-    return node.p_ref_val
-
-
-def _type_val(node):
-    _prepare_sem_query(node)
-    return node.p_type_val
-
-
 def _gen_ir(subp):
     var_decls = {}
 
@@ -73,7 +47,7 @@ def _gen_ir(subp):
                         lhs,
                         transform_operator(expr.f_op, 2),
                         rhs,
-                        type_hint=_type_val(expr)
+                        type_hint=expr.p_expression_type
                     ))
 
                 return transform_expr(expr.f_right, rhs_ctx)
@@ -85,7 +59,7 @@ def _gen_ir(subp):
                 irt.UnExpr(
                     transform_operator(expr.f_op, 1),
                     operand,
-                    type_hint=_type_val(expr)
+                    type_hint=expr.p_expression_type
                 )
             ))
 
@@ -114,7 +88,7 @@ def _gen_ir(subp):
             return transform_expr(expr.f_cond_expr, cond_ctx)
 
         elif expr.is_a(lal.Identifier):
-            ref = _ref_val(expr)
+            ref = expr.p_referenced_decl
             if ref.is_a(lal.ObjectDecl):
                 return ctx(var_decls[ref, expr.text])
             elif ref.is_a(lal.EnumLiteralDecl):
@@ -126,13 +100,13 @@ def _gen_ir(subp):
         elif expr.is_a(lal.IntLiteral):
             return ctx(irt.Lit(
                 int(expr.f_tok.text),
-                type_hint=_type_val(expr)
+                type_hint=expr.p_expression_type
             ))
 
         elif expr.is_a(lal.NullLiteral):
             return ctx(irt.Lit(
                 lits.Null,
-                type_hint=_type_val(expr)
+                type_hint=expr.p_expression_type
             ))
 
         elif expr.is_a(lal.ExplicitDeref):
@@ -142,7 +116,7 @@ def _gen_ir(subp):
                     irt.bin_ops[ops.Neq],
                     irt.Lit(
                         lits.Null,
-                        type_hint=_type_val(expr.f_prefix)
+                        type_hint=expr.f_prefix.p_expression_type
                     ),
                     type_hint=expr.p_bool_type
                 )
@@ -157,7 +131,7 @@ def _gen_ir(subp):
                     irt.UnExpr(
                         irt.un_ops[ops.Deref],
                         prefix,
-                        type_hint=_type_val(expr)
+                        type_hint=expr.p_expression_type
                     )
                 )
 
@@ -169,7 +143,7 @@ def _gen_ir(subp):
                     irt.UnExpr(
                         irt.un_ops[ops.Address],
                         prefix,
-                        type_hint=_type_val(expr)
+                        type_hint=expr.p_expression_type
                     )
                 ))
 
@@ -202,7 +176,8 @@ def _gen_ir(subp):
         if stmt.is_a(lal.AssignStmt):
             return transform_expr(stmt.f_expr, lambda expr: [
                 irt.AssignStmt(
-                    var_decls[_ref_val(stmt.f_dest), stmt.f_dest.text], expr
+                    var_decls[stmt.f_dest.p_referenced_decl, stmt.f_dest.text],
+                    expr
                 )
             ])
 
@@ -347,7 +322,7 @@ def access_typer(inner_typer):
     def typer(hint):
         if hint.p_is_access_type:
             accessed_type = hint.f_type_def.f_subtype_indication.f_name
-            tpe = inner_typer.from_hint(_ref_val(accessed_type))
+            tpe = inner_typer.from_hint(accessed_type.p_referenced_decl)
             if tpe:
                 return types.Pointer(tpe)
 
