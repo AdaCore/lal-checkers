@@ -126,7 +126,7 @@ def default_int_range_interpreter(tpe):
             (ops.Neq, binary_rel_dom): interval_ops.neq(int_dom),
             (ops.Ge, binary_rel_dom): interval_ops.ge(int_dom),
             (ops.Gt, binary_rel_dom): interval_ops.gt(int_dom),
-            (ops.Neg, unary_fun_dom): interval_ops.inverse(int_dom),
+            (ops.Neg, unary_fun_dom): interval_ops.negate(int_dom),
         }
 
         inv_defs = {

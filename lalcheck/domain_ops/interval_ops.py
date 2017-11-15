@@ -81,11 +81,11 @@ def sub_no_wraparound(domain):
     return do
 
 
-def inverse(domain):
+def negate(domain):
     """
     :param lalcheck.domains.Intervals domain: An intervals domain.
 
-    :return: A function which computes the inverse of an interval.
+    :return: A function which computes the negation of an interval.
 
     :rtype: ((int, int)) -> (int, int)
     """
@@ -95,7 +95,7 @@ def inverse(domain):
             an element of the interval domain.
 
         :return: A set of integers which contains all the possible values
-            that can result from the inversing the concrete values of the given
+            that can result from the negating the concrete values of the given
             set of integers, represented by an element of the interval domain.
 
         :rtype: (int, int)
@@ -103,8 +103,7 @@ def inverse(domain):
         if domain.eq(x, domain.bottom):
             return domain.bottom
 
-        a, b = -x[0], -x[1]
-        return domain.build(min(a, b), max(a, b))
+        return domain.build(-x[1], -x[0])
 
     return do
 
@@ -416,7 +415,7 @@ def inv_inverse(domain):
 
     :rtype: ((int, int), (int, int)) -> ((int, int) | None)
     """
-    do_inverse = inverse(domain)
+    do_inverse = negate(domain)
 
     def do(res, constr):
         """
