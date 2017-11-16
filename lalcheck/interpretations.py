@@ -13,6 +13,37 @@ from lalcheck import types
 from lalcheck import domains
 
 
+class TypeInterpretation(object):
+    """
+    A type interpretation is how the middle-end type is represented when
+    doing abstract interpretation. It provides the abstract domain used to
+    represent elements of the type, the implementation of the different
+    operations available for that type, etc.
+    """
+    def __init__(self, domain, def_provider, inv_def_provider, builder):
+        """
+        :param domains.AbstractDomain domain: The abstract domain used to
+            represent the type.
+
+        :param (str, tuple[domains.AbstractDomain])->function def_provider:
+            A function which can be called with the name and signature
+            (domains of all its operands) of the desired definition to
+            retrieve it.
+
+        :param (str, tuple[domains.AbstractDomain])->function inv_def_provider:
+            A function which can be called with the name and signature
+            (domains of all its operands) of the desired definition to
+            retrieve its inverse definition.
+
+        :param function builder: A function used to build elements of the
+            domain from literal values.
+        """
+        self.domain = domain
+        self.def_provider = def_provider
+        self.inv_def_provider = inv_def_provider
+        self.builder = builder
+
+
 class TypeInterpreter(object):
     """
     A TypeInterpreter is used to determine how a type is interpreted in the
@@ -96,7 +127,7 @@ def default_boolean_interpreter(tpe):
 
         builder = boolean_ops.lit
 
-        return (
+        return TypeInterpretation(
             bool_dom,
             dict_to_provider(defs),
             dict_to_provider(inv_defs),
@@ -147,7 +178,7 @@ def default_int_range_interpreter(tpe):
 
         builder = interval_ops.lit(int_dom)
 
-        return (
+        return TypeInterpretation(
             int_dom,
             dict_to_provider(defs),
             dict_to_provider(inv_defs),
@@ -174,7 +205,7 @@ def default_enum_interpreter(tpe):
 
         builder = finite_lattice_ops.lit(enum_dom)
 
-        return (
+        return TypeInterpretation(
             enum_dom,
             dict_to_provider(defs),
             dict_to_provider(inv_defs),
@@ -260,7 +291,7 @@ def simple_access_interpreter(tpe):
 
                 return inv_address
 
-        return (
+        return TypeInterpretation(
             ptr_dom,
             def_provider,
             inv_def_provider,

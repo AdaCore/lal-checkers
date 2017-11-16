@@ -257,6 +257,8 @@ class Models(visitors.Visitor):
         :param lalcheck.types.Type tpe: The lalcheck type.
 
         :return: The corresponding type interpretation.
+
+        :rtype: lalcheck.interpretations.TypeInterpretation
         """
         return self.type_interpreter.from_type(tpe)
 
@@ -266,6 +268,8 @@ class Models(visitors.Visitor):
             interpretation.
 
         :return: The associated interpretation
+
+        :rtype: lalcheck.interpretations.TypeInterpretation
         """
         return self._type_to_interp(self._hint_to_type(node.data.type_hint))
 
@@ -350,12 +354,11 @@ class Models(visitors.Visitor):
 
             for node in typeable:
                 interp = self._typeable_to_interp(node)
-                domain, domain_defs, domain_inv_defs, domain_builder = interp
 
-                node_domains[node] = domain
-                def_providers.add(domain_defs)
-                inv_def_providers.add(domain_inv_defs)
-                builders[domain] = domain_builder
+                node_domains[node] = interp.domain
+                def_providers.add(interp.def_provider)
+                inv_def_providers.add(interp.inv_def_provider)
+                builders[interp.domain] = interp.builder
 
         for node in node_domains.keys():
             model[node] = node.visit(
