@@ -1,5 +1,6 @@
 import collecting_semantics
 import lalcheck.irs.basic.tree as irt
+from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.digraph import Digraph
 from lalcheck.constants import lits
 from lalcheck import dot_printer
@@ -9,7 +10,7 @@ from collections import defaultdict
 
 
 def html_render_node(node):
-    return escape(node.pretty_print(irt.PrettyPrintOpts(0)))
+    return escape(PrettyPrinter.pretty_print(node))
 
 
 def build_resulting_graph(file_name, cfg, null_derefs):
@@ -53,8 +54,7 @@ def build_resulting_graph(file_name, cfg, null_derefs):
         derefed, precise = value
         qualifier = "" if precise else "potential "
         res_str = "path to {}null dereference of {}".format(
-            qualifier,
-            derefed.pretty_print(irt.PrettyPrintOpts(0))
+            qualifier, html_render_node(derefed)
         )
         return (
             '<font color="{}">{}</font>'.format('red', res_str),

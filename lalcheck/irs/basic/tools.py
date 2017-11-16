@@ -7,7 +7,127 @@ from lalcheck.digraph import Digraph
 from lalcheck.domain_ops import boolean_ops
 import visitors
 
+from collections import defaultdict
 from funcy.calc import memoize
+
+
+class PrettyPrinter(visitors.Visitor):
+    """
+    Visitor that can be used to construct a human-readable string
+    representation of Basic IR nodes.
+    """
+
+    class Opts(object):
+        """
+        An object that holds the pretty-printing context.
+        """
+
+        def __init__(self, indent=0, print_ids=False):
+            """
+            :param int indent: The indentation count.
+            """
+            self.indent = indent
+            self.print_ids = print_ids
+
+        def indents(self, offset=0):
+            """
+            :param int offset: An additional indentation value.
+
+            :return: A string filled with whitespaces, to prepend at the start
+                of an indented line.
+
+            :rtype: str
+            """
+            return "  " * (self.indent + offset)
+
+        def indented(self):
+            """
+            :return: A new pretty printing options instance where an
+                incremented "indent" field.
+
+            :rtype: PrettyPrintOpts
+            """
+            return PrettyPrinter.Opts(self.indent + 1, self.print_ids)
+
+    def __init__(self):
+        self.cur_id = 0
+
+        def next_id():
+            self.cur_id += 1
+            return self.cur_id
+
+        self.id_map = defaultdict(next_id)
+
+    @staticmethod
+    def pretty_print(node, opts=None):
+        """
+        :param tree.Node node: The node to pretty print.
+        :param PrettyPrinter.Opts | None opts: The pretty printing options.
+        :return: A human-readable string representation of this node.
+        :rtype: str
+        """
+        return node.visit(
+            PrettyPrinter(),
+            opts if opts is not None else PrettyPrinter.Opts()
+        )
+
+    def print_stmts(self, stmts, opts):
+        indents = opts.indents(1)
+        return "\n".join(map(
+            lambda stmt: indents + stmt.visit(self, opts.indented()),
+            stmts
+        ))
+
+    def visit_program(self, prgm, opts):
+        return "Program:\n{}".format(self.print_stmts(prgm.stmts, opts))
+
+    def visit_ident(self, ident, opts):
+        return "{}{}".format(
+            str(ident.name),
+            "#{}".format(self.id_map[ident]) if opts.print_ids else ""
+        )
+
+    def visit_assign(self, assign, opts):
+        return "{} = {}".format(
+            assign.var.visit(self, opts),
+            assign.expr.visit(self, opts)
+        )
+
+    def visit_split(self, split, opts):
+        indents = opts.indents()
+        return "split:\n{}\n{}|:\n{}".format(
+            self.print_stmts(split.fst_stmts, opts),
+            indents,
+            self.print_stmts(split.snd_stmts, opts),
+        )
+
+    def visit_loop(self, loop, opts):
+        return "loop:\n{}".format(self.print_stmts(loop.stmts, opts))
+
+    def visit_read(self, read, opts):
+        return "read({})".format(read.var.visit(self, opts))
+
+    def visit_use(self, use, opts):
+        return "use({})".format(use.var.visit(self, opts))
+
+    def visit_assume(self, assume, opts):
+        return "assume({})".format(assume.expr.visit(self, opts))
+
+    def visit_binexpr(self, binexpr, opts):
+        return "{} {} {}".format(
+            binexpr.lhs.visit(self, opts),
+            str(binexpr.bin_op),
+            binexpr.rhs.visit(self, opts)
+        )
+
+    def visit_unexpr(self, unexpr, opts):
+        return "{}{}".format(
+            str(unexpr.un_op),
+            unexpr.expr.visit(self, opts)
+        )
+
+    def visit_lit(self, lit, opts):
+        return str(lit.val)
 
 
 class CFGBuilder(visitors.ImplicitVisitor):

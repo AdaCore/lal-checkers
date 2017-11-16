@@ -8,7 +8,8 @@ from lalcheck.irs.basic.tools import (
     ExprSolver
 )
 
-from lalcheck.irs.basic.tree import Identifier, PrettyPrintOpts
+from lalcheck.irs.basic.tree import Identifier
+from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.irs.basic import visitors
 from lalcheck.utils import KeyCounter
 from lalcheck.digraph import Digraph
@@ -112,7 +113,7 @@ MergePredicateBuilder.Eq_Vals = MergePredicateBuilder(_mp_eq_vals)
 
 
 def html_render_node(node):
-    return escape(node.pretty_print(PrettyPrintOpts(0)))
+    return escape(PrettyPrinter.pretty_print(node))
 
 
 def save_cfg_to(file_name, cfg):

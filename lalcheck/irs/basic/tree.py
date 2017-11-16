@@ -63,14 +63,6 @@ class Node(object):
         """
         raise NotImplementedError
 
-    def pretty_print(self, opts):
-        """
-        :param PrettyPrintOpts opts: The pretty printing options.
-        :return: A human-readable string representation of this node.
-        :rtype: str
-        """
-        raise NotImplementedError
-
 
 @_visitable("visit_program")
 class Program(Node):
@@ -94,9 +86,6 @@ class Program(Node):
         for stmt in self.stmts:
             yield stmt
 
-    def pretty_print(self, opts):
-        return "Program:\n{}".format(pretty_print_stmts(self.stmts, opts))
-
 
 @_visitable("visit_ident")
 class Identifier(Node):
@@ -113,9 +102,6 @@ class Identifier(Node):
 
     def children(self):
         return iter(())
-
-    def pretty_print(self, opts):
-        return str(self.name)
 
 
 class Stmt(Node):
@@ -144,12 +130,6 @@ class AssignStmt(Stmt):
         yield self.var
         yield self.expr
 
-    def pretty_print(self, opts):
-        return "{} = {}".format(
-            self.var.pretty_print(opts),
-            self.expr.pretty_print(opts)
-        )
-
 
 @_visitable("visit_split")
 class SplitStmt(Stmt):
@@ -175,14 +155,6 @@ class SplitStmt(Stmt):
         for stmt in self.fst_stmts + self.snd_stmts:
             yield stmt
 
-    def pretty_print(self, opts):
-        indents = opts.indents()
-        return "split:\n{}\n{}|:\n{}".format(
-            pretty_print_stmts(self.fst_stmts, opts),
-            indents,
-            pretty_print_stmts(self.snd_stmts, opts),
-        )
-
 
 @_visitable("visit_loop")
 class LoopStmt(Stmt):
@@ -203,9 +175,6 @@ class LoopStmt(Stmt):
         for stmt in self.stmts:
             yield stmt
 
-    def pretty_print(self, opts):
-        return "loop:\n{}".format(pretty_print_stmts(self.stmts, opts))
-
 
 @_visitable("visit_read")
 class ReadStmt(Stmt):
@@ -222,9 +191,6 @@ class ReadStmt(Stmt):
 
     def children(self):
         yield self.var
-
-    def pretty_print(self, opts):
-        return "read({})".format(self.var.pretty_print(opts))
 
 
 @_visitable("visit_use")
@@ -243,9 +209,6 @@ class UseStmt(Stmt):
     def children(self):
         yield self.var
 
-    def pretty_print(self, opts):
-        return "use({})".format(self.var.pretty_print(opts))
-
 
 @_visitable("visit_assume")
 class AssumeStmt(Stmt):
@@ -262,9 +225,6 @@ class AssumeStmt(Stmt):
 
     def children(self):
         yield self.expr
-
-    def pretty_print(self, opts):
-        return "assume({})".format(self.expr.pretty_print(opts))
 
 
 class Expr(Node):
@@ -295,13 +255,6 @@ class BinExpr(Expr):
         yield self.lhs
         yield self.rhs
 
-    def pretty_print(self, opts):
-        return "{} {} {}".format(
-            self.lhs.pretty_print(opts),
-            self.bin_op.pretty_print(opts),
-            self.rhs.pretty_print(opts)
-        )
-
 
 @_visitable("visit_unexpr")
 class UnExpr(Expr):
@@ -324,12 +277,6 @@ class UnExpr(Expr):
     def children(self):
         yield self.expr
 
-    def pretty_print(self, opts):
-        return "{}{}".format(
-            self.un_op.pretty_print(opts),
-            self.expr.pretty_print(opts)
-        )
-
 
 @_visitable("visit_lit")
 class Lit(Expr):
@@ -347,9 +294,6 @@ class Lit(Expr):
     def children(self):
         return iter(())
 
-    def pretty_print(self, opts):
-        return str(self.val)
-
 
 class Operator(object):
     """
@@ -362,7 +306,7 @@ class Operator(object):
         """
         self.sym = sym
 
-    def pretty_print(self, _):
+    def __str__(self):
         """
         :return: A representation of the operator.
         :rtype: str
@@ -387,52 +331,3 @@ un_ops = {
     ops.Address: Operator(ops.Address),
     ops.Deref: Operator(ops.Deref)
 }
-
-
-def pretty_print_stmts(stmts, opts):
-    """
-    :param list[Stmt] stmts: The list of statements to pretty print.
-
-    :param PrettyPrintOpts opts: The pretty printing options.
-
-    :return: A human-readable string representation of the iterable of
-        statements.
-
-    :rtype: str
-    """
-    indents = opts.indents(1)
-    return "\n".join(map(
-        lambda stmt: indents + stmt.pretty_print(opts.indented()),
-        stmts
-    ))
-
-
-class PrettyPrintOpts(object):
-    """
-    An object that holds the pretty-printing context.
-    """
-    def __init__(self, indent):
-        """
-        :param int indent: The indentation count.
-        """
-        self.indent = indent
-
-    def indents(self, offset=0):
-        """
-        :param int offset: An additional indentation value.
-
-        :return: A string filled with whitespaces, to prepend at the start of
-            an indented line.
-
-        :rtype: str
-        """
-        return "  " * (self.indent + offset)
-
-    def indented(self):
-        """
-        :return: A new pretty printing options instance where an incremented
-            "indent" field.
-
-        :rtype: PrettyPrintOpts
-        """
-        return PrettyPrintOpts(self.indent + 1)
