@@ -6,7 +6,7 @@ import libadalang as lal
 
 from lalcheck.irs.basic import tree as irt
 from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
-from lalcheck.utils import Bunch
+from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.constants import ops, lits
 from lalcheck import types
 
@@ -261,58 +261,176 @@ class ConvertUniversalTypes(IRImplicitVisitor):
     universal types from in node data's type hints.
     """
 
-    def __init__(self):
+    def __init__(self, unit):
+        """
+        :param lal.AbstractNode unit: Any lal node.
+        """
         super(ConvertUniversalTypes, self).__init__()
+        self.bool = unit.p_bool_type
+        self.universal_int = unit.p_universal_int_type
+        self.universal_real = unit.p_universal_real_type
+        self.eval = ConstExprEvaluator(unit).eval
+
+    def has_universal_type(self, expr):
+        """
+        :param irt.Expr expr: A Basic IR expression.
+
+        :return: True if the expression is either of universal int type, or
+            universal real type.
+
+        :rtype: bool
+        """
+        return expr.data.type_hint in [self.universal_int, self.universal_real]
+
+    def try_convert_expr(self, expr, expected_type):
+        """
+        :param irt.Expr expr: A Basic IR expression.
+
+        :param lal.BaseTypeDecl expected_type: The expected type hint of the
+            expression.
+
+        :return: An equivalent expression which does not have an universal
+            type.
+
+        :rtype: irt.Expr
+        """
+        try:
+            return irt.Lit(
+                self.eval(expr),
+                type_hint=expected_type
+            )
+        except NotConstExprError:
+            expr.visit(self)
+            return expr
 
     def visit_assign(self, assign):
-        assign.expr.visit(self, assign.var.data.type_hint),
+        assign.expr = self.try_convert_expr(
+            assign.expr,
+            assign.var.data.type_hint
+        )
 
     def visit_assume(self, assume):
-        assume.expr.visit(self, assume.expr.data.type_hint)
+        assume.expr = self.try_convert_expr(assume.expr, self.bool)
 
-    def visit_binexpr(self, binexpr, expected_type):
-        univ_int = binexpr.data.type_hint.p_universal_int_type
+    def visit_binexpr(self, binexpr):
+        expected_type = (binexpr.lhs.data.type_hint
+                         if self.has_universal_type(binexpr.rhs)
+                         else binexpr.rhs.data.type_hint)
 
-        if binexpr.data.type_hint == univ_int:
-            new_data = dict(**binexpr.data)
-            new_data['type_hint'] = expected_type
-            binexpr.data = Bunch(**new_data)
+        binexpr.lhs = self.try_convert_expr(binexpr.lhs, expected_type)
+        binexpr.rhs = self.try_convert_expr(binexpr.rhs, expected_type)
 
-        lhs_hint = binexpr.lhs.data.type_hint
-        rhs_hint = binexpr.rhs.data.type_hint
+    def visit_unexpr(self, unexpr):
+        unexpr.expr.visit(self)
 
-        if lhs_hint == rhs_hint == univ_int:
-            in_expected_type = binexpr.data.type_hint
+
+class NotConstExprError(ValueError):
+    def __init__(self):
+        super(NotConstExprError, self).__init__()
+
+
+AdaTrue = 'True'
+AdaFalse = 'False'
+
+
+class ConstExprEvaluator(IRImplicitVisitor):
+    """
+    Used to evaluate expressions statically.
+    See eval.
+    """
+
+    BinOps = {
+        ops.And: lambda x, y: ConstExprEvaluator.from_bool(
+            ConstExprEvaluator.to_bool(x) and ConstExprEvaluator.to_bool(y)
+        ),
+        ops.Or: lambda x, y: ConstExprEvaluator.from_bool(
+            ConstExprEvaluator.to_bool(x) or ConstExprEvaluator.to_bool(y)
+        ),
+
+        ops.Neq: lambda x, y: ConstExprEvaluator.from_bool(x != y),
+        ops.Eq: lambda x, y: ConstExprEvaluator.from_bool(x == y),
+        ops.Lt: lambda x, y: ConstExprEvaluator.from_bool(x < y),
+        ops.Le: lambda x, y: ConstExprEvaluator.from_bool(x <= y),
+        ops.Ge: lambda x, y: ConstExprEvaluator.from_bool(x >= y),
+        ops.Gt: lambda x, y: ConstExprEvaluator.from_bool(x > y),
+
+        ops.Plus: lambda x, y: x + y,
+        ops.Minus: lambda x, y: x - y
+    }
+
+    UnOps = {
+        ops.Not: lambda x: ConstExprEvaluator.from_bool(
+            not ConstExprEvaluator.to_bool(x)
+        ),
+        ops.Neg: lambda x: -x
+    }
+
+    def __init__(self, unit):
+        """
+        :param lal.AbstractNode unit: Any lal node.
+        """
+        super(ConstExprEvaluator, self).__init__()
+        self.bool = unit.p_bool_type
+        self.int = unit.p_int_type
+        self.universal_int = unit.p_universal_int_type
+        self.universal_real = unit.p_universal_real_type
+
+    @staticmethod
+    def to_bool(x):
+        """
+        :param str x: The boolean to convert.
+        :return: The representation of the corresponding boolean literal.
+        :rtype: bool
+        """
+        return x == AdaTrue
+
+    @staticmethod
+    def from_bool(x):
+        """
+        :param bool x: The representation of a boolean literal to convert.
+        :return: The corresponding boolean.
+        :rtype: str
+        """
+        return AdaTrue if x else AdaFalse
+
+    def eval(self, expr):
+        """
+        :param irt.Expr expr: A Basic IR expression to evaluate.
+        :return: The value which this expression evalutes to.
+        :rtype: int | str
+        :raise NotConstExprError: if the expression is not a constant.
+        :raise NotImplementedError: if implementation is incomplete.
+        """
+        res = self.visit(expr)
+        if res is not None:
+            return res
         else:
-            in_expected_type = lhs_hint if rhs_hint == univ_int else rhs_hint
+            raise NotImplementedError("Cannot evaluate `{}`".format(
+                PrettyPrinter.pretty_print(expr)
+            ))
 
-        binexpr.lhs.visit(self, in_expected_type)
-        binexpr.rhs.visit(self, in_expected_type)
+    def visit_ident(self, ident):
+        raise NotConstExprError
 
-    def visit_unexpr(self, unexpr, expected_type):
-        univ_int = unexpr.data.type_hint.p_universal_int_type
+    def visit_binexpr(self, binexpr):
+        try:
+            op = ConstExprEvaluator.BinOps[binexpr.bin_op.sym]
+            return op(
+                binexpr.lhs.visit(self),
+                binexpr.rhs.visit(self)
+            )
+        except KeyError:
+            raise NotConstExprError
 
-        if unexpr.data.type_hint == univ_int:
-            new_data = dict(**unexpr.data)
-            new_data['type_hint'] = expected_type
-            unexpr.data = Bunch(**new_data)
+    def visit_unexpr(self, unexpr):
+        try:
+            op = ConstExprEvaluator.UnOps[unexpr.un_op.sym]
+            return op(unexpr.expr.visit(self))
+        except KeyError:
+            raise NotConstExprError
 
-        e_hint = unexpr.expr.data.type_hint
-
-        if e_hint == univ_int:
-            in_expected_type = unexpr.data.type_hint
-        else:
-            in_expected_type = e_hint
-
-        unexpr.expr.visit(self, in_expected_type)
-
-    def visit_lit(self, lit, expected_type):
-        univ_int = lit.data.type_hint.p_universal_int_type
-
-        if lit.data.type_hint == univ_int:
-            new_data = dict(**lit.data)
-            new_data['type_hint'] = expected_type
-            lit.data = Bunch(**new_data)
+    def visit_lit(self, lit):
+        return lit.val
 
 
 @types.typer
@@ -439,7 +557,7 @@ def extract_programs(ctx, ada_file):
         ))
     ]
 
-    converter = ConvertUniversalTypes()
+    converter = ConvertUniversalTypes(unit.root)
     for prog in progs:
         prog.visit(converter)
 
