@@ -28,3 +28,13 @@ Program:
   |:
     assume(True)
 """)
+
+do('test_constant_1', """
+Program:
+  read(x#1)
+  split:
+    assume(True)
+    x#1 = 1
+  |:
+    assume(False)
+""")

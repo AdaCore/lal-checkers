@@ -10,6 +10,8 @@ from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.constants import ops, lits
 from lalcheck import types
 
+from funcy.calc import memoize
+
 
 _lal_op_type_2_symbol = {
     (lal.OpLt, 2): irt.bin_ops[ops.Lt],
@@ -106,6 +108,8 @@ def _gen_ir(subp):
                     expr.text,
                     type_hint=ref.parent.parent
                 ))
+            elif ref.is_a(lal.NumberDecl):
+                return transform_expr(ref.f_expr, ctx)
 
         elif expr.is_a(lal.IntLiteral):
             return ctx(irt.Lit(
@@ -160,9 +164,9 @@ def _gen_ir(subp):
         unimplemented(expr)
 
     def transform_decl(decl):
-        if decl.is_a(lal.TypeDecl, lal.EnumTypeDecl):
+        if decl.is_a(lal.TypeDecl, lal.EnumTypeDecl, lal.NumberDecl):
             return []
-        if decl.is_a(lal.ObjectDecl):
+        elif decl.is_a(lal.ObjectDecl):
             tdecl = decl.f_type_expr.p_designated_type_decl
 
             for var_id in decl.f_ids:
@@ -409,6 +413,21 @@ class ConstExprEvaluator(IRImplicitVisitor):
                 PrettyPrinter.pretty_print(expr)
             ))
 
+    @memoize
+    def visit(self, expr):
+        """
+        To use instead of node.visit(self). Performs memoization, so as to
+        avoid evaluating expression referred to by constant symbols multiple
+        times.
+
+        :param irt.Expr expr: The IR Basic expression to evaluate
+
+        :return: The value of this expression.
+
+        :rtype: int | str
+        """
+        return expr.visit(self)
+
     def visit_ident(self, ident):
         raise NotConstExprError
 
@@ -416,8 +435,8 @@ class ConstExprEvaluator(IRImplicitVisitor):
         try:
             op = ConstExprEvaluator.BinOps[binexpr.bin_op.sym]
             return op(
-                binexpr.lhs.visit(self),
-                binexpr.rhs.visit(self)
+                self.visit(binexpr.lhs),
+                self.visit(binexpr.rhs)
             )
         except KeyError:
             raise NotConstExprError
@@ -425,7 +444,7 @@ class ConstExprEvaluator(IRImplicitVisitor):
     def visit_unexpr(self, unexpr):
         try:
             op = ConstExprEvaluator.UnOps[unexpr.un_op.sym]
-            return op(unexpr.expr.visit(self))
+            return op(self.visit(unexpr.expr))
         except KeyError:
             raise NotConstExprError
 
