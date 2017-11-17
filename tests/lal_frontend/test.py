@@ -38,3 +38,9 @@ Program:
   |:
     assume(False)
 """)
+
+do('test_static_range', """
+Program:
+  read(x#1)
+  x#1 = 40
+""")

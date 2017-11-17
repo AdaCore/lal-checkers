@@ -8,8 +8,12 @@ Eq = '=='
 Neq = '!='
 Ge = '>='
 Gt = '>'
+DotDot = '..'
 
 Not = '!'
 Neg = '-'
 Address = '&'
 Deref = '*'
+
+GetFirst = 'First\''
+GetLast = 'Last\''

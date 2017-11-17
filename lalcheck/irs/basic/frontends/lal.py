@@ -22,12 +22,16 @@ _lal_op_type_2_symbol = {
     (lal.OpGt, 2): irt.bin_ops[ops.Gt],
     (lal.OpPlus, 2): irt.bin_ops[ops.Plus],
     (lal.OpMinus, 2): irt.bin_ops[ops.Minus],
+    (lal.OpDoubleDot, 2): irt.bin_ops[ops.DotDot],
+
     (lal.OpMinus, 1): irt.un_ops[ops.Neg],
     (lal.OpNot, 1): irt.un_ops[ops.Not],
 }
 
 _attr_2_unop = {
-    'Access': irt.un_ops[ops.Address]
+    'Access': irt.un_ops[ops.Address],
+    'First': irt.un_ops[ops.GetFirst],
+    'Last': irt.un_ops[ops.GetLast],
 }
 
 
@@ -114,6 +118,9 @@ def _gen_ir(subp):
                 ))
             elif ref.is_a(lal.NumberDecl):
                 return transform_expr(ref.f_expr, ctx)
+            elif ref.is_a(lal.TypeDecl):
+                if ref.f_type_def.is_a(lal.SignedIntTypeDef):
+                    return transform_expr(ref.f_type_def.f_range.f_range, ctx)
 
         elif expr.is_a(lal.IntLiteral):
             return ctx(irt.Lit(
@@ -346,6 +353,11 @@ class ConstExprEvaluator(IRImplicitVisitor):
     See eval.
     """
 
+    class Range(object):
+        def __init__(self, first, last):
+            self.first = first
+            self.last = last
+
     BinOps = {
         ops.And: lambda x, y: ConstExprEvaluator.from_bool(
             ConstExprEvaluator.to_bool(x) and ConstExprEvaluator.to_bool(y)
@@ -360,6 +372,7 @@ class ConstExprEvaluator(IRImplicitVisitor):
         ops.Le: lambda x, y: ConstExprEvaluator.from_bool(x <= y),
         ops.Ge: lambda x, y: ConstExprEvaluator.from_bool(x >= y),
         ops.Gt: lambda x, y: ConstExprEvaluator.from_bool(x > y),
+        ops.DotDot: lambda x, y: ConstExprEvaluator.Range(x, y),
 
         ops.Plus: lambda x, y: x + y,
         ops.Minus: lambda x, y: x - y
@@ -369,7 +382,9 @@ class ConstExprEvaluator(IRImplicitVisitor):
         ops.Not: lambda x: ConstExprEvaluator.from_bool(
             not ConstExprEvaluator.to_bool(x)
         ),
-        ops.Neg: lambda x: -x
+        ops.Neg: lambda x: -x,
+        ops.GetFirst: lambda x: x.first,
+        ops.GetLast: lambda x: x.last
     }
 
     def __init__(self, unit):

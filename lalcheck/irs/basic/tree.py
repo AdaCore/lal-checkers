@@ -322,12 +322,15 @@ bin_ops = {
     ops.Eq: Operator(ops.Eq),
     ops.Neq: Operator(ops.Neq),
     ops.Ge: Operator(ops.Ge),
-    ops.Gt: Operator(ops.Gt)
+    ops.Gt: Operator(ops.Gt),
+    ops.DotDot: Operator(ops.DotDot)
 }
 
 un_ops = {
     ops.Not: Operator(ops.Not),
     ops.Neg: Operator(ops.Neg),
     ops.Address: Operator(ops.Address),
-    ops.Deref: Operator(ops.Deref)
+    ops.Deref: Operator(ops.Deref),
+    ops.GetFirst: Operator(ops.GetFirst),
+    ops.GetLast: Operator(ops.GetLast)
 }
