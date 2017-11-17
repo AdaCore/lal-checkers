@@ -26,6 +26,10 @@ _lal_op_type_2_symbol = {
     (lal.OpNot, 1): irt.un_ops[ops.Not],
 }
 
+_attr_2_unop = {
+    'Access': irt.un_ops[ops.Address]
+}
+
 
 def _gen_ir(subp):
     """
@@ -152,14 +156,13 @@ def _gen_ir(subp):
             return transform_expr(expr.f_prefix, prefix_ctx)
 
         elif expr.is_a(lal.AttributeRef):
-            if expr.f_attribute.text == 'Access':
-                return transform_expr(expr.f_prefix, lambda prefix: ctx(
-                    irt.UnExpr(
-                        irt.un_ops[ops.Address],
-                        prefix,
-                        type_hint=expr.p_expression_type
-                    )
-                ))
+            return transform_expr(expr.f_prefix, lambda prefix: ctx(
+                irt.UnExpr(
+                    _attr_2_unop[expr.f_attribute.text],
+                    prefix,
+                    type_hint=expr.p_expression_type
+                )
+            ))
 
         unimplemented(expr)
 
