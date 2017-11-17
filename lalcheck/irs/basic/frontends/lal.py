@@ -275,15 +275,13 @@ class ConvertUniversalTypes(IRImplicitVisitor):
     universal types from in node data's type hints.
     """
 
-    def __init__(self, unit):
+    def __init__(self, evaluator):
         """
-        :param lal.AbstractNode unit: Any lal node.
+        :param ConstExprEvaluator evaluator: A const expr evaluator.
         """
         super(ConvertUniversalTypes, self).__init__()
-        self.bool = unit.p_bool_type
-        self.universal_int = unit.p_universal_int_type
-        self.universal_real = unit.p_universal_real_type
-        self.eval = ConstExprEvaluator(unit).eval
+
+        self.evaluator = evaluator
 
     def has_universal_type(self, expr):
         """
@@ -294,7 +292,10 @@ class ConvertUniversalTypes(IRImplicitVisitor):
 
         :rtype: bool
         """
-        return expr.data.type_hint in [self.universal_int, self.universal_real]
+        return expr.data.type_hint in [
+            self.evaluator.universal_int,
+            self.evaluator.universal_real
+        ]
 
     def try_convert_expr(self, expr, expected_type):
         """
@@ -310,7 +311,7 @@ class ConvertUniversalTypes(IRImplicitVisitor):
         """
         try:
             return irt.Lit(
-                self.eval(expr),
+                self.evaluator.eval(expr),
                 type_hint=expected_type
             )
         except NotConstExprError:
@@ -324,7 +325,7 @@ class ConvertUniversalTypes(IRImplicitVisitor):
         )
 
     def visit_assume(self, assume):
-        assume.expr = self.try_convert_expr(assume.expr, self.bool)
+        assume.expr = self.try_convert_expr(assume.expr, self.evaluator.bool)
 
     def visit_binexpr(self, binexpr):
         expected_type = (binexpr.lhs.data.type_hint
@@ -387,15 +388,18 @@ class ConstExprEvaluator(IRImplicitVisitor):
         ops.GetLast: lambda x: x.last
     }
 
-    def __init__(self, unit):
+    def __init__(self, bool_type, int_type, u_int_type, u_real_type):
         """
-        :param lal.AbstractNode unit: Any lal node.
+        :param lal.BaseTypeDecl bool_type: The standard boolean type.
+        :param lal.BaseTypeDecl int_type: The standard int type.
+        :param lal.BaseTypeDecl u_int_type: The standard universal int type.
+        :param lal.BaseTypeDecl u_real_type: The standard universal real type.
         """
         super(ConstExprEvaluator, self).__init__()
-        self.bool = unit.p_bool_type
-        self.int = unit.p_int_type
-        self.universal_int = unit.p_universal_int_type
-        self.universal_real = unit.p_universal_real_type
+        self.bool = bool_type
+        self.int = int_type
+        self.universal_int = u_int_type
+        self.universal_real = u_real_type
 
     @staticmethod
     def to_bool(x):
@@ -525,13 +529,12 @@ def access_typer(inner_typer):
 
 def standard_typer_of(ctx):
     """
-    :param lal.AnalysisContext ctx: The lal analysis context.
+    :param ExtractionContext ctx: The program extraction context.
     :return: A Typer for Ada's standard types.
     :rtype: types.Typer[lal.BaseTypeDecl]
     """
-    node = ctx.get_from_file('standard.ads').root
-    bool_type = node.p_bool_type
-    int_type = node.p_int_type
+    bool_type = ctx.evaluator.bool
+    int_type = ctx.evaluator.int
 
     @types.typer
     def typer(hint):
@@ -548,6 +551,28 @@ def standard_typer_of(ctx):
     return typer
 
 
+class ExtractionContext(object):
+    def __init__(self, lal_ctx):
+        """
+        :param lal.AnalysisContext lal_ctx: The libadalang analysis context.
+        """
+        self.lal_ctx = lal_ctx
+
+        dummy = lal_ctx.get_from_buffer(
+            "<dummy>", 'package Dummy is end;'
+        ).root
+
+        self.evaluator = ConstExprEvaluator(
+            dummy.p_bool_type,
+            dummy.p_int_type,
+            dummy.p_universal_int_type,
+            dummy.p_universal_real_type
+        )
+
+    def parse_file(self, ada_file):
+        return self.lal_ctx.get_from_file(ada_file)
+
+
 def new_context():
     """
     Creates a new program extraction context.
@@ -559,14 +584,14 @@ def new_context():
 
     :return: A new libadalang analysis context.
 
-    :rtype: lal.AnalysisContext
+    :rtype: ExtractionContext
     """
-    return lal.AnalysisContext()
+    return ExtractionContext(lal.AnalysisContext())
 
 
 def extract_programs(ctx, ada_file):
     """
-    :param lal.AnalysisContext ctx: The libadalang context.
+    :param ExtractionContext ctx: The extraction context.
 
     :param str ada_file: A path to the Ada source file from which to extract
         programs.
@@ -576,7 +601,7 @@ def extract_programs(ctx, ada_file):
 
     :rtype: iterable[irt.Program]
     """
-    unit = ctx.get_from_file(ada_file)
+    unit = ctx.parse_file(ada_file)
 
     if unit.root is None:
         print('Could not parse {}:'.format(ada_file))
@@ -594,7 +619,8 @@ def extract_programs(ctx, ada_file):
         ))
     ]
 
-    converter = ConvertUniversalTypes(unit.root)
+    converter = ConvertUniversalTypes(ctx.evaluator)
+
     for prog in progs:
         prog.visit(converter)
 
@@ -603,7 +629,7 @@ def extract_programs(ctx, ada_file):
 
 def default_typer(ctx):
     """
-    :param lal.AnalysisContext ctx: The lal analysis context.
+    :param ExtractionContext ctx: The program extraction context.
     :return: The default Typer for the Ada language.
     :rtype: types.Typer[lal.BaseTypeDecl]
     """
