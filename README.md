@@ -19,3 +19,15 @@ This code is licensed under GPL v3.
 
 Download the source of [Libadalang](https://github.com/AdaCore/libadalang) and
 follow the instructions given in the README.
+
+# 5. Running the testsuite
+
+In order to run the testsuite, you need to install
+[GNATpython](https://github.com/Nikokrock/gnatpython). You can then start it
+with the following command-line:
+
+```sh
+./run_testsuite.sh
+```
+
+This will display the status of all executed testcases as they are executed.
