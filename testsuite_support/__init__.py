@@ -1,12 +1,12 @@
 from gnatpython.testsuite import Testsuite as BaseTestsuite
 
-import testsuite_support.python_driver
+from testsuite_support import python_driver
 
 
 class Testsuite(BaseTestsuite):
     TEST_SUBDIR = 'tests'
     DRIVERS = {
-        'python': testsuite_support.python_driver.PythonDriver,
+        'python': python_driver.PythonDriver
     }
 
     def add_options(self):

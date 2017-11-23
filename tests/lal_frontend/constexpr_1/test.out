@@ -1,0 +1,7 @@
+Program:
+  read(x#1)
+  split:
+    assume(False)
+    x#1 = 1
+  |:
+    assume(True)

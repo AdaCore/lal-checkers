@@ -1,0 +1,12 @@
+Program:
+  read(x#1)
+  read(C#2)
+  read(A#3)
+  read(B#4)
+  split:
+    assume(C#2)
+    tmp0#5 = A#3
+  |:
+    assume(!C#2)
+    tmp0#5 = B#4
+  x#1 = tmp0#5

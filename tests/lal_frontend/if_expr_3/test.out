@@ -1,0 +1,19 @@
+Program:
+  read(x#1)
+  read(C1#2)
+  read(C2#3)
+  read(A1#4)
+  read(A2#5)
+  split:
+    assume(C1#2)
+    tmp0#6 = C1#2
+  |:
+    assume(!C1#2)
+    tmp0#6 = C2#3
+  split:
+    assume(tmp0#6)
+    tmp1#7 = A1#4
+  |:
+    assume(!tmp0#6)
+    tmp1#7 = A2#5
+  x#1 = tmp1#7
