@@ -4,7 +4,7 @@ Provides a libadalang frontend for the Basic IR.
 
 import libadalang as lal
 
-from lalcheck.irs.basic import tree as irt
+from lalcheck.irs.basic import tree as irt, purpose
 from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
 from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.constants import ops, lits
@@ -181,10 +181,7 @@ def _gen_ir(subp):
 
             return prefix_pre_stmts + [irt.AssumeStmt(
                 assumed_expr,
-                purpose={
-                    'kind': 'deref_check',
-                    'obj': prefix
-                }
+                purpose=purpose.DerefCheck(prefix)
             )], irt.UnExpr(
                 irt.un_ops[ops.Deref],
                 prefix,

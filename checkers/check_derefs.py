@@ -1,6 +1,7 @@
 import collecting_semantics
 import lalcheck.irs.basic.tree as irt
 from lalcheck.irs.basic.tools import PrettyPrinter
+from lalcheck.irs.basic.purpose import DerefCheck
 from lalcheck.digraph import Digraph
 from lalcheck.constants import lits
 from lalcheck import dot_printer
@@ -108,20 +109,14 @@ def check_derefs(prog, model, merge_pred_builder):
         if 'node' in node.data
     )
 
-    # Collect those which are assume statements carrying a 'purpose' tag.
-    assume_nodes_with_purpose = (
-        (node, ast_node.data.purpose)
+    # Collect those that are assume statements and that have a 'purpose' tag
+    # which indicates that this assume statement was added to check
+    # dereferences.
+    deref_checks = (
+        (node, ast_node.data.purpose.expr)
         for node, ast_node in nodes_with_ast
         if isinstance(ast_node, irt.AssumeStmt)
-        if 'purpose' in ast_node.data
-    )
-
-    # Collect those that signal that the assume statement is a synthetic node
-    # generated for the purpose of checking null dereferences.
-    deref_checks = (
-        (node, purpose['obj'])
-        for node, purpose in assume_nodes_with_purpose
-        if purpose['kind'] == 'deref_check'
+        if DerefCheck.is_purpose_of(ast_node)
     )
 
     # Use the semantic analysis to evaluate at those program points the
