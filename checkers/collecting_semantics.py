@@ -10,6 +10,7 @@ from lalcheck.irs.basic.tools import (
 
 from lalcheck.irs.basic.tree import Identifier
 from lalcheck.irs.basic.tools import PrettyPrinter
+from lalcheck.irs.basic.purpose import SyntheticVariable
 from lalcheck.irs.basic import visitors
 from lalcheck.utils import KeyCounter
 from lalcheck.digraph import Digraph
@@ -150,7 +151,11 @@ def build_resulting_graph(file_name, cfg, results, trace_domain):
                 Digraph.Node(
                     node.name,
                     ___orig=node,
-                    **{v.name: value for v, value in values.iteritems()}
+                    **{
+                        v.name: value
+                        for v, value in values.iteritems()
+                        if not SyntheticVariable.is_purpose_of(v)
+                    }
                 )
             )
 

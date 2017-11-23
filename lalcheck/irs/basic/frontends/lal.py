@@ -120,7 +120,8 @@ def _gen_ir(subp):
 
             tmp = irt.Identifier(
                 fresh_name("tmp"),
-                type_hint=expr.p_expression_type
+                type_hint=expr.p_expression_type,
+                purpose=purpose.SyntheticVariable()
             )
 
             then_stmts, then_expr = transform_expr(expr.f_then_expr)

@@ -32,3 +32,11 @@ class DerefCheck(Purpose):
         :param tree.Expr derefed_expr: The derefed expression.
         """
         self.expr = derefed_expr
+
+
+class SyntheticVariable(Purpose):
+    """
+    Attached to an identifier that was created synthetically. (For example,
+    to hold a temporary value.)
+    """
+    pass
