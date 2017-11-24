@@ -1,5 +1,5 @@
 """
-Provides the test_runner.run decorator to use on functions to test.
+Provide the test_runner.run decorator to use on functions to test.
 """
 
 import argparse

@@ -1,0 +1,656 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Init'])"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_1'])",
+          "state": "frozenset([u'Init'])"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "assume1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Init'])"
+        }
+      }
+    ],
+    "assume2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "assume3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "assume4": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init'])"
+        }
+      }
+    ],
+    "loop_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+        }
+      }
+    ],
+    "loop_start0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+        }
+      }
+    ],
+    "read0": [
+      {
+        "trace:": [
+          "assign0",
+          "read0",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Init'])"
+        }
+      }
+    ],
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "split_join1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+        }
+      }
+    ]
+  },
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Init'])"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_1'])",
+          "state": "frozenset([u'Init'])"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "assume1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Init'])"
+        }
+      }
+    ],
+    "assume2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "assume3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "assume4": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init'])"
+        }
+      }
+    ],
+    "loop_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+        }
+      }
+    ],
+    "loop_start0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+        }
+      }
+    ],
+    "read0": [
+      {
+        "trace:": [
+          "assign0",
+          "read0",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Init'])"
+        }
+      }
+    ],
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "split_join1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+        }
+      }
+    ]
+  }
+}

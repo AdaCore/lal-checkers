@@ -274,13 +274,6 @@ def collect_semantics(prog, model, merge_pred_builder):
 
     def it(states):
         new_states = states.copy()
-        print({
-            k.name: {
-                repr_trace(trace): values
-                for trace, values in v
-            }
-            for k, v in new_states.iteritems()
-        })
 
         for node in cfg.nodes:
             inputs = [new_states[anc] for anc in cfg.ancestors(node)]
