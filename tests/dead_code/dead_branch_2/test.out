@@ -1,0 +1,10 @@
+{
+  "always": [
+    "assign2",
+    "assume1"
+  ],
+  "le_t_eq_v": [
+    "assign2",
+    "assume1"
+  ]
+}

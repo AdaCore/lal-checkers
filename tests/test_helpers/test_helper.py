@@ -3,6 +3,7 @@ Provide the test_runner.run decorator to use on functions to test.
 """
 
 import argparse
+import os
 
 
 parser = argparse.ArgumentParser(description="Generic Test Helper")
@@ -19,3 +20,14 @@ def run(fun):
     """
     args = parser.parse_args()
     fun(args)
+
+
+def ensure_dir(path):
+    """
+    Ensure that the directory at the given path exists. (Creates it if it
+    doesn't).
+
+    :param str path: The desired path to the directory.
+    """
+    if not os.path.exists(path):
+        os.makedirs(path)
