@@ -9,9 +9,15 @@ from gnatpython.testsuite.driver import TestDriver
 
 
 class PythonDriver(TestDriver):
+    """
+    If the 'helper' option is used in the YAML file, the corresponding test
+    helper (from the 'tests/test_helpers' directory) is run with a set of
+    standard arguments ('output_dir', etc.). Otherwise, the default 'test.py'
+    file is run.
+    """
 
     #
-    # Driver entry poins
+    # Driver entry points
     #
 
     py_file = 'test.py'
@@ -43,6 +49,30 @@ class PythonDriver(TestDriver):
         """
         return self.global_env['options'].with_python or sys.executable
 
+    @property
+    def test_helpers_dir(self):
+        """
+        Return the path to the "test_helpers" directory.
+
+        :rtype: str
+        """
+        return os.path.join(self.global_env['test_dir'], 'test_helpers')
+
+    @property
+    def python_interpreter_args(self):
+        """
+        Return the arguments to pass to the python interpreter.
+        :rtype: list[str]
+        """
+        if 'helper' in self.test_env:
+            py_file = os.path.join(
+                self.test_helpers_dir,
+                self.test_env['helper']
+            )
+            return [py_file, '--output_dir=output']
+        else:
+            return [self.py_file]
+
     def test_working_dir(self, *args):
         """
         Build a path under the temporary directory created for this testcase.
@@ -55,11 +85,12 @@ class PythonDriver(TestDriver):
                             *args)
 
     def tear_up(self):
+        super(PythonDriver, self).tear_up()
         fileutils.sync_tree(self.test_env['test_dir'], self.test_working_dir())
 
     def run(self):
         # Run the Python script and redirect its output to `self.out_file`.
-        argv = [self.python_interpreter, self.py_file]
+        argv = [self.python_interpreter] + self.python_interpreter_args
 
         p = Run(argv, timeout=self.timeout, output=PIPE, error=STDOUT,
                 cwd=self.test_working_dir())
