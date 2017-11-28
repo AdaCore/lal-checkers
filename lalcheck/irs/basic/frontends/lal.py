@@ -111,6 +111,24 @@ def _gen_ir(subp):
             )
 
         elif expr.is_a(lal.IfExpr):
+            # If expressions are transformed as such:
+            #
+            # Ada:
+            # ---------------
+            # x := (if C then A else B);
+            #
+            #
+            # Basic IR:
+            # ---------------
+            # split:
+            #   assume(cond)
+            #   tmp := A
+            # |:
+            #   assume(!cond)
+            #   tmp := B
+            # x := tmp
+
+            # Transform the condition and build its inverse.
             cond_pre_stmts, cond = transform_expr(expr.f_cond_expr)
             not_cond = irt.UnExpr(
                 irt.un_ops[ops.NOT],
@@ -118,21 +136,27 @@ def _gen_ir(subp):
                 type_hint=cond.data.type_hint
             )
 
+            # Generate the temporary variable, make sure it is marked as
+            # synthetic so as to inform checkers not to emit irrelevant
+            # messages.
             tmp = irt.Identifier(
                 fresh_name("tmp"),
                 type_hint=expr.p_expression_type,
                 purpose=purpose.SyntheticVariable()
             )
 
+            # Transform the "then" and "else" subexpressions.
             then_stmts, then_expr = transform_expr(expr.f_then_expr)
             else_stmts, else_expr = transform_expr(expr.f_else_expr)
 
+            # Generate the "then" statements of our split statement.
             fst_stmts = (
                 [irt.AssumeStmt(cond)] +
                 then_stmts +
                 [irt.AssignStmt(tmp, then_expr)]
             )
 
+            # Generate the "else" statements of our split statement.
             snd_stmts = (
                 [irt.AssumeStmt(not_cond)] +
                 else_stmts +
@@ -142,6 +166,8 @@ def _gen_ir(subp):
             return cond_pre_stmts + [irt.SplitStmt(fst_stmts, snd_stmts)], tmp
 
         elif expr.is_a(lal.Identifier):
+            # Transform the identifier according what it refers to.
+
             ref = expr.p_referenced_decl
             if ref.is_a(lal.ObjectDecl):
                 return [], var_decls[ref, expr.text]
@@ -169,6 +195,19 @@ def _gen_ir(subp):
             )
 
         elif expr.is_a(lal.ExplicitDeref):
+            # Explicit dereferences are transformed as such:
+            #
+            # Ada:
+            # ----------------
+            # x := F(y.all);
+            #
+            # Basic IR:
+            # ----------------
+            # assume(y != null)
+            # x := F(y.all)
+
+            # Transform the expression being dereferenced and build the
+            # assume expression stating that the prefix is not null.
             prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
             assumed_expr = irt.BinExpr(
                 prefix,
@@ -180,6 +219,9 @@ def _gen_ir(subp):
                 type_hint=expr.p_bool_type
             )
 
+            # Build the assume statement as mark it as a deref check, so as
+            # to inform deref checkers that this assume statement was
+            # introduced for that purpose.
             return prefix_pre_stmts + [irt.AssumeStmt(
                 assumed_expr,
                 purpose=purpose.DerefCheck(prefix)
@@ -190,6 +232,8 @@ def _gen_ir(subp):
             )
 
         elif expr.is_a(lal.AttributeRef):
+            # AttributeRefs are transformed using an unary operator.
+
             prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
             return prefix_pre_stmts, irt.UnExpr(
                 _attr_2_unop[expr.f_attribute.text],
