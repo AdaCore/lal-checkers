@@ -14,6 +14,9 @@ class Visitor(object):
     def visit_ident(self, ident, *args):
         return
 
+    def visit_var(self, var, *args):
+        return
+
     def visit_assign(self, assign, *args):
         return
 
@@ -57,6 +60,9 @@ class ImplicitVisitor(Visitor):
     def visit_ident(self, ident, *args):
         self.visit_children(ident, *args)
 
+    def visit_var(self, var, *args):
+        self.visit_children(var, *args)
+
     def visit_assign(self, assign, *args):
         self.visit_children(assign, *args)
 
@@ -98,6 +104,9 @@ class CFGNodeVisitor(Visitor):
 
     def visit_ident(self, ident, *args):
         self.err(ident)
+
+    def visit_var(self, var, *args):
+        self.err(var)
 
     def visit_assign(self, assign, *args):
         return

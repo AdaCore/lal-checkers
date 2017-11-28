@@ -142,9 +142,13 @@ def _gen_ir(subp):
             # synthetic so as to inform checkers not to emit irrelevant
             # messages.
             tmp = irt.Identifier(
-                fresh_name("tmp"),
+                irt.Variable(
+                    fresh_name("tmp"),
+                    purpose=purpose.SyntheticVariable(),
+                    type_hint=expr.p_expression_type,
+                    orig_node=expr
+                ),
                 type_hint=expr.p_expression_type,
-                purpose=purpose.SyntheticVariable(),
                 orig_node=expr
             )
 
@@ -173,7 +177,11 @@ def _gen_ir(subp):
 
             ref = expr.p_referenced_decl
             if ref.is_a(lal.ObjectDecl):
-                return [], var_decls[ref, expr.text]
+                return [], irt.Identifier(
+                    var_decls[ref, expr.text],
+                    type_hint=expr.p_expression_type,
+                    orig_node=expr
+                )
             elif ref.is_a(lal.EnumLiteralDecl):
                 return [], irt.Lit(
                     expr.text,
@@ -266,7 +274,7 @@ def _gen_ir(subp):
             tdecl = decl.f_type_expr.p_designated_type_decl
 
             for var_id in decl.f_ids:
-                var_decls[decl, var_id.text] = irt.Identifier(
+                var_decls[decl, var_id.text] = irt.Variable(
                     var_id.text,
                     type_hint=tdecl,
                     orig_node=var_id
@@ -275,7 +283,11 @@ def _gen_ir(subp):
             if decl.f_default_expr is None:
                 return [
                     irt.ReadStmt(
-                        var_decls[decl, var_id.text],
+                        irt.Identifier(
+                            var_decls[decl, var_id.text],
+                            type_hint=tdecl,
+                            orig_node=var_id
+                        ),
                         orig_node=decl
                     )
                     for var_id in decl.f_ids
@@ -284,7 +296,11 @@ def _gen_ir(subp):
                 dval_pre_stmts, dval_expr = transform_expr(decl.f_default_expr)
                 return dval_pre_stmts + [
                     irt.AssignStmt(
-                        var_decls[decl, var_id.text],
+                        irt.Identifier(
+                            var_decls[decl, var_id.text],
+                            type_hint=tdecl,
+                            orig_node=var_id
+                        ),
                         dval_expr,
                         orig_node=decl
                     )
@@ -307,7 +323,14 @@ def _gen_ir(subp):
             expr_pre_stmts, expr = transform_expr(stmt.f_expr)
             return expr_pre_stmts + [
                 irt.AssignStmt(
-                    var_decls[stmt.f_dest.p_referenced_decl, stmt.f_dest.text],
+                    irt.Identifier(
+                        var_decls[
+                            stmt.f_dest.p_referenced_decl,
+                            stmt.f_dest.text
+                        ],
+                        type_hint=stmt.f_dest.p_expression_type,
+                        orig_node=stmt.f_dest
+                    ),
                     expr,
                     orig_node=stmt
                 )
@@ -445,7 +468,7 @@ class ConvertUniversalTypes(IRImplicitVisitor):
     def visit_assign(self, assign):
         assign.expr = self.try_convert_expr(
             assign.expr,
-            assign.var.data.type_hint
+            assign.id.data.type_hint
         )
 
     def visit_assume(self, assume):

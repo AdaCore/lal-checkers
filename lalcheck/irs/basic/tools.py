@@ -82,14 +82,17 @@ class PrettyPrinter(visitors.Visitor):
         return "Program:\n{}".format(self.print_stmts(prgm.stmts, opts))
 
     def visit_ident(self, ident, opts):
+        return ident.var.visit(self, opts)
+
+    def visit_var(self, var, opts):
         return "{}{}".format(
-            str(ident.name),
-            "#{}".format(self.id_map[ident]) if opts.print_ids else ""
+            str(var.name),
+            "#{}".format(self.id_map[var]) if opts.print_ids else ""
         )
 
     def visit_assign(self, assign, opts):
         return "{} = {}".format(
-            assign.var.visit(self, opts),
+            assign.id.visit(self, opts),
             assign.expr.visit(self, opts)
         )
 
@@ -105,10 +108,10 @@ class PrettyPrinter(visitors.Visitor):
         return "loop:\n{}".format(self.print_stmts(loop.stmts, opts))
 
     def visit_read(self, read, opts):
-        return "read({})".format(read.var.visit(self, opts))
+        return "read({})".format(read.id.visit(self, opts))
 
     def visit_use(self, use, opts):
-        return "use({})".format(use.var.visit(self, opts))
+        return "use({})".format(use.id.visit(self, opts))
 
     def visit_assume(self, assume, opts):
         return "assume({})".format(assume.expr.visit(self, opts))
@@ -297,8 +300,11 @@ class Models(visitors.Visitor):
         )
 
     def visit_ident(self, ident, node_domains, defs, inv_defs, builders):
+        return ident.var.visit(self, node_domains, defs, inv_defs, builders)
+
+    def visit_var(self, var, node_domains, defs, inv_defs, builders):
         return Bunch(
-            domain=node_domains[ident]
+            domain=node_domains[var]
         )
 
     def visit_lit(self, lit, node_domains, defs, inv_defs, builders):
@@ -387,8 +393,8 @@ class ExprEvaluator(visitors.Visitor):
         """
         :param tree.Expr expr: The expression to evaluate.
 
-        :param dict[tree.Identifier, object] env: The environment, containing
-            an entry for each identifier traversed during evaluation.
+        :param dict[tree.Variable, object] env: The environment, containing
+            an entry for each Variable traversed during evaluation.
 
         :return: The value this expression evaluates to.
 
@@ -397,7 +403,7 @@ class ExprEvaluator(visitors.Visitor):
         return expr.visit(self, env)
 
     def visit_ident(self, ident, env):
-        return env[ident]
+        return env[ident.var]
 
     def visit_binexpr(self, binexpr, env):
         lhs = binexpr.lhs.visit(self, env)
@@ -428,13 +434,13 @@ class ExprSolver(visitors.Visitor):
         """
         :param tree.Expr expr: The predicate expression to solve.
 
-        :param dict[tree.Identifier, object] env: The environment, containing
-            an entry for each identifier traversed while solving.
+        :param dict[tree.Variable, object] env: The environment, containing
+            an entry for each variable traversed while solving.
 
         :return: A new environment for which evaluating the given expression
             returns boolean_ops.True
 
-        :rtype: dict[tree.Identifier, object]
+        :rtype: dict[tree.Variable, object]
 
         Note: The new environment may in fact not evaluate to True because it
         is an over-approximation of the optimal solution. However, it should
@@ -448,8 +454,8 @@ class ExprSolver(visitors.Visitor):
         return new_env
 
     def visit_ident(self, ident, env, expected):
-        dom = self.model[ident].domain
-        env[ident] = dom.meet(env[ident], expected)
+        dom = self.model[ident.var].domain
+        env[ident.var] = dom.meet(env[ident.var], expected)
         return True
 
     def visit_binexpr(self, binexpr, env, expected):

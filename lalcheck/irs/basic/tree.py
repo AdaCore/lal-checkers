@@ -90,11 +90,29 @@ class Program(Node):
 @_visitable("visit_ident")
 class Identifier(Node):
     """
-    An identifier, like "x", "True", etc.
+    An identifier, like "x", etc.
+    """
+    def __init__(self, var, **data):
+        """
+        :param Variable var: The variable object associated to this identifier.
+        :param **object data: User-defined data.
+        """
+        Node.__init__(self, **data)
+        self.var = var
+
+    def children(self):
+        yield self.var
+
+
+@_visitable("visit_var")
+class Variable(Node):
+    """
+    Represents a unique variable object, that can be referred to by multiple
+    identifiers.
     """
     def __init__(self, name, **data):
         """
-        :param str name: The name of this identifier.
+        :param string name: The name of the variable
         :param **object data: User-defined data.
         """
         Node.__init__(self, **data)
@@ -116,18 +134,18 @@ class AssignStmt(Stmt):
     """
     Represents the assign statement, i.e. [identifier] = [expr].
     """
-    def __init__(self, var, expr, **data):
+    def __init__(self, id, expr, **data):
         """
-        :param Identifier var: The identifier being assigned.
+        :param Identifier id: The identifier being assigned.
         :param Expr expr: The expression assigned to the identifier.
         :param **object data: User-defined data.
         """
         Node.__init__(self, **data)
-        self.var = var
+        self.id = id
         self.expr = expr
 
     def children(self):
-        yield self.var
+        yield self.id
         yield self.expr
 
 
@@ -181,16 +199,16 @@ class ReadStmt(Stmt):
     """
     Represents the havoc operation on a variable.
     """
-    def __init__(self, var, **data):
+    def __init__(self, id, **data):
         """
-        :param Identifier var: The variable being read.
+        :param Identifier id: The identifier being read.
         :param **object data: User-defined data.
         """
         Node.__init__(self, **data)
-        self.var = var
+        self.id = id
 
     def children(self):
-        yield self.var
+        yield self.id
 
 
 @_visitable("visit_use")
@@ -198,16 +216,16 @@ class UseStmt(Stmt):
     """
     Represents the fact that a variable was used at this point.
     """
-    def __init__(self, var, **data):
+    def __init__(self, id, **data):
         """
-        :param Identifier var: The variable being used.
+        :param Identifier id: The identifier being used.
         :param **object data: User-defined data.
         """
         Node.__init__(self, **data)
-        self.var = var
+        self.id = id
 
     def children(self):
-        yield self.var
+        yield self.id
 
 
 @_visitable("visit_assume")

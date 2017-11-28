@@ -8,7 +8,7 @@ from lalcheck.irs.basic.tools import (
     ExprSolver
 )
 
-from lalcheck.irs.basic.tree import Identifier
+from lalcheck.irs.basic.tree import Variable
 from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.irs.basic.purpose import SyntheticVariable
 from lalcheck.irs.basic import visitors
@@ -40,7 +40,7 @@ class VarTracker(visitors.CFGNodeVisitor):
 
     def visit_assign(self, assign, state):
         env = self.state_to_env(state)
-        env[assign.var] = self.evaluator.eval(assign.expr, env)
+        env[assign.id.var] = self.evaluator.eval(assign.expr, env)
         return self.env_to_state(env)
 
     def visit_assume(self, assume, state):
@@ -50,7 +50,7 @@ class VarTracker(visitors.CFGNodeVisitor):
         ))
 
     def visit_read(self, read, state):
-        return tuple(self.vars_domain.top[i] if i == self.vars_idx[read.var]
+        return tuple(self.vars_domain.top[i] if i == self.vars_idx[read.id.var]
                      else x for i, x in enumerate(state))
 
     def visit_use(self, use, state):
@@ -244,7 +244,7 @@ def collect_semantics(prog, model, merge_pred_builder):
 
     cfg = prog.visit(CFGBuilder())
 
-    var_set = set(visitors.findall(prog, lambda n: isinstance(n, Identifier)))
+    var_set = set(visitors.findall(prog, lambda n: isinstance(n, Variable)))
     vars_idx = {v: i for i, v in enumerate(var_set)}
     vars_domain = domains.Product(*(model[v].domain for v in var_set))
     trace_domain = SimpleTraceLattice(cfg.nodes)
