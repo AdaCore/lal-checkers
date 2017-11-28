@@ -315,22 +315,22 @@ class Operator(object):
 
 
 bin_ops = {
-    ops.Plus: Operator(ops.Plus),
-    ops.Minus: Operator(ops.Minus),
-    ops.Lt: Operator(ops.Lt),
-    ops.Le: Operator(ops.Le),
-    ops.Eq: Operator(ops.Eq),
-    ops.Neq: Operator(ops.Neq),
-    ops.Ge: Operator(ops.Ge),
-    ops.Gt: Operator(ops.Gt),
-    ops.DotDot: Operator(ops.DotDot)
+    ops.PLUS: Operator(ops.PLUS),
+    ops.MINUS: Operator(ops.MINUS),
+    ops.LT: Operator(ops.LT),
+    ops.LE: Operator(ops.LE),
+    ops.EQ: Operator(ops.EQ),
+    ops.NEQ: Operator(ops.NEQ),
+    ops.GE: Operator(ops.GE),
+    ops.GT: Operator(ops.GT),
+    ops.DOT_DOT: Operator(ops.DOT_DOT)
 }
 
 un_ops = {
-    ops.Not: Operator(ops.Not),
-    ops.Neg: Operator(ops.Neg),
-    ops.Address: Operator(ops.Address),
-    ops.Deref: Operator(ops.Deref),
-    ops.GetFirst: Operator(ops.GetFirst),
-    ops.GetLast: Operator(ops.GetLast)
+    ops.NOT: Operator(ops.NOT),
+    ops.NEG: Operator(ops.NEG),
+    ops.ADDRESS: Operator(ops.ADDRESS),
+    ops.DEREF: Operator(ops.DEREF),
+    ops.GET_FIRST: Operator(ops.GET_FIRST),
+    ops.GET_LAST: Operator(ops.GET_LAST)
 }

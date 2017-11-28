@@ -1,5 +1,5 @@
-True = 'True'
-False = 'False'
+TRUE = 'True'
+FALSE = 'False'
 
-Null = 'null'
-NotNull = 'notnull'
+NULL = 'null'
+NOT_NULL = 'notnull'

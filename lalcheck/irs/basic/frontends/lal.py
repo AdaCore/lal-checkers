@@ -15,24 +15,24 @@ from funcy.calc import memoize
 
 
 _lal_op_type_2_symbol = {
-    (lal.OpLt, 2): irt.bin_ops[ops.Lt],
-    (lal.OpLte, 2): irt.bin_ops[ops.Le],
-    (lal.OpEq, 2): irt.bin_ops[ops.Eq],
-    (lal.OpNeq, 2): irt.bin_ops[ops.Neq],
-    (lal.OpGte, 2): irt.bin_ops[ops.Ge],
-    (lal.OpGt, 2): irt.bin_ops[ops.Gt],
-    (lal.OpPlus, 2): irt.bin_ops[ops.Plus],
-    (lal.OpMinus, 2): irt.bin_ops[ops.Minus],
-    (lal.OpDoubleDot, 2): irt.bin_ops[ops.DotDot],
+    (lal.OpLt, 2): irt.bin_ops[ops.LT],
+    (lal.OpLte, 2): irt.bin_ops[ops.LE],
+    (lal.OpEq, 2): irt.bin_ops[ops.EQ],
+    (lal.OpNeq, 2): irt.bin_ops[ops.NEQ],
+    (lal.OpGte, 2): irt.bin_ops[ops.GE],
+    (lal.OpGt, 2): irt.bin_ops[ops.GT],
+    (lal.OpPlus, 2): irt.bin_ops[ops.PLUS],
+    (lal.OpMinus, 2): irt.bin_ops[ops.MINUS],
+    (lal.OpDoubleDot, 2): irt.bin_ops[ops.DOT_DOT],
 
-    (lal.OpMinus, 1): irt.un_ops[ops.Neg],
-    (lal.OpNot, 1): irt.un_ops[ops.Not],
+    (lal.OpMinus, 1): irt.un_ops[ops.NEG],
+    (lal.OpNot, 1): irt.un_ops[ops.NOT],
 }
 
 _attr_2_unop = {
-    'Access': irt.un_ops[ops.Address],
-    'First': irt.un_ops[ops.GetFirst],
-    'Last': irt.un_ops[ops.GetLast],
+    'Access': irt.un_ops[ops.ADDRESS],
+    'First': irt.un_ops[ops.GET_FIRST],
+    'Last': irt.un_ops[ops.GET_LAST],
 }
 
 
@@ -113,7 +113,7 @@ def _gen_ir(subp):
         elif expr.is_a(lal.IfExpr):
             cond_pre_stmts, cond = transform_expr(expr.f_cond_expr)
             not_cond = irt.UnExpr(
-                irt.un_ops[ops.Not],
+                irt.un_ops[ops.NOT],
                 cond,
                 type_hint=cond.data.type_hint
             )
@@ -164,7 +164,7 @@ def _gen_ir(subp):
 
         elif expr.is_a(lal.NullLiteral):
             return [], irt.Lit(
-                lits.Null,
+                lits.NULL,
                 type_hint=expr.p_expression_type
             )
 
@@ -172,9 +172,9 @@ def _gen_ir(subp):
             prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
             assumed_expr = irt.BinExpr(
                 prefix,
-                irt.bin_ops[ops.Neq],
+                irt.bin_ops[ops.NEQ],
                 irt.Lit(
-                    lits.Null,
+                    lits.NULL,
                     type_hint=expr.f_prefix.p_expression_type
                 ),
                 type_hint=expr.p_bool_type
@@ -184,7 +184,7 @@ def _gen_ir(subp):
                 assumed_expr,
                 purpose=purpose.DerefCheck(prefix)
             )], irt.UnExpr(
-                irt.un_ops[ops.Deref],
+                irt.un_ops[ops.DEREF],
                 prefix,
                 type_hint=expr.p_expression_type
             )
@@ -256,7 +256,7 @@ def _gen_ir(subp):
         elif stmt.is_a(lal.IfStmt):
             cond_pre_stmts, cond = transform_expr(stmt.f_cond_expr)
             not_cond = irt.UnExpr(
-                irt.un_ops[ops.Not],
+                irt.un_ops[ops.NOT],
                 cond,
                 type_hint=cond.data.type_hint
             )
@@ -397,8 +397,8 @@ class NotConstExprError(ValueError):
         super(NotConstExprError, self).__init__()
 
 
-AdaTrue = 'True'
-AdaFalse = 'False'
+ADA_TRUE = 'True'
+ADA_FALSE = 'False'
 
 
 class ConstExprEvaluator(IRImplicitVisitor):
@@ -413,32 +413,32 @@ class ConstExprEvaluator(IRImplicitVisitor):
             self.last = last
 
     BinOps = {
-        ops.And: lambda x, y: ConstExprEvaluator.from_bool(
+        ops.AND: lambda x, y: ConstExprEvaluator.from_bool(
             ConstExprEvaluator.to_bool(x) and ConstExprEvaluator.to_bool(y)
         ),
-        ops.Or: lambda x, y: ConstExprEvaluator.from_bool(
+        ops.OR: lambda x, y: ConstExprEvaluator.from_bool(
             ConstExprEvaluator.to_bool(x) or ConstExprEvaluator.to_bool(y)
         ),
 
-        ops.Neq: lambda x, y: ConstExprEvaluator.from_bool(x != y),
-        ops.Eq: lambda x, y: ConstExprEvaluator.from_bool(x == y),
-        ops.Lt: lambda x, y: ConstExprEvaluator.from_bool(x < y),
-        ops.Le: lambda x, y: ConstExprEvaluator.from_bool(x <= y),
-        ops.Ge: lambda x, y: ConstExprEvaluator.from_bool(x >= y),
-        ops.Gt: lambda x, y: ConstExprEvaluator.from_bool(x > y),
-        ops.DotDot: lambda x, y: ConstExprEvaluator.Range(x, y),
+        ops.NEQ: lambda x, y: ConstExprEvaluator.from_bool(x != y),
+        ops.EQ: lambda x, y: ConstExprEvaluator.from_bool(x == y),
+        ops.LT: lambda x, y: ConstExprEvaluator.from_bool(x < y),
+        ops.LE: lambda x, y: ConstExprEvaluator.from_bool(x <= y),
+        ops.GE: lambda x, y: ConstExprEvaluator.from_bool(x >= y),
+        ops.GT: lambda x, y: ConstExprEvaluator.from_bool(x > y),
+        ops.DOT_DOT: lambda x, y: ConstExprEvaluator.Range(x, y),
 
-        ops.Plus: lambda x, y: x + y,
-        ops.Minus: lambda x, y: x - y
+        ops.PLUS: lambda x, y: x + y,
+        ops.MINUS: lambda x, y: x - y
     }
 
     UnOps = {
-        ops.Not: lambda x: ConstExprEvaluator.from_bool(
+        ops.NOT: lambda x: ConstExprEvaluator.from_bool(
             not ConstExprEvaluator.to_bool(x)
         ),
-        ops.Neg: lambda x: -x,
-        ops.GetFirst: lambda x: x.first,
-        ops.GetLast: lambda x: x.last
+        ops.NEG: lambda x: -x,
+        ops.GET_FIRST: lambda x: x.first,
+        ops.GET_LAST: lambda x: x.last
     }
 
     def __init__(self, bool_type, int_type, u_int_type, u_real_type):
@@ -461,7 +461,7 @@ class ConstExprEvaluator(IRImplicitVisitor):
         :return: The representation of the corresponding boolean literal.
         :rtype: bool
         """
-        return x == AdaTrue
+        return x == ADA_TRUE
 
     @staticmethod
     def from_bool(x):
@@ -470,7 +470,7 @@ class ConstExprEvaluator(IRImplicitVisitor):
         :return: The corresponding boolean.
         :rtype: str
         """
-        return AdaTrue if x else AdaFalse
+        return ADA_TRUE if x else ADA_FALSE
 
     def eval(self, expr):
         """

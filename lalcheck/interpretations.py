@@ -108,21 +108,21 @@ def default_boolean_interpreter(tpe):
         bin_fun_dom = (bool_dom, bool_dom, bool_dom)
 
         defs = {
-            (ops.Not, un_fun_dom): boolean_ops.not_,
-            (ops.And, bin_fun_dom): boolean_ops.and_,
-            (ops.Or, bin_fun_dom): boolean_ops.or_,
+            (ops.NOT, un_fun_dom): boolean_ops.not_,
+            (ops.AND, bin_fun_dom): boolean_ops.and_,
+            (ops.OR, bin_fun_dom): boolean_ops.or_,
 
-            (ops.Eq, bin_fun_dom): finite_lattice_ops.eq(bool_dom),
-            (ops.Neq, bin_fun_dom): finite_lattice_ops.neq(bool_dom)
+            (ops.EQ, bin_fun_dom): finite_lattice_ops.eq(bool_dom),
+            (ops.NEQ, bin_fun_dom): finite_lattice_ops.neq(bool_dom)
         }
 
         inv_defs = {
-            (ops.Not, un_fun_dom): boolean_ops.inv_not,
-            (ops.And, bin_fun_dom): boolean_ops.inv_and,
-            (ops.Or, bin_fun_dom): boolean_ops.inv_or,
+            (ops.NOT, un_fun_dom): boolean_ops.inv_not,
+            (ops.AND, bin_fun_dom): boolean_ops.inv_and,
+            (ops.OR, bin_fun_dom): boolean_ops.inv_or,
 
-            (ops.Eq, bin_fun_dom): finite_lattice_ops.inv_eq(bool_dom),
-            (ops.Neq, bin_fun_dom): finite_lattice_ops.inv_neq(bool_dom)
+            (ops.EQ, bin_fun_dom): finite_lattice_ops.inv_eq(bool_dom),
+            (ops.NEQ, bin_fun_dom): finite_lattice_ops.inv_neq(bool_dom)
         }
 
         builder = boolean_ops.lit
@@ -145,35 +145,35 @@ def default_int_range_interpreter(tpe):
         binary_rel_dom = (int_dom, int_dom, bool_dom)
 
         defs = {
-            (ops.Plus, binary_fun_dom):
+            (ops.PLUS, binary_fun_dom):
                 interval_ops.add_no_wraparound(int_dom),
 
-            (ops.Minus, binary_fun_dom):
+            (ops.MINUS, binary_fun_dom):
                 interval_ops.sub_no_wraparound(int_dom),
 
-            (ops.Lt, binary_rel_dom): interval_ops.lt(int_dom),
-            (ops.Le, binary_rel_dom): interval_ops.le(int_dom),
-            (ops.Eq, binary_rel_dom): interval_ops.eq(int_dom),
-            (ops.Neq, binary_rel_dom): interval_ops.neq(int_dom),
-            (ops.Ge, binary_rel_dom): interval_ops.ge(int_dom),
-            (ops.Gt, binary_rel_dom): interval_ops.gt(int_dom),
-            (ops.Neg, unary_fun_dom): interval_ops.negate(int_dom),
+            (ops.LT, binary_rel_dom): interval_ops.lt(int_dom),
+            (ops.LE, binary_rel_dom): interval_ops.le(int_dom),
+            (ops.EQ, binary_rel_dom): interval_ops.eq(int_dom),
+            (ops.NEQ, binary_rel_dom): interval_ops.neq(int_dom),
+            (ops.GE, binary_rel_dom): interval_ops.ge(int_dom),
+            (ops.GT, binary_rel_dom): interval_ops.gt(int_dom),
+            (ops.NEG, unary_fun_dom): interval_ops.negate(int_dom),
         }
 
         inv_defs = {
-            (ops.Plus, binary_fun_dom):
+            (ops.PLUS, binary_fun_dom):
                 interval_ops.inv_add_no_wraparound(int_dom),
 
-            (ops.Minus, binary_fun_dom):
+            (ops.MINUS, binary_fun_dom):
                 interval_ops.inv_sub_no_wraparound(int_dom),
 
-            (ops.Lt, binary_rel_dom): interval_ops.inv_lt(int_dom),
-            (ops.Le, binary_rel_dom): interval_ops.inv_le(int_dom),
-            (ops.Eq, binary_rel_dom): interval_ops.inv_eq(int_dom),
-            (ops.Neq, binary_rel_dom): interval_ops.inv_neq(int_dom),
-            (ops.Ge, binary_rel_dom): interval_ops.inv_ge(int_dom),
-            (ops.Gt, binary_rel_dom): interval_ops.inv_gt(int_dom),
-            (ops.Neg, unary_fun_dom): interval_ops.inv_inverse(int_dom)
+            (ops.LT, binary_rel_dom): interval_ops.inv_lt(int_dom),
+            (ops.LE, binary_rel_dom): interval_ops.inv_le(int_dom),
+            (ops.EQ, binary_rel_dom): interval_ops.inv_eq(int_dom),
+            (ops.NEQ, binary_rel_dom): interval_ops.inv_neq(int_dom),
+            (ops.GE, binary_rel_dom): interval_ops.inv_ge(int_dom),
+            (ops.GT, binary_rel_dom): interval_ops.inv_gt(int_dom),
+            (ops.NEG, unary_fun_dom): interval_ops.inv_inverse(int_dom)
         }
 
         builder = interval_ops.lit(int_dom)
@@ -194,13 +194,13 @@ def default_enum_interpreter(tpe):
         bin_rel_dom = (enum_dom, enum_dom, bool_dom)
 
         defs = {
-            (ops.Eq, bin_rel_dom): finite_lattice_ops.eq(enum_dom),
-            (ops.Neq, bin_rel_dom): finite_lattice_ops.neq(enum_dom)
+            (ops.EQ, bin_rel_dom): finite_lattice_ops.eq(enum_dom),
+            (ops.NEQ, bin_rel_dom): finite_lattice_ops.neq(enum_dom)
         }
 
         inv_defs = {
-            (ops.Eq, bin_rel_dom): finite_lattice_ops.inv_eq(enum_dom),
-            (ops.Neq, bin_rel_dom): finite_lattice_ops.inv_neq(enum_dom)
+            (ops.EQ, bin_rel_dom): finite_lattice_ops.inv_eq(enum_dom),
+            (ops.NEQ, bin_rel_dom): finite_lattice_ops.inv_neq(enum_dom)
         }
 
         builder = finite_lattice_ops.lit(enum_dom)
@@ -216,29 +216,29 @@ def default_enum_interpreter(tpe):
 @type_interpreter
 def simple_access_interpreter(tpe):
     if tpe.is_a(types.Pointer):
-        ptr_dom = domains.FiniteLattice.of_subsets({lits.Null, lits.NotNull})
+        ptr_dom = domains.FiniteLattice.of_subsets({lits.NULL, lits.NOT_NULL})
         bool_dom = boolean_ops.Boolean
         bin_rel_dom = (ptr_dom, ptr_dom, bool_dom)
 
         defs = {
-            (ops.Eq, bin_rel_dom): finite_lattice_ops.eq(ptr_dom),
-            (ops.Neq, bin_rel_dom): finite_lattice_ops.neq(ptr_dom)
+            (ops.EQ, bin_rel_dom): finite_lattice_ops.eq(ptr_dom),
+            (ops.NEQ, bin_rel_dom): finite_lattice_ops.neq(ptr_dom)
         }
 
         inv_defs = {
-            (ops.Eq, bin_rel_dom): finite_lattice_ops.inv_eq(ptr_dom),
-            (ops.Neq, bin_rel_dom): finite_lattice_ops.inv_neq(ptr_dom)
+            (ops.EQ, bin_rel_dom): finite_lattice_ops.inv_eq(ptr_dom),
+            (ops.NEQ, bin_rel_dom): finite_lattice_ops.inv_neq(ptr_dom)
         }
 
         builder = finite_lattice_ops.lit(ptr_dom)
-        null = builder(lits.Null)
-        notnull = builder(lits.NotNull)
+        null = builder(lits.NULL)
+        notnull = builder(lits.NOT_NULL)
 
         def def_provider(name, sig):
             if (name, sig) in defs:
                 return defs[name, sig]
 
-            elif (name == ops.Deref and
+            elif (name == ops.DEREF and
                     len(sig) == 2 and
                     sig[0] == ptr_dom):
                 elem_dom = sig[1]
@@ -248,7 +248,7 @@ def simple_access_interpreter(tpe):
 
                 return deref
 
-            elif (name == ops.Address and
+            elif (name == ops.ADDRESS and
                     len(sig) == 2 and
                     sig[1] == ptr_dom):
                 elem_dom = sig[0]
@@ -262,7 +262,7 @@ def simple_access_interpreter(tpe):
             if (name, sig) in defs:
                 return inv_defs[name, sig]
 
-            elif (name == ops.Deref and
+            elif (name == ops.DEREF and
                     len(sig) == 2 and
                     sig[0] == ptr_dom):
                 elem_dom = sig[1]
@@ -278,7 +278,7 @@ def simple_access_interpreter(tpe):
 
                 return inv_deref
 
-            elif (name == ops.Address and
+            elif (name == ops.ADDRESS and
                     len(sig) == 2 and
                     sig[1] == ptr_dom):
                 elem_dom = sig[0]

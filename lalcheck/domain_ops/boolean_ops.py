@@ -8,12 +8,12 @@ from lalcheck import domains
 from lalcheck.constants import lits
 
 
-Boolean = domains.FiniteLattice.of_subsets({lits.True, lits.False})
+Boolean = domains.FiniteLattice.of_subsets({lits.TRUE, lits.FALSE})
 
 none = Boolean.build(frozenset([]))
-false = Boolean.build(frozenset([lits.False]))
-true = Boolean.build(frozenset([lits.True]))
-both = Boolean.build(frozenset([lits.True, lits.False]))
+false = Boolean.build(frozenset([lits.FALSE]))
+true = Boolean.build(frozenset([lits.TRUE]))
+both = Boolean.build(frozenset([lits.TRUE, lits.FALSE]))
 
 
 def not_(x):
@@ -194,7 +194,7 @@ def lit(val):
 
     :rtype: frozenset[str]
     """
-    if val == lits.True:
+    if val == lits.TRUE:
         return true
-    elif val == lits.False:
+    elif val == lits.FALSE:
         return false

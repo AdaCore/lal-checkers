@@ -134,7 +134,7 @@ def check_derefs(prog, model, merge_pred_builder):
     null_derefs = [
         (trace, derefed, len(value) == 1)
         for trace, derefed, value in derefed_values
-        if lits.Null in value
+        if lits.NULL in value
     ]
 
     return AnalysisResult(analysis, null_derefs)
