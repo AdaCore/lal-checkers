@@ -1,13 +1,17 @@
-import collecting_semantics
+import lalcheck.irs.basic.frontends.lal as lal2basic
 import lalcheck.irs.basic.tree as irt
-from lalcheck.irs.basic.tools import PrettyPrinter
+from lalcheck.irs.basic.tools import PrettyPrinter, Models
 from lalcheck.irs.basic.purpose import DerefCheck
 from lalcheck.digraph import Digraph
+from lalcheck.interpretations import default_type_interpreter
 from lalcheck.constants import lits
 from lalcheck import dot_printer
 
+from collecting_semantics import collect_semantics, MergePredicateBuilder
+
 from xml.sax.saxutils import escape
 from collections import defaultdict
+import argparse
 
 
 def html_render_node(node):
@@ -96,7 +100,7 @@ class AnalysisResult(object):
 
 def check_derefs(prog, model, merge_pred_builder):
 
-    analysis = collecting_semantics.collect_semantics(
+    analysis = collect_semantics(
         prog,
         model,
         merge_pred_builder
@@ -138,3 +142,67 @@ def check_derefs(prog, model, merge_pred_builder):
     ]
 
     return AnalysisResult(analysis, null_derefs)
+
+
+def lal_subprogram_info(subp):
+    return (
+        subp.f_subp_spec.f_subp_name.text,
+        subp.f_subp_spec.f_subp_name.sloc_range.start,
+    )
+
+
+def emit_codepeer_message(file, line, column,
+                          proc_name, proc_file, proc_line, proc_column,
+                          expr):
+    print("{}:{}:{} warning: {}:{}:{}:{}: {} {}".format(
+        file, line, column,
+        proc_name, proc_file, proc_line, proc_column,
+        "Null dereference of '{}'!".format(expr),
+        "[check_derefs]"
+    ))
+
+
+def run(args):
+    ctx = lal2basic.new_context()
+
+    progs = lal2basic.extract_programs(ctx, args.file)
+
+    model_builder = Models(
+        lal2basic.default_typer(ctx),
+        default_type_interpreter
+    )
+
+    model = model_builder.of(*progs)
+
+    if args.path_sensitive:
+        merge_predicate = (
+            MergePredicateBuilder.Le_Traces | MergePredicateBuilder.Eq_Vals
+        )
+    else:
+        merge_predicate = MergePredicateBuilder.Always
+
+    analyses = {
+        prog: check_derefs(prog, model, merge_predicate)
+        for prog in progs
+    }
+
+    if args.output_format == 'codepeer':
+        emit_message = emit_codepeer_message
+
+    for prog, analysis in analyses.iteritems():
+        prog_info = lal_subprogram_info(prog.data.orig_node)
+        for (trace, derefed, precise) in analysis.null_derefs:
+            derefed_pos = derefed.data.orig_node.sloc_range.start
+            emit_message(args.file, derefed_pos.line, derefed_pos.column,
+                         prog_info[0], args.file,
+                         prog_info[1].line, prog_info[1].column,
+                         derefed.data.orig_node.text)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Null deref checker")
+    parser.add_argument('--output-format', required=True, default="codepeer")
+    parser.add_argument('--path-sensitive', action='store_true')
+    parser.add_argument('file')
+
+    run(parser.parse_args())
