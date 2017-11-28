@@ -99,7 +99,8 @@ def _gen_ir(subp):
                 lhs,
                 transform_operator(expr.f_op, 2),
                 rhs,
-                type_hint=expr.p_expression_type
+                type_hint=expr.p_expression_type,
+                orig_node=expr
             )
 
         elif expr.is_a(lal.UnOp):
@@ -107,7 +108,8 @@ def _gen_ir(subp):
             return inner_pre_stmts, irt.UnExpr(
                 transform_operator(expr.f_op, 1),
                 inner_expr,
-                type_hint=expr.p_expression_type
+                type_hint=expr.p_expression_type,
+                orig_node=expr
             )
 
         elif expr.is_a(lal.IfExpr):
@@ -142,7 +144,8 @@ def _gen_ir(subp):
             tmp = irt.Identifier(
                 fresh_name("tmp"),
                 type_hint=expr.p_expression_type,
-                purpose=purpose.SyntheticVariable()
+                purpose=purpose.SyntheticVariable(),
+                orig_node=expr
             )
 
             # Transform the "then" and "else" subexpressions.
@@ -174,7 +177,8 @@ def _gen_ir(subp):
             elif ref.is_a(lal.EnumLiteralDecl):
                 return [], irt.Lit(
                     expr.text,
-                    type_hint=ref.parent.parent
+                    type_hint=ref.parent.parent,
+                    orig_node=expr
                 )
             elif ref.is_a(lal.NumberDecl):
                 return transform_expr(ref.f_expr)
@@ -185,13 +189,15 @@ def _gen_ir(subp):
         elif expr.is_a(lal.IntLiteral):
             return [], irt.Lit(
                 int(expr.f_tok.text),
-                type_hint=expr.p_expression_type
+                type_hint=expr.p_expression_type,
+                orig_node=expr
             )
 
         elif expr.is_a(lal.NullLiteral):
             return [], irt.Lit(
                 lits.NULL,
-                type_hint=expr.p_expression_type
+                type_hint=expr.p_expression_type,
+                orig_node=expr
             )
 
         elif expr.is_a(lal.ExplicitDeref):
@@ -228,7 +234,8 @@ def _gen_ir(subp):
             )], irt.UnExpr(
                 irt.un_ops[ops.DEREF],
                 prefix,
-                type_hint=expr.p_expression_type
+                type_hint=expr.p_expression_type,
+                orig_node=expr
             )
 
         elif expr.is_a(lal.AttributeRef):
@@ -238,7 +245,8 @@ def _gen_ir(subp):
             return prefix_pre_stmts, irt.UnExpr(
                 _attr_2_unop[expr.f_attribute.text],
                 prefix,
-                type_hint=expr.p_expression_type
+                type_hint=expr.p_expression_type,
+                orig_node=expr
             )
 
         unimplemented(expr)
@@ -260,18 +268,25 @@ def _gen_ir(subp):
             for var_id in decl.f_ids:
                 var_decls[decl, var_id.text] = irt.Identifier(
                     var_id.text,
-                    type_hint=tdecl
+                    type_hint=tdecl,
+                    orig_node=var_id
                 )
 
             if decl.f_default_expr is None:
-                return [irt.ReadStmt(var_decls[decl, var_id.text])
-                        for var_id in decl.f_ids]
+                return [
+                    irt.ReadStmt(
+                        var_decls[decl, var_id.text],
+                        orig_node=decl
+                    )
+                    for var_id in decl.f_ids
+                ]
             else:
                 dval_pre_stmts, dval_expr = transform_expr(decl.f_default_expr)
                 return dval_pre_stmts + [
                     irt.AssignStmt(
                         var_decls[decl, var_id.text],
-                        dval_expr
+                        dval_expr,
+                        orig_node=decl
                     )
                     for var_id in decl.f_ids
                 ]
@@ -293,7 +308,8 @@ def _gen_ir(subp):
             return expr_pre_stmts + [
                 irt.AssignStmt(
                     var_decls[stmt.f_dest.p_referenced_decl, stmt.f_dest.text],
-                    expr
+                    expr,
+                    orig_node=stmt
                 )
             ]
 
@@ -311,21 +327,31 @@ def _gen_ir(subp):
             then_stmts.extend(transform_stmts(stmt.f_then_stmts))
             else_stmts.extend(transform_stmts(stmt.f_else_stmts))
 
-            return cond_pre_stmts + [irt.SplitStmt(then_stmts, else_stmts)]
+            return cond_pre_stmts + [
+                irt.SplitStmt(
+                    then_stmts,
+                    else_stmts,
+                    orig_node=stmt
+                )
+            ]
 
         elif stmt.is_a(lal.CaseStmt):
             # todo
             return []
 
         elif stmt.is_a(lal.LoopStmt):
-            return [irt.LoopStmt(transform_stmts(stmt.f_stmts))]
+            return [irt.LoopStmt(
+                transform_stmts(stmt.f_stmts),
+                orig_node=stmt
+            )]
 
         elif stmt.is_a(lal.WhileLoopStmt):
             cond_pre_stmts, cond = transform_expr(stmt.f_spec.f_expr)
             return [irt.LoopStmt(
                 cond_pre_stmts +
                 [irt.AssumeStmt(cond)] +
-                transform_stmts(stmt.f_stmts)
+                transform_stmts(stmt.f_stmts),
+                orig_node=stmt
             )]
 
         elif stmt.is_a(lal.ForLoopStmt):
@@ -362,7 +388,8 @@ def _gen_ir(subp):
 
     return irt.Program(
         transform_decls(subp.f_decls.f_decls) +
-        transform_stmts(subp.f_stmts.f_stmts)
+        transform_stmts(subp.f_stmts.f_stmts),
+        orig_node=subp
     )
 
 
