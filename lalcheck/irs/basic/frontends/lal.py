@@ -369,13 +369,39 @@ def _gen_ir(subp):
             )]
 
         elif stmt.is_a(lal.WhileLoopStmt):
+            # While loops are transformed as such:
+            #
+            # Ada:
+            # ----------------
+            # while C loop
+            #   S;
+            # end loop;
+            #
+            # Basic IR:
+            # ----------------
+            # loop:
+            #   assume(C)
+            #   S;
+            # assume(!C)
+
+            # Transform the condition of the while loop
             cond_pre_stmts, cond = transform_expr(stmt.f_spec.f_expr)
+
+            # Build its inverse. It is appended at the end of the loop. We know
+            # that the inverse condition is true once the control goes out of
+            # the loop as long as there are not exit statements.
+            not_cond = irt.UnExpr(
+                irt.un_ops[ops.NOT],
+                cond,
+                type_hint=cond.data.type_hint
+            )
+
             return [irt.LoopStmt(
                 cond_pre_stmts +
                 [irt.AssumeStmt(cond)] +
                 transform_stmts(stmt.f_stmts),
                 orig_node=stmt
-            )]
+            ), irt.AssumeStmt(not_cond)]
 
         elif stmt.is_a(lal.ForLoopStmt):
             # todo

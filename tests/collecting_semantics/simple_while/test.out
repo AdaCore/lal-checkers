@@ -57,6 +57,24 @@
         }
       }
     ],
+    "assume1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assume0",
+          "assume1",
+          "loop_join0",
+          "loop_start0",
+          "start0"
+        ],
+        "values": {
+          "x": "(100, 100)",
+          "y": "(100, 100)"
+        }
+      }
+    ],
     "loop_join0": [
       {
         "trace:": [
@@ -156,6 +174,24 @@
         ],
         "values": {
           "x": "(0, 99)",
+          "y": "(100, 100)"
+        }
+      }
+    ],
+    "assume1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assume0",
+          "assume1",
+          "loop_join0",
+          "loop_start0",
+          "start0"
+        ],
+        "values": {
+          "x": "(100, 100)",
           "y": "(100, 100)"
         }
       }

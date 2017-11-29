@@ -204,6 +204,32 @@
         }
       }
     ],
+    "assume5": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "assume5",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Finalize'])"
+        }
+      }
+    ],
     "loop_join0": [
       {
         "trace:": [
@@ -528,6 +554,32 @@
         "values": {
           "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
           "state": "frozenset([u'Do_Stuff_2', u'Init'])"
+        }
+      }
+    ],
+    "assume5": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "assume4",
+          "assume5",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
+          "state": "frozenset([u'Finalize'])"
         }
       }
     ],
