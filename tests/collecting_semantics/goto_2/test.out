@@ -1,0 +1,435 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "assume2",
+          "assume3",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(5, 10)",
+          "y": "(5, 10)"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "assume1": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume1",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(5, 5)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "assume2": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "assume3": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "assume3",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(10, 10)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "loop_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "loop_start0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "read0": [
+      {
+        "trace:": [
+          "read0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "read1": [
+      {
+        "trace:": [
+          "read0",
+          "read1",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ]
+  },
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(5, 5)",
+          "y": "(5, 5)"
+        }
+      },
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume2",
+          "assume3",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(10, 10)",
+          "y": "(10, 10)"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "assume1": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume1",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(5, 5)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "assume2": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "assume3": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "assume3",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(10, 10)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "loop_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_join0",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "loop_start0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "read0": [
+      {
+        "trace:": [
+          "read0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "read1": [
+      {
+        "trace:": [
+          "read0",
+          "read1",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "loop_start0",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "x": "(-2147483648, 2147483647)",
+          "y": "(-2147483648, 2147483647)"
+        }
+      }
+    ]
+  }
+}

@@ -194,6 +194,40 @@ class LoopStmt(Stmt):
             yield stmt
 
 
+@_visitable("visit_label")
+class LabelStmt(Stmt):
+    """
+    Represents a point in the program which can be jumped to.
+    """
+    def __init__(self, name, **data):
+        """
+        :param str name: The name of the label.
+        :param **object data: User-defined data.
+        """
+        Node.__init__(self, **data)
+        self.name = name
+
+    def children(self):
+        return iter(())
+
+
+@_visitable("visit_goto")
+class GotoStmt(Stmt):
+    """
+    Represents a jump statement.
+    """
+    def __init__(self, label, **data):
+        """
+        :param LabelStmt label: The label to jump to.
+        :param **object data: User-defined data.
+        """
+        Node.__init__(self, **data)
+        self.label = label
+
+    def children(self):
+        yield self.label
+
+
 @_visitable("visit_read")
 class ReadStmt(Stmt):
     """

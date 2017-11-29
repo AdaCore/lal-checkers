@@ -5,6 +5,7 @@ Provides tools for using the Basic IR.
 from lalcheck.utils import KeyCounter, Bunch
 from lalcheck.digraph import Digraph
 from lalcheck.domain_ops import boolean_ops
+from tree import LabelStmt
 import visitors
 
 from collections import defaultdict
@@ -107,6 +108,12 @@ class PrettyPrinter(visitors.Visitor):
     def visit_loop(self, loop, opts):
         return "loop:\n{}".format(self.print_stmts(loop.stmts, opts))
 
+    def visit_label(self, labelstmt, *args):
+        return "{}:".format(labelstmt.name)
+
+    def visit_goto(self, gotostmt, *args):
+        return "goto {}".format(gotostmt.label.name)
+
     def visit_read(self, read, opts):
         return "read({})".format(read.id.visit(self, opts))
 
@@ -145,20 +152,73 @@ class CFGBuilder(visitors.ImplicitVisitor):
     def __init__(self):
         self.nodes = None
         self.edges = None
+        self.jumps = None
+        self.labels = None
         self.start_node = None
         self.key_counter = KeyCounter()
 
     def fresh(self, name):
         return "{}{}".format(name, self.key_counter.get_incr(name))
 
+    @staticmethod
+    def is_label(node):
+        """
+        :param tree.Node node: An IR node
+        :return: Whether the node is a LabelStmt
+        :rtype: bool
+        """
+        return isinstance(node, LabelStmt)
+
+    def compute_reachable_nodes(self, start, reachables):
+        """
+        Computes the set of nodes that are reachable from the given "start"
+        node using the set of edges registered so far. Reachable nodes are
+        added to the given set.
+
+        :param Digraph.Node start: The node from which to compute reachable
+            nodes.
+
+        :param set[Digraph.Node] reachables: The set of nodes that are found
+            reachable so far.
+        """
+        def outs(node):
+            """
+            :return: The directly reachable nodes from the given node
+            :rtype: iterable[Digraph.Node]
+            """
+            return (e.to for e in self.edges if e.frm == node)
+
+        reachables.add(start)
+        for node in outs(start):
+            if node not in reachables:
+                self.compute_reachable_nodes(node, reachables)
+
     def visit_program(self, prgm):
         self.nodes = []
         self.edges = []
+        self.jumps = []
+        self.labels = {}
 
         start = self.build_node("start")
         self.visit_stmts(prgm.stmts, start)
 
-        return Digraph(self.nodes + [start], self.edges)
+        # Generate jump edges
+        for node, label in self.jumps:
+            self.edges.extend([
+                Digraph.Edge(node, edge.to)
+                for edge in self.edges
+                if edge.frm == self.labels[label]
+            ])
+
+        # Compute reachable nodes
+        reachables = set()
+        self.compute_reachable_nodes(start, reachables)
+
+        # Remove all nodes and edges that are not reachable
+        self.nodes = [n for n in self.nodes if n in reachables]
+        self.edges = [e for e in self.edges if e.frm in reachables]
+
+        return Digraph([start] + self.nodes, self.edges)
 
     def visit_split(self, splitstmt, start):
         end_fst = self.visit_stmts(splitstmt.fst_stmts, start)
@@ -178,6 +238,14 @@ class CFGBuilder(visitors.ImplicitVisitor):
         self.register_and_link([start, end], loop_start)
         self.register_and_link([loop_start], join)
         return join
+
+    def visit_label(self, label, start):
+        self.labels[label] = start
+        return start
+
+    def visit_goto(self, goto, start):
+        self.jumps.append((start, goto.label))
+        return None
 
     def visit_assign(self, assign, start):
         n = self.build_node("assign", orig_node=assign)
@@ -214,7 +282,8 @@ class CFGBuilder(visitors.ImplicitVisitor):
     def register_and_link(self, froms, new_node):
         self.nodes.append(new_node)
         for f in froms:
-            self.edges.append(Digraph.Edge(f, new_node))
+            if f is not None:
+                self.edges.append(Digraph.Edge(f, new_node))
 
 
 class Models(visitors.Visitor):

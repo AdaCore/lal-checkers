@@ -26,6 +26,12 @@ class Visitor(object):
     def visit_loop(self, loopstmt, *args):
         return
 
+    def visit_label(self, labelstmt, *args):
+        return
+
+    def visit_goto(self, gotostmt, *args):
+        return
+
     def visit_assume(self, assumestmt, *args):
         return
 
@@ -72,6 +78,12 @@ class ImplicitVisitor(Visitor):
     def visit_loop(self, loopstmt, *args):
         self.visit_children(loopstmt, *args)
 
+    def visit_label(self, labelstmt, *args):
+        self.visit_children(labelstmt, *args)
+
+    def visit_goto(self, gotostmt, *args):
+        self.visit_children(gotostmt, *args)
+
     def visit_assume(self, assumestmt, *args):
         self.visit_children(assumestmt, *args)
 
@@ -116,6 +128,12 @@ class CFGNodeVisitor(Visitor):
 
     def visit_loop(self, loopstmt, *args):
         self.err(loopstmt)
+
+    def visit_label(self, labelstmt, *args):
+        self.err(labelstmt)
+
+    def visit_goto(self, gotostmt, *args):
+        self.err(gotostmt)
 
     def visit_assume(self, assumestmt, *args):
         return

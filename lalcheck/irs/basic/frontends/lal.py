@@ -50,6 +50,16 @@ def _gen_ir(subp):
     var_decls = {}
     tmp_vars = KeyCounter()
 
+    # Pre-transform every label, as a label might not have been seen yet when
+    # transforming a goto statement.
+    labels = {
+        label_decl: irt.LabelStmt(
+            label_decl.f_name.text,
+            orig_node=label_decl
+        )
+        for label_decl in subp.findall(lal.LabelDecl)
+    }
+
     def fresh_name(name):
         """
         :param str name: The base name of the variable.
@@ -406,6 +416,14 @@ def _gen_ir(subp):
         elif stmt.is_a(lal.ForLoopStmt):
             # todo
             return []
+
+        elif stmt.is_a(lal.Label):
+            # Use the pre-transformed label.
+            return [labels[stmt.f_decl]]
+
+        elif stmt.is_a(lal.GotoStmt):
+            label = labels[stmt.f_label_name.p_referenced_decl]
+            return [irt.GotoStmt(label, orig_node=stmt)]
 
         elif stmt.is_a(lal.ExceptionHandler):
             # todo ?
