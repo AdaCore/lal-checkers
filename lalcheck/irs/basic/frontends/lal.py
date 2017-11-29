@@ -195,7 +195,7 @@ def _gen_ir(subp):
             elif ref.is_a(lal.EnumLiteralDecl):
                 return [], irt.Lit(
                     expr.text,
-                    type_hint=ref.parent.parent,
+                    type_hint=ref.parent.parent.parent,
                     orig_node=expr
                 )
             elif ref.is_a(lal.NumberDecl):
@@ -278,7 +278,7 @@ def _gen_ir(subp):
 
         :rtype: list[irt.Stmt]
         """
-        if decl.is_a(lal.TypeDecl, lal.EnumTypeDecl, lal.NumberDecl):
+        if decl.is_a(lal.TypeDecl, lal.NumberDecl):
             return []
         elif decl.is_a(lal.ObjectDecl):
             tdecl = decl.f_type_expr.p_designated_type_decl
@@ -687,9 +687,10 @@ def enum_typer(hint):
     :return: The corresponding lalcheck type.
     :rtype: types.Enum
     """
-    if hint.is_a(lal.EnumTypeDecl):
-        literals = hint.findall(lal.EnumLiteralDecl)
-        return types.Enum([lit.f_enum_identifier.text for lit in literals])
+    if hint.is_a(lal.TypeDecl):
+        if hint.f_type_def.is_a(lal.EnumTypeDef):
+            literals = hint.f_type_def.findall(lal.EnumLiteralDecl)
+            return types.Enum([lit.f_enum_identifier.text for lit in literals])
 
 
 def access_typer(inner_typer):
