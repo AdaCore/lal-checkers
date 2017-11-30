@@ -92,6 +92,134 @@ def _gen_ir(subp):
             'Cannot transform "{}" ({})'.format(node.text, type(node))
         )
 
+    def transform_short_circuit_ops(bin_expr):
+        """
+        :param lal.BinOp bin_expr: A binary expression that involves a short-
+            circuit operation (and then / or else).
+
+        :return: The transformation of the given expression.
+
+        :rtype:  (list[irt.Stmt], irt.Expr)
+        """
+        bool_hint = bin_expr.p_expression_type
+        res = irt.Identifier(
+            irt.Variable(
+                fresh_name("tmp"),
+                purpose=purpose.SyntheticVariable(),
+                type_hint=bool_hint,
+                orig_node=bin_expr
+            ),
+            type_hint=bool_hint,
+            orig_node=bin_expr
+        )
+        res_eq_true, res_eq_false = (irt.AssignStmt(
+            res,
+            irt.Lit(
+                literal,
+                type_hint=bool_hint
+            )
+        ) for literal in [lits.TRUE, lits.FALSE])
+
+        lhs_pre_stmts, lhs = transform_expr(bin_expr.f_left)
+        rhs_pre_stmts, rhs = transform_expr(bin_expr.f_right)
+
+        not_lhs, not_rhs = (irt.UnExpr(
+            irt.un_ops[ops.NOT],
+            side,
+            type_hint=bool_hint
+        ) for side in [lhs, rhs])
+
+        assume_lhs, assume_not_lhs, assume_rhs, assume_not_rhs = (
+            irt.AssumeStmt(x) for x in [lhs, not_lhs, rhs, not_rhs]
+        )
+
+        if bin_expr.f_op.is_a(lal.OpAndThen):
+            # And then is transformed as such:
+            #
+            # Ada:
+            # ------------
+            # x := C1 and then C2;
+            #
+            # Basic IR:
+            # -------------
+            # split:
+            #   assume(C1)
+            #   split:
+            #     assume(C2)
+            #     res = True
+            #   |:
+            #     assume(!C2)
+            #     res = False
+            # |:
+            #   assume(!C1)
+            #   res = False
+            # x = res
+
+            res_stmts = lhs_pre_stmts + [
+                irt.SplitStmt(
+                    [assume_lhs] + rhs_pre_stmts + [
+                        irt.SplitStmt(
+                            [
+                                assume_rhs,
+                                res_eq_true
+                            ],
+                            [
+                                assume_not_rhs,
+                                res_eq_false
+                            ]
+                        )
+                    ],
+                    [
+                        assume_not_lhs,
+                        res_eq_false
+                    ]
+                )
+            ]
+        else:
+            # Or else is transformed as such:
+            #
+            # Ada:
+            # ------------
+            # x := C1 or else C2;
+            #
+            # Basic IR:
+            # -------------
+            # split:
+            #   assume(C1)
+            #   res = True
+            # |:
+            #   assume(!C1)
+            #   split:
+            #     assume(C2)
+            #     res = True
+            #   |:
+            #     assume(!C2)
+            #     res = False
+            # x = res
+
+            res_stmts = lhs_pre_stmts + [
+                irt.SplitStmt(
+                    [
+                        assume_lhs,
+                        res_eq_true
+                    ],
+                    [assume_not_lhs] + rhs_pre_stmts + [
+                        irt.SplitStmt(
+                            [
+                                assume_rhs,
+                                res_eq_true
+                            ],
+                            [
+                                assume_not_rhs,
+                                res_eq_false
+                            ]
+                        )
+                    ]
+                )
+            ]
+
+        return res_stmts, res
+
     def transform_expr(expr):
         """
         :param lal.Expr expr: The expression to transform.
@@ -107,16 +235,20 @@ def _gen_ir(subp):
             return transform_expr(expr.f_expr)
 
         if expr.is_a(lal.BinOp):
-            lhs_pre_stmts, lhs = transform_expr(expr.f_left)
-            rhs_pre_stmts, rhs = transform_expr(expr.f_right)
 
-            return lhs_pre_stmts + rhs_pre_stmts, irt.BinExpr(
-                lhs,
-                transform_operator(expr.f_op, 2),
-                rhs,
-                type_hint=expr.p_expression_type,
-                orig_node=expr
-            )
+            if expr.f_op.is_a(lal.OpAndThen, lal.OpOrElse):
+                return transform_short_circuit_ops(expr)
+            else:
+                lhs_pre_stmts, lhs = transform_expr(expr.f_left)
+                rhs_pre_stmts, rhs = transform_expr(expr.f_right)
+
+                return lhs_pre_stmts + rhs_pre_stmts, irt.BinExpr(
+                    lhs,
+                    transform_operator(expr.f_op, 2),
+                    rhs,
+                    type_hint=expr.p_expression_type,
+                    orig_node=expr
+                )
 
         elif expr.is_a(lal.UnOp):
             inner_pre_stmts, inner_expr = transform_expr(expr.f_expr)
