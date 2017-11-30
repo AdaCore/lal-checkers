@@ -155,23 +155,23 @@ class SplitStmt(Stmt):
     A control-flow statement representing a nondeterministic choice of
     execution path, i.e. the two branches are visited.
     """
-    def __init__(self, fst_stmts, snd_stmts, **data):
+    def __init__(self, branches, **data):
         """
-        :param list[Stmt] fst_stmts: The list of the statements appearing in
-            the first branch.
-
-        :param list[Stmt] snd_stmts: The list of statements appearing in
-            the second branch.
+        :param list[list[Stmt]] branches: The branches of the split statement,
+            where each branch is a list of statements. At least two branches
+            are expected.
 
         :param **object data: User-defined data.
         """
+        assert len(branches) >= 2
+
         Node.__init__(self, **data)
-        self.fst_stmts = fst_stmts
-        self.snd_stmts = snd_stmts
+        self.branches = branches
 
     def children(self):
-        for stmt in self.fst_stmts + self.snd_stmts:
-            yield stmt
+        for branch in self.branches:
+            for stmt in branch:
+                yield stmt
 
 
 @_visitable("visit_loop")

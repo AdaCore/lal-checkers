@@ -98,12 +98,14 @@ class PrettyPrinter(visitors.Visitor):
         )
 
     def visit_split(self, split, opts):
-        indents = opts.indents()
-        return "split:\n{}\n{}|:\n{}".format(
-            self.print_stmts(split.fst_stmts, opts),
-            indents,
-            self.print_stmts(split.snd_stmts, opts),
-        )
+        indents = "\n{}".format(opts.indents())
+        branches = ["split:\n{}".format(
+            self.print_stmts(split.branches[0], opts)
+        )] + [
+            "|:\n{}".format(self.print_stmts(branch, opts))
+            for branch in split.branches[1:]
+        ]
+        return indents.join(branches)
 
     def visit_loop(self, loop, opts):
         return "loop:\n{}".format(self.print_stmts(loop.stmts, opts))
@@ -221,11 +223,12 @@ class CFGBuilder(visitors.ImplicitVisitor):
         return Digraph([start] + self.nodes, self.edges)
 
     def visit_split(self, splitstmt, start):
-        end_fst = self.visit_stmts(splitstmt.fst_stmts, start)
-        end_snd = self.visit_stmts(splitstmt.snd_stmts, start)
+        ends = [
+            self.visit_stmts(branch, start) for branch in splitstmt.branches
+        ]
 
         join = self.build_node("split_join")
-        self.register_and_link([end_fst, end_snd], join)
+        self.register_and_link(ends, join)
 
         return join
 

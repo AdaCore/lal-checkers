@@ -121,8 +121,10 @@ def _gen_ir(subp):
 
         return cond_pre_stmts + [
             irt.SplitStmt(
-                [assume_cond] + then_stmts,
-                [assume_not_cond] + else_stmts,
+                [
+                    [assume_cond] + then_stmts,
+                    [assume_not_cond] + else_stmts,
+                ],
                 **data
             )
         ]
