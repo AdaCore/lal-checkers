@@ -351,17 +351,22 @@ def _gen_ir(ctx, subp):
             #
             # Ada:
             # ---------------
-            # x := (if C then A else B);
+            # x := (if C1 then A elsif C2 then B else C);
             #
             #
             # Basic IR:
             # ---------------
             # split:
-            #   assume(cond)
+            #   assume(C1)
             #   tmp := A
             # |:
-            #   assume(!cond)
-            #   tmp := B
+            #   assume(!C1)
+            #   split:
+            #     assume(C2)
+            #     tmp := B
+            #  |:
+            #     assume(!C2)
+            #     tmp := C
             # x := tmp
 
             # Generate the temporary variable, make sure it is marked as
@@ -378,15 +383,42 @@ def _gen_ir(ctx, subp):
                 orig_node=expr
             )
 
-            # Transform the "then" and "else" subexpressions.
-            then_stmts, then_expr = transform_expr(expr.f_then_expr)
-            else_stmts, else_expr = transform_expr(expr.f_else_expr)
+            def gen_parts(parts):
+                """
+                Generate the chain of if-elsif-else.
 
-            return gen_split_stmt(
-                expr.f_cond_expr,
-                then_stmts + [irt.AssignStmt(tmp, then_expr)],
-                else_stmts + [irt.AssignStmt(tmp, else_expr)]
-            ), tmp
+                :param list[(lal.Expr | None, lal.Expr)] parts: The list of
+                    alternatives, where each alternative is represented by
+                    a pair (its condition, its resulting expression). The
+                    sepcial "else" alternative has None as a condition.
+
+                :return: The list of statements corresponding to the
+                    transformation of the chain.
+
+                :rtype: list[irt.Stmt]
+                """
+
+                cond, expr = parts[0]
+                pre_expr_stmts, tr_expr = transform_expr(expr)
+                stmts = pre_expr_stmts + [irt.AssignStmt(tmp, tr_expr)]
+
+                return stmts if cond is None else gen_split_stmt(
+                    cond,
+                    stmts,
+                    gen_parts(parts[1:]),
+                    orig_node=expr
+                )
+
+            parts = [
+                (expr.f_cond_expr, expr.f_then_expr)
+            ] + [
+                (part.f_cond_expr, part.f_then_expr)
+                for part in expr.f_alternatives
+            ] + [
+                (None, expr.f_else_expr)
+            ]
+
+            return gen_parts(parts), tmp
 
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
@@ -553,12 +585,69 @@ def _gen_ir(ctx, subp):
             ]
 
         elif stmt.is_a(lal.IfStmt):
-            return gen_split_stmt(
-                stmt.f_cond_expr,
-                transform_stmts(stmt.f_then_stmts),
-                transform_stmts(stmt.f_else_stmts),
-                orig_node=stmt
-            )
+            # If statements are transformed as such:
+            #
+            # Ada:
+            # ---------------
+            # if C1 then
+            #   S1;
+            # elsif C2 then
+            #   S2;
+            # else
+            #   S3;
+            # end if;
+            #
+            #
+            # Basic IR:
+            # ---------------
+            # split:
+            #   assume(C1)
+            #   S1
+            # |:
+            #   assume(!C1)
+            #   split:
+            #     assume(C2)
+            #     S2
+            #  |:
+            #     assume(!C2)
+            #     S3
+
+            def gen_parts(parts):
+                """
+                Generate the chain of if-elsif-else.
+
+                :param list[(lal.Expr | None, iterable[lal.Stmt])] parts:
+                    The list of alternatives, where each alternative is
+                    represented by a pair (its condition, its list of
+                    statements). The sepcial "else" alternative has None
+                    as a condition.
+
+                :return: The list of statements corresponding to the
+                    transformation of the chain.
+
+                :rtype: list[irt.Stmt]
+                """
+
+                cond, stmts = parts[0]
+                tr_stmts = transform_stmts(stmts)
+
+                return tr_stmts if cond is None else gen_split_stmt(
+                    cond,
+                    tr_stmts,
+                    gen_parts(parts[1:]),
+                    orig_node=stmts
+                )
+
+            parts = [
+                (stmt.f_cond_expr, stmt.f_then_stmts)
+            ] + [
+                (part.f_cond_expr, part.f_stmts)
+                for part in stmt.f_alternatives
+            ] + [
+                (None, stmt.f_else_stmts)
+            ]
+
+            return gen_parts(parts)
 
         elif stmt.is_a(lal.CaseStmt):
             # Case statements are transformed as such:

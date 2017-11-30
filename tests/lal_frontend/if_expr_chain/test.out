@@ -1,0 +1,22 @@
+Program:
+  read(x#1)
+  read(C1#2)
+  read(C2#3)
+  read(C3#4)
+  split:
+    assume(C1#2)
+    tmp0#5 = 1
+  |:
+    assume(!C1#2)
+    split:
+      assume(C2#3)
+      tmp0#5 = 2
+    |:
+      assume(!C2#3)
+      split:
+        assume(C3#4)
+        tmp0#5 = 3
+      |:
+        assume(!C3#4)
+        tmp0#5 = 4
+  x#1 = tmp0#5
