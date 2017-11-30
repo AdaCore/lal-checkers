@@ -92,6 +92,41 @@ def _gen_ir(subp):
             'Cannot transform "{}" ({})'.format(node.text, type(node))
         )
 
+    def gen_split_stmt(cond, then_stmts, else_stmts, **data):
+        """
+        :param lal.Expr cond: The condition of the if statement.
+
+        :param iterable[irt.Stmt] then_stmts: The already transformed then
+            statements.
+
+        :param iterable[irt.Stmt] else_stmts: The already transformed else
+            statements.
+
+        :param **object data: user data on the generated split statement.
+
+        :return: The corresponding split-assume statements.
+
+        :rtype: list[irt.Stmt]
+        """
+        cond_pre_stmts, cond = transform_expr(cond)
+        not_cond = irt.UnExpr(
+            irt.un_ops[ops.NOT],
+            cond,
+            type_hint=cond.data.type_hint
+        )
+
+        assume_cond, assume_not_cond = (
+            irt.AssumeStmt(x) for x in [cond, not_cond]
+        )
+
+        return cond_pre_stmts + [
+            irt.SplitStmt(
+                [assume_cond] + then_stmts,
+                [assume_not_cond] + else_stmts,
+                **data
+            )
+        ]
+
     def transform_short_circuit_ops(bin_expr):
         """
         :param lal.BinOp bin_expr: A binary expression that involves a short-
@@ -120,19 +155,6 @@ def _gen_ir(subp):
             )
         ) for literal in [lits.TRUE, lits.FALSE])
 
-        lhs_pre_stmts, lhs = transform_expr(bin_expr.f_left)
-        rhs_pre_stmts, rhs = transform_expr(bin_expr.f_right)
-
-        not_lhs, not_rhs = (irt.UnExpr(
-            irt.un_ops[ops.NOT],
-            side,
-            type_hint=bool_hint
-        ) for side in [lhs, rhs])
-
-        assume_lhs, assume_not_lhs, assume_rhs, assume_not_rhs = (
-            irt.AssumeStmt(x) for x in [lhs, not_lhs, rhs, not_rhs]
-        )
-
         if bin_expr.f_op.is_a(lal.OpAndThen):
             # And then is transformed as such:
             #
@@ -155,26 +177,15 @@ def _gen_ir(subp):
             #   res = False
             # x = res
 
-            res_stmts = lhs_pre_stmts + [
-                irt.SplitStmt(
-                    [assume_lhs] + rhs_pre_stmts + [
-                        irt.SplitStmt(
-                            [
-                                assume_rhs,
-                                res_eq_true
-                            ],
-                            [
-                                assume_not_rhs,
-                                res_eq_false
-                            ]
-                        )
-                    ],
-                    [
-                        assume_not_lhs,
-                        res_eq_false
-                    ]
-                )
-            ]
+            res_stmts = gen_split_stmt(
+                bin_expr.f_left,
+                gen_split_stmt(
+                    bin_expr.f_right,
+                    [res_eq_true],
+                    [res_eq_false]
+                ),
+                [res_eq_false]
+            )
         else:
             # Or else is transformed as such:
             #
@@ -196,27 +207,15 @@ def _gen_ir(subp):
             #     assume(!C2)
             #     res = False
             # x = res
-
-            res_stmts = lhs_pre_stmts + [
-                irt.SplitStmt(
-                    [
-                        assume_lhs,
-                        res_eq_true
-                    ],
-                    [assume_not_lhs] + rhs_pre_stmts + [
-                        irt.SplitStmt(
-                            [
-                                assume_rhs,
-                                res_eq_true
-                            ],
-                            [
-                                assume_not_rhs,
-                                res_eq_false
-                            ]
-                        )
-                    ]
+            res_stmts = gen_split_stmt(
+                bin_expr.f_left,
+                [res_eq_true],
+                gen_split_stmt(
+                    bin_expr.f_right,
+                    [res_eq_true],
+                    [res_eq_false]
                 )
-            ]
+            )
 
         return res_stmts, res
 
@@ -277,14 +276,6 @@ def _gen_ir(subp):
             #   tmp := B
             # x := tmp
 
-            # Transform the condition and build its inverse.
-            cond_pre_stmts, cond = transform_expr(expr.f_cond_expr)
-            not_cond = irt.UnExpr(
-                irt.un_ops[ops.NOT],
-                cond,
-                type_hint=cond.data.type_hint
-            )
-
             # Generate the temporary variable, make sure it is marked as
             # synthetic so as to inform checkers not to emit irrelevant
             # messages.
@@ -303,21 +294,11 @@ def _gen_ir(subp):
             then_stmts, then_expr = transform_expr(expr.f_then_expr)
             else_stmts, else_expr = transform_expr(expr.f_else_expr)
 
-            # Generate the "then" statements of our split statement.
-            fst_stmts = (
-                [irt.AssumeStmt(cond)] +
-                then_stmts +
-                [irt.AssignStmt(tmp, then_expr)]
-            )
-
-            # Generate the "else" statements of our split statement.
-            snd_stmts = (
-                [irt.AssumeStmt(not_cond)] +
-                else_stmts +
-                [irt.AssignStmt(tmp, else_expr)]
-            )
-
-            return cond_pre_stmts + [irt.SplitStmt(fst_stmts, snd_stmts)], tmp
+            return gen_split_stmt(
+                expr.f_cond_expr,
+                then_stmts + [irt.AssignStmt(tmp, then_expr)],
+                else_stmts + [irt.AssignStmt(tmp, else_expr)]
+            ), tmp
 
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
@@ -484,26 +465,12 @@ def _gen_ir(subp):
             ]
 
         elif stmt.is_a(lal.IfStmt):
-            cond_pre_stmts, cond = transform_expr(stmt.f_cond_expr)
-            not_cond = irt.UnExpr(
-                irt.un_ops[ops.NOT],
-                cond,
-                type_hint=cond.data.type_hint
+            return gen_split_stmt(
+                stmt.f_cond_expr,
+                transform_stmts(stmt.f_then_stmts),
+                transform_stmts(stmt.f_else_stmts),
+                orig_node=stmt
             )
-
-            then_stmts = [irt.AssumeStmt(cond)]
-            else_stmts = [irt.AssumeStmt(not_cond)]
-
-            then_stmts.extend(transform_stmts(stmt.f_then_stmts))
-            else_stmts.extend(transform_stmts(stmt.f_else_stmts))
-
-            return cond_pre_stmts + [
-                irt.SplitStmt(
-                    then_stmts,
-                    else_stmts,
-                    orig_node=stmt
-                )
-            ]
 
         elif stmt.is_a(lal.CaseStmt):
             # todo
@@ -616,23 +583,12 @@ def _gen_ir(subp):
                 return [exit_goto]
             else:
                 # Else emulate the behavior with split-assume statements.
-                cond_pre_stmts, cond = transform_expr(stmt.f_condition)
-                not_cond = irt.UnExpr(
-                    irt.un_ops[ops.NOT],
-                    cond,
-                    type_hint=cond.data.type_hint
+                return gen_split_stmt(
+                    stmt.f_condition,
+                    [exit_goto],
+                    [],
+                    orig_node=stmt
                 )
-
-                then_stmts = [irt.AssumeStmt(cond), exit_goto]
-                else_stmts = [irt.AssumeStmt(not_cond)]
-
-                return cond_pre_stmts + [
-                    irt.SplitStmt(
-                        then_stmts,
-                        else_stmts,
-                        orig_node=stmt
-                    )
-                ]
 
         elif stmt.is_a(lal.ExceptionHandler):
             # todo ?

@@ -6,14 +6,14 @@ Program:
   read(A2#5)
   split:
     assume(C1#2)
-    tmp0#6 = C1#2
+    tmp1#6 = C1#2
   |:
     assume(!C1#2)
-    tmp0#6 = C2#3
+    tmp1#6 = C2#3
   split:
-    assume(tmp0#6)
-    tmp1#7 = A1#4
+    assume(tmp1#6)
+    tmp0#7 = A1#4
   |:
-    assume(!tmp0#6)
-    tmp1#7 = A2#5
-  x#1 = tmp1#7
+    assume(!tmp1#6)
+    tmp0#7 = A2#5
+  x#1 = tmp0#7
