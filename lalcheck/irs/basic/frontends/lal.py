@@ -21,6 +21,8 @@ _lal_op_type_2_symbol = {
     (lal.OpNeq, 2): irt.bin_ops[ops.NEQ],
     (lal.OpGte, 2): irt.bin_ops[ops.GE],
     (lal.OpGt, 2): irt.bin_ops[ops.GT],
+    (lal.OpAnd, 2): irt.bin_ops[ops.AND],
+    (lal.OpOr, 2): irt.bin_ops[ops.OR],
     (lal.OpPlus, 2): irt.bin_ops[ops.PLUS],
     (lal.OpMinus, 2): irt.bin_ops[ops.MINUS],
     (lal.OpDoubleDot, 2): irt.bin_ops[ops.DOT_DOT],
@@ -74,7 +76,6 @@ def _gen_ir(subp):
 
     def transform_operator(lal_op, arity):
         """
-
         :param lal.Op lal_op: The lal operator to convert.
         :param int arity: The arity of the operator
         :return: The corresponding Basic IR operator.

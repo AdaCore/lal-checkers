@@ -375,6 +375,8 @@ bin_ops = {
     ops.NEQ: Operator(ops.NEQ),
     ops.GE: Operator(ops.GE),
     ops.GT: Operator(ops.GT),
+    ops.AND: Operator(ops.AND),
+    ops.OR: Operator(ops.OR),
     ops.DOT_DOT: Operator(ops.DOT_DOT)
 }
 
