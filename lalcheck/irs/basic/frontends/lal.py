@@ -60,6 +60,10 @@ def _gen_ir(subp):
         for label_decl in subp.findall(lal.LabelDecl)
     }
 
+    # Store the loops which we are currently in while traversing the syntax
+    # tree. The tuple (loop_statement, exit_label) is stored.
+    loop_stack = []
+
     def fresh_name(name):
         """
         :param str name: The base name of the variable.
@@ -373,10 +377,13 @@ def _gen_ir(subp):
             return []
 
         elif stmt.is_a(lal.LoopStmt):
-            return [irt.LoopStmt(
-                transform_stmts(stmt.f_stmts),
-                orig_node=stmt
-            )]
+            exit_label = irt.LabelStmt(fresh_name('exit_loop'))
+
+            loop_stack.append((stmt, exit_label))
+            loop_stmts = transform_stmts(stmt.f_stmts)
+            loop_stack.pop()
+
+            return [irt.LoopStmt(loop_stmts, orig_node=stmt), exit_label]
 
         elif stmt.is_a(lal.WhileLoopStmt):
             # While loops are transformed as such:
@@ -406,12 +413,18 @@ def _gen_ir(subp):
                 type_hint=cond.data.type_hint
             )
 
+            exit_label = irt.LabelStmt(fresh_name('exit_while_loop'))
+
+            loop_stack.append((stmt, exit_label))
+            loop_stmts = transform_stmts(stmt.f_stmts)
+            loop_stack.pop()
+
             return [irt.LoopStmt(
                 cond_pre_stmts +
                 [irt.AssumeStmt(cond)] +
-                transform_stmts(stmt.f_stmts),
+                loop_stmts,
                 orig_node=stmt
-            ), irt.AssumeStmt(not_cond)]
+            ), irt.AssumeStmt(not_cond), exit_label]
 
         elif stmt.is_a(lal.ForLoopStmt):
             # todo
@@ -424,6 +437,69 @@ def _gen_ir(subp):
         elif stmt.is_a(lal.GotoStmt):
             label = labels[stmt.f_label_name.p_referenced_decl]
             return [irt.GotoStmt(label, orig_node=stmt)]
+
+        elif stmt.is_a(lal.NamedStmt):
+            return transform_stmt(stmt.f_stmt)
+
+        elif stmt.is_a(lal.ExitStmt):
+            # Exit statements are transformed as such:
+            #
+            # Ada:
+            # ----------------
+            # loop
+            #   exit when C
+            # end loop;
+            #
+            # Basic IR:
+            # ----------------
+            # loop:
+            #   split:
+            #     assume(C)
+            #     goto [AFTER_LOOP]
+            #   |:
+            #     assume(!C)
+            # [AFTER_LOOP]
+
+            if stmt.f_loop_name is None:
+                # If not loop name is specified, take the one on top of the
+                # loop stack.
+                exited_loop = loop_stack[-1]
+            else:
+                named_loop_decl = stmt.f_loop_name.p_referenced_decl
+                ref_loop = named_loop_decl.parent.f_stmt
+                # Find the exit label corresponding to the exited loop.
+                exited_loop = next(
+                    loop for loop in loop_stack
+                    if loop[0] == ref_loop
+                )
+
+            # The label to jump to is stored in the second component of the
+            # loop tuple.
+            loop_exit_label = exited_loop[1]
+            exit_goto = irt.GotoStmt(loop_exit_label)
+
+            if stmt.f_condition is None:
+                # If there is no "when" part, only generate a goto statement.
+                return [exit_goto]
+            else:
+                # Else emulate the behavior with split-assume statements.
+                cond_pre_stmts, cond = transform_expr(stmt.f_condition)
+                not_cond = irt.UnExpr(
+                    irt.un_ops[ops.NOT],
+                    cond,
+                    type_hint=cond.data.type_hint
+                )
+
+                then_stmts = [irt.AssumeStmt(cond), exit_goto]
+                else_stmts = [irt.AssumeStmt(not_cond)]
+
+                return cond_pre_stmts + [
+                    irt.SplitStmt(
+                        then_stmts,
+                        else_stmts,
+                        orig_node=stmt
+                    )
+                ]
 
         elif stmt.is_a(lal.ExceptionHandler):
             # todo ?
