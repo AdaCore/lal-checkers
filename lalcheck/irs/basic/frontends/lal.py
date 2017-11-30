@@ -38,9 +38,11 @@ _attr_2_unop = {
 }
 
 
-def _gen_ir(subp):
+def _gen_ir(ctx, subp):
     """
     Generates Basic intermediate representation from a lal subprogram body.
+
+    :param ExtractionContext ctx: The program extraction context.
 
     :param lal.SubpBody subp: The subprogram body from which to generate IR.
 
@@ -128,6 +130,90 @@ def _gen_ir(subp):
                 **data
             )
         ]
+
+    def binexpr_builder(op, type_hint):
+        """
+        :param irt.Operator op: The binary operator.
+
+        :return: A function taking an lhs and an rhs and returning a binary
+            expression using this builder's operator.
+
+        :rtype: (irt.Expr, irt.Expr)->irt.Expr
+        """
+        def build(lhs, rhs):
+            return irt.BinExpr(
+                lhs, op, rhs,
+                type_hint=type_hint
+            )
+        return build
+
+    def gen_case_condition(expr, values):
+        """
+        Example:
+
+        `gen_case_condition(X, [1, 2, 10 .. 20])`
+
+        Will generate the following condition:
+
+        `X == 1 || X == 2 || X >= 10 || X <= 20`
+
+        :param irt.Expr expr: The case's selector expression.
+
+        :param list[int | ConstExprEvaluator.Range] values:
+            The different possible literal values.
+
+        :return: An expression corresponding to the condition check for
+            entering an alternative of an Ada case statement.
+
+        :rtype: irt.Expr
+        """
+        def gen_lit(value):
+            if isinstance(value, int):
+                return irt.Lit(
+                    value,
+                    type_hint=ctx.evaluator.int
+                )
+            raise NotImplementedError("Cannot transform literal")
+
+        def gen_single(value):
+            if isinstance(value, int):
+                return irt.BinExpr(
+                    expr,
+                    irt.bin_ops[ops.EQ],
+                    gen_lit(value),
+                    type_hint=ctx.evaluator.bool
+                )
+            elif isinstance(value, ConstExprEvaluator.Range):
+                if (isinstance(value.first, int) and
+                        isinstance(value.last, int)):
+                    return irt.BinExpr(
+                        irt.BinExpr(
+                            expr,
+                            irt.bin_ops[ops.GE],
+                            gen_lit(value.first),
+                            type_hint=ctx.evaluator.bool
+                        ),
+                        irt.bin_ops[ops.AND],
+                        irt.BinExpr(
+                            expr,
+                            irt.bin_ops[ops.LE],
+                            gen_lit(value.last),
+                            type_hint=ctx.evaluator.bool
+                        ),
+                        type_hint=ctx.evaluator.bool
+                    )
+
+            raise NotImplementedError("Cannot transform when condition")
+
+        conditions = [gen_single(value) for value in values]
+
+        if len(conditions) > 1:
+            return reduce(
+                binexpr_builder(irt.bin_ops[ops.OR], ctx.evaluator.bool),
+                conditions
+            )
+        else:
+            return conditions[0]
 
     def transform_short_circuit_ops(bin_expr):
         """
@@ -475,8 +561,106 @@ def _gen_ir(subp):
             )
 
         elif stmt.is_a(lal.CaseStmt):
-            # todo
-            return []
+            # Case statements are transformed as such:
+            #
+            # Ada:
+            # ---------------
+            # case x is
+            #   when CST1 =>
+            #     S1;
+            #   when CST2 | CST3 =>
+            #     S2;
+            #   when RANGE =>
+            #     S3;
+            #   when others =>
+            #     S4;
+            # end case;
+            #
+            #
+            # Basic IR:
+            # ---------------
+            # split:
+            #   assume(x == CST1)
+            #   S1
+            # |:
+            #   assume(x == CST2 || x == CST3)
+            #   S2
+            # |:
+            #   assume(x >= GetFirst(Range) && x <= GetLast(Range))
+            #   S3
+            # |:
+            #   assume(!(x == CST1 || (x == CST2 || x == CST3) ||
+            #          x >= GetFirst(Range) && x <= GetLast(Range)))
+            #   S4
+            #
+            # Note: In Ada, case statements must be complete and *disjoint*.
+            # This allows us to transform the case in a split of N branches
+            # instead of in a chain of if-elsifs.
+
+            # Transform the selector expression
+            case_pre_stmts, case_expr = transform_expr(stmt.f_case_expr)
+
+            # Evaluate the choices of each alternative that is not the "others"
+            # one. Choices are statically known values, meaning the evaluator
+            # should never fail.
+            # Also store the transformed statements of each alternative.
+            case_alts = [
+                (
+                    [
+                        ctx.evaluator.eval(transform_expr(choice)[1])
+                        for choice in alt.f_choices
+                    ],
+                    transform_stmts(alt.f_stmts)
+                )
+                for alt in stmt.f_case_alts
+                if not any(
+                    choice.is_a(lal.OthersDesignator)
+                    for choice in alt.f_choices
+                )
+            ]
+
+            # Store the transformed statements of the "others" alternative.
+            others_potential_stmts = [
+                transform_stmts(alt.f_stmts)
+                for alt in stmt.f_case_alts
+                if any(
+                    choice.is_a(lal.OthersDesignator)
+                    for choice in alt.f_choices
+                )
+            ]
+
+            # Build the conditions that correspond to matching the choices,
+            # for each alternative that is not the "others".
+            # See `gen_case_condition`.
+            alts_conditions = [
+                gen_case_condition(case_expr, choices)
+                for choices, _ in case_alts
+            ]
+
+            # Build the condition for the "others" alternative, which is the
+            # negation of the disjunction of all the previous conditions.
+            others_condition = irt.UnExpr(
+                irt.un_ops[ops.NOT],
+                reduce(
+                    binexpr_builder(irt.bin_ops[ops.OR], ctx.evaluator.bool),
+                    alts_conditions
+                ),
+                type_hint=ctx.evaluator.bool
+            )
+
+            # Generate the branches of the split statement.
+            branches = [
+                [irt.AssumeStmt(cond)] + stmts
+                for cond, (choices, stmts) in zip(alts_conditions, case_alts)
+            ] + [
+                [irt.AssumeStmt(others_condition)] + others_stmts
+                for others_stmts in others_potential_stmts
+            ]
+
+            return case_pre_stmts + [irt.SplitStmt(
+                branches,
+                orig_node=stmt
+            )]
 
         elif stmt.is_a(lal.LoopStmt):
             exit_label = irt.LabelStmt(fresh_name('exit_loop'))
@@ -971,7 +1155,7 @@ def extract_programs(ctx, ada_file):
     unit.populate_lexical_env()
 
     progs = [
-        _gen_ir(subp)
+        _gen_ir(ctx, subp)
         for subp in unit.root.findall((
             lal.SubpBody,
             lal.ExprFunction
