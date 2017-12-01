@@ -94,6 +94,35 @@ def _gen_ir(ctx, subp):
             'Cannot transform "{}" ({})'.format(node.text, type(node))
         )
 
+    def new_expression_replacing_var(name, replaced_expr):
+        """
+        Some lal expressions such as if expressions and case expressions
+        cannot be described in the Basic IR as an expression and must therefore
+        be transformed as several statements which modify a temporary variable
+        that holds the result of the original expression.
+
+        This function creates such a variable.
+
+        :param str name: The base name of the synthetic variable to generate.
+
+        :param lal.Expr replaced_expr: The expression being replaced by this
+            variable.
+
+        :return: A new identifier of a new variable.
+
+        :rtype: irt.Identifier
+        """
+        return irt.Identifier(
+            irt.Variable(
+                fresh_name(name),
+                purpose=purpose.SyntheticVariable(),
+                type_hint=replaced_expr.p_expression_type,
+                orig_node=replaced_expr
+            ),
+            type_hint=replaced_expr.p_expression_type,
+            orig_node=replaced_expr
+        )
+
     def gen_split_stmt(cond, then_stmts, else_stmts, **data):
         """
         :param lal.Expr cond: The condition of the if statement.
@@ -224,22 +253,12 @@ def _gen_ir(ctx, subp):
 
         :rtype:  (list[irt.Stmt], irt.Expr)
         """
-        bool_hint = bin_expr.p_expression_type
-        res = irt.Identifier(
-            irt.Variable(
-                fresh_name("tmp"),
-                purpose=purpose.SyntheticVariable(),
-                type_hint=bool_hint,
-                orig_node=bin_expr
-            ),
-            type_hint=bool_hint,
-            orig_node=bin_expr
-        )
+        res = new_expression_replacing_var("tmp", bin_expr)
         res_eq_true, res_eq_false = (irt.AssignStmt(
             res,
             irt.Lit(
                 literal,
-                type_hint=bool_hint
+                type_hint=bin_expr.p_expression_type
             )
         ) for literal in [lits.TRUE, lits.FALSE])
 
@@ -307,6 +326,171 @@ def _gen_ir(ctx, subp):
 
         return res_stmts, res
 
+    def if_expr_alt_transformer_of(var):
+        """
+        :param irt.Identifier var: The synthetic variable used in the
+            transformation of an if expression.
+
+        :return: A transformer for if expression's alternatives.
+
+        :rtype: (lal.Expr)->list[irt.Stmt]
+        """
+        def transformer(expr):
+            """
+            :param lal.Expr expr: The if-expression's alternative's expression.
+            :return: Its transformation.
+            :rtype: list[irt.Stmt]
+            """
+            pre_stmts, tr_expr = transform_expr(expr)
+            return pre_stmts + [irt.AssignStmt(var, tr_expr)]
+
+        return transformer
+
+    def case_expr_alt_transformer_of(var):
+        """
+        :param irt.Identifier var: The synthetic variable used in the
+            transformation of a case expression.
+
+        :return: A transformer for case expression's alternatives.
+
+        :rtype: (lal.CaseExprAlternative)->list[irt.Stmt]
+        """
+
+        def transformer(alt):
+            """
+            :param lal.CaseExprAlternative alt: The case-expression's
+                alternative.
+
+            :return: Its transformation.
+
+            :rtype: list[irt.Stmt]
+            """
+            pre_stmts, tr_expr = transform_expr(alt.f_expr)
+            return pre_stmts + [irt.AssignStmt(var, tr_expr)]
+
+        return transformer
+
+    def case_stmt_alt_transformer(alt):
+        """
+        :param lal.CaseStmtAlternative alt: The case-statement's alternative.
+        :return: Its transformation.
+        :rtype: list[irt.Stmt]
+        """
+        return transform_stmts(alt.f_stmts)
+
+    def gen_if_base(alternatives, transformer):
+        """
+        Transforms a chain of if-elsifs.
+
+        :param iterable[(lal.Expr | None, lal.AbstractNode)] alternatives:
+            Each alternative of the chain, represented by a pair holding:
+                - The condition of the alternative (None for the "else" one).
+                - The "then" part of the alternative.
+
+        :param (lal.AbstractNode)->list[irt.Stmt] transformer: The function
+            which transforms the "then" part of an alternative.
+
+        :return: The transformation of the if-elsif chain as chain of nested
+            split statements.
+
+        :rtype: list[irt.Stmt]
+        """
+        cond, lal_node = alternatives[0]
+        stmts = transformer(lal_node)
+
+        return stmts if cond is None else gen_split_stmt(
+            cond,
+            stmts,
+            gen_if_base(alternatives[1:], transformer),
+            orig_node=lal_node
+        )
+
+    def gen_case_base(selector_expr, alternatives, transformer, orig_node):
+        """
+        Transforms a case construct.
+
+        :param lal.Expr selector_expr: The selector of the case.
+
+        :param iterable[object] alternatives: The alternatives of the case
+            construct.
+
+        :param object->list[irt.Stmt] transformer: The function which
+            transforms the "then" part of an alternative.
+
+        :param lal.AbstractNode orig_node: The lal node of the case construct.
+
+        :return: The transformation of the case construct as a multi-branch
+            split statement.
+
+        :rtype: list[irt.Stmt]
+        """
+
+        # Transform the selector expression
+        case_pre_stmts, case_expr = transform_expr(selector_expr)
+
+        # Evaluate the choices of each alternative that is not the "others"
+        # one. Choices are statically known values, meaning the evaluator
+        # should never fail.
+        # Also store the transformed statements of each alternative.
+        case_alts = [
+            (
+                [
+                    ctx.evaluator.eval(transform_expr(choice)[1])
+                    for choice in alt.f_choices
+                ],
+                transformer(alt)
+            )
+            for alt in alternatives
+            if not any(
+                choice.is_a(lal.OthersDesignator)
+                for choice in alt.f_choices
+            )
+        ]
+
+        # Store the transformed statements of the "others" alternative.
+        others_potential_stmts = [
+            transformer(alt)
+            for alt in alternatives
+            if any(
+                choice.is_a(lal.OthersDesignator)
+                for choice in alt.f_choices
+            )
+        ]
+
+        # Build the conditions that correspond to matching the choices,
+        # for each alternative that is not the "others".
+        # See `gen_case_condition`.
+        alts_conditions = [
+            gen_case_condition(case_expr, choices)
+            for choices, _ in case_alts
+        ]
+
+        # Build the condition for the "others" alternative, which is the
+        # negation of the disjunction of all the previous conditions.
+        others_condition = irt.UnExpr(
+            irt.un_ops[ops.NOT],
+            reduce(
+                binexpr_builder(irt.bin_ops[ops.OR], ctx.evaluator.bool),
+                alts_conditions
+            ),
+            type_hint=ctx.evaluator.bool
+        )
+
+        # Generate the branches of the split statement.
+        branches = [
+            [irt.AssumeStmt(cond)] + stmts
+            for cond, (choices, stmts) in
+            zip(alts_conditions, case_alts)
+        ] + [
+            [irt.AssumeStmt(others_condition)] + others_stmts
+            for others_stmts in others_potential_stmts
+        ]
+
+        return case_pre_stmts + [irt.SplitStmt(
+            branches,
+            orig_node=orig_node
+        )]
+
     def transform_expr(expr):
         """
         :param lal.Expr expr: The expression to transform.
@@ -372,53 +556,16 @@ def _gen_ir(ctx, subp):
             # Generate the temporary variable, make sure it is marked as
             # synthetic so as to inform checkers not to emit irrelevant
             # messages.
-            tmp = irt.Identifier(
-                irt.Variable(
-                    fresh_name("tmp"),
-                    purpose=purpose.SyntheticVariable(),
-                    type_hint=expr.p_expression_type,
-                    orig_node=expr
-                ),
-                type_hint=expr.p_expression_type,
-                orig_node=expr
-            )
+            tmp = new_expression_replacing_var("tmp", expr)
 
-            def gen_parts(parts):
-                """
-                Generate the chain of if-elsif-else.
-
-                :param list[(lal.Expr | None, lal.Expr)] parts: The list of
-                    alternatives, where each alternative is represented by
-                    a pair (its condition, its resulting expression). The
-                    sepcial "else" alternative has None as a condition.
-
-                :return: The list of statements corresponding to the
-                    transformation of the chain.
-
-                :rtype: list[irt.Stmt]
-                """
-
-                cond, expr = parts[0]
-                pre_expr_stmts, tr_expr = transform_expr(expr)
-                stmts = pre_expr_stmts + [irt.AssignStmt(tmp, tr_expr)]
-
-                return stmts if cond is None else gen_split_stmt(
-                    cond,
-                    stmts,
-                    gen_parts(parts[1:]),
-                    orig_node=expr
-                )
-
-            parts = [
+            return gen_if_base([
                 (expr.f_cond_expr, expr.f_then_expr)
             ] + [
                 (part.f_cond_expr, part.f_then_expr)
                 for part in expr.f_alternatives
             ] + [
                 (None, expr.f_else_expr)
-            ]
-
-            return gen_parts(parts), tmp
+            ], if_expr_alt_transformer_of(tmp)), tmp
 
         elif expr.is_a(lal.CaseExpr):
             # Case expressions are transformed as such:
@@ -456,84 +603,14 @@ def _gen_ir(ctx, subp):
             # Generate the temporary variable, make sure it is marked as
             # synthetic so as to inform checkers not to emit irrelevant
             # messages.
-            tmp = irt.Identifier(
-                irt.Variable(
-                    fresh_name("tmp"),
-                    purpose=purpose.SyntheticVariable(),
-                    type_hint=expr.p_expression_type,
-                    orig_node=expr
-                ),
-                type_hint=expr.p_expression_type,
-                orig_node=expr
-            )
+            tmp = new_expression_replacing_var("tmp", expr)
 
-            # Transform the selector expression
-            case_pre_stmts, case_expr = transform_expr(expr.f_expr)
-
-            # Evaluate the choices of each alternative that is not the "others"
-            # one. Choices are statically known values, meaning the evaluator
-            # should never fail.
-            # Also store the transformed expression of each alternative.
-            case_alts = [
-                (
-                    [
-                        ctx.evaluator.eval(transform_expr(choice)[1])
-                        for choice in alt.f_choices
-                    ],
-                    transform_expr(alt.f_expr)
-                )
-                for alt in expr.f_cases
-                if not any(
-                    choice.is_a(lal.OthersDesignator)
-                    for choice in alt.f_choices
-                )
-            ]
-
-            # Store the transformed expression of the "others" alternative.
-            others_potential_expr = [
-                transform_expr(alt.f_expr)
-                for alt in expr.f_cases
-                if any(
-                    choice.is_a(lal.OthersDesignator)
-                    for choice in alt.f_choices
-                )
-            ]
-
-            # Build the conditions that correspond to matching the choices,
-            # for each alternative that is not the "others".
-            # See `gen_case_condition`.
-            alts_conditions = [
-                gen_case_condition(case_expr, choices)
-                for choices, _ in case_alts
-            ]
-
-            # Build the condition for the "others" alternative, which is the
-            # negation of the disjunction of all the previous conditions.
-            others_condition = irt.UnExpr(
-                irt.un_ops[ops.NOT],
-                reduce(
-                    binexpr_builder(irt.bin_ops[ops.OR], ctx.evaluator.bool),
-                    alts_conditions
-                ),
-                type_hint=ctx.evaluator.bool
-            )
-
-            # Generate the branches of the split statement.
-            branches = [
-                ([irt.AssumeStmt(cond)] + pre_stmts +
-                 [irt.AssignStmt(tmp, alt_e)])
-                for cond, (choices, (pre_stmts, alt_e)) in
-                zip(alts_conditions, case_alts)
-            ] + [
-                ([irt.AssumeStmt(others_condition)] + others_pre_stmts +
-                 [irt.AssignStmt(tmp, others_e)])
-                for others_pre_stmts, others_e in others_potential_expr
-            ]
-
-            return case_pre_stmts + [irt.SplitStmt(
-                branches,
-                orig_node=expr
-            )], tmp
+            return gen_case_base(
+                expr.f_expr,
+                expr.f_cases,
+                case_expr_alt_transformer_of(tmp),
+                expr
+            ), tmp
 
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
@@ -727,42 +804,14 @@ def _gen_ir(ctx, subp):
             #     assume(!C2)
             #     S3
 
-            def gen_parts(parts):
-                """
-                Generate the chain of if-elsif-else.
-
-                :param list[(lal.Expr | None, iterable[lal.Stmt])] parts:
-                    The list of alternatives, where each alternative is
-                    represented by a pair (its condition, its list of
-                    statements). The sepcial "else" alternative has None
-                    as a condition.
-
-                :return: The list of statements corresponding to the
-                    transformation of the chain.
-
-                :rtype: list[irt.Stmt]
-                """
-
-                cond, stmts = parts[0]
-                tr_stmts = transform_stmts(stmts)
-
-                return tr_stmts if cond is None else gen_split_stmt(
-                    cond,
-                    tr_stmts,
-                    gen_parts(parts[1:]),
-                    orig_node=stmts
-                )
-
-            parts = [
+            return gen_if_base([
                 (stmt.f_cond_expr, stmt.f_then_stmts)
             ] + [
                 (part.f_cond_expr, part.f_stmts)
                 for part in stmt.f_alternatives
             ] + [
                 (None, stmt.f_else_stmts)
-            ]
-
-            return gen_parts(parts)
+            ], transform_stmts)
 
         elif stmt.is_a(lal.CaseStmt):
             # Case statements are transformed as such:
@@ -801,70 +850,12 @@ def _gen_ir(ctx, subp):
             # This allows us to transform the case in a split of N branches
             # instead of in a chain of if-elsifs.
 
-            # Transform the selector expression
-            case_pre_stmts, case_expr = transform_expr(stmt.f_case_expr)
-
-            # Evaluate the choices of each alternative that is not the "others"
-            # one. Choices are statically known values, meaning the evaluator
-            # should never fail.
-            # Also store the transformed statements of each alternative.
-            case_alts = [
-                (
-                    [
-                        ctx.evaluator.eval(transform_expr(choice)[1])
-                        for choice in alt.f_choices
-                    ],
-                    transform_stmts(alt.f_stmts)
-                )
-                for alt in stmt.f_case_alts
-                if not any(
-                    choice.is_a(lal.OthersDesignator)
-                    for choice in alt.f_choices
-                )
-            ]
-
-            # Store the transformed statements of the "others" alternative.
-            others_potential_stmts = [
-                transform_stmts(alt.f_stmts)
-                for alt in stmt.f_case_alts
-                if any(
-                    choice.is_a(lal.OthersDesignator)
-                    for choice in alt.f_choices
-                )
-            ]
-
-            # Build the conditions that correspond to matching the choices,
-            # for each alternative that is not the "others".
-            # See `gen_case_condition`.
-            alts_conditions = [
-                gen_case_condition(case_expr, choices)
-                for choices, _ in case_alts
-            ]
-
-            # Build the condition for the "others" alternative, which is the
-            # negation of the disjunction of all the previous conditions.
-            others_condition = irt.UnExpr(
-                irt.un_ops[ops.NOT],
-                reduce(
-                    binexpr_builder(irt.bin_ops[ops.OR], ctx.evaluator.bool),
-                    alts_conditions
-                ),
-                type_hint=ctx.evaluator.bool
+            return gen_case_base(
+                stmt.f_case_expr,
+                stmt.f_case_alts,
+                case_stmt_alt_transformer,
+                stmt
             )
-
-            # Generate the branches of the split statement.
-            branches = [
-                [irt.AssumeStmt(cond)] + stmts
-                for cond, (choices, stmts) in zip(alts_conditions, case_alts)
-            ] + [
-                [irt.AssumeStmt(others_condition)] + others_stmts
-                for others_stmts in others_potential_stmts
-            ]
-
-            return case_pre_stmts + [irt.SplitStmt(
-                branches,
-                orig_node=stmt
-            )]
 
         elif stmt.is_a(lal.LoopStmt):
             exit_label = irt.LabelStmt(fresh_name('exit_loop'))
