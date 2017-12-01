@@ -420,6 +420,121 @@ def _gen_ir(ctx, subp):
 
             return gen_parts(parts), tmp
 
+        elif expr.is_a(lal.CaseExpr):
+            # Case expressions are transformed as such:
+            #
+            # Ada:
+            # ---------------
+            # y := case x is
+            #      when CST1 => E1,
+            #      when CST2 | CST3 => E2,
+            #      when RANGE => E3,
+            #      when others => E4;
+            #
+            #
+            # Basic IR:
+            # ---------------
+            # split:
+            #   assume(x == CST1)
+            #   tmp = E1
+            # |:
+            #   assume(x == CST2 || x == CST3)
+            #   tmp = E2
+            # |:
+            #   assume(x >= GetFirst(Range) && x <= GetLast(Range))
+            #   tmp = E3
+            # |:
+            #   assume(!(x == CST1 || (x == CST2 || x == CST3) ||
+            #          x >= GetFirst(Range) && x <= GetLast(Range)))
+            #   tmp = E4
+            #  y := tmp
+            #
+            # Note: In Ada, case expressions must be complete and *disjoint*.
+            # This allows us to transform the case in a split of N branches
+            # instead of in a chain of if-elsifs.
+
+            # Generate the temporary variable, make sure it is marked as
+            # synthetic so as to inform checkers not to emit irrelevant
+            # messages.
+            tmp = irt.Identifier(
+                irt.Variable(
+                    fresh_name("tmp"),
+                    purpose=purpose.SyntheticVariable(),
+                    type_hint=expr.p_expression_type,
+                    orig_node=expr
+                ),
+                type_hint=expr.p_expression_type,
+                orig_node=expr
+            )
+
+            # Transform the selector expression
+            case_pre_stmts, case_expr = transform_expr(expr.f_expr)
+
+            # Evaluate the choices of each alternative that is not the "others"
+            # one. Choices are statically known values, meaning the evaluator
+            # should never fail.
+            # Also store the transformed expression of each alternative.
+            case_alts = [
+                (
+                    [
+                        ctx.evaluator.eval(transform_expr(choice)[1])
+                        for choice in alt.f_choices
+                    ],
+                    transform_expr(alt.f_expr)
+                )
+                for alt in expr.f_cases
+                if not any(
+                    choice.is_a(lal.OthersDesignator)
+                    for choice in alt.f_choices
+                )
+            ]
+
+            # Store the transformed expression of the "others" alternative.
+            others_potential_expr = [
+                transform_expr(alt.f_expr)
+                for alt in expr.f_cases
+                if any(
+                    choice.is_a(lal.OthersDesignator)
+                    for choice in alt.f_choices
+                )
+            ]
+
+            # Build the conditions that correspond to matching the choices,
+            # for each alternative that is not the "others".
+            # See `gen_case_condition`.
+            alts_conditions = [
+                gen_case_condition(case_expr, choices)
+                for choices, _ in case_alts
+            ]
+
+            # Build the condition for the "others" alternative, which is the
+            # negation of the disjunction of all the previous conditions.
+            others_condition = irt.UnExpr(
+                irt.un_ops[ops.NOT],
+                reduce(
+                    binexpr_builder(irt.bin_ops[ops.OR], ctx.evaluator.bool),
+                    alts_conditions
+                ),
+                type_hint=ctx.evaluator.bool
+            )
+
+            # Generate the branches of the split statement.
+            branches = [
+                ([irt.AssumeStmt(cond)] + pre_stmts +
+                 [irt.AssignStmt(tmp, alt_e)])
+                for cond, (choices, (pre_stmts, alt_e)) in
+                zip(alts_conditions, case_alts)
+            ] + [
+                ([irt.AssumeStmt(others_condition)] + others_pre_stmts +
+                 [irt.AssignStmt(tmp, others_e)])
+                for others_pre_stmts, others_e in others_potential_expr
+            ]
+
+            return case_pre_stmts + [irt.SplitStmt(
+                branches,
+                orig_node=expr
+            )], tmp
+
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
 
