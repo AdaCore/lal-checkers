@@ -10,9 +10,9 @@ import test_helper
 
 @test_helper.run
 def run(args):
-    ctx = lal2basic.new_context()
+    ctx = lal2basic.ExtractionContext()
 
-    progs = lal2basic.extract_programs(ctx, "test.adb")
+    progs = ctx.extract_programs("test.adb")
 
     output = PrettyPrinter.pretty_print(
         progs[0],

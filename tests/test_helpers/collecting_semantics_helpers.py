@@ -19,12 +19,12 @@ default_merge_predicates = {
 
 
 def do_analysis(checker, merge_predicates):
-    ctx = lal2basic.new_context()
+    ctx = lal2basic.ExtractionContext()
 
-    progs = lal2basic.extract_programs(ctx, "test.adb")
+    progs = ctx.extract_programs("test.adb")
 
     model_builder = Models(
-        lal2basic.default_typer(ctx),
+        ctx.default_typer(),
         default_type_interpreter
     )
 

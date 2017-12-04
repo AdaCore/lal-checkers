@@ -1259,38 +1259,21 @@ def access_typer(inner_typer):
     return typer
 
 
-def standard_typer_of(ctx):
-    """
-    :param ExtractionContext ctx: The program extraction context.
-    :return: A Typer for Ada's standard types.
-    :rtype: types.Typer[lal.BaseTypeDecl]
-    """
-    bool_type = ctx.evaluator.bool
-    int_type = ctx.evaluator.int
-
-    @types.typer
-    def typer(hint):
-        """
-        :param lal.BaseTypeDecl hint: the lal type.
-        :return: The corresponding lalcheck type.
-        :rtype: types.Boolean | types.IntRange
-        """
-        if hint == bool_type:
-            return types.Boolean()
-        elif hint == int_type:
-            return types.IntRange(-2 ** 31, 2 ** 31 - 1)
-
-    return typer
-
-
 class ExtractionContext(object):
-    def __init__(self, lal_ctx):
-        """
-        :param lal.AnalysisContext lal_ctx: The libadalang analysis context.
-        """
-        self.lal_ctx = lal_ctx
+    """
+    The libadalang-based frontend interface. Provides method for extracting
+    IR programs from Ada source files (see extract_programs), as well as
+    a default typer for those programs (see default_typer).
 
-        dummy = lal_ctx.get_from_buffer(
+    Note: programs extracted using different ExtractionContext are not
+    compatible. Also, this extraction context must be kept alive as long
+    as the programs parsed with it are intended to be used.
+    """
+    def __init__(self):
+        self.lal_ctx = lal.AnalysisContext()
+
+        # Get a dummy node, needed to call static properties of libadalang.
+        dummy = self.lal_ctx.get_from_buffer(
             "<dummy>", 'package Dummy is end;'
         ).root
 
@@ -1301,81 +1284,90 @@ class ExtractionContext(object):
             dummy.p_universal_real_type
         )
 
-    def parse_file(self, ada_file):
+    def _parse_file(self, ada_file):
+        """
+        Parses the given file.
+
+        :param str ada_file: The path to the file to parse.
+        :rtype: lal.AnalysisUnit
+        """
         return self.lal_ctx.get_from_file(ada_file)
 
-
-def new_context():
-    """
-    Creates a new program extraction context.
-
-    Programs extracted with the same context have compatible standard types.
-
-    Note that the context must be kept alive as long as long as the
-    programs that were extracted with this context are intended to be used.
-
-    :return: A new libadalang analysis context.
-
-    :rtype: ExtractionContext
-    """
-    return ExtractionContext(lal.AnalysisContext())
-
-
-def extract_programs(ctx, ada_file):
-    """
-    :param ExtractionContext ctx: The extraction context.
-
-    :param str ada_file: A path to the Ada source file from which to extract
-        programs.
-
-    :return: a Basic IR Program for each subprogram body that exists in the
-        given source code.
-
-    :rtype: iterable[irt.Program]
-    """
-    unit = ctx.parse_file(ada_file)
-
-    if unit.root is None:
-        print('Could not parse {}:'.format(ada_file))
-        for diag in unit.diagnostics:
-            print('   {}'.format(diag))
-            return
-
-    unit.populate_lexical_env()
-
-    progs = [
-        _gen_ir(ctx, subp)
-        for subp in unit.root.findall((
-            lal.SubpBody,
-            lal.ExprFunction
-        ))
-    ]
-
-    converter = ConvertUniversalTypes(ctx.evaluator)
-
-    for prog in progs:
-        prog.visit(converter)
-
-    return progs
-
-
-def default_typer(ctx):
-    """
-    :param ExtractionContext ctx: The program extraction context.
-    :return: The default Typer for the Ada language.
-    :rtype: types.Typer[lal.BaseTypeDecl]
-    """
-
-    standard_typer = standard_typer_of(ctx)
-
-    @types.delegating_typer
-    def typer():
+    def extract_programs(self, ada_file):
         """
+        :param str ada_file: A path to the Ada source file from which to
+            extract programs.
+
+        :return: a Basic IR Program for each subprogram body that exists in the
+            given source code.
+
+        :rtype: iterable[irt.Program]
+        """
+        unit = self._parse_file(ada_file)
+
+        if unit.root is None:
+            print('Could not parse {}:'.format(ada_file))
+            for diag in unit.diagnostics:
+                print('   {}'.format(diag))
+                return
+
+        unit.populate_lexical_env()
+
+        progs = [
+            _gen_ir(self, subp)
+            for subp in unit.root.findall((
+                lal.SubpBody,
+                lal.ExprFunction
+            ))
+        ]
+
+        converter = ConvertUniversalTypes(self.evaluator)
+
+        for prog in progs:
+            prog.visit(converter)
+
+        return progs
+
+    def standard_typer(self):
+        """
+        :return: A Typer for Ada standard types of programs parsed using
+            this extraction context.
+
         :rtype: types.Typer[lal.BaseTypeDecl]
         """
-        return (standard_typer |
-                int_range_typer |
-                enum_typer |
-                access_typer(typer))
+        bool_type = self.evaluator.bool
+        int_type = self.evaluator.int
 
-    return typer
+        @types.typer
+        def typer(hint):
+            """
+            :param lal.BaseTypeDecl hint: the lal type.
+            :return: The corresponding lalcheck type.
+            :rtype: types.Boolean | types.IntRange
+            """
+            if hint == bool_type:
+                return types.Boolean()
+            elif hint == int_type:
+                return types.IntRange(-2 ** 31, 2 ** 31 - 1)
+
+        return typer
+
+    def default_typer(self):
+        """
+        :return: The default Typer for Ada programs parsed using this
+            extraction context.
+
+        :rtype: types.Typer[lal.BaseTypeDecl]
+        """
+
+        @types.delegating_typer
+        def typer():
+            """
+            :rtype: types.Typer[lal.BaseTypeDecl]
+            """
+            return (self.standard_typer() |
+                    int_range_typer |
+                    enum_typer |
+                    access_typer(typer))
+
+        return typer

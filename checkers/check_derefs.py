@@ -163,12 +163,12 @@ def emit_codepeer_message(file, line, column,
 
 
 def run(args):
-    ctx = lal2basic.new_context()
+    ctx = lal2basic.ExtractionContext()
 
-    progs = lal2basic.extract_programs(ctx, args.file)
+    progs = ctx.extract_programs(args.file)
 
     model_builder = Models(
-        lal2basic.default_typer(ctx),
+        ctx.default_typer(),
         default_type_interpreter
     )
 
