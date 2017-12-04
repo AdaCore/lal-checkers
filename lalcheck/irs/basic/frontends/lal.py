@@ -6,7 +6,6 @@ import libadalang as lal
 
 from lalcheck.irs.basic import tree as irt, purpose
 from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
-from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.constants import ops, lits
 from lalcheck.utils import KeyCounter
 from lalcheck import types
@@ -14,7 +13,7 @@ from lalcheck import types
 from funcy.calc import memoize
 
 
-_lal_op_type_2_symbol = {
+_lal_op_type_to_symbol = {
     (lal.OpLt, 2): irt.bin_ops[ops.LT],
     (lal.OpLte, 2): irt.bin_ops[ops.LE],
     (lal.OpEq, 2): irt.bin_ops[ops.EQ],
@@ -31,7 +30,7 @@ _lal_op_type_2_symbol = {
     (lal.OpNot, 1): irt.un_ops[ops.NOT],
 }
 
-_attr_2_unop = {
+_attr_to_unop = {
     'Access': irt.un_ops[ops.ADDRESS],
     'First': irt.un_ops[ops.GET_FIRST],
     'Last': irt.un_ops[ops.GET_LAST],
@@ -83,7 +82,7 @@ def _gen_ir(ctx, subp):
         :return: The corresponding Basic IR operator.
         :rtype: irt.Operator
         """
-        return _lal_op_type_2_symbol[type(lal_op), arity]
+        return _lal_op_type_to_symbol[type(lal_op), arity]
 
     def unimplemented(node):
         """
@@ -691,7 +690,7 @@ def _gen_ir(ctx, subp):
 
             prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
             return prefix_pre_stmts, irt.UnExpr(
-                _attr_2_unop[expr.f_attribute.text],
+                _attr_to_unop[expr.f_attribute.text],
                 prefix,
                 type_hint=expr.p_expression_type,
                 orig_node=expr
@@ -1158,19 +1157,14 @@ class ConstExprEvaluator(IRImplicitVisitor):
 
     def eval(self, expr):
         """
+        Evaluates an expression, returning the value it evaluates to.
+
         :param irt.Expr expr: A Basic IR expression to evaluate.
-        :return: The value which this expression evalutes to.
-        :rtype: int | str
+        :rtype: int | str | ConstExprEvaluator.Range
         :raise NotConstExprError: if the expression is not a constant.
         :raise NotImplementedError: if implementation is incomplete.
         """
-        res = self.visit(expr)
-        if res is not None:
-            return res
-        else:
-            raise NotImplementedError("Cannot evaluate `{}`".format(
-                PrettyPrinter.pretty_print(expr)
-            ))
+        return self.visit(expr)
 
     @memoize
     def visit(self, expr):
@@ -1183,7 +1177,7 @@ class ConstExprEvaluator(IRImplicitVisitor):
 
         :return: The value of this expression.
 
-        :rtype: int | str
+        :rtype: int | str | ConstExprEvaluator.Range
         """
         return expr.visit(self)
 
