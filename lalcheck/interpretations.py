@@ -259,7 +259,7 @@ def simple_access_interpreter(tpe):
         )
 
 
-default_type_interpreter = (
+default_type_interpreter = Transformer.make_memoizing(
     default_boolean_interpreter |
     default_int_range_interpreter |
     default_enum_interpreter |

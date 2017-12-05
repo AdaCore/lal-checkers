@@ -15,6 +15,7 @@ Typer[T] is equivalent to Transformer[T, Type]
 
 typer = Transformer.as_transformer
 delegating_typer = Transformer.from_transformer_builder
+memoizing_typer = Transformer.make_memoizing
 
 
 class Type(object):

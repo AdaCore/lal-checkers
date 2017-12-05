@@ -9,7 +9,6 @@ from tree import LabelStmt
 import visitors
 
 from collections import defaultdict
-from funcy.calc import memoize
 
 
 class PrettyPrinter(visitors.Visitor):
@@ -308,33 +307,7 @@ class Models(visitors.Visitor):
         :param lalcheck.types.TypeInterpreter type_interpreter: The type
             interpreter that maps lalcheck types to interpretations.
         """
-        self.typer = typer
-        self.type_interpreter = type_interpreter
-
-    @memoize
-    def _hint_to_type(self, hint):
-        """
-        :param T hint: The type hint.
-
-        :return: The corresponding lalcheck type.
-
-        :rtype: lalcheck.types.Type
-
-        Note: requires memoization so that any two identical hints map to the
-        same lalcheck type.
-        """
-        return self.typer.get(hint)
-
-    @memoize
-    def _type_to_interp(self, tpe):
-        """
-        :param lalcheck.types.Type tpe: The lalcheck type.
-
-        :return: The corresponding type interpretation.
-
-        :rtype: lalcheck.interpretations.TypeInterpretation
-        """
-        return self.type_interpreter.get(tpe)
+        self.hint_to_interpreter = typer >> type_interpreter
 
     def _typeable_to_interp(self, node):
         """
@@ -345,7 +318,7 @@ class Models(visitors.Visitor):
 
         :rtype: lalcheck.interpretations.TypeInterpretation
         """
-        return self._type_to_interp(self._hint_to_type(node.data.type_hint))
+        return self.hint_to_interpreter.get(node.data.type_hint)
 
     def visit_funcall(self, funcall, node_domains, defs, inv_defs, builders):
         dom = node_domains[funcall]

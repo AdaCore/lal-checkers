@@ -1,5 +1,6 @@
 from itertools import chain, combinations
 from collections import defaultdict
+from funcy.calc import memoize
 
 
 class Bunch(dict):
@@ -127,3 +128,15 @@ class Transformer(object):
         :rtype: Transformer
         """
         return Transformer(lambda hint: builder()._transform(hint))
+
+    @staticmethod
+    def make_memoizing(transformer):
+        """
+        Constructs a transformer that memoizes transformed objects from an
+        underlying transformer.
+
+        :param Transformer transformer: The underlying transformer.
+
+        :rtype: Transformer
+        """
+        return Transformer(memoize(transformer._transform))

@@ -1386,6 +1386,7 @@ class ExtractionContext(object):
 
         standard_typer = self.standard_typer()
 
+        @types.memoizing_typer
         @types.delegating_typer
         def typer():
             """
