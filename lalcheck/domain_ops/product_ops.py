@@ -72,6 +72,23 @@ def neq(elem_eq_defs):
     return do
 
 
+def construct(domain):
+    """
+    :param lalcheck.domains.Product domain: The product domain.
+    :return: A function which can construct instances of the product domain.
+    :rtype: *object -> tuple
+    """
+    def do(*x):
+        """
+        :param *object x: The values of each component.
+        :return: An instance of the product domain using the given values.
+        :rtype: tuple
+        """
+        return domain.build(*x)
+
+    return do
+
+
 def inv_eq(domain, elem_inv_eq_defs, elem_eq_defs):
     """"
     :param lalcheck.domains.Product domain: A product domain.
@@ -192,6 +209,33 @@ def inv_neq(domain, elem_inv_eq_defs, elem_eq_defs):
         :rtype: (frozenset[object], frozenset[object]) | None
         """
         return do_inv_eq(boolean_ops.not_(res), l_constr, r_constr)
+
+    return do
+
+
+def inv_construct(domain):
+    """
+    :param lalcheck.domains.Product domain: The product domain.
+
+    :return: A function which performs the inverse of the "construct"
+        operation.
+
+    :rtype: (tuple, *object) -> (tuple[object] | None)
+    """
+    def do(res, *constr):
+        """
+        :param tuple res: The expected output, as an instance of a product
+            domain.
+
+        :param object* constr: The constraints on the inputs of the
+            constructor.
+
+        :return: The set of inputs that could construct the given instance
+            of the product domain.
+
+        :rtype: tuple[object] | None
+        """
+        return domain.meet(res, constr)
 
     return do
 

@@ -6,7 +6,8 @@ TypeInterpreters.
 from lalcheck.domain_ops import (
     boolean_ops,
     interval_ops,
-    finite_lattice_ops
+    finite_lattice_ops,
+    product_ops
 )
 from lalcheck.constants import ops, lits
 from lalcheck.utils import Transformer
@@ -264,6 +265,89 @@ def default_simple_pointer_interpreter(inner_interpreter):
     return get_pointer_element >> inner_interpreter >> pointer_interpreter
 
 
+def default_product_interpreter(elem_interpreter):
+    """
+    Builds a type interpreter for product types, using the product domain of
+    the domains of each of its components.
+
+    :param TypeInterpreter elem_interpreter: interpreter for elements of
+        the product.
+
+    :rtype: TypeInterpreter
+    """
+    @Transformer.as_transformer
+    def get_elements(tpe):
+        """
+        :param types.Type tpe: The type.
+        :return: The type of the elements of the record, if relevant.
+        :rtype: list[type.Type]
+        """
+        if tpe.is_a(types.Product):
+            return tpe.elem_types
+
+    @Transformer.as_transformer
+    def product_interpreter(elem_interpretations):
+        """
+        :param list[TypeInterpretation] elem_interpretations:
+        :return:
+        """
+        elem_doms = [interp.domain for interp in elem_interpretations]
+        prod_dom = domains.Product(*elem_doms)
+        constructor_dom = tuple(elem_doms) + (prod_dom,)
+        bool_dom = boolean_ops.Boolean
+        bin_rel_dom = (prod_dom, prod_dom, bool_dom)
+
+        elem_eq_defs = [
+            interp.def_provider(
+                ops.EQ, (
+                    interp.domain,
+                    interp.domain,
+                    bool_dom
+                )
+            )
+            for interp in elem_interpretations
+        ]
+
+        elem_inv_eq_defs, elem_inv_neq_defs = (
+            [
+                interp.inv_def_provider(
+                    op, (
+                        interp.domain,
+                        interp.domain,
+                        bool_dom
+                    )
+                )
+                for interp in elem_interpretations
+            ]
+            for op in [ops.EQ, ops.NEQ]
+        )
+
+        defs = {
+            (ops.NEW, constructor_dom): product_ops.construct(prod_dom),
+            (ops.EQ, bin_rel_dom): product_ops.eq(elem_eq_defs),
+            (ops.NEQ, bin_rel_dom): product_ops.neq(elem_eq_defs)
+        }
+
+        inv_defs = {
+            (ops.NEW, constructor_dom): product_ops.inv_construct(prod_dom),
+            (ops.EQ, bin_rel_dom): product_ops.inv_eq(
+                prod_dom, elem_inv_eq_defs, elem_eq_defs
+            ),
+            (ops.NEQ, bin_rel_dom): product_ops.inv_neq(
+                prod_dom, elem_inv_eq_defs, elem_eq_defs
+            )
+        }
+
+        return TypeInterpretation(
+            prod_dom,
+            dict_to_provider(defs),
+            dict_to_provider(inv_defs),
+            product_ops.lit
+        )
+
+    return get_elements >> elem_interpreter.lifted() >> product_interpreter
+
+
 @memoizing_type_interpreter
 @delegating_type_interpreter
 def default_type_interpreter():
@@ -271,5 +355,6 @@ def default_type_interpreter():
         default_boolean_interpreter |
         default_int_range_interpreter |
         default_enum_interpreter |
-        default_simple_pointer_interpreter(default_type_interpreter)
+        default_simple_pointer_interpreter(default_type_interpreter) |
+        default_product_interpreter(default_type_interpreter)
     )

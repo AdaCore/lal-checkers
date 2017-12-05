@@ -17,3 +17,5 @@ DEREF = '*'
 
 GET_FIRST = 'GetFirst'
 GET_LAST = 'GetLast'
+
+NEW = 'new'

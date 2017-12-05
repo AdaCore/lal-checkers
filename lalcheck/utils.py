@@ -94,6 +94,20 @@ class Transformer(object):
     or_else = __or__
     and_then = __rshift__
 
+    def lifted(self):
+        """
+        Turns a Transformer that works on values of type T to a transformer
+        that works on values of type iterable[T].
+
+        :rtype: Transformer
+        """
+        @self.as_transformer
+        def f(hints):
+            res = [self._transform(hint) for hint in hints]
+            return res if all(x is not None for x in res) else None
+
+        return f
+
     def get(self, x):
         """
         Forces transformation of the given argument.

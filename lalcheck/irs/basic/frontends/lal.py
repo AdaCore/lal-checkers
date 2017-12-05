@@ -508,7 +508,7 @@ def _gen_ir(ctx, subp):
         if expr.is_a(lal.ParenExpr):
             return transform_expr(expr.f_expr)
 
-        if expr.is_a(lal.BinOp):
+        elif expr.is_a(lal.BinOp):
 
             if expr.f_op.is_a(lal.OpAndThen, lal.OpOrElse):
                 return transform_short_circuit_ops(expr)
@@ -646,6 +646,25 @@ def _gen_ir(ctx, subp):
         elif expr.is_a(lal.NullLiteral):
             return [], irt.Lit(
                 lits.NULL,
+                type_hint=expr.p_expression_type,
+                orig_node=expr
+            )
+
+        elif expr.is_a(lal.Aggregate):
+            transformed_exprs = [
+                transform_expr(assoc.f_r_expr)
+                for assoc in expr.f_assocs
+            ]
+            exprs_pre_stmts = [
+                stmt
+                for stmts, _ in transformed_exprs
+                for stmt in stmts
+            ]
+            exprs = [tr_expr for _, tr_expr in transformed_exprs]
+
+            return exprs_pre_stmts, irt.FunCall(
+                ops.NEW,
+                exprs,
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
@@ -1261,6 +1280,38 @@ def access_typer(inner_typer):
     return accessed_type >> inner_typer >> to_pointer
 
 
+def record_typer(elem_typer):
+    """
+    :param types.Typer[lal.AdaNode] elem_typer: A typer for elements of
+        products.
+
+    :return: A typer for record types.
+
+    :rtype: types.Typer[lal.AdaNode]
+    """
+    @Transformer.as_transformer
+    def get_elements(hint):
+        """
+        :param lal.AdaNode hint: the lal type.
+        :return: The components of the record type, if relevant.
+        :rtype: list[lal.AdaNode]
+        """
+        if hint.is_a(lal.TypeDecl):
+            if hint.f_type_def.is_a(lal.RecordTypeDef):
+                r_def = hint.f_type_def.f_record_def
+                fields = r_def.f_components.f_components
+                return [
+                    field.f_component_def.f_type_expr
+                    for field in fields
+                    for name in field.f_ids
+                ]
+
+    to_product = Transformer.as_transformer(types.Product)
+
+    # Get the elements -> type them all -> generate the product type.
+    return get_elements >> elem_typer.lifted() >> to_product
+
+
 def name_typer(inner_typer):
     """
     :param types.Typer[lal.AdaNode] inner_typer: A typer for elements
@@ -1396,6 +1447,7 @@ class ExtractionContext(object):
                     int_range_typer |
                     enum_typer |
                     access_typer(typer) |
+                    record_typer(typer) |
                     name_typer(typer))
 
         return typer

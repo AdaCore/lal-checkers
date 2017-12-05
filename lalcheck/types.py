@@ -58,3 +58,14 @@ class Pointer(Type):
     """
     def __init__(self, elem_type):
         self.elem_type = elem_type
+
+
+class Product(Type):
+    """
+    Represents a product type.
+    """
+    def __init__(self, elem_types):
+        """
+        :param list[Type] elem_types: types of the elements of the product.
+        """
+        self.elem_types = elem_types
