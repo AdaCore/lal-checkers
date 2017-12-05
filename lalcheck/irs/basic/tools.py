@@ -323,7 +323,7 @@ class Models(visitors.Visitor):
         Note: requires memoization so that any two identical hints map to the
         same lalcheck type.
         """
-        return self.typer.from_hint(hint)
+        return self.typer.get(hint)
 
     @memoize
     def _type_to_interp(self, tpe):
@@ -334,7 +334,7 @@ class Models(visitors.Visitor):
 
         :rtype: lalcheck.interpretations.TypeInterpretation
         """
-        return self.type_interpreter.from_type(tpe)
+        return self.type_interpreter.get(tpe)
 
     def _typeable_to_interp(self, node):
         """

@@ -48,3 +48,82 @@ def powerset(iterable):
     xs = list(iterable)
     res = chain.from_iterable(combinations(xs, n) for n in range(len(xs) + 1))
     return frozenset(frozenset(x for x in tp) for tp in res)
+
+
+class Transformer(object):
+    def __init__(self, fun):
+        """
+        Creates a new transformer using the given function.
+
+        :param object -> (object | None) fun: The transforming function.
+        """
+        self._transform = fun
+
+    def __or__(self, other):
+        """
+        Combines two transformer in a fallback fashion: apply the other
+        transformer if the first one returned an invalid value.
+
+        :param Transformer other: The transformer to combine with.
+        :rtype: Transformer
+        """
+        @self.as_transformer
+        def f(hint):
+            x = self._transform(hint)
+            return x if x is not None else other._transform(hint)
+
+        return f
+
+    def __rshift__(self, other):
+        """
+        Combines two transformer in a chain fashion: use the other
+        transformer on the value transformed by the first if this value is
+        valid.
+
+        :param Transformer other: The transformer to combine with.
+        :rtype: Transformer
+        """
+        @self.as_transformer
+        def f(hint):
+            x = self._transform(hint)
+            return None if x is None else other._transform(x)
+
+        return f
+
+    or_else = __or__
+    and_then = __rshift__
+
+    def get(self, x):
+        """
+        Forces transformation of the given argument.
+
+        :param object x: The object to transform.
+        :rtype: object
+        :raise ValueError: if the transformation failed.
+        """
+        res = self._transform(x)
+        if res is None:
+            raise ValueError("Could not transform {}".format(x))
+        return res
+
+    @staticmethod
+    def as_transformer(fun):
+        """
+        Constructs a transformer from a function.
+
+        :param object -> (object | None) fun: The transforming function.
+        :rtype: Transformer
+        """
+        return Transformer(fun)
+
+    @staticmethod
+    def from_transformer_builder(builder):
+        """
+        Constructs a transformer from a function that returns a transformer.
+
+        :param () -> Transformer builder: A function that returns a
+            transformer.
+
+        :rtype: Transformer
+        """
+        return Transformer(lambda hint: builder()._transform(hint))

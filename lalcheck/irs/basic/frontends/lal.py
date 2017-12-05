@@ -7,7 +7,7 @@ import libadalang as lal
 from lalcheck.irs.basic import tree as irt, purpose
 from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
 from lalcheck.constants import ops, lits
-from lalcheck.utils import KeyCounter
+from lalcheck.utils import KeyCounter, Transformer
 from lalcheck import types
 
 from funcy.calc import memoize
@@ -1246,20 +1246,20 @@ def access_typer(inner_typer):
     :rtype: types.Typer[lal.BaseTypeDecl]
     """
 
-    @types.typer
-    def typer(hint):
+    @Transformer.as_transformer
+    def accessed_type(hint):
         """
         :param lal.BaseTypeDecl hint: the lal type.
-        :return: The corresponding lalcheck type.
-        :rtype: types.Pointer
+        :return: The lal type being accessed.
+        :rtype: lal.BaseTypeDecl
         """
-        if hint.p_is_access_type:
-            accessed_type = hint.f_type_def.f_subtype_indication.f_name
-            tpe = inner_typer.from_hint(accessed_type.p_referenced_decl)
-            if tpe:
-                return types.Pointer(tpe)
+        if hint.is_a(lal.TypeDecl):
+            if hint.p_is_access_type:
+                tpe = hint.f_type_def.f_subtype_indication
+                return tpe.f_name.p_referenced_decl
 
-    return typer
+    to_pointer = Transformer.as_transformer(types.Pointer)
+    return accessed_type >> inner_typer >> to_pointer
 
 
 class ExtractionContext(object):
