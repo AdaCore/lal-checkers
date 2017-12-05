@@ -3,7 +3,6 @@ Provides the tree constructors of the Basic intermediate representation.
 """
 
 from lalcheck.utils import Bunch
-from lalcheck.constants import ops
 
 
 def _visitable(name):
@@ -286,48 +285,24 @@ class Expr(Node):
     pass
 
 
-@_visitable("visit_binexpr")
-class BinExpr(Expr):
+@_visitable("visit_funcall")
+class FunCall(Expr):
     """
-    Represents a binary operation, i.e. ([expr] [op] [expr])
+    Represents a function call.
     """
-    def __init__(self, lhs, bin_op, rhs, **data):
+    def __init__(self, fun_id, args, **data):
         """
-        :param Expr lhs: The left-hand side of the binary expression.
-        :param Operator bin_op: The binary operator.
-        :param Expr rhs: The right-hand side of the binary expression.
+        :param object fun_id: An object identifying the function called.
+        :param list[Expr] args: The arguments passed.
         :param **object data: User-defined data.
         """
         Node.__init__(self, **data)
-        self.lhs = lhs
-        self.bin_op = bin_op
-        self.rhs = rhs
+        self.fun_id = fun_id
+        self.args = args
 
     def children(self):
-        yield self.lhs
-        yield self.rhs
-
-
-@_visitable("visit_unexpr")
-class UnExpr(Expr):
-    """
-    Represents an unary operation, i.e. ([op] [expr])
-    """
-    def __init__(self, un_op, expr, **data):
-        """
-        :param Operator un_op: The unary operator
-
-        :param Expr expr: The expression which the unary operator is applied
-            on.
-
-        :param **object data: User-defined data.
-        """
-        Node.__init__(self, **data)
-        self.un_op = un_op
-        self.expr = expr
-
-    def children(self):
-        yield self.expr
+        for arg in self.args:
+            yield arg
 
 
 @_visitable("visit_lit")
@@ -345,46 +320,3 @@ class Lit(Expr):
 
     def children(self):
         return iter(())
-
-
-class Operator(object):
-    """
-    Holds an operator. The address of this object uniquely identifies the
-    operator that is held, unlike its string representation.
-    """
-    def __init__(self, sym):
-        """
-        :param object sym: The symbol associated with this operator.
-        """
-        self.sym = sym
-
-    def __str__(self):
-        """
-        :return: A representation of the operator.
-        :rtype: str
-        """
-        return str(self.sym)
-
-
-bin_ops = {
-    ops.PLUS: Operator(ops.PLUS),
-    ops.MINUS: Operator(ops.MINUS),
-    ops.LT: Operator(ops.LT),
-    ops.LE: Operator(ops.LE),
-    ops.EQ: Operator(ops.EQ),
-    ops.NEQ: Operator(ops.NEQ),
-    ops.GE: Operator(ops.GE),
-    ops.GT: Operator(ops.GT),
-    ops.AND: Operator(ops.AND),
-    ops.OR: Operator(ops.OR),
-    ops.DOT_DOT: Operator(ops.DOT_DOT)
-}
-
-un_ops = {
-    ops.NOT: Operator(ops.NOT),
-    ops.NEG: Operator(ops.NEG),
-    ops.ADDRESS: Operator(ops.ADDRESS),
-    ops.DEREF: Operator(ops.DEREF),
-    ops.GET_FIRST: Operator(ops.GET_FIRST),
-    ops.GET_LAST: Operator(ops.GET_LAST)
-}

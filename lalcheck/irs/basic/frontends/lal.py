@@ -14,26 +14,26 @@ from funcy.calc import memoize
 
 
 _lal_op_type_to_symbol = {
-    (lal.OpLt, 2): irt.bin_ops[ops.LT],
-    (lal.OpLte, 2): irt.bin_ops[ops.LE],
-    (lal.OpEq, 2): irt.bin_ops[ops.EQ],
-    (lal.OpNeq, 2): irt.bin_ops[ops.NEQ],
-    (lal.OpGte, 2): irt.bin_ops[ops.GE],
-    (lal.OpGt, 2): irt.bin_ops[ops.GT],
-    (lal.OpAnd, 2): irt.bin_ops[ops.AND],
-    (lal.OpOr, 2): irt.bin_ops[ops.OR],
-    (lal.OpPlus, 2): irt.bin_ops[ops.PLUS],
-    (lal.OpMinus, 2): irt.bin_ops[ops.MINUS],
-    (lal.OpDoubleDot, 2): irt.bin_ops[ops.DOT_DOT],
+    (lal.OpLt, 2): ops.LT,
+    (lal.OpLte, 2): ops.LE,
+    (lal.OpEq, 2): ops.EQ,
+    (lal.OpNeq, 2): ops.NEQ,
+    (lal.OpGte, 2): ops.GE,
+    (lal.OpGt, 2): ops.GT,
+    (lal.OpAnd, 2): ops.AND,
+    (lal.OpOr, 2): ops.OR,
+    (lal.OpPlus, 2): ops.PLUS,
+    (lal.OpMinus, 2): ops.MINUS,
+    (lal.OpDoubleDot, 2): ops.DOT_DOT,
 
-    (lal.OpMinus, 1): irt.un_ops[ops.NEG],
-    (lal.OpNot, 1): irt.un_ops[ops.NOT],
+    (lal.OpMinus, 1): ops.NEG,
+    (lal.OpNot, 1): ops.NOT,
 }
 
 _attr_to_unop = {
-    'Access': irt.un_ops[ops.ADDRESS],
-    'First': irt.un_ops[ops.GET_FIRST],
-    'Last': irt.un_ops[ops.GET_LAST],
+    'Access': ops.ADDRESS,
+    'First': ops.GET_FIRST,
+    'Last': ops.GET_LAST,
 }
 
 
@@ -80,7 +80,7 @@ def _gen_ir(ctx, subp):
         :param lal.Op lal_op: The lal operator to convert.
         :param int arity: The arity of the operator
         :return: The corresponding Basic IR operator.
-        :rtype: irt.Operator
+        :rtype: str
         """
         return _lal_op_type_to_symbol[type(lal_op), arity]
 
@@ -139,9 +139,9 @@ def _gen_ir(ctx, subp):
         :rtype: list[irt.Stmt]
         """
         cond_pre_stmts, cond = transform_expr(cond)
-        not_cond = irt.UnExpr(
-            irt.un_ops[ops.NOT],
-            cond,
+        not_cond = irt.FunCall(
+            ops.NOT,
+            [cond],
             type_hint=cond.data.type_hint
         )
 
@@ -161,7 +161,10 @@ def _gen_ir(ctx, subp):
 
     def binexpr_builder(op, type_hint):
         """
-        :param irt.Operator op: The binary operator.
+        :param str op: The binary operator.
+
+        :param lal.BaseTypeDecl type_hint: The type hint to attach to the
+            binary expressions.
 
         :return: A function taking an lhs and an rhs and returning a binary
             expression using this builder's operator.
@@ -169,8 +172,8 @@ def _gen_ir(ctx, subp):
         :rtype: (irt.Expr, irt.Expr)->irt.Expr
         """
         def build(lhs, rhs):
-            return irt.BinExpr(
-                lhs, op, rhs,
+            return irt.FunCall(
+                op, [lhs, rhs],
                 type_hint=type_hint
             )
         return build
@@ -205,29 +208,28 @@ def _gen_ir(ctx, subp):
 
         def gen_single(value):
             if isinstance(value, int):
-                return irt.BinExpr(
-                    expr,
-                    irt.bin_ops[ops.EQ],
-                    gen_lit(value),
+                return irt.FunCall(
+                    ops.EQ,
+                    [expr, gen_lit(value)],
                     type_hint=ctx.evaluator.bool
                 )
             elif isinstance(value, ConstExprEvaluator.Range):
                 if (isinstance(value.first, int) and
                         isinstance(value.last, int)):
-                    return irt.BinExpr(
-                        irt.BinExpr(
-                            expr,
-                            irt.bin_ops[ops.GE],
-                            gen_lit(value.first),
-                            type_hint=ctx.evaluator.bool
-                        ),
-                        irt.bin_ops[ops.AND],
-                        irt.BinExpr(
-                            expr,
-                            irt.bin_ops[ops.LE],
-                            gen_lit(value.last),
-                            type_hint=ctx.evaluator.bool
-                        ),
+                    return irt.FunCall(
+                        ops.AND,
+                        [
+                            irt.FunCall(
+                                ops.GE,
+                                [expr, gen_lit(value.first)],
+                                type_hint=ctx.evaluator.bool
+                            ),
+                            irt.FunCall(
+                                ops.LE,
+                                [expr, gen_lit(value.last)],
+                                type_hint=ctx.evaluator.bool
+                            )
+                        ],
                         type_hint=ctx.evaluator.bool
                     )
 
@@ -237,7 +239,7 @@ def _gen_ir(ctx, subp):
 
         if len(conditions) > 1:
             return reduce(
-                binexpr_builder(irt.bin_ops[ops.OR], ctx.evaluator.bool),
+                binexpr_builder(ops.OR, ctx.evaluator.bool),
                 conditions
             )
         else:
@@ -466,12 +468,14 @@ def _gen_ir(ctx, subp):
 
         # Build the condition for the "others" alternative, which is the
         # negation of the disjunction of all the previous conditions.
-        others_condition = irt.UnExpr(
-            irt.un_ops[ops.NOT],
-            reduce(
-                binexpr_builder(irt.bin_ops[ops.OR], ctx.evaluator.bool),
-                alts_conditions
-            ),
+        others_condition = irt.FunCall(
+            ops.NOT,
+            [
+                reduce(
+                    binexpr_builder(ops.OR, ctx.evaluator.bool),
+                    alts_conditions
+                )
+            ],
             type_hint=ctx.evaluator.bool
         )
 
@@ -512,19 +516,18 @@ def _gen_ir(ctx, subp):
                 lhs_pre_stmts, lhs = transform_expr(expr.f_left)
                 rhs_pre_stmts, rhs = transform_expr(expr.f_right)
 
-                return lhs_pre_stmts + rhs_pre_stmts, irt.BinExpr(
-                    lhs,
+                return lhs_pre_stmts + rhs_pre_stmts, irt.FunCall(
                     transform_operator(expr.f_op, 2),
-                    rhs,
+                    [lhs, rhs],
                     type_hint=expr.p_expression_type,
                     orig_node=expr
                 )
 
         elif expr.is_a(lal.UnOp):
             inner_pre_stmts, inner_expr = transform_expr(expr.f_expr)
-            return inner_pre_stmts, irt.UnExpr(
+            return inner_pre_stmts, irt.FunCall(
                 transform_operator(expr.f_op, 1),
-                inner_expr,
+                [inner_expr],
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
@@ -662,13 +665,15 @@ def _gen_ir(ctx, subp):
             # Transform the expression being dereferenced and build the
             # assume expression stating that the prefix is not null.
             prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
-            assumed_expr = irt.BinExpr(
-                prefix,
-                irt.bin_ops[ops.NEQ],
-                irt.Lit(
-                    lits.NULL,
-                    type_hint=expr.f_prefix.p_expression_type
-                ),
+            assumed_expr = irt.FunCall(
+                ops.NEQ,
+                [
+                    prefix,
+                    irt.Lit(
+                        lits.NULL,
+                        type_hint=expr.f_prefix.p_expression_type
+                    )
+                ],
                 type_hint=expr.p_bool_type
             )
 
@@ -678,9 +683,9 @@ def _gen_ir(ctx, subp):
             return prefix_pre_stmts + [irt.AssumeStmt(
                 assumed_expr,
                 purpose=purpose.DerefCheck(prefix)
-            )], irt.UnExpr(
-                irt.un_ops[ops.DEREF],
-                prefix,
+            )], irt.FunCall(
+                ops.DEREF,
+                [prefix],
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
@@ -689,9 +694,9 @@ def _gen_ir(ctx, subp):
             # AttributeRefs are transformed using an unary operator.
 
             prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
-            return prefix_pre_stmts, irt.UnExpr(
+            return prefix_pre_stmts, irt.FunCall(
                 _attr_to_unop[expr.f_attribute.text],
-                prefix,
+                [prefix],
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
@@ -887,9 +892,9 @@ def _gen_ir(ctx, subp):
             # Build its inverse. It is appended at the end of the loop. We know
             # that the inverse condition is true once the control goes out of
             # the loop as long as there are not exit statements.
-            not_cond = irt.UnExpr(
-                irt.un_ops[ops.NOT],
-                cond,
+            not_cond = irt.FunCall(
+                ops.NOT,
+                [cond],
                 type_hint=cond.data.type_hint
             )
 
@@ -1063,16 +1068,24 @@ class ConvertUniversalTypes(IRImplicitVisitor):
     def visit_assume(self, assume):
         assume.expr = self.try_convert_expr(assume.expr, self.evaluator.bool)
 
-    def visit_binexpr(self, binexpr):
-        expected_type = (binexpr.lhs.data.type_hint
-                         if self.has_universal_type(binexpr.rhs)
-                         else binexpr.rhs.data.type_hint)
+    def visit_funcall(self, funcall):
+        if any(self.has_universal_type(arg) for arg in funcall.args):
+            # Assume that functions that accept one argument as universal
+            # int/real need all their arguments to be of the same type, which
+            # is true for arithmetic ops, comparison ops, etc.
 
-        binexpr.lhs = self.try_convert_expr(binexpr.lhs, expected_type)
-        binexpr.rhs = self.try_convert_expr(binexpr.rhs, expected_type)
+            expected_type = next(
+                arg.data.type_hint
+                for arg in funcall.args
+                if not self.has_universal_type(arg)
+            )
 
-    def visit_unexpr(self, unexpr):
-        unexpr.expr.visit(self)
+            funcall.args = [
+                self.try_convert_expr(arg, expected_type)
+                for arg in funcall.args
+            ]
+
+        super(ConvertUniversalTypes, self).visit_funcall(funcall)
 
 
 class NotConstExprError(ValueError):
@@ -1095,33 +1108,31 @@ class ConstExprEvaluator(IRImplicitVisitor):
             self.first = first
             self.last = last
 
-    BinOps = {
-        ops.AND: lambda x, y: ConstExprEvaluator.from_bool(
+    Ops = {
+        (ops.AND, 2): lambda x, y: ConstExprEvaluator.from_bool(
             ConstExprEvaluator.to_bool(x) and ConstExprEvaluator.to_bool(y)
         ),
-        ops.OR: lambda x, y: ConstExprEvaluator.from_bool(
+        (ops.OR, 2): lambda x, y: ConstExprEvaluator.from_bool(
             ConstExprEvaluator.to_bool(x) or ConstExprEvaluator.to_bool(y)
         ),
 
-        ops.NEQ: lambda x, y: ConstExprEvaluator.from_bool(x != y),
-        ops.EQ: lambda x, y: ConstExprEvaluator.from_bool(x == y),
-        ops.LT: lambda x, y: ConstExprEvaluator.from_bool(x < y),
-        ops.LE: lambda x, y: ConstExprEvaluator.from_bool(x <= y),
-        ops.GE: lambda x, y: ConstExprEvaluator.from_bool(x >= y),
-        ops.GT: lambda x, y: ConstExprEvaluator.from_bool(x > y),
-        ops.DOT_DOT: lambda x, y: ConstExprEvaluator.Range(x, y),
+        (ops.NEQ, 2): lambda x, y: ConstExprEvaluator.from_bool(x != y),
+        (ops.EQ, 2): lambda x, y: ConstExprEvaluator.from_bool(x == y),
+        (ops.LT, 2): lambda x, y: ConstExprEvaluator.from_bool(x < y),
+        (ops.LE, 2): lambda x, y: ConstExprEvaluator.from_bool(x <= y),
+        (ops.GE, 2): lambda x, y: ConstExprEvaluator.from_bool(x >= y),
+        (ops.GT, 2): lambda x, y: ConstExprEvaluator.from_bool(x > y),
+        (ops.DOT_DOT, 2): lambda x, y: ConstExprEvaluator.Range(x, y),
 
-        ops.PLUS: lambda x, y: x + y,
-        ops.MINUS: lambda x, y: x - y
-    }
+        (ops.PLUS, 2): lambda x, y: x + y,
+        (ops.MINUS, 2): lambda x, y: x - y,
 
-    UnOps = {
-        ops.NOT: lambda x: ConstExprEvaluator.from_bool(
+        (ops.NOT, 1): lambda x: ConstExprEvaluator.from_bool(
             not ConstExprEvaluator.to_bool(x)
         ),
-        ops.NEG: lambda x: -x,
-        ops.GET_FIRST: lambda x: x.first,
-        ops.GET_LAST: lambda x: x.last
+        (ops.NEG, 1): lambda x: -x,
+        (ops.GET_FIRST, 1): lambda x: x.first,
+        (ops.GET_LAST, 1): lambda x: x.last
     }
 
     def __init__(self, bool_type, int_type, u_int_type, u_real_type):
@@ -1184,20 +1195,12 @@ class ConstExprEvaluator(IRImplicitVisitor):
     def visit_ident(self, ident):
         raise NotConstExprError
 
-    def visit_binexpr(self, binexpr):
+    def visit_funcall(self, funcall):
         try:
-            op = ConstExprEvaluator.BinOps[binexpr.bin_op.sym]
-            return op(
-                self.visit(binexpr.lhs),
-                self.visit(binexpr.rhs)
-            )
-        except KeyError:
-            raise NotConstExprError
-
-    def visit_unexpr(self, unexpr):
-        try:
-            op = ConstExprEvaluator.UnOps[unexpr.un_op.sym]
-            return op(self.visit(unexpr.expr))
+            op = ConstExprEvaluator.Ops[funcall.fun_id, len(funcall.args)]
+            return op(*(
+                self.visit(arg) for arg in funcall.args
+            ))
         except KeyError:
             raise NotConstExprError
 

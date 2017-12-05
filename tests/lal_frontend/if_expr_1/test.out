@@ -7,6 +7,6 @@ Program:
     assume(C#2)
     tmp0#5 = A#3
   |:
-    assume(!C#2)
+    assume(!(C#2))
     tmp0#5 = B#4
   x#1 = tmp0#5

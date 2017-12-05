@@ -15,5 +15,5 @@ NEG = '-'
 ADDRESS = '&'
 DEREF = '*'
 
-GET_FIRST = 'First\''
-GET_LAST = 'Last\''
+GET_FIRST = 'GetFirst'
+GET_LAST = 'GetLast'

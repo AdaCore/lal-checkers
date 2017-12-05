@@ -11,10 +11,10 @@ Program:
       assume(C2#3)
       tmp1#7 = A1#4
     |:
-      assume(!C2#3)
+      assume(!(C2#3))
       tmp1#7 = A2#5
     tmp0#8 = tmp1#7
   |:
-    assume(!C1#2)
+    assume(!(C1#2))
     tmp0#8 = A3#6
   x#1 = tmp0#8

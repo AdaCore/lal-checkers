@@ -125,11 +125,10 @@ class PrettyPrinter(visitors.Visitor):
     def visit_assume(self, assume, opts):
         return "assume({})".format(assume.expr.visit(self, opts))
 
-    def visit_binexpr(self, binexpr, opts):
-        return "{} {} {}".format(
-            binexpr.lhs.visit(self, opts),
-            str(binexpr.bin_op),
-            binexpr.rhs.visit(self, opts)
+    def visit_funcall(self, funcall, opts):
+        return "{}({})".format(
+            str(funcall.fun_id),
+            ", ".join([arg.visit(self, opts) for arg in funcall.args])
         )
 
     def visit_unexpr(self, unexpr, opts):
@@ -348,27 +347,15 @@ class Models(visitors.Visitor):
         """
         return self._type_to_interp(self._hint_to_type(node.data.type_hint))
 
-    def visit_unexpr(self, unexpr, node_domains, defs, inv_defs, builders):
-        dom = node_domains[unexpr]
-        expr_dom = node_domains[unexpr.expr]
-        tpe = (expr_dom, dom)
+    def visit_funcall(self, funcall, node_domains, defs, inv_defs, builders):
+        dom = node_domains[funcall]
+        arg_doms = [node_domains[arg] for arg in funcall.args]
+        tpe = tuple(arg_doms + [dom])
 
         return Bunch(
             domain=dom,
-            definition=defs(unexpr.un_op.sym, tpe),
-            inverse=inv_defs(unexpr.un_op.sym, tpe)
-        )
-
-    def visit_binexpr(self, binexpr, node_domains, defs, inv_defs, builders):
-        dom = node_domains[binexpr]
-        lhs_dom = node_domains[binexpr.lhs]
-        rhs_dom = node_domains[binexpr.rhs]
-        tpe = (lhs_dom, rhs_dom, dom)
-
-        return Bunch(
-            domain=dom,
-            definition=defs(binexpr.bin_op.sym, tpe),
-            inverse=inv_defs(binexpr.bin_op.sym, tpe)
+            definition=defs(funcall.fun_id, tpe),
+            inverse=inv_defs(funcall.fun_id, tpe)
         )
 
     def visit_ident(self, ident, node_domains, defs, inv_defs, builders):
@@ -477,14 +464,9 @@ class ExprEvaluator(visitors.Visitor):
     def visit_ident(self, ident, env):
         return env[ident.var]
 
-    def visit_binexpr(self, binexpr, env):
-        lhs = binexpr.lhs.visit(self, env)
-        rhs = binexpr.rhs.visit(self, env)
-        return self.model[binexpr].definition(lhs, rhs)
-
-    def visit_unexpr(self, unexpr, env):
-        expr = unexpr.expr.visit(self, env)
-        return self.model[unexpr].definition(expr)
+    def visit_funcall(self, funcall, env):
+        args = [arg.visit(self, env) for arg in funcall.args]
+        return self.model[funcall].definition(*args)
 
     def visit_lit(self, lit, env):
         return self.model[lit].builder(lit.val)
@@ -530,26 +512,22 @@ class ExprSolver(visitors.Visitor):
         env[ident.var] = dom.meet(env[ident.var], expected)
         return True
 
-    def visit_binexpr(self, binexpr, env, expected):
-        lhs_val = self.eval(binexpr.lhs, env)
-        rhs_val = self.eval(binexpr.rhs, env)
-        inv_res = self.model[binexpr].inverse(
-            expected, lhs_val, rhs_val
+    def visit_funcall(self, funcall, env, expected):
+        args_val = [self.eval(arg, env) for arg in funcall.args]
+        inv_res = self.model[funcall].inverse(
+            expected, *args_val
         )
 
         if inv_res is None:
             return False
 
-        expected_lhs, expected_rhs = inv_res
-        return (binexpr.lhs.visit(self, env, expected_lhs) and
-                binexpr.rhs.visit(self, env, expected_rhs))
+        if len(args_val) == 1:
+            inv_res = [inv_res]
 
-    def visit_unexpr(self, unexpr, env, expected):
-        expr_val = self.eval(unexpr.expr, env)
-        expected_expr = self.model[unexpr].inverse(expected, expr_val)
-        if expected_expr is None:
-            return False
-        return unexpr.expr.visit(self, env, expected_expr)
+        return all(
+            arg.visit(self, env, expected_arg)
+            for arg, expected_arg in zip(funcall.args, inv_res)
+        )
 
     def visit_lit(self, lit, env, expected):
         lit_dom = self.model[lit].domain

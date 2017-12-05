@@ -4,14 +4,14 @@ Program:
   read(b#3)
   split:
     assume(b#3)
-    x#1 = &y#2
+    x#1 = &(y#2)
   |:
-    assume(!b#3)
+    assume(!(b#3))
     x#1 = null
   split:
-    assume(x#1 == null)
+    assume(==(x#1, null))
     y#2 = 2
   |:
-    assume(!x#1 == null)
-    assume(x#1 != null)
-    y#2 = *x#1
+    assume(!(==(x#1, null)))
+    assume(!=(x#1, null))
+    y#2 = *(x#1)

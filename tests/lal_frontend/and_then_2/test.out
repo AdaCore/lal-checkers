@@ -11,10 +11,10 @@ Program:
       assume(C2#2)
       tmp3#7 = True
     |:
-      assume(!C2#2)
+      assume(!(C2#2))
       tmp3#7 = False
   |:
-    assume(!C1#1)
+    assume(!(C1#1))
     tmp3#7 = False
   split:
     assume(tmp3#7)
@@ -22,10 +22,10 @@ Program:
       assume(C3#3)
       tmp2#8 = True
     |:
-      assume(!C3#3)
+      assume(!(C3#3))
       tmp2#8 = False
   |:
-    assume(!tmp3#7)
+    assume(!(tmp3#7))
     tmp2#8 = False
   split:
     assume(tmp2#8)
@@ -33,10 +33,10 @@ Program:
       assume(C4#4)
       tmp1#9 = True
     |:
-      assume(!C4#4)
+      assume(!(C4#4))
       tmp1#9 = False
   |:
-    assume(!tmp2#8)
+    assume(!(tmp2#8))
     tmp1#9 = False
   split:
     assume(tmp1#9)
@@ -44,9 +44,9 @@ Program:
       assume(C5#5)
       tmp0#10 = True
     |:
-      assume(!C5#5)
+      assume(!(C5#5))
       tmp0#10 = False
   |:
-    assume(!tmp1#9)
+    assume(!(tmp1#9))
     tmp0#10 = False
   x#6 = tmp0#10

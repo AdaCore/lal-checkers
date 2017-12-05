@@ -6,16 +6,16 @@ Program:
     assume(C1#1)
     tmp0#4 = True
   |:
-    assume(!C1#1)
+    assume(!(C1#1))
     split:
       assume(C2#2)
       tmp0#4 = True
     |:
-      assume(!C2#2)
+      assume(!(C2#2))
       tmp0#4 = False
   split:
     assume(tmp0#4)
     x#3 = 1
   |:
-    assume(!tmp0#4)
+    assume(!(tmp0#4))
     x#3 = 2

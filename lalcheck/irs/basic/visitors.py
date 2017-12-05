@@ -41,10 +41,7 @@ class Visitor(object):
     def visit_use(self, use, *args):
         return
 
-    def visit_binexpr(self, binexpr, *args):
-        return
-
-    def visit_unexpr(self, unexpr, *args):
+    def visit_funcall(self, funcall, *args):
         return
 
     def visit_lit(self, lit, *args):
@@ -93,11 +90,8 @@ class ImplicitVisitor(Visitor):
     def visit_use(self, use, *args):
         self.visit_children(use, *args)
 
-    def visit_binexpr(self, binexpr, *args):
-        self.visit_children(binexpr, *args)
-
-    def visit_unexpr(self, unexpr, *args):
-        self.visit_children(unexpr, *args)
+    def visit_funcall(self, funcall, *args):
+        self.visit_children(funcall, *args)
 
     def visit_lit(self, lit, *args):
         self.visit_children(lit, *args)
@@ -144,11 +138,8 @@ class CFGNodeVisitor(Visitor):
     def visit_use(self, use, *args):
         return
 
-    def visit_binexpr(self, binexpr, *args):
-        self.err(binexpr)
-
-    def visit_unexpr(self, unexpr, *args):
-        self.err(unexpr)
+    def visit_funcall(self, funcall, *args):
+        self.err(funcall)
 
     def visit_lit(self, lit, *args):
         self.err(lit)

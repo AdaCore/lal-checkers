@@ -7,15 +7,15 @@ Program:
     assume(C1#2)
     x#1 = 1
   |:
-    assume(!C1#2)
+    assume(!(C1#2))
     split:
       assume(C2#3)
       x#1 = 2
     |:
-      assume(!C2#3)
+      assume(!(C2#3))
       split:
         assume(C3#4)
         x#1 = 3
       |:
-        assume(!C3#4)
+        assume(!(C3#4))
         x#1 = 4

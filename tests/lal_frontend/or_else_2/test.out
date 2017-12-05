@@ -2,19 +2,19 @@ Program:
   read(x#1)
   y#2 = 0
   split:
-    assume(x#1 == null)
+    assume(==(x#1, null))
     tmp0#3 = True
   |:
-    assume(!x#1 == null)
-    assume(x#1 != null)
+    assume(!(==(x#1, null)))
+    assume(!=(x#1, null))
     split:
-      assume(*x#1 == y#2)
+      assume(==(*(x#1), y#2))
       tmp0#3 = True
     |:
-      assume(!*x#1 == y#2)
+      assume(!(==(*(x#1), y#2)))
       tmp0#3 = False
   split:
     assume(tmp0#3)
     y#2 = 42
   |:
-    assume(!tmp0#3)
+    assume(!(tmp0#3))
