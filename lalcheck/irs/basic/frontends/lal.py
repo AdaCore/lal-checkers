@@ -163,7 +163,7 @@ def _gen_ir(ctx, subp):
         """
         :param str op: The binary operator.
 
-        :param lal.BaseTypeDecl type_hint: The type hint to attach to the
+        :param lal.AdaNode type_hint: The type hint to attach to the
             binary expressions.
 
         :return: A function taking an lhs and an rhs and returning a binary
@@ -1042,7 +1042,7 @@ class ConvertUniversalTypes(IRImplicitVisitor):
         """
         :param irt.Expr expr: A Basic IR expression.
 
-        :param lal.BaseTypeDecl expected_type: The expected type hint of the
+        :param lal.AdaNode expected_type: The expected type hint of the
             expression.
 
         :return: An equivalent expression which does not have an universal
@@ -1137,10 +1137,10 @@ class ConstExprEvaluator(IRImplicitVisitor):
 
     def __init__(self, bool_type, int_type, u_int_type, u_real_type):
         """
-        :param lal.BaseTypeDecl bool_type: The standard boolean type.
-        :param lal.BaseTypeDecl int_type: The standard int type.
-        :param lal.BaseTypeDecl u_int_type: The standard universal int type.
-        :param lal.BaseTypeDecl u_real_type: The standard universal real type.
+        :param lal.AdaNode bool_type: The standard boolean type.
+        :param lal.AdaNode int_type: The standard int type.
+        :param lal.AdaNode u_int_type: The standard universal int type.
+        :param lal.AdaNode u_real_type: The standard universal real type.
         """
         super(ConstExprEvaluator, self).__init__()
         self.bool = bool_type
@@ -1211,7 +1211,7 @@ class ConstExprEvaluator(IRImplicitVisitor):
 @types.typer
 def int_range_typer(hint):
     """
-    :param lal.BaseTypeDecl hint: the lal type.
+    :param lal.AdaNode hint: the lal type.
     :return: The corresponding lalcheck type.
     :rtype: types.IntRange
     """
@@ -1226,7 +1226,7 @@ def int_range_typer(hint):
 @types.typer
 def enum_typer(hint):
     """
-    :param lal.BaseTypeDecl hint: the lal type.
+    :param lal.AdaNode hint: the lal type.
     :return: The corresponding lalcheck type.
     :rtype: types.Enum
     """
@@ -1238,28 +1238,49 @@ def enum_typer(hint):
 
 def access_typer(inner_typer):
     """
-    :param types.Typer[lal.BaseTypeDecl] inner_typer: A typer for elements
+    :param types.Typer[lal.AdaNode] inner_typer: A typer for elements
         being accessed.
 
     :return: A Typer for Ada's access types.
 
-    :rtype: types.Typer[lal.BaseTypeDecl]
+    :rtype: types.Typer[lal.AdaNode]
     """
 
     @Transformer.as_transformer
     def accessed_type(hint):
         """
-        :param lal.BaseTypeDecl hint: the lal type.
+        :param lal.AdaNode hint: the lal type.
         :return: The lal type being accessed.
-        :rtype: lal.BaseTypeDecl
+        :rtype: lal.AdaNode
         """
         if hint.is_a(lal.TypeDecl):
             if hint.p_is_access_type:
-                tpe = hint.f_type_def.f_subtype_indication
-                return tpe.f_name.p_referenced_decl
+                return hint.f_type_def.f_subtype_indication
 
     to_pointer = Transformer.as_transformer(types.Pointer)
     return accessed_type >> inner_typer >> to_pointer
+
+
+def name_typer(inner_typer):
+    """
+    :param types.Typer[lal.AdaNode] inner_typer: A typer for elements
+        being referred by identifiers.
+
+    :return: A typer for names.
+
+    :rtype: types.Typer[lal.AdaNode]
+    """
+    @Transformer.as_transformer
+    def resolved_name(hint):
+        """
+        :param lal.AdaNode hint: the lal type expression.
+        :return: The type declaration associated to the name, if relevant.
+        :rtype: lal.BaseTypeDecl
+        """
+        if hint.is_a(lal.SubtypeIndication):
+            return hint.f_name.p_referenced_decl
+
+    return resolved_name >> inner_typer
 
 
 class ExtractionContext(object):
@@ -1336,7 +1357,7 @@ class ExtractionContext(object):
         :return: A Typer for Ada standard types of programs parsed using
             this extraction context.
 
-        :rtype: types.Typer[lal.BaseTypeDecl]
+        :rtype: types.Typer[lal.AdaNode]
         """
         bool_type = self.evaluator.bool
         int_type = self.evaluator.int
@@ -1344,7 +1365,7 @@ class ExtractionContext(object):
         @types.typer
         def typer(hint):
             """
-            :param lal.BaseTypeDecl hint: the lal type.
+            :param lal.AdaNode hint: the lal type.
             :return: The corresponding lalcheck type.
             :rtype: types.Boolean | types.IntRange
             """
@@ -1360,17 +1381,20 @@ class ExtractionContext(object):
         :return: The default Typer for Ada programs parsed using this
             extraction context.
 
-        :rtype: types.Typer[lal.BaseTypeDecl]
+        :rtype: types.Typer[lal.AdaNode]
         """
+
+        standard_typer = self.standard_typer()
 
         @types.delegating_typer
         def typer():
             """
-            :rtype: types.Typer[lal.BaseTypeDecl]
+            :rtype: types.Typer[lal.AdaNode]
             """
-            return (self.standard_typer() |
+            return (standard_typer |
                     int_range_typer |
                     enum_typer |
-                    access_typer(typer))
+                    access_typer(typer) |
+                    name_typer(typer))
 
         return typer
