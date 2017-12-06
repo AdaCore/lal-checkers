@@ -4,7 +4,6 @@ from itertools import product
 
 
 test_dom = domains.Intervals(-4, 4)
-debug = False
 
 
 class BinaryInverseOperationTest(object):
@@ -12,8 +11,9 @@ class BinaryInverseOperationTest(object):
     Abstract test class. Can be inherited to test the inverse of a binary
     operation on an interval domain.
     """
-    def __init__(self, domain):
+    def __init__(self, domain, debug):
         self.domain = domain
+        self.debug = debug
 
     def test_results(self):
         raise NotImplementedError
@@ -25,52 +25,41 @@ class BinaryInverseOperationTest(object):
         raise NotImplementedError
 
     def run(self):
-        dom_from, dom_to = self.domain.top[0], self.domain.top[1]
         for expected in self.test_results():
-            for x_f in range(dom_from, dom_to + 1):
-                for x_t in range(x_f, dom_to + 1):
-                    xs = set(range(x_f, x_t + 1))
-                    for y_f in range(dom_from, dom_to + 1):
-                        for y_t in range(y_f, dom_to + 1):
-                            ys = set(range(y_f, y_t + 1))
-                            res = self.concrete_inverse(xs, ys, expected)
+            for x in self.domain.generator():
+                xs = self.domain.concretize(x)
+                for y in self.domain.generator():
+                    ys = self.domain.concretize(y)
+                    res = self.concrete_inverse(xs, ys, expected)
 
-                            if len(res) == 0:
-                                res_exact = None
-                            else:
-                                lhs = [x[0] for x in res]
-                                rhs = [x[1] for x in res]
-                                lhs = (min(lhs), max(lhs))
-                                rhs = (min(rhs), max(rhs))
-                                res_exact = lhs, rhs
+                    if len(res) == 0:
+                        res_exact = None
+                    else:
+                        res_exact = tuple(
+                            self.domain.abstract(frozenset(x[i] for x in res))
+                            for i in range(2)
+                        )
 
-                            res_short = self.abstract_inverse(
-                                (x_f, x_t),
-                                (y_f, y_t),
-                                expected
-                            )
+                    res_short = self.abstract_inverse(x, y, expected)
 
-                            if debug:
-                                print(
-                                    expected,
-                                    (x_f, x_t), (y_f, y_t),
-                                    res_exact, res_short
-                                )
+                    if self.debug:
+                        print(expected, x, y, res_exact, res_short)
 
-                            assert (res_exact is None) == (res_short is None)
-                            assert res_exact is None or (
-                                self.domain.eq(res_short[0], res_exact[0]) and
-                                self.domain.eq(res_short[1], res_exact[1])
-                            )
+                    assert (res_exact is None) == (res_short is None)
+                    assert res_exact is None or (
+                        self.domain.eq(res_short[0], res_exact[0]) and
+                        self.domain.eq(res_short[1], res_exact[1])
+                    )
 
 
-class UnaryInverseOperation(object):
+class UnaryInverseOperationTest(object):
     """
     Abstract test class. Can be inherited to test the inverse of a unary
     operation on an interval domain.
     """
-    def __init__(self, domain):
+    def __init__(self, domain, debug):
         self.domain = domain
+        self.debug = debug
 
     def test_results(self):
         raise NotImplementedError
@@ -82,42 +71,33 @@ class UnaryInverseOperation(object):
         raise NotImplementedError
 
     def run(self):
-        dom_from, dom_to = self.domain.top[0], self.domain.top[1]
         for expected in self.test_results():
-            for x_f in range(dom_from, dom_to + 1):
-                for x_t in range(x_f, dom_to + 1):
-                    xs = set(range(x_f, x_t + 1))
-                    res = self.concrete_inverse(xs, expected)
+            for x in self.domain.generator():
+                xs = self.domain.concretize(x)
+                res = self.concrete_inverse(xs, expected)
 
-                    if len(res) == 0:
-                        res_exact = None
-                    else:
-                        res_exact = (min(res), max(res))
+                if len(res) == 0:
+                    res_exact = None
+                else:
+                    res_exact = self.domain.abstract(frozenset(res))
 
-                    res_short = self.abstract_inverse(
-                        (x_f, x_t),
-                        expected
-                    )
+                res_short = self.abstract_inverse(x, expected)
 
-                    if debug:
-                        print(
-                            expected,
-                            (x_f, x_t),
-                            res_exact, res_short
-                        )
+                if self.debug:
+                    print(expected, x, res_exact, res_short)
 
-                    assert (res_exact is None) == (res_short is None)
-                    assert res_exact is None or (
-                        self.domain.eq(res_short, res_exact)
-                    )
+                assert (res_exact is None) == (res_short is None)
+                assert res_exact is None or (
+                    self.domain.eq(res_short, res_exact)
+                )
 
 
 class AddInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "addition" binary operation.
     """
-    def __init__(self):
-        super(AddInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(AddInverseTest, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_add_no_wraparound(self.domain)
 
     def test_results(self):
@@ -141,8 +121,8 @@ class SubInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "subtraction" binary operation.
     """
-    def __init__(self):
-        super(SubInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(SubInverseTest, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_sub_no_wraparound(self.domain)
 
     def test_results(self):
@@ -162,12 +142,12 @@ class SubInverseTest(BinaryInverseOperationTest):
         return self.inv(res, x, y)
 
 
-class InverseInverseOperation(UnaryInverseOperation):
+class InverseInverseOperation(UnaryInverseOperationTest):
     """
     Tests the inverse of the "inverse" unary operation.
     """
-    def __init__(self):
-        super(InverseInverseOperation, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(InverseInverseOperation, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_inverse(self.domain)
 
     def test_results(self):
@@ -188,8 +168,8 @@ class EqualsToInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "equals to" binary operation.
     """
-    def __init__(self):
-        super(EqualsToInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(EqualsToInverseTest, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_eq(self.domain)
 
     def test_results(self):
@@ -217,8 +197,8 @@ class NotEqualsToInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "not equals to" binary operation.
     """
-    def __init__(self):
-        super(NotEqualsToInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(NotEqualsToInverseTest, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_neq(self.domain)
 
     def test_results(self):
@@ -246,8 +226,8 @@ class LessThanInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "less than" binary operation.
     """
-    def __init__(self):
-        super(LessThanInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(LessThanInverseTest, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_lt(self.domain)
 
     def test_results(self):
@@ -275,8 +255,8 @@ class LessThanOrEqualsToInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "less than or equals to" binary operation.
     """
-    def __init__(self):
-        super(LessThanOrEqualsToInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(LessThanOrEqualsToInverseTest, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_le(self.domain)
 
     def test_results(self):
@@ -304,8 +284,8 @@ class GreaterThanInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "greater than" binary operation.
     """
-    def __init__(self):
-        super(GreaterThanInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(GreaterThanInverseTest, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_gt(self.domain)
 
     def test_results(self):
@@ -333,8 +313,8 @@ class GreaterThanOrEqualsToInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "greater than or equals to" binary operation.
     """
-    def __init__(self):
-        super(GreaterThanOrEqualsToInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(GreaterThanOrEqualsToInverseTest, self).__init__(test_dom, debug)
         self.inv = interval_ops.inv_ge(self.domain)
 
     def test_results(self):

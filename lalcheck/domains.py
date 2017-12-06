@@ -3,6 +3,7 @@ Provides some basic abstract domains.
 """
 
 from utils import powerset
+import itertools
 import collections
 
 
@@ -152,6 +153,26 @@ class AbstractDomain(object):
             )
         )
 
+    def generator(self):
+        """
+        Returns an iterable of all the abstract elements of this domain.
+        """
+        raise NotImplementedError
+
+    def concretize(self, abstract):
+        """
+        Returns an iterable of concrete elements represented by the given
+        abstract element.
+        """
+        raise NotImplementedError
+
+    def abstract(self, concrete):
+        """
+        Returns the abstract element used to represent the given concrete
+        element.
+        """
+        raise NotImplementedError
+
 
 class Intervals(AbstractDomain):
     """
@@ -244,6 +265,21 @@ class Intervals(AbstractDomain):
     def le(self, a, b):
         return self.lt(a, b) or self.eq(a, b)
 
+    def generator(self):
+        dom_from, dom_to = self.top[0], self.top[1]
+        for x_f in range(dom_from, dom_to + 1):
+            for x_t in range(x_f, dom_to + 1):
+                yield (x_f, x_t)
+
+    def concretize(self, abstract):
+        if abstract == self.bottom:
+            return frozenset([])
+        else:
+            return frozenset(range(abstract[0], abstract[1] + 1))
+
+    def abstract(self, concrete):
+        return self.build(min(concrete), max(concrete))
+
 
 class Product(AbstractDomain):
     """
@@ -302,6 +338,23 @@ class Product(AbstractDomain):
         return all(
             domain.eq(x, y)
             for domain, x, y in zip(self.domains, a, b)
+        )
+
+    def generator(self):
+        return itertools.product(*(
+            dom.generator() for dom in self.domains
+        ))
+
+    def concretize(self, abstract):
+        return frozenset(itertools.product(*(
+            dom.concretize(x)
+            for dom, x in zip(self.domains, abstract)
+        )))
+
+    def abstract(self, concrete):
+        return tuple(
+            dom.abstract(frozenset(concretes))
+            for dom, concretes in zip(self.domains, zip(*concrete))
         )
 
 
@@ -401,6 +454,15 @@ class Set(AbstractDomain):
     def eq(self, a, b):
         return self.le(a, b) and self.le(b, a)
 
+    def generator(self):
+        raise NotImplementedError
+
+    def concretize(self, abstract):
+        raise NotImplementedError
+
+    def abstract(self, concrete):
+        raise NotImplementedError
+
 
 class FiniteLattice(AbstractDomain):
     """
@@ -494,6 +556,15 @@ class FiniteLattice(AbstractDomain):
     def eq(self, a, b):
         return a == b
 
+    def generator(self):
+        return self.lts[self.bottom]
+
+    def concretize(self, abstract):
+        return abstract
+
+    def abstract(self, concretes):
+        return self.build(concretes)
+
 
 class FiniteSubsetLattice(AbstractDomain):
     """
@@ -527,3 +598,12 @@ class FiniteSubsetLattice(AbstractDomain):
 
     def eq(self, a, b):
         return a == b
+
+    def generator(self):
+        return powerset(self.top)
+
+    def concretize(self, abstract):
+        return abstract
+
+    def abstract(self, concrete):
+        return self.build(concrete)

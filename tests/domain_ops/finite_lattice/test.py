@@ -4,7 +4,6 @@ from itertools import product
 
 
 test_dom = domains.FiniteLattice.of_subsets({1, 2, 3, 4})
-debug = False
 
 
 class BinaryInverseOperationTest(object):
@@ -12,8 +11,9 @@ class BinaryInverseOperationTest(object):
     Abstract test class. Can be inherited to test the inverse of a binary
     operation on a finite lattice domain.
     """
-    def __init__(self, domain):
+    def __init__(self, domain, debug):
         self.domain = domain
+        self.debug = debug
 
     def test_results(self):
         raise NotImplementedError
@@ -25,27 +25,25 @@ class BinaryInverseOperationTest(object):
         raise NotImplementedError
 
     def run(self):
-        all_elems = self.domain.lts[self.domain.bottom]
         for expected in self.test_results():
-            for x in all_elems:
-                for y in all_elems:
-                    res = self.concrete_inverse(x, y, expected)
+            for x in self.domain.generator():
+                xs = self.domain.concretize(x)
+                for y in self.domain.generator():
+                    ys = self.domain.concretize(y)
+                    res = self.concrete_inverse(xs, ys, expected)
 
                     if len(res) == 0:
                         res_exact = None
                     else:
-                        lhs = frozenset({x[0] for x in res})
-                        rhs = frozenset({x[1] for x in res})
-                        res_exact = lhs, rhs
+                        res_exact = tuple(
+                            self.domain.abstract(frozenset(x[i] for x in res))
+                            for i in range(2)
+                        )
 
                     res_short = self.abstract_inverse(x, y, expected)
 
-                    if debug:
-                        print(
-                            expected,
-                            x, y,
-                            res_exact, res_short
-                        )
+                    if self.debug:
+                        print(expected, x, y, res_exact, res_short)
 
                     assert (res_exact is None) == (res_short is None)
                     assert res_exact is None or (
@@ -58,8 +56,8 @@ class EqualsToInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "equals to" binary operation.
     """
-    def __init__(self):
-        super(EqualsToInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(EqualsToInverseTest, self).__init__(test_dom, debug)
         self.inv = finite_lattice_ops.inv_eq(self.domain)
 
     def test_results(self):
@@ -87,8 +85,8 @@ class NotEqualsToInverseTest(BinaryInverseOperationTest):
     """
     Tests the inverse of the "not equals to" binary operation.
     """
-    def __init__(self):
-        super(NotEqualsToInverseTest, self).__init__(test_dom)
+    def __init__(self, debug=False):
+        super(NotEqualsToInverseTest, self).__init__(test_dom, debug)
         self.inv = finite_lattice_ops.inv_neq(self.domain)
 
     def test_results(self):
