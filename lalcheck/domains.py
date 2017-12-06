@@ -265,7 +265,7 @@ class Product(AbstractDomain):
         elements.
         """
         assert len(args) == len(self.domains)
-        return tuple(*args)
+        return tuple(args)
 
     def is_empty(self, x):
         # a cartesian product is empty iff any of its operand is empty.
