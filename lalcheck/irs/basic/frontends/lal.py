@@ -556,12 +556,18 @@ def _gen_ir(ctx, subp):
             ), expr)
 
         elif dest.is_a(lal.DottedName):
+            updated_index = _compute_field_index(dest.f_suffix)
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
+
             pre_stmts, ret = gen_actual_dest(dest.f_prefix, irt.FunCall(
-                ops.updated(_compute_field_index(dest.f_suffix)),
+                ops.updated(updated_index),
                 [prefix_expr, expr],
                 type_hint=dest.f_prefix.p_expression_type,
-                orig_node=dest.f_prefix
+                orig_node=dest.f_prefix,
+                purpose=purpose.FieldAssignment(
+                    updated_index,
+                    dest.f_suffix.p_expression_type
+                )
             ))
             return prefix_pre_stmts + pre_stmts, ret
 
@@ -1178,15 +1184,20 @@ class ConvertUniversalTypes(IRImplicitVisitor):
 
     def visit_funcall(self, funcall):
         if any(self.has_universal_type(arg) for arg in funcall.args):
-            # Assume that functions that accept one argument as universal
-            # int/real need all their arguments to be of the same type, which
-            # is true for arithmetic ops, comparison ops, etc.
-
-            expected_type = next(
-                arg.data.type_hint
-                for arg in funcall.args
-                if not self.has_universal_type(arg)
-            )
+            if purpose.FieldAssignment.is_purpose_of(funcall):
+                # Case where the function is an update call replacing a
+                # field assignment.
+                expected_type = funcall.data.purpose.field_type_hint
+            else:
+                # Otherwise, assume that functions that accept one argument
+                # as universal int/real need all their arguments to be of the
+                # same type, which is true for arithmetic ops, comparison ops,
+                # etc.
+                expected_type = next(
+                    arg.data.type_hint
+                    for arg in funcall.args
+                    if not self.has_universal_type(arg)
+                )
 
             funcall.args = [
                 self.try_convert_expr(arg, expected_type)

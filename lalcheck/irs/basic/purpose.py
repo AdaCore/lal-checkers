@@ -40,3 +40,17 @@ class SyntheticVariable(Purpose):
     to hold a temporary value.)
     """
     pass
+
+
+class FieldAssignment(Purpose):
+    """
+    Attached to a function call that is the result of the translation of a
+    field assignment. (p.x = 2 ==> p = Updated_I(p, 2))
+    """
+    def __init__(self, field_index, field_type_hint):
+        """
+        :param int field_index: The index of the updated field
+        :param lal.AdaNode field_type_hint: The type of the updated field
+        """
+        self.field_index = field_index
+        self.field_type_hint = field_type_hint

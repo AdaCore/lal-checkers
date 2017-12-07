@@ -10,8 +10,8 @@ procedure Ex1 is
    r : Rectangle;
    i : Integer := 12;
 begin
-   r.top_left.x := i;
+   r.top_left.x := 12;
    r.top_left.y := i - 2;
    r.bottom_right.x := i + 5;
-   r.bottom_right.y := i + 10;
+   r.bottom_right.y := 22;
 end Ex1;
