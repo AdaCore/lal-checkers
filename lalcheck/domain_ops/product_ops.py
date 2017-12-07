@@ -89,6 +89,53 @@ def construct(domain):
     return do
 
 
+def getter(n):
+    """
+    :param int n: The index of the field to build a getter for.
+
+    :return: A function which gets the nth component of a given instance
+        of a product domain.
+
+    :rtype: tuple -> object
+    """
+    def do(x):
+        """
+        :param tuple x: An instance of a product domain.
+        :return: The nth component of the given instance.
+        """
+        return x[n]
+
+    return do
+
+
+def updater(n):
+    """
+    :param int n: The index of the field to build an updater for.
+
+    :return: A function which updates the nth component of a given instance
+        of a product domain.
+
+    :rtype: (tuple, object) -> tuple
+    """
+    def do(x, new):
+        """
+        :param tuple x: An instance of a product domain.
+
+        :param object new: A value to update the nth component of the given
+            instance with.
+
+        :return: The same instance, with the updated field.
+
+        :rtype: tuple
+        """
+        return tuple(
+            new if i == n else old
+            for i, old in enumerate(x)
+        )
+
+    return do
+
+
 def inv_eq(domain, elem_inv_eq_defs, elem_eq_defs):
     """"
     :param lalcheck.domains.Product domain: A product domain.
@@ -236,6 +283,75 @@ def inv_construct(domain):
         :rtype: tuple[object] | None
         """
         return domain.meet(res, constr)
+
+    return do
+
+
+def inv_getter(domain, n):
+    """
+    :param lalcheck.domains.Product domain: The product domain.
+
+    :param int n: The index of the domain component for which to build the
+        inverse getter.
+
+    :return: A function which performs the inverse of a get operation.
+
+    :rtype: (object, tuple) -> tuple
+    """
+    def do(res, constr):
+        """
+        :param object res: The expected output of the get operation.
+
+        :param tuple constr: The constraint of the input tuples.
+
+        :return: A set of tuple that could give the expected output when
+            a get operation on the nth component is performed.
+
+        :rtype: tuple | None
+        """
+        biggest = tuple(
+            res if i == n else e_dom.top
+            for i, e_dom in enumerate(domain.domains)
+        )
+
+        meet = domain.meet(biggest, constr)
+
+        if domain.is_empty(meet):
+            return None
+
+        return meet
+
+    return do
+
+
+def inv_updater(domain, n):
+    """
+    :param lalcheck.domains.Product domain: The product domain.
+
+    :param int n: The index of the domain component for which to build the
+        inverse updater.
+
+    :return: A function which performs the inverse of an update operation.
+
+    :rtype: (object, tuple, object) -> (tuple, object)
+    """
+    def do(res, tuple_constr, elem_constr):
+        """
+        :param tuple res: The expected updated tuple.
+
+        :param tuple tuple_constr: A constraint on the set of tuples to be
+            updated.
+
+        :param object elem_constr: A constraint on the set of values which
+            to update the tuples with.
+
+        :return: The set of tuples that could be updated into the expected one,
+            as well as the set of elements that could be used to update the
+            original tuples into the expected ones.
+
+        :rtype: (tuple, object) | None
+        """
+        raise NotImplementedError
 
     return do
 

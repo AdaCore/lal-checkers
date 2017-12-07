@@ -328,6 +328,17 @@ def default_product_interpreter(elem_interpreter):
             (ops.NEQ, bin_rel_dom): product_ops.neq(elem_eq_defs)
         }
 
+        defs.update({
+            (ops.get(i), (prod_dom, e_dom)): product_ops.getter(i)
+            for i, e_dom in enumerate(elem_doms)
+        })
+
+        defs.update({
+            (ops.updated(i), (prod_dom, e_dom, prod_dom)):
+                product_ops.updater(i)
+            for i, e_dom in enumerate(elem_doms)
+        })
+
         inv_defs = {
             (ops.NEW, constructor_dom): product_ops.inv_construct(prod_dom),
             (ops.EQ, bin_rel_dom): product_ops.inv_eq(
@@ -337,6 +348,18 @@ def default_product_interpreter(elem_interpreter):
                 prod_dom, elem_inv_eq_defs, elem_eq_defs
             )
         }
+
+        inv_defs.update({
+            (ops.get(i), (prod_dom, e_dom)):
+                product_ops.inv_getter(prod_dom, i)
+            for i, e_dom in enumerate(elem_doms)
+        })
+
+        inv_defs.update({
+            (ops.updated(i), (prod_dom, e_dom, prod_dom)):
+                product_ops.inv_updater(prod_dom, i)
+            for i, e_dom in enumerate(elem_doms)
+        })
 
         return TypeInterpretation(
             prod_dom,

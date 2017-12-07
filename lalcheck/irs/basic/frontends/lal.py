@@ -37,6 +37,40 @@ _attr_to_unop = {
 }
 
 
+def _record_fields(record_def):
+    """
+    Returns an iterable of the fields of the given record, where a field is
+    identified by the pair (its ComponentDecl, its Identifier).
+
+    :param lal.RecordDef record_def: The record whose fields to list.
+    """
+    for component in record_def.f_components.f_components:
+        for name in component.f_ids:
+            yield (component, name.text)
+
+
+def _compute_field_index(field_id):
+    """
+    Computes the index of the given record's field. Example:
+    type Foo is record
+      x, y : Integer;
+      z : Integer;
+    end record;
+
+    => "x" has index 0, "y" has index 1, "z" has index 2
+
+    :param lal.Identifier field_id: An identifier referring to a record's
+        field.
+    :rtype: int
+    """
+    record_def = field_id.p_referenced_decl.parent.parent.parent
+    return next(
+        i
+        for i, field in enumerate(_record_fields(record_def))
+        if field == (field_id.p_referenced_decl, field_id.text)
+    )
+
+
 def _gen_ir(ctx, subp):
     """
     Generates Basic intermediate representation from a lal subprogram body.
@@ -494,6 +528,45 @@ def _gen_ir(ctx, subp):
             orig_node=orig_node
         )]
 
+    def gen_actual_dest(dest, expr):
+        """
+        Examples:
+        - gen_actual_dest(`x`, "3") is called when transforming `x := 3`. In
+          this case, ("x", "3") is returned.
+
+        - gen_actual_dest(`r.p.x`, "12") is called when transforming
+          `r.p.x := 12`. It will produce in this case (
+            "r",
+            "Updated_I(r, Updated_J(Get_I(r), 12))"
+          ). Where I is the index of the "p" field in "r", and J of the "x"
+          field in "r.p".
+
+        :param lal.Expr dest: The destination of the assignment (lhs).
+        :param irt.Expr expr: The expression to assign (rhs).
+        :rtype: list[irt.Stmt], irt.Identifier, irt.Expr
+        """
+        if dest.is_a(lal.Identifier):
+            return [], (irt.Identifier(
+                var_decls[
+                    dest.p_referenced_decl,
+                    dest.text
+                ],
+                type_hint=dest.p_expression_type,
+                orig_node=dest
+            ), expr)
+
+        elif dest.is_a(lal.DottedName):
+            prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
+            pre_stmts, ret = gen_actual_dest(dest.f_prefix, irt.FunCall(
+                ops.updated(_compute_field_index(dest.f_suffix)),
+                [prefix_expr, expr],
+                type_hint=dest.f_prefix.p_expression_type,
+                orig_node=dest.f_prefix
+            ))
+            return prefix_pre_stmts + pre_stmts, ret
+
+        unimplemented(dest)
+
     def transform_expr(expr):
         """
         :param lal.Expr expr: The expression to transform.
@@ -635,6 +708,26 @@ def _gen_ir(ctx, subp):
             elif ref.is_a(lal.TypeDecl):
                 if ref.f_type_def.is_a(lal.SignedIntTypeDef):
                     return transform_expr(ref.f_type_def.f_range.f_range)
+
+        elif expr.is_a(lal.DottedName):
+            # Field access is transformed as such:
+            # Ada:
+            # ---------------
+            # r := x.f
+            #
+            # Basic IR:
+            # ---------------
+            # r = Get_N(x)
+            #
+            # Where N is the index of the field "f" in the record x
+            # (see _compute_field_index).
+            prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
+            return prefix_pre_stmts, irt.FunCall(
+                ops.get(_compute_field_index(expr.f_suffix)),
+                [prefix],
+                type_hint=expr.p_expression_type,
+                orig_node=expr
+            )
 
         elif expr.is_a(lal.IntLiteral):
             return [], irt.Lit(
@@ -784,17 +877,13 @@ def _gen_ir(ctx, subp):
 
         if stmt.is_a(lal.AssignStmt):
             expr_pre_stmts, expr = transform_expr(stmt.f_expr)
-            return expr_pre_stmts + [
+            dest_pre_stmts, (dest, updated_expr) = gen_actual_dest(
+                stmt.f_dest, expr
+            )
+            return dest_pre_stmts + expr_pre_stmts + [
                 irt.AssignStmt(
-                    irt.Identifier(
-                        var_decls[
-                            stmt.f_dest.p_referenced_decl,
-                            stmt.f_dest.text
-                        ],
-                        type_hint=stmt.f_dest.p_expression_type,
-                        orig_node=stmt.f_dest
-                    ),
-                    expr,
+                    dest,
+                    updated_expr,
                     orig_node=stmt
                 )
             ]
@@ -1299,11 +1388,9 @@ def record_typer(elem_typer):
         if hint.is_a(lal.TypeDecl):
             if hint.f_type_def.is_a(lal.RecordTypeDef):
                 r_def = hint.f_type_def.f_record_def
-                fields = r_def.f_components.f_components
                 return [
-                    field.f_component_def.f_type_expr
-                    for field in fields
-                    for name in field.f_ids
+                    decl.f_component_def.f_type_expr
+                    for decl, _ in _record_fields(r_def)
                 ]
 
     to_product = Transformer.as_transformer(types.Product)
