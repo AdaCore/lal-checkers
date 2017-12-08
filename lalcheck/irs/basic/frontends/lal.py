@@ -1508,6 +1508,29 @@ def name_typer(inner_typer):
     return resolved_name >> inner_typer
 
 
+def anonymous_typer(inner_typer):
+    """
+    :param types.Typer[lal.AdaNode] inner_typer: A typer for the types declared
+        by the anonymous typer.
+
+    :return: A typer for anonymous types.
+
+    :rtype: types.Typer[lal.AdaNode]
+    """
+    @Transformer.as_transformer
+    def get_type_decl(hint):
+        """
+        :param lal.AdaNode hint: the lal type expression.
+        :return: The type declaration associated to the anonymous type, if
+            relevant.
+        :rtype: lal.BaseTypeDecl
+        """
+        if hint.is_a(lal.AnonymousType):
+            return hint.f_type_decl
+
+    return get_type_decl >> inner_typer
+
+
 class ExtractionContext(object):
     """
     The libadalang-based frontend interface. Provides method for extracting
@@ -1622,6 +1645,7 @@ class ExtractionContext(object):
                     enum_typer |
                     access_typer(typer) |
                     record_typer(typer) |
-                    name_typer(typer))
+                    name_typer(typer) |
+                    anonymous_typer(typer))
 
         return typer
