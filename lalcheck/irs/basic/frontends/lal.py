@@ -573,6 +573,96 @@ def _gen_ir(ctx, subp):
 
         unimplemented(dest)
 
+    def transform_dereference(derefed_expr, deref_type, deref_orig):
+        """
+        Generate the IR code that dereferences the given expression, as such:
+        Ada:
+        ----------------
+        x := F(y.all);
+
+        Basic IR:
+        ----------------
+        assume(y != null)
+        x := F(y.all)
+
+        :param lal.Expr derefed_expr: The expression being dereferenced.
+        :param lal.AdaNode deref_type: The type of the dereference expression.
+        :param lal.Expr deref_orig: The original dereference node.
+        :rtype: (list[irt.Stmt], irt.Expr)
+        """
+        # Transform the expression being dereferenced and build the
+        # assume expression stating that the expr is not null.
+        expr_pre_stmts, expr = transform_expr(derefed_expr)
+        assumed_expr = irt.FunCall(
+            ops.NEQ,
+            [
+                expr,
+                irt.Lit(
+                    lits.NULL,
+                    type_hint=derefed_expr.p_expression_type
+                )
+            ],
+            type_hint=derefed_expr.p_bool_type
+        )
+
+        # Build the assume statement as mark it as a deref check, so as
+        # to inform deref checkers that this assume statement was
+        # introduced for that purpose.
+        return expr_pre_stmts + [irt.AssumeStmt(
+            assumed_expr,
+            purpose=purpose.DerefCheck(expr)
+        )], irt.FunCall(
+            ops.DEREF,
+            [expr],
+            type_hint=deref_type,
+            orig_node=deref_orig
+        )
+
+    def transform_record_aggregate(expr):
+        """
+        :param lal.Aggregate expr: The aggregate expression.
+        :return: Its IR transformation.
+        :rtype: (list[irt.Stmt], irt.Expr)
+        """
+        record_def = expr.p_expression_type.f_type_def.f_record_def
+        all_fields = list(_record_fields(record_def))
+        field_init = [None] * len(all_fields)
+        others_expr_idx = None
+
+        r_exprs_pre_stmts, r_exprs = zip(*[
+            transform_expr(assoc.f_r_expr)
+            if not assoc.f_r_expr.is_a(lal.BoxExpr)
+            else ([], None)  # todo: replace None by default expr
+            for assoc in expr.f_assocs
+        ])
+
+        for i, assoc in enumerate(expr.f_assocs):
+            if len(assoc.f_designators) == 0:
+                indexes = [i]
+            elif (len(assoc.f_designators) == 1 and
+                  assoc.f_designators[0].is_a(lal.OthersDesignator)):
+                others_expr_idx = i
+                continue
+            else:
+                indexes = [
+                    _compute_field_index(designator)
+                    for designator in assoc.f_designators
+                ]
+
+            for idx in indexes:
+                field_init[idx] = r_exprs[i]
+
+        for i in range(len(field_init)):
+            if field_init[i] is None:
+                field_init[i] = r_exprs[others_expr_idx]
+
+        return sum(r_exprs_pre_stmts, []), irt.FunCall(
+            ops.NEW,
+            field_init,
+            type_hint=expr.p_expression_type,
+            orig_node=expr
+        )
+
     def transform_expr(expr):
         """
         :param lal.Expr expr: The expression to transform.
@@ -750,23 +840,9 @@ def _gen_ir(ctx, subp):
             )
 
         elif expr.is_a(lal.Aggregate):
-            transformed_exprs = [
-                transform_expr(assoc.f_r_expr)
-                for assoc in expr.f_assocs
-            ]
-            exprs_pre_stmts = [
-                stmt
-                for stmts, _ in transformed_exprs
-                for stmt in stmts
-            ]
-            exprs = [tr_expr for _, tr_expr in transformed_exprs]
-
-            return exprs_pre_stmts, irt.FunCall(
-                ops.NEW,
-                exprs,
-                type_hint=expr.p_expression_type,
-                orig_node=expr
-            )
+            type_def = expr.p_expression_type.f_type_def
+            if type_def.is_a(lal.RecordTypeDef):
+                return transform_record_aggregate(expr)
 
         elif expr.is_a(lal.ExplicitDeref):
             # Explicit dereferences are transformed as such:
