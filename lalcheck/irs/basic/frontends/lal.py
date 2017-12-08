@@ -817,7 +817,15 @@ def _gen_ir(ctx, subp):
             #
             # Where N is the index of the field "f" in the record x
             # (see _compute_field_index).
-            prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
+            if expr.f_prefix.p_expression_type.p_is_access_type:
+                access_type_def = expr.f_prefix.p_expression_type.f_type_def
+                accessed_type = access_type_def.f_subtype_indication
+                prefix_pre_stmts, prefix = transform_dereference(
+                    expr.f_prefix, accessed_type, expr.f_prefix
+                )
+            else:
+                prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
+
             return prefix_pre_stmts, irt.FunCall(
                 ops.get(_compute_field_index(expr.f_suffix)),
                 [prefix],
@@ -845,43 +853,10 @@ def _gen_ir(ctx, subp):
                 return transform_record_aggregate(expr)
 
         elif expr.is_a(lal.ExplicitDeref):
-            # Explicit dereferences are transformed as such:
-            #
-            # Ada:
-            # ----------------
-            # x := F(y.all);
-            #
-            # Basic IR:
-            # ----------------
-            # assume(y != null)
-            # x := F(y.all)
-
-            # Transform the expression being dereferenced and build the
-            # assume expression stating that the prefix is not null.
-            prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
-            assumed_expr = irt.FunCall(
-                ops.NEQ,
-                [
-                    prefix,
-                    irt.Lit(
-                        lits.NULL,
-                        type_hint=expr.f_prefix.p_expression_type
-                    )
-                ],
-                type_hint=expr.p_bool_type
-            )
-
-            # Build the assume statement as mark it as a deref check, so as
-            # to inform deref checkers that this assume statement was
-            # introduced for that purpose.
-            return prefix_pre_stmts + [irt.AssumeStmt(
-                assumed_expr,
-                purpose=purpose.DerefCheck(prefix)
-            )], irt.FunCall(
-                ops.DEREF,
-                [prefix],
-                type_hint=expr.p_expression_type,
-                orig_node=expr
+            return transform_dereference(
+                expr.f_prefix,
+                expr.p_expression_type,
+                expr
             )
 
         elif expr.is_a(lal.AttributeRef):

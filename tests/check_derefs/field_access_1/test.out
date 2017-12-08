@@ -1,0 +1,34 @@
+{
+  "always": [
+    {
+      "precise": false, 
+      "trace": [
+        "assign0", 
+        "assign1", 
+        "assume0", 
+        "assume1",
+        "assume2",
+        "read0",
+        "read1",
+        "read2",
+        "split_join0",
+        "start0"
+      ]
+    }
+  ],
+  "le_t_eq_v": [
+    {
+      "precise": false,
+      "trace": [
+        "assign0",
+        "assume1",
+        "assume2",
+        "read0",
+        "read1",
+        "read2",
+        "split_join0",
+        "start0"
+      ]
+    }
+  ]
+}

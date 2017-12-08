@@ -1,0 +1,5 @@
+Program:
+  read(r#1)
+  read(x#2)
+  assume(!=(Get_0(r#1), null))
+  x#2 = Get_0(*(Get_0(r#1)))
