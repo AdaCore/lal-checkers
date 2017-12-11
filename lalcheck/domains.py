@@ -44,12 +44,14 @@ class AbstractDomain(object):
         """
         Returns True if the given element represents an empty set of
         concrete values.
-
-        Often, the "bottom" element represents an empty set of
-        concrete values, but this may not always be true.
-        If it is not the case, this behavior should be overriden.
         """
-        return self.eq(x, self.bottom)
+        return self.size(x) == 0
+
+    def size(self, x):
+        """
+        Returns the number of concrete values represented by the given element.
+        """
+        raise NotImplementedError
 
     def join(self, a, b):
         """
@@ -124,6 +126,17 @@ class AbstractDomain(object):
         of concrete values than the second one, or the same one.
         """
         return self.le(b, a)
+
+    def split(self, elem, separator):
+        """
+        Returns an iterable of disjoint elements of this abstract domain,
+        such that all of them have an empty meet with the separator element,
+        but the union of all the sets of concrete values represented by each
+        elements is equal to the set difference between the set of concrete
+        values represented by the original element and the set of concrete
+        values represented by the separator.
+        """
+        raise NotImplementedError
 
     def lowest_among(self, xs):
         """
@@ -223,6 +236,12 @@ class Intervals(AbstractDomain):
         if x >= self.top[0]:
             return x, self.top[1]
 
+    def is_empty(self, x):
+        return x == self.bottom
+
+    def size(self, x):
+        return 0 if x == self.bottom else x[1] - x[0] + 1
+
     def join(self, a, b):
         if a == self.bottom:
             return b
@@ -264,6 +283,26 @@ class Intervals(AbstractDomain):
 
     def le(self, a, b):
         return self.lt(a, b) or self.eq(a, b)
+
+    def split(self, elem, separator):
+        if self.is_empty(self.meet(elem, separator)):
+            return [elem]
+        elif self.le(elem, separator):
+            return []
+        elif self.lt(separator, elem):
+            if separator[0] == elem[0]:
+                return [(separator[1] + 1, elem[1])]
+            elif separator[1] == elem[1]:
+                return [(elem[0], separator[0] - 1)]
+            else:
+                return [
+                    (elem[0], separator[0] - 1),
+                    (separator[1] + 1, elem[1])
+                ]
+        elif separator[0] <= elem[0]:
+            return [(separator[1] + 1, elem[1])]
+        else:
+            return [(elem[0], separator[0] - 1)]
 
     def generator(self):
         dom_from, dom_to = self.top[0], self.top[1]
@@ -310,6 +349,13 @@ class Product(AbstractDomain):
             for domain, v in zip(self.domains, x)
         )
 
+    def size(self, x):
+        return reduce(
+            lambda acc, dom_e: acc * (dom_e[0].size(dom_e[1])),
+            zip(self.domains, x),
+            1
+        )
+
     def join(self, a, b):
         return tuple(
             domain.join(x, y)
@@ -339,6 +385,35 @@ class Product(AbstractDomain):
             domain.eq(x, y)
             for domain, x, y in zip(self.domains, a, b)
         )
+
+    def split(self, elem, separator):
+        def inner(elem, dimension):
+            if dimension == len(elem):
+                return []
+
+            dom = self.domains[dimension]
+            x_slice = elem[dimension]
+            sep = separator[dimension]
+
+            self_splits = [
+                tuple(
+                    x_split if dimension == j else y_elem
+                    for j, y_elem in enumerate(elem)
+                )
+                for x_split in dom.split(x_slice, sep)
+            ]
+
+            rest_splits = inner(
+                tuple(
+                    sep if dimension == j else y_elem
+                    for j, y_elem in enumerate(elem)
+                ),
+                dimension + 1
+            )
+
+            return self_splits + rest_splits
+
+        return inner(elem, 0)
 
     def generator(self):
         return itertools.product(*(
@@ -387,6 +462,13 @@ class Set(AbstractDomain):
         Creates a new set which contains the given iterable of elements.
         """
         return self._reduce(elems)
+
+    def is_empty(self, x):
+        return all(self.dom.is_empty(e) for e in x)
+
+    def size(self, x):
+        # Not relevant
+        raise NotImplementedError
 
     def _reduce(self, xs):
         """
@@ -454,6 +536,9 @@ class Set(AbstractDomain):
     def eq(self, a, b):
         return self.le(a, b) and self.le(b, a)
 
+    def split(self, elem, separator):
+        raise NotImplementedError
+
     def generator(self):
         raise NotImplementedError
 
@@ -510,6 +595,14 @@ class FiniteLattice(AbstractDomain):
         return inv_lts
 
     @staticmethod
+    def _subset_splitter(domain, elem, separator):
+        without = elem - separator
+        if without in domain.lts[domain.bottom]:
+            return [without]
+        else:
+            return []
+
+    @staticmethod
     def of_subsets(xs):
         """
         Constructor that can build a finite lattice from the given elements.
@@ -518,18 +611,20 @@ class FiniteLattice(AbstractDomain):
         sets = powerset(xs)
         return FiniteLattice({
             k: {v for v in sets if k.issubset(v)} for k in sets
-        })
+        }, FiniteLattice._subset_splitter)
 
-    def __init__(self, lts):
+    def __init__(self, lts, splitter):
         """
         Constructs a new finite lattice from the given "less than" relation.
         The "bottom" and "top" elements are inferred automatically, which means
-        that they must exist.
+        that they must exist. The splitter function used to split elements
+        must also be provided.
         """
         self.lts = FiniteLattice._transitive_closure(lts)
         self.inv_lts = FiniteLattice._inverse(self.lts)
         self.bottom = self.lowest_among(self.lts.keys())
         self.top = self.greatest_among(self.lts.keys())
+        self.splitter = splitter
 
     def build(self, elem):
         """
@@ -540,6 +635,9 @@ class FiniteLattice(AbstractDomain):
 
     def is_empty(self, x):
         return len(x) == 0
+
+    def size(self, x):
+        return len(x)
 
     def join(self, a, b):
         return self.lowest_among(self.lts[a] & self.lts[b])
@@ -555,6 +653,9 @@ class FiniteLattice(AbstractDomain):
 
     def eq(self, a, b):
         return a == b
+
+    def split(self, elem, separator):
+        return self.splitter(self, elem, separator)
 
     def generator(self):
         return self.lts[self.bottom]
@@ -584,6 +685,9 @@ class FiniteSubsetLattice(AbstractDomain):
         res = frozenset(elems)
         return res if res <= self.top else None
 
+    def size(self, x):
+        return len(x)
+
     def join(self, a, b):
         return a | b
 
@@ -598,6 +702,9 @@ class FiniteSubsetLattice(AbstractDomain):
 
     def eq(self, a, b):
         return a == b
+
+    def split(self, elem, separator):
+        return [elem - separator]
 
     def generator(self):
         return powerset(self.top)
