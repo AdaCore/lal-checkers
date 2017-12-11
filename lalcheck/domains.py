@@ -364,13 +364,13 @@ class Set(AbstractDomain):
     Two sets of concrete values are considered equal according to the provided
     merge predicate. When two values are considered equal, they are joined.
     """
-    def __init__(self, dom, merge_predicate):
+    def __init__(self, dom, merge_predicate, top):
         """
         Constructs a new abstract domain from the given abstract domain and the
         merge predicate. Its elements will represent sets of elements of the
         given abstract domain. Two elements will be considered equal and merged
         iff they satisfy the merge predicate or are equal according to inner
-        domain.
+        domain. A top element for the domain must also be provided.
         """
         def actual_predicate(a, b):
             return (dom.eq(a, b) or
@@ -380,7 +380,7 @@ class Set(AbstractDomain):
         self.dom = dom
         self.merge_predicate = actual_predicate
         self.bottom = []
-        self.top = object()
+        self.top = top
 
     def build(self, elems):
         """

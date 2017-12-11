@@ -269,7 +269,8 @@ def collect_semantics(prog, model, merge_pred_builder):
         merge_pred_builder.build(
             trace_domain,
             vars_domain
-        )
+        ),
+        None  # We don't need a top element here.
     )
 
     def it(states):
