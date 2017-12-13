@@ -51,6 +51,20 @@ def powerset(iterable):
     return frozenset(frozenset(x for x in tp) for tp in res)
 
 
+def partition(it, predicate):
+    """
+    Partitions an iterable into two lists, one containing all the elements
+    that satisfy the given predicate, and one containing the others.
+
+    :param iterable[T] it: The iterable to partition.
+    :param T->bool predicate: The partition predicate.
+    """
+    res_true, res_false = [], []
+    for x in it:
+        (res_true if predicate(x) else res_false).append(x)
+    return res_true, res_false
+
+
 class Transformer(object):
     def __init__(self, fun):
         """

@@ -714,3 +714,163 @@ class FiniteSubsetLattice(AbstractDomain):
 
     def abstract(self, concrete):
         return self.build(concrete)
+
+
+class SparseArray(AbstractDomain):
+    def __init__(self, index_dom, elem_dom):
+        self.index_dom = index_dom
+        self.elem_dom = elem_dom
+        self.prod_dom = Product(index_dom, elem_dom)
+        self.bottom = []
+        self.top = [self.prod_dom.top]
+
+    def build(self, elems):
+        assert self.le(elems, self.top)
+        return elems
+
+    def size(self, x):
+        return sum(self.prod_dom.size(e) for e in x)
+
+    def _join_elem(self, x, elem):
+        # Filter out elements that would be absorbed anyway.
+        x = [
+            e for e in x
+            if not self.prod_dom.le(e, elem)
+        ]
+
+        res = []
+        left = [elem[0]]
+        for idx, val in x:
+            meet = self.index_dom.meet(idx, elem[0])
+
+            if self.index_dom.is_empty(meet):
+                res.append((idx, val))
+            else:
+                elem_join = self.elem_dom.join(val, elem[1])
+
+                if self.elem_dom.eq(elem_join, val):
+                    res.append((idx, val))
+                else:
+                    splits = self.index_dom.split(idx, meet)
+                    res.extend([(split, val) for split in splits])
+                    res.append((meet, elem_join))
+
+                left = reduce(list.__add__, [
+                    self.index_dom.split(l, idx) for l in left
+                ])
+
+        res.extend([(l, elem[1]) for l in left])
+        return res
+
+    def join(self, a, b):
+        return reduce(self._join_elem, b, a)
+
+    def meet(self, a, b):
+        res = []
+        for e_a in a:
+            for e_b in b:
+                meet = self.prod_dom.meet(e_a, e_b)
+                if not self.prod_dom.is_empty(meet):
+                    res.append(meet)
+        return res
+
+    def le(self, a, b):
+        return all(
+            any(
+                self.prod_dom.le(x, y)
+                for y in b
+            )
+            for x in a
+        )
+
+    def lt(self, a, b):
+        return self.le(a, b) and not self.eq(a, b)
+
+    def _has_value_at(self, matrix, index, value):
+        meets = [
+            (meet, v)
+            for i, v in matrix
+            for meet in (self.index_dom.meet(i, index),)
+            if not self.index_dom.is_empty(meet)
+        ]
+
+        indices_count = sum(self.index_dom.size(i) for i, _ in meets)
+        if indices_count != self.index_dom.size(index):
+            return False
+
+        return all(self.elem_dom.eq(v, value) for _, v in meets)
+
+    def eq(self, a, b):
+        return (all(self._has_value_at(b, i, v) for i, v in a) and
+                all(self._has_value_at(a, i, v) for i, v in b))
+
+    def split(self, x, separator):
+        raise NotImplementedError
+
+    def generator(self):
+        def index_overlaps(a, b):
+            return not self.index_dom.is_empty(self.index_dom.meet(a, b))
+
+        def gen_not_overlapping_indices(array):
+            for index in self.index_dom.generator():
+                if not any(index_overlaps(index, x[0]) for x in array):
+                    yield index
+
+        def gen_arrays_of_size(array, size):
+            if size == 0:
+                yield array
+            else:
+                for not_overlapping in gen_not_overlapping_indices(array):
+                    for elem in self.elem_dom.generator():
+                        inced_size = array + [(not_overlapping, elem)]
+
+                        nexts = gen_arrays_of_size(inced_size, size - 1)
+                        for n in nexts:
+                            yield n
+
+        i = 0
+        while True:
+            arrays = gen_arrays_of_size([], i)
+            first = next(arrays, None)
+            if first is None:
+                break
+
+            yield first
+            for array in arrays:
+                yield array
+
+            i += 1
+
+    def concretize(self, abstract):
+        def gen_arrays(abstract, i=0, gened=frozenset()):
+            if len(abstract) == i:
+                yield gened
+            else:
+                concr_idx = self.index_dom.concretize(abstract[i][0])
+                concr_val = self.elem_dom.concretize(abstract[i][1])
+
+                parts = (
+                    frozenset(zip(concr_idx, values))
+                    for values in itertools.product(*(
+                        concr_val
+                        for _ in range(len(concr_idx))
+                    ))
+                )
+
+                for part in parts:
+                    for rest in gen_arrays(abstract, i + 1, gened | part):
+                        yield rest
+
+        return frozenset(gen_arrays(abstract))
+
+    def abstract(self, concrete):
+        def abstract_one(array):
+            return [
+                (
+                    self.index_dom.abstract(frozenset([idx])),
+                    self.elem_dom.abstract(frozenset([val]))
+                )
+                for idx, val in array
+            ]
+
+        return reduce(self.join, [abstract_one(x) for x in concrete])
