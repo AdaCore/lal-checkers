@@ -69,3 +69,12 @@ class Product(Type):
         :param list[Type] elem_types: types of the elements of the product.
         """
         self.elem_types = elem_types
+
+
+class Array(Type):
+    """
+    Represents an array (possibly multidimensional)
+    """
+    def __init__(self, index_types, component_type):
+        self.index_types = index_types
+        self.component_type = component_type

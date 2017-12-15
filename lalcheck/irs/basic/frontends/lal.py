@@ -71,6 +71,16 @@ def _compute_field_index(field_id):
     )
 
 
+def _is_array_type_decl(tpe):
+    """
+    Returns True iff the given type is an array type decl.
+    :param lal.AdaNode tpe: The type to check.
+    """
+    if tpe.is_a(lal.TypeDecl):
+        return tpe.f_type_def.is_a(lal.ArrayTypeDef)
+    return False
+
+
 def _gen_ir(ctx, subp):
     """
     Generates Basic intermediate representation from a lal subprogram body.
@@ -571,6 +581,28 @@ def _gen_ir(ctx, subp):
             ))
             return prefix_pre_stmts + pre_stmts, ret
 
+        elif dest.is_a(lal.CallExpr):
+            prefix_pre_stmts, prefix_expr = transform_expr(dest.f_name)
+            suffixes = [
+                transform_expr(suffix.f_r_expr)
+                for suffix in dest.f_suffix
+            ]
+            suffix_pre_stmts = reduce(list.__add__, [
+                suffix[0] for suffix in suffixes
+            ])
+            suffix_exprs = [suffix[1] for suffix in suffixes]
+            pre_stmts, ret = gen_actual_dest(dest.f_name, irt.FunCall(
+                ops.UPDATED,
+                [prefix_expr, expr] + suffix_exprs,
+                type_hint=dest.f_name.p_expression_type,
+                orig_node=dest,
+                purpose=purpose.CallAssignment(dest.f_name.p_expression_type)
+            ))
+            return (
+                prefix_pre_stmts + pre_stmts + suffix_pre_stmts,
+                ret
+            )
+
         unimplemented(dest)
 
     def transform_dereference(derefed_expr, deref_type, deref_orig):
@@ -663,6 +695,16 @@ def _gen_ir(ctx, subp):
             orig_node=expr
         )
 
+    def transform_array_aggregate(expr):
+        """
+        :param lal.Aggregate expr: The aggregate expression.
+        :return: its IR transformation.
+        :rtype: (list[irt.Stmt], irt.Expr)
+        """
+        array_def = expr.p_expression_type.f_type_def
+        print(array_def.dump())
+        unimplemented(expr)
+
     def transform_expr(expr):
         """
         :param lal.Expr expr: The expression to transform.
@@ -699,6 +741,25 @@ def _gen_ir(ctx, subp):
                 [inner_expr],
                 type_hint=expr.p_expression_type,
                 orig_node=expr
+            )
+
+        elif expr.is_a(lal.CallExpr):
+            prefix_pre_stmts, prefix_expr = transform_expr(expr.f_name)
+            suffixes = [
+                transform_expr(suffix.f_r_expr)
+                for suffix in expr.f_suffix
+            ]
+            suffix_pre_stmts = reduce(list.__add__, [
+                suffix[0] for suffix in suffixes
+            ])
+            suffix_exprs = [suffix[1] for suffix in suffixes]
+
+            return prefix_pre_stmts + suffix_pre_stmts, irt.FunCall(
+                ops.CALL,
+                [prefix_expr] + suffix_exprs,
+                type_hint=expr.p_expression_type,
+                orig_node=expr,
+                callee_type=expr.f_name.p_expression_type
             )
 
         elif expr.is_a(lal.IfExpr):
@@ -785,7 +846,6 @@ def _gen_ir(ctx, subp):
 
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
-
             ref = expr.p_referenced_decl
             if ref.is_a(lal.ObjectDecl):
                 return [], irt.Identifier(
@@ -851,6 +911,8 @@ def _gen_ir(ctx, subp):
             type_def = expr.p_expression_type.f_type_def
             if type_def.is_a(lal.RecordTypeDef):
                 return transform_record_aggregate(expr)
+            elif type_def.is_a(lal.ArrayTypeDef):
+                return transform_array_aggregate(expr)
 
         elif expr.is_a(lal.ExplicitDeref):
             return transform_dereference(
@@ -1235,10 +1297,39 @@ class ConvertUniversalTypes(IRImplicitVisitor):
 
     def visit_funcall(self, funcall):
         if any(self.has_universal_type(arg) for arg in funcall.args):
-            if purpose.FieldAssignment.is_purpose_of(funcall):
+            if 'callee_type' in funcall.data:
+                # Case where we have information about the callee type
+                tpe = funcall.data.callee_type
+                if _is_array_type_decl(tpe):
+                    # if the "callee" is an array
+                    indices = tpe.f_type_def.f_indices.f_list
+                    funcall.args[1:] = [
+                        self.try_convert_expr(arg, indices[i])
+                        for i, arg in enumerate(funcall.args[1:])
+                    ]
+            elif purpose.FieldAssignment.is_purpose_of(funcall):
                 # Case where the function is an update call replacing a
-                # field assignment.
-                expected_type = funcall.data.purpose.field_type_hint
+                # field assignment. (p.x = y)
+                funcall.args[1] = self.try_convert_expr(
+                    funcall.args[1],
+                    funcall.data.purpose.field_type_hint
+                )
+            elif purpose.CallAssignment.is_purpose_of(funcall):
+                # Case where the function is an udpate call replacing a
+                # call assignment. (a(i) = b)
+                tpe = funcall.data.purpose.callee_type
+                if _is_array_type_decl(tpe):
+                    # if the "callee" is an array
+                    tdef = tpe.f_type_def
+                    indices = tdef.f_indices.f_list
+                    funcall.args[1] = self.try_convert_expr(
+                        funcall.args[1],
+                        tdef.f_component_type.f_type_expr
+                    )
+                    funcall.args[2:] = [
+                        self.try_convert_expr(arg, indices[i])
+                        for i, arg in enumerate(funcall.args[2:])
+                    ]
             else:
                 # Otherwise, assume that functions that accept one argument
                 # as universal int/real need all their arguments to be of the
@@ -1250,10 +1341,10 @@ class ConvertUniversalTypes(IRImplicitVisitor):
                     if not self.has_universal_type(arg)
                 )
 
-            funcall.args = [
-                self.try_convert_expr(arg, expected_type)
-                for arg in funcall.args
-            ]
+                funcall.args = [
+                    self.try_convert_expr(arg, expected_type)
+                    for arg in funcall.args
+                ]
 
         super(ConvertUniversalTypes, self).visit_funcall(funcall)
 
@@ -1506,6 +1597,37 @@ def anonymous_typer(inner_typer):
     return get_type_decl >> inner_typer
 
 
+def array_typer(indices_typer, component_typer):
+    """
+    :param types.Typer[lal.AdaNode] indices_typer: Typer for array indices.
+
+    :param types.Typer[lal.AdaNode] component_typer: Typer for array
+        components.
+
+    :return: A Typer for array types.
+
+    :rtype: types.Typer[lal.AdaNode]
+    """
+    @Transformer.as_transformer
+    def get_array_attributes(hint):
+        if _is_array_type_decl(hint):
+            return (
+                hint.f_type_def.f_indices.f_list,
+                hint.f_type_def.f_component_type.f_type_expr
+            )
+
+    @Transformer.as_transformer
+    def to_array(attribute_types):
+        index_types, component_type = attribute_types
+        return types.Array(index_types, component_type)
+
+    return (
+        get_array_attributes >>
+        (indices_typer.lifted() & component_typer) >>
+        to_array
+    )
+
+
 class ExtractionContext(object):
     """
     The libadalang-based frontend interface. Provides method for extracting
@@ -1621,6 +1743,7 @@ class ExtractionContext(object):
                     access_typer(typer) |
                     record_typer(typer) |
                     name_typer(typer) |
-                    anonymous_typer(typer))
+                    anonymous_typer(typer) |
+                    array_typer(typer, typer))
 
         return typer

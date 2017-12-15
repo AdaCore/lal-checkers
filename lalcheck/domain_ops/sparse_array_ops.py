@@ -36,10 +36,8 @@ def get(domain):
                 index_dom.meet(index, elem[0])
             )
         ]
-        if len(relevant) == 0:
-            return elem_dom.bottom
 
-        return reduce(elem_dom.join, relevant)
+        return reduce(elem_dom.join, relevant, elem_dom.bottom)
 
     return do
 

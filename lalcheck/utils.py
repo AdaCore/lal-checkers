@@ -89,6 +89,28 @@ class Transformer(object):
 
         return f
 
+    def __and__(self, other):
+        """
+        Combines two transformer to form a single transformer that transforms
+        pairs of values. The transformation succeeds if both individual
+        transformer succeed.
+
+        :param Transformer other: The transformer to combine with.
+        :rtype: Transformer
+        """
+        @self.as_transformer
+        def f(hint):
+            a, b = hint
+            new_a = self._transform(a)
+            if new_a is not None:
+                new_b = other._transform(b)
+                if new_b is not None:
+                    return new_a, new_b
+
+            return None
+
+        return f
+
     def __rshift__(self, other):
         """
         Combines two transformer in a chain fashion: use the other

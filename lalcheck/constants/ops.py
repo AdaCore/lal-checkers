@@ -20,6 +20,9 @@ GET_LAST = 'GetLast'
 
 NEW = 'new'
 
+CALL = "Call"
+UPDATED = "Updated"
+
 
 def get(x):
     """

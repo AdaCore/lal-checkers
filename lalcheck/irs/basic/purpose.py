@@ -54,3 +54,15 @@ class FieldAssignment(Purpose):
         """
         self.field_index = field_index
         self.field_type_hint = field_type_hint
+
+
+class CallAssignment(Purpose):
+    """
+    Attached to a function call that is the result of the translation of a
+    "call assignment". (a(2) = 3 ==> a = Updated(a, 3, 2)
+    """
+    def __init__(self, callee_type):
+        """
+        :param lal.AdaNode callee_type: The type of the "callee".
+        """
+        self.callee_type = callee_type

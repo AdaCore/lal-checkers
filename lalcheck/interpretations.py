@@ -7,7 +7,8 @@ from lalcheck.domain_ops import (
     boolean_ops,
     interval_ops,
     finite_lattice_ops,
-    product_ops
+    product_ops,
+    sparse_array_ops
 )
 from lalcheck.constants import ops, lits
 from lalcheck.utils import Transformer
@@ -371,6 +372,93 @@ def default_product_interpreter(elem_interpreter):
     return get_elements >> elem_interpreter.lifted() >> product_interpreter
 
 
+def default_array_interpreter(attribute_interpreter):
+    """
+    Builds a type interpreter for array types.
+
+    :param TypeInterpreter attribute_interpreter: interpreter for the
+        attributes of the array.
+
+    :rtype: TypeInterpreter
+    """
+    @Transformer.as_transformer
+    def get_array_attributes(tpe):
+        """
+        :param types.Type tpe: The type.
+        :rtype: (iterable[types.Type], types.Type)
+        """
+        if tpe.is_a(types.Array):
+            return tpe.index_types, tpe.component_type
+
+    @Transformer.as_transformer
+    def array_interpreter(attribute_interps):
+        """
+        :param (iterable[TypeInterpretation], TypeInterpretation)
+            attribute_interps: The interpretations of the types of the indices,
+            and the interpretation of the type of the components.
+
+        :return: The interpretation for the array type
+
+        :rtype: TypeInterpretation
+        """
+        index_interps, component_interp = attribute_interps
+
+        indices_dom = domains.Product(*(
+            interp.domain for interp in index_interps
+        ))
+        comp_dom = component_interp.domain
+
+        array_dom = domains.SparseArray(indices_dom, comp_dom)
+
+        call_tpe = (array_dom,) + tuple(indices_dom.domains) + (comp_dom,)
+        updated_tpe = (
+            (array_dom, comp_dom) + tuple(indices_dom.domains) + (array_dom,)
+        )
+
+        array_get = sparse_array_ops.get(array_dom)
+        array_updated = sparse_array_ops.updated(array_dom)
+        array_inv_get = sparse_array_ops.inv_get(array_dom)
+        array_inv_updated = sparse_array_ops.inv_updated(array_dom)
+
+        def actual_get(array, *indices):
+            return array_get(array, indices)
+
+        def actual_updated(array, val, *indices):
+            return array_updated(array, val, indices)
+
+        def actual_inv_get(res, array_constr, *indices_constr):
+            arr, indices = array_inv_get(res, array_constr, indices_constr)
+            return (arr,) + indices
+
+        def actual_inv_udpated(res, array_constr, val_constr, *indices_constr):
+            return array_inv_updated(
+                res, array_constr, val_constr, indices_constr
+            )
+
+        defs = {
+            (ops.CALL, call_tpe): actual_get,
+            (ops.UPDATED, updated_tpe): actual_updated
+        }
+
+        inv_defs = {
+            (ops.CALL, call_tpe): actual_inv_get,
+            (ops.UPDATED, updated_tpe): actual_inv_udpated
+        }
+
+        return TypeInterpretation(
+            array_dom,
+            dict_to_provider(defs),
+            dict_to_provider(inv_defs),
+            id
+        )
+
+    return (
+        get_array_attributes >>
+        (attribute_interpreter.lifted() & attribute_interpreter) >>
+        array_interpreter
+    )
+
+
 @memoizing_type_interpreter
 @delegating_type_interpreter
 def default_type_interpreter():
@@ -379,5 +467,6 @@ def default_type_interpreter():
         default_int_range_interpreter |
         default_enum_interpreter |
         default_simple_pointer_interpreter(default_type_interpreter) |
-        default_product_interpreter(default_type_interpreter)
+        default_product_interpreter(default_type_interpreter) |
+        default_array_interpreter(default_type_interpreter)
     )
