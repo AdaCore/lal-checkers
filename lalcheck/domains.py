@@ -755,9 +755,11 @@ class SparseArray(AbstractDomain):
                     res.extend([(split, val) for split in splits])
                     res.append((meet, elem_join))
 
-                left = reduce(list.__add__, [
-                    self.index_dom.split(l, idx) for l in left
-                ])
+                left = [
+                    split
+                    for l in left
+                    for split in self.index_dom.split(l, idx)
+                ]
 
         res.extend([(l, elem[1]) for l in left])
         return res

@@ -587,9 +587,11 @@ def _gen_ir(ctx, subp):
                 transform_expr(suffix.f_r_expr)
                 for suffix in dest.f_suffix
             ]
-            suffix_pre_stmts = reduce(list.__add__, [
-                suffix[0] for suffix in suffixes
-            ])
+            suffix_pre_stmts = [
+                suffix_stmt
+                for suffix in suffixes
+                for suffix_stmt in suffix[0]
+            ]
             suffix_exprs = [suffix[1] for suffix in suffixes]
             pre_stmts, ret = gen_actual_dest(dest.f_name, irt.FunCall(
                 ops.UPDATED,
@@ -749,9 +751,10 @@ def _gen_ir(ctx, subp):
                 transform_expr(suffix.f_r_expr)
                 for suffix in expr.f_suffix
             ]
-            suffix_pre_stmts = reduce(list.__add__, [
-                suffix[0] for suffix in suffixes
-            ])
+            suffix_pre_stmts = [
+                suffix_stmt for suffix in suffixes
+                for suffix_stmt in suffix[0]
+            ]
             suffix_exprs = [suffix[1] for suffix in suffixes]
 
             return prefix_pre_stmts + suffix_pre_stmts, irt.FunCall(
