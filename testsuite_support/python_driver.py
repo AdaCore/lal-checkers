@@ -88,6 +88,47 @@ class PythonDriver(TestDriver):
         super(PythonDriver, self).tear_up()
         fileutils.sync_tree(self.test_env['test_dir'], self.test_working_dir())
 
+        # See if we expect a failure for this testcase
+        try:
+            comment = self.test_env['expect_failure']
+        except KeyError:
+            self.expect_failure = False
+            self.expect_failure_comment = None
+        else:
+            self.expect_failure = True
+            if not (comment is None or isinstance(comment, basestring)):
+                self.result.set_status(
+                    'PROBLEM',
+                    'Invalid "expect_failure" entry: expected a string but got'
+                    ' {}'.format(repr(comment))
+                )
+                return
+            # Because of wrapping in the YAML file, we can get multi-line
+            # strings, which is not valid for comments.
+            self.expect_failure_comment = comment.replace('\n', ' ').strip()
+
+    def set_result_status(self, failed, message=''):
+        """
+        Shortcut to call `self.result.set_status`, taking the expected failure
+        message into account (if provided).
+
+        :param bool failed: Whether the testcase should be considered as
+            failed.
+        :param None|str message: Message for the status, if any.
+        """
+        if failed:
+            if self.expect_failure:
+                status = 'XFAIL'
+                message = '{} ({})'.format(message,
+                                           self.expect_failure_comment)
+            else:
+                status = 'FAILED'
+        else:
+            status = 'UOK' if self.expect_failure else 'PASSED'
+            message = self.expect_failure_comment
+
+        self.result.set_status(status, message)
+
     def run(self):
         # Run the Python script and redirect its output to `self.out_file`.
         argv = [self.python_interpreter] + self.python_interpreter_args
@@ -103,13 +144,20 @@ class PythonDriver(TestDriver):
                 ' '.join(argv), p.status
             )
             self.result.actual_output += p.out
-            self.result.set_status('FAILED', 'error status code')
+            self.set_result_status(True, 'error status code')
 
     def analyze(self):
         diff = fileutils.diff(self.test_working_dir(self.expected_file),
                               self.test_working_dir(self.out_file))
+
+        # Determine the status of this test, ignoring expected failure (for
+        # now).
         if diff:
             self.result.actual_output += diff
-            self.result.set_status('FAILED', 'diff in output')
+            failed = True
+            message = 'diff in output'
         else:
-            self.result.set_status('PASSED')
+            failed = False
+            message = ''
+
+        self.set_result_status(failed, message)
