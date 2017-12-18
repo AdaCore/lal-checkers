@@ -58,6 +58,17 @@ class Mode(object):
             return Mode.Out
 
 
+class _ValueHolder(object):
+    """
+    Holds a value.
+    """
+    def __init__(self, init=None):
+        """
+        :param T init: The value to initialize the held value with.
+        """
+        self.value = init
+
+
 def _record_fields(record_def):
     """
     Returns an iterable of the fields of the given record, where a field is
@@ -118,6 +129,11 @@ def _gen_ir(ctx, subp):
     var_decls = {}
     tmp_vars = KeyCounter()
 
+    # A synthetic variable used to store the result of a function (what is
+    # returned). Use a ValueHolder so it can be rebound by closures (e.g.
+    # transform_spec).
+    result_var = _ValueHolder()
+
     # Pre-transform every label, as a label might not have been seen yet when
     # transforming a goto statement.
     labels = {
@@ -127,6 +143,10 @@ def _gen_ir(ctx, subp):
         )
         for label_decl in subp.findall(lal.LabelDecl)
     }
+
+    # Make a label for the end of the function, so that return statement
+    # can jump to it.
+    func_end_label = irt.LabelStmt("end")
 
     # Store the loops which we are currently in while traversing the syntax
     # tree. The tuple (loop_statement, exit_label) is stored.
@@ -964,7 +984,10 @@ def _gen_ir(ctx, subp):
         :param lal.SubpSpec spec: The subprogram's specification
         :return:
         """
-        params = spec.f_subp_params.f_params
+        if spec.f_subp_params is not None:
+            params = spec.f_subp_params.f_params
+        else:
+            params = []
 
         for param in params:
             mode = Mode.from_lal_mode(param.f_mode)
@@ -975,6 +998,15 @@ def _gen_ir(ctx, subp):
                     orig_node=var_id,
                     mode=mode
                 )
+
+        if spec.f_subp_returns is not None:
+            result_var.value = irt.Identifier(
+                irt.Variable(
+                    fresh_name("result"),
+                    type_hint=spec.f_subp_returns
+                ),
+                type_hint=spec.f_subp_returns
+            )
 
         return []
 
@@ -1247,6 +1279,25 @@ def _gen_ir(ctx, subp):
                     orig_node=stmt
                 )
 
+        elif stmt.is_a(lal.ReturnStmt):
+            stmts = []
+
+            if stmt.f_return_expr is not None:
+                ret_pre_stmts, ret_expr = transform_expr(stmt.f_return_expr)
+                stmts.extend(ret_pre_stmts)
+                stmts.append(irt.AssignStmt(
+                    result_var.value,
+                    ret_expr,
+                    orig_node=stmt
+                ))
+
+            stmts.append(irt.GotoStmt(
+                func_end_label,
+                orig_node=stmt
+            ))
+
+            return stmts
+
         elif stmt.is_a(lal.ExceptionHandler):
             # todo ?
             return []
@@ -1278,8 +1329,10 @@ def _gen_ir(ctx, subp):
     return irt.Program(
         transform_spec(subp.f_subp_spec) +
         transform_decls(subp.f_decls.f_decls) +
-        transform_stmts(subp.f_stmts.f_stmts),
-        orig_node=subp
+        transform_stmts(subp.f_stmts.f_stmts) +
+        [func_end_label],
+        orig_node=subp,
+        result_var=result_var.value
     )
 
 

@@ -19,3 +19,4 @@ Program:
   |:
     assume(!(tmp0#4))
     x#3 = 2
+    end:

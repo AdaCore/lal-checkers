@@ -1,0 +1,4 @@
+Program:
+  result0#1 = 42
+  goto end
+  end:
