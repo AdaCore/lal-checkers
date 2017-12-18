@@ -37,6 +37,27 @@ _attr_to_unop = {
 }
 
 
+class Mode(object):
+    """
+    Represent the mode of an Ada variable.
+    """
+    Local = 0
+    Global = 1
+    Out = 2
+
+    @staticmethod
+    def from_lal_mode(mode):
+        """
+        Returns the equivalent mode.
+        :param lal.Mode mode: The lal mode.
+        :rtype: int
+        """
+        if mode.is_a(lal.ModeIn, lal.ModeDefault):
+            return Mode.Local
+        elif mode.is_a(lal.ModeOut, lal.ModeInOut):
+            return Mode.Out
+
+
 def _record_fields(record_def):
     """
     Returns an iterable of the fields of the given record, where a field is
@@ -160,7 +181,8 @@ def _gen_ir(ctx, subp):
                 fresh_name(name),
                 purpose=purpose.SyntheticVariable(),
                 type_hint=replaced_expr.p_expression_type,
-                orig_node=replaced_expr
+                orig_node=replaced_expr,
+                mode=Mode.Local
             ),
             type_hint=replaced_expr.p_expression_type,
             orig_node=replaced_expr
@@ -850,7 +872,7 @@ def _gen_ir(ctx, subp):
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
             ref = expr.p_referenced_decl
-            if ref.is_a(lal.ObjectDecl):
+            if ref.is_a(lal.ObjectDecl, lal.ParamSpec):
                 return [], irt.Identifier(
                     var_decls[ref, expr.text],
                     type_hint=expr.p_expression_type,
@@ -937,6 +959,25 @@ def _gen_ir(ctx, subp):
 
         unimplemented(expr)
 
+    def transform_spec(spec):
+        """
+        :param lal.SubpSpec spec: The subprogram's specification
+        :return:
+        """
+        params = spec.f_subp_params.f_params
+
+        for param in params:
+            mode = Mode.from_lal_mode(param.f_mode)
+            for var_id in param.f_ids:
+                var_decls[param, var_id.text] = irt.Variable(
+                    var_id.text,
+                    type_hint=param.f_type_expr,
+                    orig_node=var_id,
+                    mode=mode
+                )
+
+        return []
+
     def transform_decl(decl):
         """
         :param lal.BasicDecl decl: The lal decl to transform.
@@ -955,7 +996,8 @@ def _gen_ir(ctx, subp):
                 var_decls[decl, var_id.text] = irt.Variable(
                     var_id.text,
                     type_hint=tdecl,
-                    orig_node=var_id
+                    orig_node=var_id,
+                    mode=Mode.Out
                 )
 
             if decl.f_default_expr is None:
@@ -1234,6 +1276,7 @@ def _gen_ir(ctx, subp):
         return res
 
     return irt.Program(
+        transform_spec(subp.f_subp_spec) +
         transform_decls(subp.f_decls.f_decls) +
         transform_stmts(subp.f_stmts.f_stmts),
         orig_node=subp
