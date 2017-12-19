@@ -1313,6 +1313,9 @@ def _gen_ir(ctx, subp):
 
             return stmts
 
+        elif stmt.is_a(lal.NullStmt):
+            return []
+
         elif stmt.is_a(lal.ExceptionHandler):
             # todo ?
             return []
