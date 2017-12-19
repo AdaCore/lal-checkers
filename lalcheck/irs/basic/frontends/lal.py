@@ -1468,6 +1468,11 @@ class ConvertUniversalTypes(IRImplicitVisitor):
                     for arg in funcall.args
                 ]
 
+        funcall.args = [
+            self.try_convert_expr(arg, arg.data.type_hint)
+            for arg in funcall.args
+        ]
+
         super(ConvertUniversalTypes, self).visit_funcall(funcall)
 
 
