@@ -93,7 +93,7 @@ class PythonDriver(TestDriver):
             comment = self.test_env['expect_failure']
         except KeyError:
             self.expect_failure = False
-            self.expect_failure_comment = None
+            self.expect_failure_comment = ''
         else:
             self.expect_failure = True
             if not (comment is None or isinstance(comment, basestring)):
