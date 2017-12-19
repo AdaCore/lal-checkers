@@ -288,7 +288,7 @@ def _gen_ir(ctx, subp):
             if isinstance(value, int):
                 return irt.Lit(
                     value,
-                    type_hint=ctx.evaluator.int
+                    type_hint=ctx.evaluator.universal_int
                 )
             raise NotImplementedError("Cannot transform literal")
 
@@ -853,7 +853,8 @@ def _gen_ir(ctx, subp):
             #      when CST1 => E1,
             #      when CST2 | CST3 => E2,
             #      when RANGE => E3,
-            #      when others => E4;
+            #      when SUBTYPE => E4,
+            #      when others => E5;
             #
             #
             # Basic IR:
@@ -868,9 +869,13 @@ def _gen_ir(ctx, subp):
             #   assume(x >= GetFirst(Range) && x <= GetLast(Range))
             #   tmp = E3
             # |:
-            #   assume(!(x == CST1 || (x == CST2 || x == CST3) ||
-            #          x >= GetFirst(Range) && x <= GetLast(Range)))
+            #   assume(x >= GetFirst(Subtype) && x <= GetLast(Subtype))
             #   tmp = E4
+            # |:
+            #   assume(!(x == CST1 || (x == CST2 || x == CST3) ||
+            #          x >= GetFirst(Range) && x <= GetLast(Range) ||
+            #          x >= GetFirst(Subtype) && x <= GetLast(Subtype)))
+            #   tmp = E5
             #  y := tmp
             #
             # Note: In Ada, case expressions must be complete and *disjoint*.
@@ -909,6 +914,10 @@ def _gen_ir(ctx, subp):
             elif ref.is_a(lal.TypeDecl):
                 if ref.f_type_def.is_a(lal.SignedIntTypeDef):
                     return transform_expr(ref.f_type_def.f_range.f_range)
+            elif ref.is_a(lal.SubtypeDecl):
+                constr = ref.f_subtype.f_constraint
+                if constr.is_a(lal.RangeConstraint):
+                    return transform_expr(constr.f_range.f_range)
 
         elif expr.is_a(lal.DottedName):
             # Field access is transformed as such:
@@ -1019,7 +1028,7 @@ def _gen_ir(ctx, subp):
 
         :rtype: list[irt.Stmt]
         """
-        if decl.is_a(lal.TypeDecl, lal.NumberDecl):
+        if decl.is_a(lal.TypeDecl, lal.SubtypeDecl, lal.NumberDecl):
             return []
         elif decl.is_a(lal.ObjectDecl):
             tdecl = decl.f_type_expr.p_designated_type_decl
@@ -1133,8 +1142,10 @@ def _gen_ir(ctx, subp):
             #     S2;
             #   when RANGE =>
             #     S3;
-            #   when others =>
+            #   when SUBTYPE =>
             #     S4;
+            #   when others =>
+            #     S5;
             # end case;
             #
             #
@@ -1150,9 +1161,13 @@ def _gen_ir(ctx, subp):
             #   assume(x >= GetFirst(Range) && x <= GetLast(Range))
             #   S3
             # |:
-            #   assume(!(x == CST1 || (x == CST2 || x == CST3) ||
-            #          x >= GetFirst(Range) && x <= GetLast(Range)))
+            #   assume(x >= GetFirst(Subtype) && x <= GetLast(Subtype))
             #   S4
+            # |:
+            #   assume(!(x == CST1 || (x == CST2 || x == CST3) ||
+            #          x >= GetFirst(Range) && x <= GetLast(Range) ||
+            #          x >= GetFirst(Subtype) && x <= GetLast(Subtype)))
+            #   S5
             #
             # Note: In Ada, case statements must be complete and *disjoint*.
             # This allows us to transform the case in a split of N branches
