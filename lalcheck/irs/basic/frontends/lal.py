@@ -1093,6 +1093,11 @@ def _gen_ir(ctx, subp):
                 )
             ]
 
+        elif stmt.is_a(lal.DeclBlock):
+            decls = transform_decls(stmt.f_decls.f_decls)
+            stmts = transform_stmts(stmt.f_stmts.f_stmts)
+            return decls + stmts
+
         elif stmt.is_a(lal.IfStmt):
             # If statements are transformed as such:
             #
