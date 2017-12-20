@@ -81,11 +81,13 @@ def updated(domain):
                 )
             )
 
-            return not_relevant + [
+            updated_relevant = [
                 (split, elem[1])
                 for elem in relevant
                 for split in index_dom.split(elem[0], indices)
             ] + [(indices, val)]
+
+            return domain.optimized(not_relevant + updated_relevant)
         else:
             return domain.join(
                 array,

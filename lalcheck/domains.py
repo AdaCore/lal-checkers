@@ -138,6 +138,14 @@ class AbstractDomain(object):
         """
         raise NotImplementedError
 
+    def touches(self, a, b):
+        """
+        Returns True if the two abstract elements touch each other, that is,
+        their join describes the same set of concrete values as the union of
+        sets of concrete values represented by the two given elements.
+        """
+        return self.size(self.join(a, b)) == self.size(a) + self.size(b)
+
     def lowest_among(self, xs):
         """
         Returns the lowest element among the given elements, that is, the
@@ -304,6 +312,10 @@ class Intervals(AbstractDomain):
         else:
             return [(elem[0], separator[0] - 1)]
 
+    def touches(self, a, b):
+        return (a == self.bottom or b == self.bottom or
+                a[1] == b[0] or a[0] == b[1])
+
     def generator(self):
         dom_from, dom_to = self.top[0], self.top[1]
         for x_f in range(dom_from, dom_to + 1):
@@ -414,6 +426,16 @@ class Product(AbstractDomain):
             return self_splits + rest_splits
 
         return inner(elem, 0)
+
+    def touches(self, a, b):
+        return any(
+            self.domains[i].touches(a[i], b[i]) and all(
+                self.domains[j].eq(a[j], b[j])
+                for j in range(len(self.domains))
+                if i != j
+            )
+            for i in range(len(self.domains))
+        )
 
     def generator(self):
         return itertools.product(*(
@@ -706,6 +728,9 @@ class FiniteSubsetLattice(AbstractDomain):
     def split(self, elem, separator):
         return [elem - separator]
 
+    def touches(self, a, b):
+        return True
+
     def generator(self):
         return powerset(self.top)
 
@@ -730,6 +755,19 @@ class SparseArray(AbstractDomain):
 
     def size(self, x):
         return sum(self.prod_dom.size(e) for e in x)
+
+    def optimized(self, array):
+        for i, x in enumerate(array):
+            for j in range(i + 1, len(array)):
+                y = array[j]
+                if self.prod_dom.touches(x, y):
+                    return self.optimized(
+                        array[:i] + array[i + 1:j] + array[j + 1:] + [
+                            self.prod_dom.join(x, y)
+                        ]
+                    )
+
+        return array
 
     def _join_elem(self, x, elem):
         # Filter out elements that would be absorbed anyway.
@@ -765,7 +803,7 @@ class SparseArray(AbstractDomain):
         return res
 
     def join(self, a, b):
-        return reduce(self._join_elem, b, a)
+        return self.optimized(reduce(self._join_elem, b, a))
 
     def meet(self, a, b):
         res = []
