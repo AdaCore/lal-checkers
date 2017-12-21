@@ -5,7 +5,8 @@
       "trace": [
         "assign0", 
         "assign1", 
-        "assume0", 
+        "assign2",
+        "assume0",
         "assume1",
         "assume2",
         "read0",
@@ -21,6 +22,7 @@
       "precise": false,
       "trace": [
         "assign0",
+        "assign1",
         "assume1",
         "assume2",
         "read0",

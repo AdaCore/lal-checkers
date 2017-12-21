@@ -1,0 +1,98 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "x": "(frozenset(['False', 'True']), (-2147483648, 2147483647), frozenset(['False', 'True']))"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "start0"
+        ],
+        "values": {
+          "x": "(frozenset(['False']), (-2147483648, 2147483647), frozenset(['True']))"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "x": "(frozenset(['False']), (-2147483648, 2147483647), frozenset(['False']))"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "x": "(frozenset(['False', 'True']), (-2147483648, 2147483647), frozenset(['False', 'True']))"
+        }
+      }
+    ]
+  },
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "x": "(frozenset(['False', 'True']), (-2147483648, 2147483647), frozenset(['False', 'True']))"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "start0"
+        ],
+        "values": {
+          "x": "(frozenset(['False']), (-2147483648, 2147483647), frozenset(['True']))"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "x": "(frozenset(['False']), (-2147483648, 2147483647), frozenset(['False']))"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "x": "(frozenset(['False', 'True']), (-2147483648, 2147483647), frozenset(['False', 'True']))"
+        }
+      }
+    ]
+  }
+}

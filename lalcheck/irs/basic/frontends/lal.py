@@ -69,16 +69,46 @@ class _ValueHolder(object):
         self.value = init
 
 
-def _record_fields(record_def):
+def _closest(node, *tpe):
+    """
+    Returns the closest parent of this node which is of the given type.
+    :param lal.AdaNode node: The node from which to start
+    :param type* tpe: The types to look for.
+    :rtype: lal.AnaNode | None
+    """
+
+    if node.is_a(*tpe):
+        return node
+    elif node.parent is not None:
+        return _closest(node.parent, *tpe)
+    else:
+        return None
+
+
+def _record_fields(record_decl):
     """
     Returns an iterable of the fields of the given record, where a field is
-    identified by the pair (its ComponentDecl, its Identifier).
+    identified by the pair (its declaration, its name).
 
-    :param lal.RecordDef record_def: The record whose fields to list.
+    :param lal.TypeDecl record_decl: The record whose fields to list.
     """
+    if record_decl.f_discriminants is not None:
+        for discr in record_decl.f_discriminants.f_discr_specs:
+            for name in discr.f_ids:
+                yield (discr, name.text)
+
+    record_def = record_decl.f_type_def.f_record_def
+
     for component in record_def.f_components.f_components:
         for name in component.f_ids:
             yield (component, name.text)
+
+    variant_part = record_def.f_components.f_variant_part
+    if variant_part is not None:
+        for variant in variant_part.f_variant:
+            for component in variant.f_components.f_components:
+                for name in component.f_ids:
+                    yield (component, name.text)
 
 
 def _compute_field_index(field_id):
@@ -95,10 +125,10 @@ def _compute_field_index(field_id):
         field.
     :rtype: int
     """
-    record_def = field_id.p_referenced_decl.parent.parent.parent
+    record_decl = _closest(field_id.p_referenced_decl, lal.TypeDecl)
     return next(
         i
-        for i, field in enumerate(_record_fields(record_def))
+        for i, field in enumerate(_record_fields(record_decl))
         if field == (field_id.p_referenced_decl, field_id.text)
     )
 
@@ -700,8 +730,8 @@ def _gen_ir(ctx, subp):
         :return: Its IR transformation.
         :rtype: (list[irt.Stmt], irt.Expr)
         """
-        record_def = expr.p_expression_type.f_type_def.f_record_def
-        all_fields = list(_record_fields(record_def))
+        record_decl = expr.p_expression_type
+        all_fields = list(_record_fields(record_decl))
         field_init = [None] * len(all_fields)
         others_expr_idx = None
 
@@ -728,16 +758,33 @@ def _gen_ir(ctx, subp):
             for idx in indexes:
                 field_init[idx] = r_exprs[i]
 
-        for i in range(len(field_init)):
-            if field_init[i] is None:
-                field_init[i] = r_exprs[others_expr_idx]
+        if others_expr_idx is not None:
+            for i in range(len(field_init)):
+                if field_init[i] is None:
+                    field_init[i] = r_exprs[others_expr_idx]
 
-        return sum(r_exprs_pre_stmts, []), irt.FunCall(
-            ops.NEW,
-            field_init,
-            type_hint=expr.p_expression_type,
-            orig_node=expr
-        )
+        def build_record(record_expr, i=0):
+            if i >= len(all_fields):
+                return record_expr
+            elif field_init[i] is None:
+                return build_record(record_expr, i + 1)
+            else:
+                return build_record(
+                    irt.FunCall(
+                        ops.updated(i),
+                        [record_expr, field_init[i]],
+                        type_hint=record_expr.data.type_hint,
+                        orig_node=expr,
+                        purpose=purpose.FieldAssignment(
+                            i, field_init[i].data.type_hint
+                        )
+                    ), i + 1
+                )
+
+        record_var = new_expression_replacing_var("tmp", expr)
+        building_stmt = irt.AssignStmt(record_var, build_record(record_var))
+
+        return sum(r_exprs_pre_stmts, []) + [building_stmt], record_var
 
     def transform_array_aggregate(expr):
         """
@@ -1031,7 +1078,7 @@ def _gen_ir(ctx, subp):
         if decl.is_a(lal.TypeDecl, lal.SubtypeDecl, lal.NumberDecl):
             return []
         elif decl.is_a(lal.ObjectDecl):
-            tdecl = decl.f_type_expr.p_designated_type_decl
+            tdecl = decl.f_type_expr
 
             for var_id in decl.f_ids:
                 var_decls[decl, var_id.text] = irt.Variable(
@@ -1649,10 +1696,30 @@ def access_typer(inner_typer):
     return accessed_type >> inner_typer >> to_pointer
 
 
-def record_typer(elem_typer):
+def record_component_typer(inner_typer):
     """
-    :param types.Typer[lal.AdaNode] elem_typer: A typer for elements of
-        products.
+    :param types.Typer[lal.AdaNode] inner_typer: A typer for the types of the
+        components.
+
+    :return: A typer for record components.
+
+    :rtype: types.Typer[lal.ComponentDecl | lal.DiscriminantSpec]
+    """
+    @Transformer.as_transformer
+    def get_component_type(component):
+        if component.is_a(lal.ComponentDecl):
+            return component.f_component_def.f_type_expr
+        elif component.is_a(lal.DiscriminantSpec):
+            component.f_type_expr.f_name.p_resolve_names
+            return component.f_type_expr
+
+    return get_component_type >> inner_typer
+
+
+def record_typer(comp_typer):
+    """
+    :param types.Typer[lal.ComponentDecl | lal.DiscriminantSpec] comp_typer:
+        A typer for components of products.
 
     :return: A typer for record types.
 
@@ -1667,16 +1734,12 @@ def record_typer(elem_typer):
         """
         if hint.is_a(lal.TypeDecl):
             if hint.f_type_def.is_a(lal.RecordTypeDef):
-                r_def = hint.f_type_def.f_record_def
-                return [
-                    decl.f_component_def.f_type_expr
-                    for decl, _ in _record_fields(r_def)
-                ]
+                return [decl for decl, _ in _record_fields(hint)]
 
     to_product = Transformer.as_transformer(types.Product)
 
     # Get the elements -> type them all -> generate the product type.
-    return get_elements >> elem_typer.lifted() >> to_product
+    return get_elements >> comp_typer.lifted() >> to_product
 
 
 def name_typer(inner_typer):
@@ -1868,7 +1931,7 @@ class ExtractionContext(object):
                     int_range_typer |
                     enum_typer |
                     access_typer(typer) |
-                    record_typer(typer) |
+                    record_typer(record_component_typer(typer)) |
                     name_typer(typer) |
                     anonymous_typer(typer) |
                     array_typer(typer, typer))

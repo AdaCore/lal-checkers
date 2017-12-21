@@ -294,7 +294,6 @@ def default_product_interpreter(elem_interpreter):
         """
         elem_doms = [interp.domain for interp in elem_interpretations]
         prod_dom = domains.Product(*elem_doms)
-        constructor_dom = tuple(elem_doms) + (prod_dom,)
         bool_dom = boolean_ops.Boolean
         bin_rel_dom = (prod_dom, prod_dom, bool_dom)
 
@@ -324,7 +323,6 @@ def default_product_interpreter(elem_interpreter):
         )
 
         defs = {
-            (ops.NEW, constructor_dom): product_ops.construct(prod_dom),
             (ops.EQ, bin_rel_dom): product_ops.eq(elem_eq_defs),
             (ops.NEQ, bin_rel_dom): product_ops.neq(elem_eq_defs)
         }
@@ -341,7 +339,6 @@ def default_product_interpreter(elem_interpreter):
         })
 
         inv_defs = {
-            (ops.NEW, constructor_dom): product_ops.inv_construct(prod_dom),
             (ops.EQ, bin_rel_dom): product_ops.inv_eq(
                 prod_dom, elem_inv_eq_defs, elem_eq_defs
             ),
