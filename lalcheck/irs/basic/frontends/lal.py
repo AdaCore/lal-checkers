@@ -58,6 +58,40 @@ class Mode(object):
             return Mode.Out
 
 
+class _RecordField(object):
+    """
+    Data structure that holds information about the field of a record.
+    """
+    def __init__(self, decl, name, index, conditions=[]):
+        """
+        :param lal.ComponentDecl | lal.DiscriminantSpec decl: The node where
+            the field is declared.
+
+        :param lal.Identifier name: The identifier of the field.
+
+        :param int index: The index of the field inside the record.
+
+        :param list[(lal.Identifier, lal.AlternativesList)] conditions:
+            The conditions that must hold in order for this field to exist,
+            where a condition is a tuple with (the selector discriminant,
+            the value(s) that it must have for the condition to hold).
+        """
+        self.decl = decl
+        self.name = name
+        self.index = index
+        self.conds = conditions
+
+    def is_referred_by(self, name):
+        """
+        Returns True if the given identifier refers to this record field.
+
+        :param lal.Identifier name: The identifier to test.
+        :rtype: bool
+        """
+        return (name.p_referenced_decl == self.decl and
+                name.text == self.name.text)
+
+
 class _ValueHolder(object):
     """
     Holds a value.
@@ -85,33 +119,71 @@ def _closest(node, *tpe):
         return None
 
 
+@memoize
 def _record_fields(record_decl):
     """
     Returns an iterable of the fields of the given record, where a field is
     identified by the pair (its declaration, its name).
 
     :param lal.TypeDecl record_decl: The record whose fields to list.
+    :rtype: list[_RecordField]
     """
+    res = []
+    i = _ValueHolder(0)
+
+    def add_component_fields(component_list, conds=[]):
+        """
+        :param lal.ComponentList component_list:
+        :param list[(lal.Identifier, lal.AlternativesList)] conds:
+        :return:
+        """
+        for component in component_list.f_components:
+            if not component.is_a(lal.NullComponentDecl):
+                for name in component.f_ids:
+                    res.append(_RecordField(component, name, i.value, conds))
+                    i.value += 1
+
+        variant_part = component_list.f_variant_part
+        if variant_part is not None:
+            for variant in variant_part.f_variant:
+                add_component_fields(variant.f_components, conds + [(
+                    variant_part.f_discr_name,
+                    variant.f_choice_list
+                )])
+
     if record_decl.f_discriminants is not None:
         for discr in record_decl.f_discriminants.f_discr_specs:
             for name in discr.f_ids:
-                yield (discr, name.text)
+                res.append(_RecordField(discr, name, i.value))
+                i.value += 1
 
     record_def = record_decl.f_type_def.f_record_def
 
-    for component in record_def.f_components.f_components:
-        for name in component.f_ids:
-            yield (component, name.text)
-
-    variant_part = record_def.f_components.f_variant_part
-    if variant_part is not None:
-        for variant in variant_part.f_variant:
-            for component in variant.f_components.f_components:
-                for name in component.f_ids:
-                    yield (component, name.text)
+    add_component_fields(record_def.f_components)
+    return res
 
 
-def _compute_field_index(field_id):
+def _find_cousin_conditions(record_fields, cond_prefix):
+    """
+    Returns the set of conditions that come after the given prefix list of
+    conditions.
+
+    :param list[_RecordField] record_fields: The fields of the record.
+
+    :param list[(lal.Identifier, lal.AlternativesList)] cond_prefix:
+        The prefix list of conditions.
+
+    :rtype: set[(lal.Identifier, lal.AlternativesList)]
+    """
+    return set(
+        field.conds[len(cond_prefix)]
+        for field in record_fields
+        if len(field.conds) == len(cond_prefix) + 1
+        if field.conds[:len(cond_prefix)] == cond_prefix
+    )
+
+
+def _field_info(field_id):
     """
     Computes the index of the given record's field. Example:
     type Foo is record
@@ -123,13 +195,14 @@ def _compute_field_index(field_id):
 
     :param lal.Identifier field_id: An identifier referring to a record's
         field.
-    :rtype: int
+    :rtype: _RecordField
     """
     record_decl = _closest(field_id.p_referenced_decl, lal.TypeDecl)
+
     return next(
-        i
-        for i, field in enumerate(_record_fields(record_decl))
-        if field == (field_id.p_referenced_decl, field_id.text)
+        field
+        for field in _record_fields(record_decl)
+        if field.is_referred_by(field_id)
     )
 
 
@@ -638,8 +711,13 @@ def _gen_ir(ctx, subp):
             ), expr)
 
         elif dest.is_a(lal.DottedName):
-            updated_index = _compute_field_index(dest.f_suffix)
+            updated_index = _field_info(dest.f_suffix).index
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
+
+            exist_stmts = gen_field_existence_condition(
+                prefix_expr,
+                dest.f_suffix
+            )
 
             pre_stmts, ret = gen_actual_dest(dest.f_prefix, irt.FunCall(
                 ops.updated(updated_index),
@@ -651,7 +729,7 @@ def _gen_ir(ctx, subp):
                     dest.f_suffix.p_expression_type
                 )
             ))
-            return prefix_pre_stmts + pre_stmts, ret
+            return prefix_pre_stmts + exist_stmts + pre_stmts, ret
 
         elif dest.is_a(lal.CallExpr):
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_name)
@@ -678,6 +756,71 @@ def _gen_ir(ctx, subp):
             )
 
         unimplemented(dest)
+
+    def gen_field_existence_condition(prefix, field):
+        """
+        Returns a list of assume statements describing the conditions that
+        must hold for the given field to exist for the given object.
+
+        :param irt.Expr prefix: The object whose field is being accessed.
+        :param lal.Identifier field: The field being accessed
+        :rtype: list[irt.AssumeStmt]
+        """
+        info = _field_info(field)
+        all_fields = _record_fields(
+            _closest(field.p_referenced_decl, lal.TypeDecl)
+        )
+
+        res = []
+        for i, (discr, alternatives) in enumerate(info.conds):
+            discr_getter = irt.FunCall(
+                ops.get(_field_info(discr).index), [prefix],
+                type_hint=discr.p_expression_type
+            )
+
+            if not any(x.is_a(lal.OthersDesignator) for x in alternatives):
+                choices = [
+                    ctx.evaluator.eval(transform_expr(choice)[1])
+                    for choice in alternatives
+                ]
+
+                condition = gen_case_condition(discr_getter, choices)
+            else:
+                # Find all the other conditions
+                cousin_conditions = _find_cousin_conditions(
+                    all_fields, info.conds[:i]
+                )
+
+                other_alts = [
+                    alts
+                    for _, alts in cousin_conditions
+                    if not any(
+                        x.is_a(lal.OthersDesignator) for x in alts
+                    )
+                ]
+
+                alts_conditions = [
+                    gen_case_condition(discr_getter, [
+                        ctx.evaluator.eval(transform_expr(choice)[1])
+                        for choice in alt
+                    ])
+                    for alt in other_alts
+                ]
+
+                condition = irt.FunCall(
+                    ops.NOT,
+                    [
+                        reduce(
+                            binexpr_builder(ops.OR, ctx.evaluator.bool),
+                            alts_conditions
+                        )
+                    ],
+                    type_hint=ctx.evaluator.bool
+                )
+
+            res.append(irt.AssumeStmt(condition))
+
+        return res
 
     def transform_dereference(derefed_expr, deref_type, deref_orig):
         """
@@ -751,7 +894,7 @@ def _gen_ir(ctx, subp):
                 continue
             else:
                 indexes = [
-                    _compute_field_index(designator)
+                    _field_info(designator).index
                     for designator in assoc.f_designators
                 ]
 
@@ -974,10 +1117,16 @@ def _gen_ir(ctx, subp):
             #
             # Basic IR:
             # ---------------
+            # assume([f exists])
             # r = Get_N(x)
             #
-            # Where N is the index of the field "f" in the record x
-            # (see _compute_field_index).
+            # Where N is the index of the field "f" in the record x (see
+            # _compute_field_index), and the condition [f exists] is an
+            # expression that must be true for x to have the field f (only
+            # relevant for variant records).
+            # Additionally, if an implicit dereference takes place, the
+            # relevant assume statements are also inserted.
+
             if expr.f_prefix.p_expression_type.p_is_access_type:
                 access_type_def = expr.f_prefix.p_expression_type.f_type_def
                 accessed_type = access_type_def.f_subtype_indication
@@ -987,8 +1136,13 @@ def _gen_ir(ctx, subp):
             else:
                 prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
 
-            return prefix_pre_stmts, irt.FunCall(
-                ops.get(_compute_field_index(expr.f_suffix)),
+            exists_stmts = gen_field_existence_condition(
+                prefix,
+                expr.f_suffix
+            )
+
+            return prefix_pre_stmts + exists_stmts, irt.FunCall(
+                ops.get(_field_info(expr.f_suffix).index),
                 [prefix],
                 type_hint=expr.p_expression_type,
                 orig_node=expr
@@ -1734,7 +1888,7 @@ def record_typer(comp_typer):
         """
         if hint.is_a(lal.TypeDecl):
             if hint.f_type_def.is_a(lal.RecordTypeDef):
-                return [decl for decl, _ in _record_fields(hint)]
+                return [field.decl for field in _record_fields(hint)]
 
     to_product = Transformer.as_transformer(types.Product)
 
