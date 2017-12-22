@@ -818,7 +818,14 @@ def _gen_ir(ctx, subp):
                     type_hint=ctx.evaluator.bool
                 )
 
-            res.append(irt.AssumeStmt(condition))
+            res.append(irt.AssumeStmt(
+                condition,
+                purpose=purpose.ExistCheck(
+                    prefix,
+                    field.text,
+                    discr.text
+                )
+            ))
 
         return res
 

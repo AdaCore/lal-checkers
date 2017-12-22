@@ -34,6 +34,23 @@ class DerefCheck(Purpose):
         self.expr = derefed_expr
 
 
+class ExistCheck(Purpose):
+    """
+    Attached to a node that was created for the purpose of checking that
+    a field exists in a given record instance.
+    """
+    def __init__(self, accessed_expr, field_name, discr_name):
+        """
+        :param tree.Expr accessed_expr: The expression being accessed.
+        :param str field_name: The name of the accessed field.
+        :param str discr_name: The name of the discriminant which is tested
+            in this check.
+        """
+        self.accessed_expr = accessed_expr
+        self.field_name = field_name
+        self.discr_name = discr_name
+
+
 class SyntheticVariable(Purpose):
     """
     Attached to an identifier that was created synthetically. (For example,
