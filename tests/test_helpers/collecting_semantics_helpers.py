@@ -30,7 +30,10 @@ def do_analysis(checker, merge_predicates):
 
     model = model_builder.of(*progs)
 
-    return {
-        pred_name: checker(progs[0], model, pred)
-        for pred_name, pred in merge_predicates.iteritems()
-    }
+    return (
+        {
+            pred_name: checker(progs[0], model, pred)
+            for pred_name, pred in merge_predicates.iteritems()
+        },
+        model
+    )

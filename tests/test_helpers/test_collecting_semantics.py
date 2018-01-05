@@ -11,14 +11,14 @@ import json
 import os
 
 
-def format_analysis_results(results):
+def format_analysis_results(results, model):
     return json.dumps({
         pred_name: {
             node.name: [
                 {
                     'trace:': sorted([n.name for n in trace]),
                     'values': {
-                        var.name: repr(value)
+                        var.name: model[var].domain.str(value)
                         for var, value in values.iteritems()
                         if not SyntheticVariable.is_purpose_of(var)
                     }
@@ -37,7 +37,7 @@ def format_analysis_results(results):
 
 @test_helper.run
 def run(args):
-    results = collecting_semantics_helpers.do_analysis(
+    results, model = collecting_semantics_helpers.do_analysis(
         collect_semantics,
         collecting_semantics_helpers.default_merge_predicates
     )
@@ -53,4 +53,4 @@ def run(args):
             analysis.save_cfg_to_file(cfg_file)
             analysis.save_results_to_file(sem_pattern.format(pred_name))
 
-    print(str(format_analysis_results(results)))
+    print(str(format_analysis_results(results, model)))

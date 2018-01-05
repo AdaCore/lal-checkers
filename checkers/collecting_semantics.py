@@ -135,7 +135,7 @@ def repr_trace(trace):
     return tuple(p.name for p in trace)
 
 
-def build_resulting_graph(file_name, cfg, results, trace_domain):
+def build_resulting_graph(file_name, cfg, results, trace_domain, model):
     paths = defaultdict(list)
 
     var_set = {
@@ -185,16 +185,17 @@ def build_resulting_graph(file_name, cfg, results, trace_domain):
             )
         return ()
 
-    def print_result_builder(name):
-        return lambda value: (name, str(value))
+    def print_result_builder(v):
+        return lambda value: (
+            "{} &isin;".format(v.name),
+            model[v].domain.str(value)
+        )
 
     with open(file_name, 'w') as f:
         f.write(dot_printer.gen_dot(res_graph, [
             dot_printer.DataPrinter('___orig', print_orig)
         ] + [
-            dot_printer.DataPrinter(v.name, print_result_builder(
-                "{} &isin;".format(v.name)
-            ))
+            dot_printer.DataPrinter(v.name, print_result_builder(v))
             for v in var_set
         ]))
 
@@ -226,7 +227,8 @@ class AnalysisResults(object):
             file_name,
             self.cfg,
             self.semantics,
-            self.trace_domain
+            self.trace_domain,
+            self.evaluator.model
         )
 
     def eval_at(self, node, expr):

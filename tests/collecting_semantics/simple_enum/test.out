@@ -7,8 +7,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Init'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Init}"
         }
       }
     ],
@@ -31,8 +31,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_1'])",
-          "state": "frozenset([u'Init'])"
+          "new_state": "{Do_Stuff_1}",
+          "state": "{Init}"
         }
       }
     ],
@@ -55,8 +55,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_1'])"
+          "new_state": "{Finalize}",
+          "state": "{Do_Stuff_1}"
         }
       }
     ],
@@ -79,8 +79,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ],
@@ -103,8 +103,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
     ],
@@ -127,8 +127,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Init'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Init}"
         }
       }
     ],
@@ -151,8 +151,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2}"
         }
       }
     ],
@@ -175,8 +175,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1}"
         }
       }
     ],
@@ -199,8 +199,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_2, Init}"
         }
       }
     ],
@@ -225,8 +225,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Finalize}"
         }
       }
     ],
@@ -250,8 +250,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ],
@@ -274,8 +274,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ],
@@ -287,8 +287,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Init'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Init}"
         }
       }
     ],
@@ -311,8 +311,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
     ],
@@ -335,8 +335,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
     ],
@@ -346,8 +346,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ]
@@ -360,8 +360,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Init'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Init}"
         }
       }
     ],
@@ -384,8 +384,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_1'])",
-          "state": "frozenset([u'Init'])"
+          "new_state": "{Do_Stuff_1}",
+          "state": "{Init}"
         }
       }
     ],
@@ -408,8 +408,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_1'])"
+          "new_state": "{Finalize}",
+          "state": "{Do_Stuff_1}"
         }
       }
     ],
@@ -432,8 +432,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ],
@@ -456,8 +456,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
     ],
@@ -480,8 +480,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Init'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Init}"
         }
       }
     ],
@@ -504,8 +504,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2}"
         }
       }
     ],
@@ -528,8 +528,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1}"
         }
       }
     ],
@@ -552,8 +552,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_2, Init}"
         }
       }
     ],
@@ -578,8 +578,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Finalize}"
         }
       }
     ],
@@ -603,8 +603,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ],
@@ -627,8 +627,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ],
@@ -640,8 +640,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Init'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Init}"
         }
       }
     ],
@@ -664,8 +664,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
     ],
@@ -688,8 +688,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
     ],
@@ -699,8 +699,8 @@
           "start0"
         ],
         "values": {
-          "new_state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])",
-          "state": "frozenset([u'Do_Stuff_2', u'Init', u'Do_Stuff_1', u'Finalize'])"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ]

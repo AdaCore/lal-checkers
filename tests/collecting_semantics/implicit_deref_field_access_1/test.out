@@ -8,10 +8,10 @@
           "start0"
         ], 
         "values": {
-          "b": "frozenset(['False', 'True'])", 
-          "p": "((-2147483648, 2147483647), (-2147483648, 2147483647))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([-2147483648, 2147483647], [-2147483648, 2147483647])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -24,10 +24,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -44,10 +44,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -68,10 +68,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -87,10 +87,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -106,10 +106,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -129,10 +129,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -143,10 +143,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((-2147483648, 2147483647), (-2147483648, 2147483647))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([-2147483648, 2147483647], [-2147483648, 2147483647])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -160,10 +160,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -178,10 +178,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -200,10 +200,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -213,10 +213,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((-2147483648, 2147483647), (-2147483648, 2147483647))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([-2147483648, 2147483647], [-2147483648, 2147483647])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ]
@@ -230,10 +230,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((-2147483648, 2147483647), (-2147483648, 2147483647))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([-2147483648, 2147483647], [-2147483648, 2147483647])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -246,10 +246,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -266,10 +266,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -288,10 +288,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       },
       {
@@ -309,10 +309,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -328,10 +328,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -347,10 +347,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -368,10 +368,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       },
       {
@@ -388,10 +388,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -402,10 +402,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((-2147483648, 2147483647), (-2147483648, 2147483647))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([-2147483648, 2147483647], [-2147483648, 2147483647])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -419,10 +419,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -437,10 +437,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False', 'True'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ],
@@ -457,10 +457,10 @@
           "start0"
         ],
         "values": {
-          "b": "frozenset(['False'])",
-          "p": "((1, 1), (2, 2))",
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))",
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       },
       {
@@ -468,31 +468,31 @@
           "assign0",
           "assign1",
           "assign2",
-          "assume0", 
-          "read0", 
-          "read1", 
-          "read2", 
-          "split_join0", 
+          "assume0",
+          "read0",
+          "read1",
+          "read2",
+          "split_join0",
           "start0"
-        ], 
+        ],
         "values": {
-          "b": "frozenset(['True'])", 
-          "p": "((1, 1), (2, 2))", 
-          "r": "(frozenset(['notnull']), frozenset(['null', 'notnull']))", 
-          "x": "(-2147483648, 2147483647)"
+          "b": "{True}",
+          "p": "([1, 1], [2, 2])",
+          "r": "({notnull}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
-    ], 
+    ],
     "start0": [
       {
         "trace:": [
           "start0"
-        ], 
+        ],
         "values": {
-          "b": "frozenset(['False', 'True'])", 
-          "p": "((-2147483648, 2147483647), (-2147483648, 2147483647))", 
-          "r": "(frozenset(['null', 'notnull']), frozenset(['null', 'notnull']))", 
-          "x": "(-2147483648, 2147483647)"
+          "b": "{False, True}",
+          "p": "([-2147483648, 2147483647], [-2147483648, 2147483647])",
+          "r": "({notnull, null}, {notnull, null})",
+          "x": "[-2147483648, 2147483647]"
         }
       }
     ]

@@ -25,7 +25,7 @@ def format_analysis_results(results):
 
 @test_helper.run
 def run(args):
-    results = collecting_semantics_helpers.do_analysis(
+    results, _ = collecting_semantics_helpers.do_analysis(
         check_derefs,
         collecting_semantics_helpers.default_merge_predicates
     )

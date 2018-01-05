@@ -194,6 +194,13 @@ class AbstractDomain(object):
         """
         raise NotImplementedError
 
+    def str(self, x):
+        """
+        Returns a human-readable string representation of the given abstract
+        element.
+        """
+        raise NotImplementedError
+
 
 class Intervals(AbstractDomain):
     """
@@ -331,6 +338,9 @@ class Intervals(AbstractDomain):
     def abstract(self, concrete):
         return self.build(min(concrete), max(concrete))
 
+    def str(self, x):
+        return "[{}, {}]".format(*x)
+
 
 class Product(AbstractDomain):
     """
@@ -454,6 +464,11 @@ class Product(AbstractDomain):
             for dom, concretes in zip(self.domains, zip(*concrete))
         )
 
+    def str(self, x):
+        return "({})".format(", ".join(
+            dom.str(e) for dom, e in zip(self.domains, x)
+        ))
+
 
 class Set(AbstractDomain):
     """
@@ -569,6 +584,11 @@ class Set(AbstractDomain):
 
     def abstract(self, concrete):
         raise NotImplementedError
+
+    def str(self, x):
+        return "{{{}}}".format(", ".join(
+            sorted(self.dom.str(e) for e in x)
+        ))
 
 
 class FiniteLattice(AbstractDomain):
@@ -688,6 +708,9 @@ class FiniteLattice(AbstractDomain):
     def abstract(self, concretes):
         return self.build(concretes)
 
+    def str(self, x):
+        return "{{{}}}".format(", ".join(sorted(str(e) for e in x)))
+
 
 class FiniteSubsetLattice(AbstractDomain):
     """
@@ -739,6 +762,9 @@ class FiniteSubsetLattice(AbstractDomain):
 
     def abstract(self, concrete):
         return self.build(concrete)
+
+    def str(self, x):
+        return "{{{}}}".format(", ".join(sorted(str(e) for e in x)))
 
 
 class SparseArray(AbstractDomain):
@@ -914,3 +940,12 @@ class SparseArray(AbstractDomain):
             ]
 
         return reduce(self.join, [abstract_one(x) for x in concrete])
+
+    def str(self, x):
+        return "{{{}}}".format(", ".join(sorted(
+            "{}: {}".format(
+                self.index_dom.str(idx),
+                self.elem_dom.str(elem)
+            )
+            for idx, elem in x)
+        ))
