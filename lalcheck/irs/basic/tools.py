@@ -5,6 +5,7 @@ Provides tools for using the Basic IR.
 from lalcheck.utils import KeyCounter, Bunch
 from lalcheck.digraph import Digraph
 from lalcheck.domain_ops import boolean_ops
+from lalcheck.interpretations import Signature
 from tree import LabelStmt
 import visitors
 
@@ -322,13 +323,18 @@ class Models(visitors.Visitor):
 
     def visit_funcall(self, funcall, node_domains, defs, inv_defs, builders):
         dom = node_domains[funcall]
-        arg_doms = [node_domains[arg] for arg in funcall.args]
-        tpe = tuple(arg_doms + [dom])
+
+        sig = Signature(
+            funcall.fun_id,
+            tuple(node_domains[arg] for arg in funcall.args),
+            dom,
+            ()
+        )
 
         return Bunch(
             domain=dom,
-            definition=defs(funcall.fun_id, tpe),
-            inverse=inv_defs(funcall.fun_id, tpe)
+            definition=defs(sig),
+            inverse=inv_defs(sig)
         )
 
     def visit_ident(self, ident, node_domains, defs, inv_defs, builders):
@@ -357,14 +363,12 @@ class Models(visitors.Visitor):
 
     @staticmethod
     def _aggregate_provider(providers):
-        def f(name, signature):
+        def f(sig):
             for provider in providers:
-                definition = provider(name, signature)
+                definition = provider(sig)
                 if definition:
                     return definition
-            raise LookupError("No provider for '{}' {}".format(
-                name, signature
-            ))
+            raise LookupError("No provider for '{}'".format(sig))
 
         return f
 

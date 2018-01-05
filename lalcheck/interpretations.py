@@ -28,15 +28,13 @@ class TypeInterpretation(object):
         :param domains.AbstractDomain domain: The abstract domain used to
             represent the type.
 
-        :param (str, tuple[domains.AbstractDomain])->function def_provider:
-            A function which can be called with the name and signature
-            (domains of all its operands) of the desired definition to
-            retrieve it.
+        :param Signature->function def_provider:
+            A function which can be called with the signature of the desired
+            definition to retrieve it.
 
-        :param (str, tuple[domains.AbstractDomain])->function inv_def_provider:
-            A function which can be called with the name and signature
-            (domains of all its operands) of the desired definition to
-            retrieve its inverse definition.
+        :param Signature->function inv_def_provider:
+            A function which can be called with the signature of the desired
+            definition to retrieve its inverse.
 
         :param function builder: A function used to build elements of the
             domain from literal values.
@@ -57,41 +55,134 @@ delegating_type_interpreter = Transformer.from_transformer_builder
 memoizing_type_interpreter = Transformer.make_memoizing
 
 
+class Signature(object):
+    """
+    The signature of a definition.
+
+    Examples:
+    - Signature(
+        "+",
+        (Intervals(-10, 10), Intervals(-10, 10)),
+        Intervals(-10, 10),
+        None
+      )
+
+    - Signature(
+        "fopen",
+        (Files,),
+        None,
+        (0,)
+      )
+    """
+
+    def __init__(self, name, input_domains, output_domain, out_param_indices):
+        """
+        :param string name: The name of the function.
+
+        :param tuple[domains.AbstractDomain] input_domains: The abstract
+            domains representing each input.
+
+        :param domains.AbstractDomain | None output_domain: The abstract domain
+            representing the output, if any.
+
+        :param tuple[int] out_param_indices: The tuple indicating which
+            of the parameters are out.
+        """
+        self.name = name
+        self.input_domains = input_domains
+        self.output_domain = output_domain
+        self.out_param_indices = out_param_indices
+
+    def __hash__(self):
+        return hash((
+            self.name,
+            self.input_domains,
+            self.output_domain,
+            self.out_param_indices)
+        )
+
+    def __eq__(self, other):
+        """
+        :param Signature other:
+        :return:
+        """
+        return (self.name == other.name and
+                self.input_domains == other.input_domains and
+                self.output_domain == other.output_domain and
+                self.out_param_indices == other.out_param_indices)
+
+    def __str__(self):
+        return "{}({}){}".format(
+            self.name,
+            ", ".join(
+                "{}{}".format(
+                    "out " if i in self.out_param_indices else "",
+                    str(dom)
+                )
+                for i, dom in enumerate(self.input_domains)
+            ),
+            "->{}".format(self.output_domain) if self.output_domain
+            else ""
+        )
+
+
 def dict_to_provider(def_dict):
     """
     Converts a dictionnary of definitions indexed by their names and domain
     signatures to a provider function.
     """
-    def provider(name, signature):
-        if (name, signature) in def_dict:
-            return def_dict[name, signature]
+    def provider(sig):
+        if sig in def_dict:
+            return def_dict[sig]
 
     return provider
+
+
+def _signer(input_domains, output_domain, out_param_indices=()):
+    """
+    Returns a function which, given a function name, output its complete
+    signature.
+
+    :param tuple[domains.AbstractDomain] input_domains: The abstract
+        domains representing each input.
+
+    :param domains.AbstractDomain | None output_domain: The abstract domain
+        representing the output, if any.
+
+    :param tuple[int] out_param_indices: The tuple indicating which
+        of the parameters are out.
+
+    :rtype: str -> Signature
+    """
+    def f(name):
+        return Signature(name, input_domains, output_domain, out_param_indices)
+    return f
 
 
 @type_interpreter
 def default_boolean_interpreter(tpe):
     if tpe.is_a(types.Boolean):
         bool_dom = boolean_ops.Boolean
-        un_fun_dom = (bool_dom, bool_dom)
-        bin_fun_dom = (bool_dom, bool_dom, bool_dom)
+
+        un_fun_sig = _signer((bool_dom,), bool_dom)
+        bin_fun_sig = _signer((bool_dom, bool_dom), bool_dom)
 
         defs = {
-            (ops.NOT, un_fun_dom): boolean_ops.not_,
-            (ops.AND, bin_fun_dom): boolean_ops.and_,
-            (ops.OR, bin_fun_dom): boolean_ops.or_,
+            un_fun_sig(ops.NOT): boolean_ops.not_,
+            bin_fun_sig(ops.AND): boolean_ops.and_,
+            bin_fun_sig(ops.OR): boolean_ops.or_,
 
-            (ops.EQ, bin_fun_dom): finite_lattice_ops.eq(bool_dom),
-            (ops.NEQ, bin_fun_dom): finite_lattice_ops.neq(bool_dom)
+            bin_fun_sig(ops.EQ): finite_lattice_ops.eq(bool_dom),
+            bin_fun_sig(ops.NEQ): finite_lattice_ops.neq(bool_dom)
         }
 
         inv_defs = {
-            (ops.NOT, un_fun_dom): boolean_ops.inv_not,
-            (ops.AND, bin_fun_dom): boolean_ops.inv_and,
-            (ops.OR, bin_fun_dom): boolean_ops.inv_or,
+            un_fun_sig(ops.NOT): boolean_ops.inv_not,
+            bin_fun_sig(ops.AND): boolean_ops.inv_and,
+            bin_fun_sig(ops.OR): boolean_ops.inv_or,
 
-            (ops.EQ, bin_fun_dom): finite_lattice_ops.inv_eq(bool_dom),
-            (ops.NEQ, bin_fun_dom): finite_lattice_ops.inv_neq(bool_dom)
+            bin_fun_sig(ops.EQ): finite_lattice_ops.inv_eq(bool_dom),
+            bin_fun_sig(ops.NEQ): finite_lattice_ops.inv_neq(bool_dom)
         }
 
         builder = boolean_ops.lit
@@ -109,40 +200,40 @@ def default_int_range_interpreter(tpe):
     if tpe.is_a(types.IntRange):
         int_dom = domains.Intervals(tpe.frm, tpe.to)
         bool_dom = boolean_ops.Boolean
-        unary_fun_dom = (int_dom, int_dom)
-        binary_fun_dom = (int_dom, int_dom, int_dom)
-        binary_rel_dom = (int_dom, int_dom, bool_dom)
+
+        un_fun_sig = _signer((int_dom,), int_dom)
+        bin_fun_sig = _signer((int_dom, int_dom), int_dom)
+        bin_rel_sig = _signer((int_dom, int_dom), bool_dom)
 
         defs = {
-            (ops.PLUS, binary_fun_dom):
-                interval_ops.add_no_wraparound(int_dom),
+            bin_fun_sig(ops.PLUS): interval_ops.add_no_wraparound(int_dom),
+            bin_fun_sig(ops.MINUS): interval_ops.sub_no_wraparound(int_dom),
 
-            (ops.MINUS, binary_fun_dom):
-                interval_ops.sub_no_wraparound(int_dom),
+            un_fun_sig(ops.NEG): interval_ops.negate(int_dom),
 
-            (ops.LT, binary_rel_dom): interval_ops.lt(int_dom),
-            (ops.LE, binary_rel_dom): interval_ops.le(int_dom),
-            (ops.EQ, binary_rel_dom): interval_ops.eq(int_dom),
-            (ops.NEQ, binary_rel_dom): interval_ops.neq(int_dom),
-            (ops.GE, binary_rel_dom): interval_ops.ge(int_dom),
-            (ops.GT, binary_rel_dom): interval_ops.gt(int_dom),
-            (ops.NEG, unary_fun_dom): interval_ops.negate(int_dom),
+            bin_rel_sig(ops.LT): interval_ops.lt(int_dom),
+            bin_rel_sig(ops.LE): interval_ops.le(int_dom),
+            bin_rel_sig(ops.EQ): interval_ops.eq(int_dom),
+            bin_rel_sig(ops.NEQ): interval_ops.neq(int_dom),
+            bin_rel_sig(ops.GE): interval_ops.ge(int_dom),
+            bin_rel_sig(ops.GT): interval_ops.gt(int_dom),
         }
 
         inv_defs = {
-            (ops.PLUS, binary_fun_dom):
+            bin_fun_sig(ops.PLUS):
                 interval_ops.inv_add_no_wraparound(int_dom),
 
-            (ops.MINUS, binary_fun_dom):
+            bin_fun_sig(ops.MINUS):
                 interval_ops.inv_sub_no_wraparound(int_dom),
 
-            (ops.LT, binary_rel_dom): interval_ops.inv_lt(int_dom),
-            (ops.LE, binary_rel_dom): interval_ops.inv_le(int_dom),
-            (ops.EQ, binary_rel_dom): interval_ops.inv_eq(int_dom),
-            (ops.NEQ, binary_rel_dom): interval_ops.inv_neq(int_dom),
-            (ops.GE, binary_rel_dom): interval_ops.inv_ge(int_dom),
-            (ops.GT, binary_rel_dom): interval_ops.inv_gt(int_dom),
-            (ops.NEG, unary_fun_dom): interval_ops.inv_inverse(int_dom)
+            un_fun_sig(ops.NEG): interval_ops.negate(int_dom),
+
+            bin_rel_sig(ops.LT): interval_ops.inv_lt(int_dom),
+            bin_rel_sig(ops.LE): interval_ops.inv_le(int_dom),
+            bin_rel_sig(ops.EQ): interval_ops.inv_eq(int_dom),
+            bin_rel_sig(ops.NEQ): interval_ops.inv_neq(int_dom),
+            bin_rel_sig(ops.GE): interval_ops.inv_ge(int_dom),
+            bin_rel_sig(ops.GT): interval_ops.inv_gt(int_dom),
         }
 
         builder = interval_ops.lit(int_dom)
@@ -160,16 +251,17 @@ def default_enum_interpreter(tpe):
     if tpe.is_a(types.Enum):
         enum_dom = domains.FiniteLattice.of_subsets(set(tpe.lits))
         bool_dom = boolean_ops.Boolean
-        bin_rel_dom = (enum_dom, enum_dom, bool_dom)
+
+        bin_rel_sig = _signer((enum_dom, enum_dom), bool_dom)
 
         defs = {
-            (ops.EQ, bin_rel_dom): finite_lattice_ops.eq(enum_dom),
-            (ops.NEQ, bin_rel_dom): finite_lattice_ops.neq(enum_dom)
+            bin_rel_sig(ops.EQ): finite_lattice_ops.eq(enum_dom),
+            bin_rel_sig(ops.NEQ): finite_lattice_ops.neq(enum_dom)
         }
 
         inv_defs = {
-            (ops.EQ, bin_rel_dom): finite_lattice_ops.inv_eq(enum_dom),
-            (ops.NEQ, bin_rel_dom): finite_lattice_ops.inv_neq(enum_dom)
+            bin_rel_sig(ops.EQ): finite_lattice_ops.inv_eq(enum_dom),
+            bin_rel_sig(ops.NEQ): finite_lattice_ops.inv_neq(enum_dom)
         }
 
         builder = finite_lattice_ops.lit(enum_dom)
@@ -212,9 +304,10 @@ def default_simple_pointer_interpreter(inner_interpreter):
         ptr_dom = domains.FiniteLattice.of_subsets({lits.NULL, lits.NOT_NULL})
         elem_dom = elem_interpretation.domain
         bool_dom = boolean_ops.Boolean
-        bin_rel_dom = (ptr_dom, ptr_dom, bool_dom)
-        deref_dom = (ptr_dom, elem_dom)
-        address_dom = (elem_dom, ptr_dom)
+
+        bin_rel_sig = _signer((ptr_dom, ptr_dom), bool_dom)
+        deref_sig = _signer((ptr_dom,), elem_dom)
+        address_sig = _signer((elem_dom,), ptr_dom)
 
         builder = finite_lattice_ops.lit(ptr_dom)
         null = builder(lits.NULL)
@@ -242,18 +335,18 @@ def default_simple_pointer_interpreter(inner_interpreter):
             return e_constr
 
         defs = {
-            (ops.EQ, bin_rel_dom): finite_lattice_ops.eq(ptr_dom),
-            (ops.NEQ, bin_rel_dom): finite_lattice_ops.neq(ptr_dom),
-            (ops.DEREF, deref_dom): deref,
-            (ops.ADDRESS, address_dom): address
+            bin_rel_sig(ops.EQ): finite_lattice_ops.eq(ptr_dom),
+            bin_rel_sig(ops.NEQ): finite_lattice_ops.neq(ptr_dom),
+            deref_sig(ops.DEREF): deref,
+            address_sig(ops.ADDRESS): address
 
         }
 
         inv_defs = {
-            (ops.EQ, bin_rel_dom): finite_lattice_ops.inv_eq(ptr_dom),
-            (ops.NEQ, bin_rel_dom): finite_lattice_ops.inv_neq(ptr_dom),
-            (ops.DEREF, deref_dom): inv_deref,
-            (ops.ADDRESS, address_dom): inv_address
+            bin_rel_sig(ops.EQ): finite_lattice_ops.inv_eq(ptr_dom),
+            bin_rel_sig(ops.NEQ): finite_lattice_ops.inv_neq(ptr_dom),
+            deref_sig(ops.DEREF): inv_deref,
+            address_sig(ops.ADDRESS): inv_address
         }
 
         return TypeInterpretation(
@@ -295,68 +388,69 @@ def default_product_interpreter(elem_interpreter):
         elem_doms = [interp.domain for interp in elem_interpretations]
         prod_dom = domains.Product(*elem_doms)
         bool_dom = boolean_ops.Boolean
-        bin_rel_dom = (prod_dom, prod_dom, bool_dom)
+
+        bin_rel_sig = _signer((prod_dom, prod_dom), bool_dom)
+
+        elem_bin_rel_sigs = [
+            _signer((interp.domain, interp.domain), bool_dom)
+            for interp in elem_interpretations
+        ]
 
         elem_eq_defs = [
-            interp.def_provider(
-                ops.EQ, (
-                    interp.domain,
-                    interp.domain,
-                    bool_dom
-                )
-            )
-            for interp in elem_interpretations
+            interp.def_provider(sig(ops.EQ))
+            for sig, interp in zip(elem_bin_rel_sigs, elem_interpretations)
+        ]
+
+        getter_sig = [
+            _signer((prod_dom,), e_dom)
+            for e_dom in elem_doms
+        ]
+
+        updated_sig = [
+            _signer((prod_dom, e_dom), prod_dom)
+            for e_dom in elem_doms
         ]
 
         elem_inv_eq_defs, elem_inv_neq_defs = (
             [
-                interp.inv_def_provider(
-                    op, (
-                        interp.domain,
-                        interp.domain,
-                        bool_dom
-                    )
-                )
-                for interp in elem_interpretations
+                interp.inv_def_provider(sig(op))
+                for sig, interp in zip(elem_bin_rel_sigs, elem_interpretations)
             ]
             for op in [ops.EQ, ops.NEQ]
         )
 
         defs = {
-            (ops.EQ, bin_rel_dom): product_ops.eq(elem_eq_defs),
-            (ops.NEQ, bin_rel_dom): product_ops.neq(elem_eq_defs)
+            bin_rel_sig(ops.EQ): product_ops.eq(elem_eq_defs),
+            bin_rel_sig(ops.NEQ): product_ops.neq(elem_eq_defs)
         }
 
         defs.update({
-            (ops.get(i), (prod_dom, e_dom)): product_ops.getter(i)
-            for i, e_dom in enumerate(elem_doms)
+            sig(ops.get(i)): product_ops.getter(i)
+            for i, sig in enumerate(getter_sig)
         })
 
         defs.update({
-            (ops.updated(i), (prod_dom, e_dom, prod_dom)):
-                product_ops.updater(i)
-            for i, e_dom in enumerate(elem_doms)
+            sig(ops.updated(i)): product_ops.updater(i)
+            for i, sig in enumerate(updated_sig)
         })
 
         inv_defs = {
-            (ops.EQ, bin_rel_dom): product_ops.inv_eq(
+            bin_rel_sig(ops.EQ): product_ops.inv_eq(
                 prod_dom, elem_inv_eq_defs, elem_eq_defs
             ),
-            (ops.NEQ, bin_rel_dom): product_ops.inv_neq(
+            bin_rel_sig(ops.NEQ): product_ops.inv_neq(
                 prod_dom, elem_inv_eq_defs, elem_eq_defs
             )
         }
 
         inv_defs.update({
-            (ops.get(i), (prod_dom, e_dom)):
-                product_ops.inv_getter(prod_dom, i)
-            for i, e_dom in enumerate(elem_doms)
+            sig(ops.get(i)): product_ops.inv_getter(prod_dom, i)
+            for i, sig in enumerate(getter_sig)
         })
 
         inv_defs.update({
-            (ops.updated(i), (prod_dom, e_dom, prod_dom)):
-                product_ops.inv_updater(prod_dom, i)
-            for i, e_dom in enumerate(elem_doms)
+            sig(ops.updated(i)): product_ops.inv_updater(prod_dom, i)
+            for i, sig in enumerate(updated_sig)
         })
 
         return TypeInterpretation(
@@ -407,9 +501,10 @@ def default_array_interpreter(attribute_interpreter):
 
         array_dom = domains.SparseArray(indices_dom, comp_dom)
 
-        call_tpe = (array_dom,) + tuple(indices_dom.domains) + (comp_dom,)
-        updated_tpe = (
-            (array_dom, comp_dom) + tuple(indices_dom.domains) + (array_dom,)
+        call_sig = _signer((array_dom,) + tuple(indices_dom.domains), comp_dom)
+        updated_sig = _signer(
+            (array_dom, comp_dom) + tuple(indices_dom.domains),
+            array_dom
         )
 
         array_get = sparse_array_ops.get(array_dom)
@@ -433,13 +528,13 @@ def default_array_interpreter(attribute_interpreter):
             )
 
         defs = {
-            (ops.CALL, call_tpe): actual_get,
-            (ops.UPDATED, updated_tpe): actual_updated
+            call_sig(ops.CALL): actual_get,
+            updated_sig(ops.UPDATED): actual_updated
         }
 
         inv_defs = {
-            (ops.CALL, call_tpe): actual_inv_get,
-            (ops.UPDATED, updated_tpe): actual_inv_udpated
+            call_sig(ops.CALL): actual_inv_get,
+            updated_sig(ops.UPDATED): actual_inv_udpated
         }
 
         return TypeInterpretation(
