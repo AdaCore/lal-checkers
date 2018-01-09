@@ -1,4 +1,5 @@
 from utils import Bunch
+from funcy.calc import memoize
 
 
 class Digraph(object):
@@ -52,19 +53,29 @@ class Digraph(object):
         self.nodes = nodes
         self.edges = edges
 
+    @memoize
     def successors(self, node):
         """
         Returns an iterable of all the nodes that are direct successors
         of the given node .
         """
-        return (e.to for e in self.edges if e.frm == node)
+        return frozenset(e.to for e in self.edges if e.frm == node)
 
+    @memoize
     def ancestors(self, node):
         """
         Returns an iterable of all the nodes that are direct predecessors
         of the given node .
         """
-        return (e.frm for e in self.edges if e.to == node)
+        return frozenset(e.frm for e in self.edges if e.to == node)
+
+    @memoize
+    def is_leaf(self, node):
+        return len(self.successors(node)) == 0
+
+    @memoize
+    def leafs(self):
+        return frozenset(node for node in self.nodes if self.is_leaf(node))
 
     def __repr__(self):
         return "({}, {})".format(self.nodes, self.edges)
