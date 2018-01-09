@@ -2,7 +2,7 @@
 Provides tools for using the Basic IR.
 """
 
-from lalcheck.utils import KeyCounter, Bunch
+from lalcheck.utils import KeyCounter, Bunch, Transformer
 from lalcheck.digraph import Digraph
 from lalcheck.domain_ops import boolean_ops
 from lalcheck.types import FunOutput
@@ -301,24 +301,36 @@ class Models(visitors.Visitor):
     relevant), how an operation must be interpreted (i.e. a binary addition),
     etc.
     """
-    def __init__(self, typer, type_interpreter):
+    def __init__(self, typer, type_interpreter, external_def_provider=None):
         """
         :param lalcheck.types.Typer[T] typer: The typer that maps type hints
             to lalcheck types.
 
         :param lalcheck.types.TypeInterpreter type_interpreter: The type
             interpreter that maps lalcheck types to interpretations.
+
+        :param lalcheck.interpretations.DefProvider external_def_provider:
+            An external def provider.
         """
         self.typer = typer
-        self.hint_to_interpreter = typer >> type_interpreter
+        self.type_interpreter = type_interpreter
+        self.external_def_provider = external_def_provider
 
-    def _type_of(self, node):
+    def _type_of(self, hint):
         """
-        :param tree.Node node: An expression node.
+        :param T hint: The hint.
         :return: Its type.
         :rtype: lalcheck.types.Type
         """
-        return self.typer.get(node.data.type_hint)
+        return self.typer.get(hint)
+
+    def _interp_of(self, tpe):
+        """
+        :param lalcheck.types.Type tpe: The type.
+        :return: Its interpretation.
+        :rtype: lalcheck.interpretations.TypeInterpretation
+        """
+        return self.type_interpreter.get(tpe)
 
     def _typeable_to_interp(self, node):
         """
@@ -326,15 +338,16 @@ class Models(visitors.Visitor):
         :return: Its type interpretation.
         :rtype: lalcheck.interpretations.TypeInterpretation
         """
-        return self.hint_to_interpreter.get(node.data.type_hint)
+        return self._interp_of(self._type_of(node.data.type_hint))
 
-    def visit_funcall(self, funcall, node_domains, defs, inv_defs, builders):
+    def visit_funcall(self, funcall, node_domains, defs, builders):
         dom = node_domains[funcall]
 
-        tpe = self._type_of(funcall)
+        tpe = self._type_of(funcall.data.type_hint)
         if tpe.is_a(FunOutput):
             out_indices = tpe.out_indices
-            ret_dom = tpe.get_return_type()
+            ret_tpe = tpe.get_return_type()
+            ret_dom = self._interp_of(ret_tpe).domain if ret_tpe else None
         else:
             out_indices = ()
             ret_dom = dom
@@ -346,21 +359,23 @@ class Models(visitors.Visitor):
             out_indices
         )
 
+        definition, inverse = defs.get(sig)
+
         return Bunch(
             domain=dom,
-            definition=defs(sig),
-            inverse=inv_defs(sig)
+            definition=definition,
+            inverse=inverse
         )
 
-    def visit_ident(self, ident, node_domains, defs, inv_defs, builders):
-        return ident.var.visit(self, node_domains, defs, inv_defs, builders)
+    def visit_ident(self, ident, node_domains, defs, builders):
+        return ident.var.visit(self, node_domains, defs, builders)
 
-    def visit_var(self, var, node_domains, defs, inv_defs, builders):
+    def visit_var(self, var, node_domains, defs, builders):
         return Bunch(
             domain=node_domains[var]
         )
 
-    def visit_lit(self, lit, node_domains, defs, inv_defs, builders):
+    def visit_lit(self, lit, node_domains, defs, builders):
         dom = node_domains[lit]
         return Bunch(
             domain=dom,
@@ -375,17 +390,6 @@ class Models(visitors.Visitor):
         :rtype: bool
         """
         return 'type_hint' in node.data
-
-    @staticmethod
-    def _aggregate_provider(providers):
-        def f(sig):
-            for provider in providers:
-                definition = provider(sig)
-                if definition:
-                    return definition
-            raise LookupError("No provider for '{}'".format(sig))
-
-        return f
 
     def of(self, *programs):
         """
@@ -403,7 +407,6 @@ class Models(visitors.Visitor):
         model = {}
         node_domains = {}
         def_providers = set()
-        inv_def_providers = set()
         builders = {}
 
         for prog in programs:
@@ -414,18 +417,16 @@ class Models(visitors.Visitor):
 
                 node_domains[node] = interp.domain
                 def_providers.add(interp.def_provider)
-                inv_def_providers.add(interp.inv_def_provider)
                 builders[interp.domain] = interp.builder
 
-        aggregate_provider = Models._aggregate_provider(def_providers)
-        aggregate_inv_provider = Models._aggregate_provider(inv_def_providers)
+        aggregate_provider = reduce(Transformer.or_else, def_providers)
 
         for node in node_domains.keys():
             model[node] = node.visit(
                 self,
                 node_domains,
-                aggregate_provider,
-                aggregate_inv_provider,
+                aggregate_provider if self.external_def_provider is None
+                else aggregate_provider | self.external_def_provider,
                 builders
             )
 

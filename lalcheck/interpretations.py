@@ -23,25 +23,20 @@ class TypeInterpretation(object):
     represent elements of the type, the implementation of the different
     operations available for that type, etc.
     """
-    def __init__(self, domain, def_provider, inv_def_provider, builder):
+    def __init__(self, domain, def_provider, builder):
         """
         :param domains.AbstractDomain domain: The abstract domain used to
             represent the type.
 
-        :param Signature->function def_provider:
+        :param Signature->(function, function) def_provider:
             A function which can be called with the signature of the desired
-            definition to retrieve it.
-
-        :param Signature->function inv_def_provider:
-            A function which can be called with the signature of the desired
-            definition to retrieve its inverse.
+            definition to retrieve it and its inverse.
 
         :param function builder: A function used to build elements of the
             domain from literal values.
         """
         self.domain = domain
         self.def_provider = def_provider
-        self.inv_def_provider = inv_def_provider
         self.builder = builder
 
 
@@ -126,11 +121,19 @@ class Signature(object):
         )
 
 
+DefProvider = Transformer
+"""
+DefProvider[T] is equivalent to Transformer[Signature, (function, function)]
+"""
+def_provider = Transformer.as_transformer
+
+
 def dict_to_provider(def_dict):
     """
-    Converts a dictionnary of definitions indexed by their names and domain
-    signatures to a provider function.
+    Converts a dictionary of definitions indexed by their names and domain
+    signatures to a def provider.
     """
+    @def_provider
     def provider(sig):
         if sig in def_dict:
             return def_dict[sig]
@@ -168,21 +171,15 @@ def default_boolean_interpreter(tpe):
         bin_fun_sig = _signer((bool_dom, bool_dom), bool_dom)
 
         defs = {
-            un_fun_sig(ops.NOT): boolean_ops.not_,
-            bin_fun_sig(ops.AND): boolean_ops.and_,
-            bin_fun_sig(ops.OR): boolean_ops.or_,
+            un_fun_sig(ops.NOT): (boolean_ops.not_, boolean_ops.inv_not),
+            bin_fun_sig(ops.AND): (boolean_ops.and_, boolean_ops.inv_and),
+            bin_fun_sig(ops.OR): (boolean_ops.or_, boolean_ops.inv_or),
 
-            bin_fun_sig(ops.EQ): finite_lattice_ops.eq(bool_dom),
-            bin_fun_sig(ops.NEQ): finite_lattice_ops.neq(bool_dom)
-        }
+            bin_fun_sig(ops.EQ): (finite_lattice_ops.eq(bool_dom),
+                                  finite_lattice_ops.inv_eq(bool_dom)),
 
-        inv_defs = {
-            un_fun_sig(ops.NOT): boolean_ops.inv_not,
-            bin_fun_sig(ops.AND): boolean_ops.inv_and,
-            bin_fun_sig(ops.OR): boolean_ops.inv_or,
-
-            bin_fun_sig(ops.EQ): finite_lattice_ops.inv_eq(bool_dom),
-            bin_fun_sig(ops.NEQ): finite_lattice_ops.inv_neq(bool_dom)
+            bin_fun_sig(ops.NEQ): (finite_lattice_ops.neq(bool_dom),
+                                   finite_lattice_ops.inv_neq(bool_dom))
         }
 
         builder = boolean_ops.lit
@@ -190,7 +187,6 @@ def default_boolean_interpreter(tpe):
         return TypeInterpretation(
             bool_dom,
             dict_to_provider(defs),
-            dict_to_provider(inv_defs),
             builder
         )
 
@@ -206,34 +202,37 @@ def default_int_range_interpreter(tpe):
         bin_rel_sig = _signer((int_dom, int_dom), bool_dom)
 
         defs = {
-            bin_fun_sig(ops.PLUS): interval_ops.add_no_wraparound(int_dom),
-            bin_fun_sig(ops.MINUS): interval_ops.sub_no_wraparound(int_dom),
+            bin_fun_sig(ops.PLUS): (
+                interval_ops.add_no_wraparound(int_dom),
+                interval_ops.inv_add_no_wraparound(int_dom)
+            ),
+            bin_fun_sig(ops.MINUS): (
+                interval_ops.sub_no_wraparound(int_dom),
+                interval_ops.inv_sub_no_wraparound(int_dom)
+            ),
 
-            un_fun_sig(ops.NEG): interval_ops.negate(int_dom),
+            un_fun_sig(ops.NEG): (
+                interval_ops.negate(int_dom), interval_ops.negate(int_dom)
+            ),
 
-            bin_rel_sig(ops.LT): interval_ops.lt(int_dom),
-            bin_rel_sig(ops.LE): interval_ops.le(int_dom),
-            bin_rel_sig(ops.EQ): interval_ops.eq(int_dom),
-            bin_rel_sig(ops.NEQ): interval_ops.neq(int_dom),
-            bin_rel_sig(ops.GE): interval_ops.ge(int_dom),
-            bin_rel_sig(ops.GT): interval_ops.gt(int_dom),
-        }
-
-        inv_defs = {
-            bin_fun_sig(ops.PLUS):
-                interval_ops.inv_add_no_wraparound(int_dom),
-
-            bin_fun_sig(ops.MINUS):
-                interval_ops.inv_sub_no_wraparound(int_dom),
-
-            un_fun_sig(ops.NEG): interval_ops.negate(int_dom),
-
-            bin_rel_sig(ops.LT): interval_ops.inv_lt(int_dom),
-            bin_rel_sig(ops.LE): interval_ops.inv_le(int_dom),
-            bin_rel_sig(ops.EQ): interval_ops.inv_eq(int_dom),
-            bin_rel_sig(ops.NEQ): interval_ops.inv_neq(int_dom),
-            bin_rel_sig(ops.GE): interval_ops.inv_ge(int_dom),
-            bin_rel_sig(ops.GT): interval_ops.inv_gt(int_dom),
+            bin_rel_sig(ops.LT): (
+                interval_ops.lt(int_dom), interval_ops.inv_lt(int_dom)
+            ),
+            bin_rel_sig(ops.LE): (
+                interval_ops.le(int_dom), interval_ops.inv_le(int_dom)
+            ),
+            bin_rel_sig(ops.EQ): (
+                interval_ops.eq(int_dom), interval_ops.inv_eq(int_dom)
+            ),
+            bin_rel_sig(ops.NEQ): (
+                interval_ops.neq(int_dom), interval_ops.inv_neq(int_dom)
+            ),
+            bin_rel_sig(ops.GE): (
+                interval_ops.ge(int_dom), interval_ops.inv_ge(int_dom)
+            ),
+            bin_rel_sig(ops.GT): (
+                interval_ops.gt(int_dom), interval_ops.inv_gt(int_dom)
+            )
         }
 
         builder = interval_ops.lit(int_dom)
@@ -241,7 +240,6 @@ def default_int_range_interpreter(tpe):
         return TypeInterpretation(
             int_dom,
             dict_to_provider(defs),
-            dict_to_provider(inv_defs),
             builder
         )
 
@@ -255,13 +253,14 @@ def default_enum_interpreter(tpe):
         bin_rel_sig = _signer((enum_dom, enum_dom), bool_dom)
 
         defs = {
-            bin_rel_sig(ops.EQ): finite_lattice_ops.eq(enum_dom),
-            bin_rel_sig(ops.NEQ): finite_lattice_ops.neq(enum_dom)
-        }
-
-        inv_defs = {
-            bin_rel_sig(ops.EQ): finite_lattice_ops.inv_eq(enum_dom),
-            bin_rel_sig(ops.NEQ): finite_lattice_ops.inv_neq(enum_dom)
+            bin_rel_sig(ops.EQ): (
+                finite_lattice_ops.eq(enum_dom),
+                finite_lattice_ops.inv_eq(enum_dom)
+            ),
+            bin_rel_sig(ops.NEQ): (
+                finite_lattice_ops.neq(enum_dom),
+                finite_lattice_ops.inv_neq(enum_dom)
+            )
         }
 
         builder = finite_lattice_ops.lit(enum_dom)
@@ -269,7 +268,6 @@ def default_enum_interpreter(tpe):
         return TypeInterpretation(
             enum_dom,
             dict_to_provider(defs),
-            dict_to_provider(inv_defs),
             builder
         )
 
@@ -335,24 +333,27 @@ def default_simple_pointer_interpreter(inner_interpreter):
             return e_constr
 
         defs = {
-            bin_rel_sig(ops.EQ): finite_lattice_ops.eq(ptr_dom),
-            bin_rel_sig(ops.NEQ): finite_lattice_ops.neq(ptr_dom),
-            deref_sig(ops.DEREF): deref,
-            address_sig(ops.ADDRESS): address
-
-        }
-
-        inv_defs = {
-            bin_rel_sig(ops.EQ): finite_lattice_ops.inv_eq(ptr_dom),
-            bin_rel_sig(ops.NEQ): finite_lattice_ops.inv_neq(ptr_dom),
-            deref_sig(ops.DEREF): inv_deref,
-            address_sig(ops.ADDRESS): inv_address
+            bin_rel_sig(ops.EQ): (
+                finite_lattice_ops.eq(ptr_dom),
+                finite_lattice_ops.inv_eq(ptr_dom)
+            ),
+            bin_rel_sig(ops.NEQ): (
+                finite_lattice_ops.neq(ptr_dom),
+                finite_lattice_ops.inv_neq(ptr_dom)
+            ),
+            deref_sig(ops.DEREF): (
+                deref,
+                inv_deref
+            ),
+            address_sig(ops.ADDRESS): (
+                address,
+                inv_address
+            )
         }
 
         return TypeInterpretation(
             ptr_dom,
             dict_to_provider(defs),
-            dict_to_provider(inv_defs),
             builder
         )
 
@@ -397,7 +398,7 @@ def default_product_interpreter(elem_interpreter):
         ]
 
         elem_eq_defs = [
-            interp.def_provider(sig(ops.EQ))
+            interp.def_provider.get(sig(ops.EQ))[0]
             for sig, interp in zip(elem_bin_rel_sigs, elem_interpretations)
         ]
 
@@ -413,50 +414,42 @@ def default_product_interpreter(elem_interpreter):
 
         elem_inv_eq_defs, elem_inv_neq_defs = (
             [
-                interp.inv_def_provider(sig(op))
+                interp.def_provider.get(sig(op))[1]
                 for sig, interp in zip(elem_bin_rel_sigs, elem_interpretations)
             ]
             for op in [ops.EQ, ops.NEQ]
         )
 
         defs = {
-            bin_rel_sig(ops.EQ): product_ops.eq(elem_eq_defs),
-            bin_rel_sig(ops.NEQ): product_ops.neq(elem_eq_defs)
-        }
-
-        defs.update({
-            sig(ops.get(i)): product_ops.getter(i)
-            for i, sig in enumerate(getter_sig)
-        })
-
-        defs.update({
-            sig(ops.updated(i)): product_ops.updater(i)
-            for i, sig in enumerate(updated_sig)
-        })
-
-        inv_defs = {
-            bin_rel_sig(ops.EQ): product_ops.inv_eq(
-                prod_dom, elem_inv_eq_defs, elem_eq_defs
+            bin_rel_sig(ops.EQ): (
+                product_ops.eq(elem_eq_defs),
+                product_ops.inv_eq(prod_dom, elem_inv_eq_defs, elem_eq_defs)
             ),
-            bin_rel_sig(ops.NEQ): product_ops.inv_neq(
-                prod_dom, elem_inv_eq_defs, elem_eq_defs
+            bin_rel_sig(ops.NEQ): (
+                product_ops.neq(elem_eq_defs),
+                product_ops.inv_neq(prod_dom, elem_inv_eq_defs, elem_eq_defs)
             )
         }
 
-        inv_defs.update({
-            sig(ops.get(i)): product_ops.inv_getter(prod_dom, i)
+        defs.update({
+            sig(ops.get(i)): (
+                product_ops.getter(i),
+                product_ops.inv_getter(prod_dom, i)
+            )
             for i, sig in enumerate(getter_sig)
         })
 
-        inv_defs.update({
-            sig(ops.updated(i)): product_ops.inv_updater(prod_dom, i)
+        defs.update({
+            sig(ops.updated(i)): (
+                product_ops.updater(i),
+                product_ops.inv_updater(prod_dom, i)
+            )
             for i, sig in enumerate(updated_sig)
         })
 
         return TypeInterpretation(
             prod_dom,
             dict_to_provider(defs),
-            dict_to_provider(inv_defs),
             product_ops.lit
         )
 
@@ -528,19 +521,13 @@ def default_array_interpreter(attribute_interpreter):
             )
 
         defs = {
-            call_sig(ops.CALL): actual_get,
-            updated_sig(ops.UPDATED): actual_updated
-        }
-
-        inv_defs = {
-            call_sig(ops.CALL): actual_inv_get,
-            updated_sig(ops.UPDATED): actual_inv_udpated
+            call_sig(ops.CALL): (actual_get, actual_inv_get),
+            updated_sig(ops.UPDATED): (actual_updated, actual_inv_udpated)
         }
 
         return TypeInterpretation(
             array_dom,
             dict_to_provider(defs),
-            dict_to_provider(inv_defs),
             id
         )
 
