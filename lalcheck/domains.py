@@ -339,7 +339,7 @@ class Intervals(AbstractDomain):
         return self.build(min(concrete), max(concrete))
 
     def str(self, x):
-        return "[{}, {}]".format(*x)
+        return "<empty>" if x == self.bottom else "[{}, {}]".format(*x)
 
 
 class Product(AbstractDomain):
