@@ -103,6 +103,16 @@ class _ValueHolder(object):
         self.value = init
 
 
+class _ExtendedCallReturnType(object):
+    def __init__(self, out_indices, out_types, ret_type=None):
+        self.out_indices = out_indices
+        self.out_types = out_types
+        self.ret_type = ret_type
+
+    def is_a(self, tpe):
+        return isinstance(self, tpe)
+
+
 def _closest(node, *tpe):
     """
     Returns the closest parent of this node which is of the given type.
@@ -216,6 +226,23 @@ def _is_array_type_decl(tpe):
     return False
 
 
+def _get_out_parameters(subp):
+    """
+    Returns the parameters from the given subprogram that have the "Out" mode.
+
+    :param lal.SubpBody subp:
+    :rtype: iterable[(int, lal.Identifier, lal.ParamSpec)]
+    """
+    spec = subp.f_subp_spec
+    i = 0
+
+    for param in spec.f_subp_params.f_params:
+        for name in param.f_ids:
+            if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut):
+                yield (i, name, param)
+            i += 1
+
+
 def _gen_ir(ctx, subp):
     """
     Generates Basic intermediate representation from a lal subprogram body.
@@ -230,6 +257,7 @@ def _gen_ir(ctx, subp):
     """
 
     var_decls = {}
+    param_vars = set()
     tmp_vars = KeyCounter()
 
     # A synthetic variable used to store the result of a function (what is
@@ -829,6 +857,147 @@ def _gen_ir(ctx, subp):
 
         return res
 
+    def gen_assignment(assign_dest, expr_pre_stmts, expr, orig_node=None):
+        """
+        Returns the statements equivalent to the assignment of the given
+        expression to the given destination.
+
+        :param lal.Expr assign_dest: The destination of the assignment.
+
+        :param irt.Expr assign_expr: The expression assigned, already
+            transformed.
+
+        :param lal.AdaNode orig_node: The original node.
+
+        :rtype: list[irt.Stmt]
+        """
+        dest_pre_stmts, (dest, updated_expr) = gen_actual_dest(
+            assign_dest, expr
+        )
+        return dest_pre_stmts + expr_pre_stmts + [
+            irt.AssignStmt(
+                dest,
+                updated_expr,
+                orig_node=orig_node
+            )
+        ]
+
+    def transform_call_expr(expr):
+        """
+        Call expressions are transformed the following way:
+
+        Ada:
+        ----------------
+        r := F(x_1, ..., x_n);
+
+        Basic IR:
+        ----------------
+
+        1. `F` does not have any out parameters:
+
+        r := F(x_1, ..., x_n);
+
+        2. `F` has out parameters (say, x_1 and x_2):
+
+        tmp := F(x_1, ..., x_n);
+        x_1 := Get_0(tmp)
+        x_2 := Get_1(tmp)
+        r := Get_2(tmp)
+
+        :param lal.CallExpr expr: The call expression to transform
+        :rtype: (list[irt.Stmt], irt.Expr)
+        """
+
+        suffixes = [
+            transform_expr(suffix.f_r_expr)
+            for suffix in expr.f_suffix
+        ]
+        suffix_pre_stmts = [
+            suffix_stmt
+            for suffix in suffixes
+            for suffix_stmt in suffix[0]
+        ]
+        suffix_exprs = [suffix[1] for suffix in suffixes]
+
+        if expr.f_name.is_a(lal.Identifier):
+            ref = expr.f_name.p_referenced_decl
+            if ref.is_a(lal.SubpBody):
+                # The call target is statically known.
+
+                out_params = list(_get_out_parameters(ref))
+
+                if len(out_params) == 0:
+                    return suffix_pre_stmts, irt.FunCall(
+                        ref,
+                        suffix_exprs,
+                        orig_node=expr,
+                        type_hint=expr.p_expression_type,
+                        callee_type=expr.f_name.p_expression_type
+                    )
+                else:
+                    ret_tpe = _ExtendedCallReturnType(
+                        [index for index, _, _ in out_params],
+                        [spec.f_type_expr for _, _, spec in out_params],
+                        expr.p_expression_type
+                    )
+
+                    ret_var = irt.Identifier(
+                        irt.Variable(
+                            fresh_name("ret"),
+                            purpose=purpose.SyntheticVariable(),
+                            type_hint=ret_tpe,
+                            orig_node=expr,
+                            mode=Mode.Local
+                        ),
+                        type_hint=ret_tpe,
+                        orig_node=expr
+                    )
+
+                    call = [irt.AssignStmt(
+                        ret_var,
+                        irt.FunCall(
+                            ref,
+                            suffix_exprs,
+                            orig_node=expr,
+                            type_hint=ret_tpe,
+                            callee_type=expr.f_name.p_expression_type
+                        )
+                    )]
+
+                    assignments = [
+                        stmt
+                        for i, (j, _, spec) in enumerate(out_params)
+                        for stmt in gen_assignment(
+                            expr.f_suffix[j].f_r_expr,
+                            [],
+                            irt.FunCall(
+                                ops.get(i),
+                                [ret_var],
+                                type_hint=expr.f_suffix[j].
+                                f_r_expr.p_expression_type
+                            )
+                        )
+                    ]
+
+                    res = irt.FunCall(
+                        ops.get(len(out_params)),
+                        [ret_var],
+                        type_hint=ret_tpe.ret_type
+                    ) if ret_tpe.ret_type is not None else None
+
+                    return suffix_pre_stmts + call + assignments, res
+
+        if _is_array_type_decl(expr.f_name.p_expression_type):
+            prefix_pre_stmts, prefix_expr = transform_expr(expr.f_name)
+
+            return prefix_pre_stmts + suffix_pre_stmts, irt.FunCall(
+                ops.CALL,
+                [prefix_expr] + suffix_exprs,
+                type_hint=expr.p_expression_type,
+                orig_node=expr,
+                callee_type=expr.f_name.p_expression_type
+            )
+
     def transform_dereference(derefed_expr, deref_type, deref_orig):
         """
         Generate the IR code that dereferences the given expression, as such:
@@ -985,24 +1154,7 @@ def _gen_ir(ctx, subp):
             )
 
         elif expr.is_a(lal.CallExpr):
-            prefix_pre_stmts, prefix_expr = transform_expr(expr.f_name)
-            suffixes = [
-                transform_expr(suffix.f_r_expr)
-                for suffix in expr.f_suffix
-            ]
-            suffix_pre_stmts = [
-                suffix_stmt for suffix in suffixes
-                for suffix_stmt in suffix[0]
-            ]
-            suffix_exprs = [suffix[1] for suffix in suffixes]
-
-            return prefix_pre_stmts + suffix_pre_stmts, irt.FunCall(
-                ops.CALL,
-                [prefix_expr] + suffix_exprs,
-                type_hint=expr.p_expression_type,
-                orig_node=expr,
-                callee_type=expr.f_name.p_expression_type
-            )
+            return transform_call_expr(expr)
 
         elif expr.is_a(lal.IfExpr):
             # If expressions are transformed as such:
@@ -1095,11 +1247,15 @@ def _gen_ir(ctx, subp):
             # Transform the identifier according what it refers to.
             ref = expr.p_referenced_decl
             if ref.is_a(lal.ObjectDecl, lal.ParamSpec):
+                var = var_decls[ref, expr.text]
                 return [], irt.Identifier(
-                    var_decls[ref, expr.text],
-                    type_hint=expr.p_expression_type,
+                    var,
+                    type_hint=var.data.type_hint,
                     orig_node=expr
                 )
+            elif ref.is_a(lal.SubpBody):
+                # todo
+                pass
             elif ref.is_a(lal.EnumLiteralDecl):
                 return [], irt.Lit(
                     expr.text,
@@ -1209,12 +1365,14 @@ def _gen_ir(ctx, subp):
         for param in params:
             mode = Mode.from_lal_mode(param.f_mode)
             for var_id in param.f_ids:
-                var_decls[param, var_id.text] = irt.Variable(
+                param_var = irt.Variable(
                     var_id.text,
                     type_hint=param.f_type_expr,
                     orig_node=var_id,
                     mode=mode
                 )
+                var_decls[param, var_id.text] = param_var
+                param_vars.add(param_var)
 
         if spec.f_subp_returns is not None:
             result_var.value = irt.Identifier(
@@ -1238,6 +1396,7 @@ def _gen_ir(ctx, subp):
         """
         if decl.is_a(lal.TypeDecl, lal.SubtypeDecl, lal.NumberDecl):
             return []
+
         elif decl.is_a(lal.ObjectDecl):
             tdecl = decl.f_type_expr
 
@@ -1276,6 +1435,9 @@ def _gen_ir(ctx, subp):
                     for var_id in decl.f_ids
                 ]
 
+        elif decl.is_a(lal.SubpBody):
+            return []
+
         unimplemented(decl)
 
     def transform_stmt(stmt):
@@ -1290,16 +1452,10 @@ def _gen_ir(ctx, subp):
 
         if stmt.is_a(lal.AssignStmt):
             expr_pre_stmts, expr = transform_expr(stmt.f_expr)
-            dest_pre_stmts, (dest, updated_expr) = gen_actual_dest(
-                stmt.f_dest, expr
-            )
-            return dest_pre_stmts + expr_pre_stmts + [
-                irt.AssignStmt(
-                    dest,
-                    updated_expr,
-                    orig_node=stmt
-                )
-            ]
+            return gen_assignment(stmt.f_dest, expr_pre_stmts, expr, stmt)
+
+        elif stmt.is_a(lal.CallStmt):
+            return transform_call_expr(stmt.f_call)[0]
 
         elif stmt.is_a(lal.DeclBlock):
             decls = transform_decls(stmt.f_decls.f_decls)
@@ -1563,7 +1719,8 @@ def _gen_ir(ctx, subp):
         transform_stmts(subp.f_stmts.f_stmts) +
         [func_end_label],
         orig_node=subp,
-        result_var=result_var.value
+        result_var=result_var.value,
+        param_vars=param_vars
     )
 
 
@@ -1979,6 +2136,32 @@ def array_typer(indices_typer, component_typer):
     )
 
 
+def subp_ret_typer(inner):
+    """
+    :param types.Typer[lal.AdaNode] inner: Typer for return type components.
+    :rtype: types.Typer[lal.AdaNode]
+    """
+    @Transformer.as_transformer
+    def get_components(hint):
+        if hint.is_a(_ExtendedCallReturnType):
+            return (
+                hint.out_indices,
+                hint.out_types if hint.ret_type is None
+                else hint.out_types + [hint.ret_type]
+            )
+
+    @Transformer.as_transformer
+    def to_output(x):
+        out_indices, out_types = x
+        return types.FunOutput(tuple(out_indices), out_types)
+
+    return (
+        get_components >>
+        (Transformer.identity() & inner.lifted()) >>
+        to_output
+    )
+
+
 class ExtractionContext(object):
     """
     The libadalang-based frontend interface. Provides method for extracting
@@ -2095,6 +2278,7 @@ class ExtractionContext(object):
                     record_typer(record_component_typer(typer)) |
                     name_typer(typer) |
                     anonymous_typer(typer) |
-                    array_typer(typer, typer))
+                    array_typer(typer, typer) |
+                    subp_ret_typer(typer))
 
         return typer

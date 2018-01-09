@@ -71,6 +71,30 @@ class Product(Type):
         self.elem_types = elem_types
 
 
+class FunOutput(Product):
+    """
+    Represents the type of function outputs.
+    """
+    def __init__(self, out_indices, out_types):
+        """
+        :param tuple[int] out_indices: indices of the out parameters.
+        :param list[Type] out_types: types of the out values.
+        """
+        super(FunOutput, self).__init__(out_types)
+        self.out_indices = out_indices
+
+    def get_return_type(self):
+        """
+        Both lists have the same size if the function does not have
+        a return value, otherwise the last element of the list of out types
+        is the type of the return value.
+
+        :rtype: Type | None
+        """
+        return (None if len(self.out_indices) == len(self.elem_types)
+                else self.elem_types[-1])
+
+
 class Array(Type):
     """
     Represents an array (possibly multidimensional)

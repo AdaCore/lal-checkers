@@ -5,6 +5,7 @@ Provides tools for using the Basic IR.
 from lalcheck.utils import KeyCounter, Bunch
 from lalcheck.digraph import Digraph
 from lalcheck.domain_ops import boolean_ops
+from lalcheck.types import FunOutput
 from lalcheck.interpretations import Signature
 from tree import LabelStmt
 import visitors
@@ -308,15 +309,21 @@ class Models(visitors.Visitor):
         :param lalcheck.types.TypeInterpreter type_interpreter: The type
             interpreter that maps lalcheck types to interpretations.
         """
+        self.typer = typer
         self.hint_to_interpreter = typer >> type_interpreter
+
+    def _type_of(self, node):
+        """
+        :param tree.Node node: An expression node.
+        :return: Its type.
+        :rtype: lalcheck.types.Type
+        """
+        return self.typer.get(node.data.type_hint)
 
     def _typeable_to_interp(self, node):
         """
-        :param tree.Node node: The expression node for which to retrieve the
-            interpretation.
-
-        :return: The associated interpretation
-
+        :param tree.Node node: An expression node.
+        :return: Its type interpretation.
         :rtype: lalcheck.interpretations.TypeInterpretation
         """
         return self.hint_to_interpreter.get(node.data.type_hint)
@@ -324,11 +331,19 @@ class Models(visitors.Visitor):
     def visit_funcall(self, funcall, node_domains, defs, inv_defs, builders):
         dom = node_domains[funcall]
 
+        tpe = self._type_of(funcall)
+        if tpe.is_a(FunOutput):
+            out_indices = tpe.out_indices
+            ret_dom = tpe.get_return_type()
+        else:
+            out_indices = ()
+            ret_dom = dom
+
         sig = Signature(
             funcall.fun_id,
             tuple(node_domains[arg] for arg in funcall.args),
-            dom,
-            ()
+            ret_dom,
+            out_indices
         )
 
         return Bunch(
@@ -402,12 +417,15 @@ class Models(visitors.Visitor):
                 inv_def_providers.add(interp.inv_def_provider)
                 builders[interp.domain] = interp.builder
 
+        aggregate_provider = Models._aggregate_provider(def_providers)
+        aggregate_inv_provider = Models._aggregate_provider(inv_def_providers)
+
         for node in node_domains.keys():
             model[node] = node.visit(
                 self,
                 node_domains,
-                Models._aggregate_provider(def_providers),
-                Models._aggregate_provider(inv_def_providers),
+                aggregate_provider,
+                aggregate_inv_provider,
                 builders
             )
 

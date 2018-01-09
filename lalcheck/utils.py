@@ -158,6 +158,13 @@ class Transformer(object):
         return res
 
     @staticmethod
+    def identity():
+        @Transformer.as_transformer
+        def f(x):
+            return x
+        return f
+
+    @staticmethod
     def as_transformer(fun):
         """
         Constructs a transformer from a function.
