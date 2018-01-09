@@ -2,13 +2,13 @@
 Output the JSON-formatted results of the "collecting semantics" analysis.
 """
 
-from lalcheck.irs.basic.purpose import SyntheticVariable
-from checkers.collecting_semantics import collect_semantics
-import test_helper
-import collecting_semantics_helpers
-
 import json
 import os
+
+import collecting_semantics_helpers
+import test_helper
+from lalcheck.irs.basic.analyses import collecting_semantics
+from lalcheck.irs.basic.purpose import SyntheticVariable
 
 
 def format_analysis_results(results, model):
@@ -38,7 +38,7 @@ def format_analysis_results(results, model):
 @test_helper.run
 def run(args):
     results, model = collecting_semantics_helpers.do_analysis(
-        collect_semantics,
+        collecting_semantics.collect_semantics,
         collecting_semantics_helpers.default_merge_predicates
     )
 

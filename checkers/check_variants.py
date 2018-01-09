@@ -1,14 +1,13 @@
-import lalcheck.irs.basic.tree as irt
-from lalcheck.irs.basic.tools import PrettyPrinter
-from lalcheck.irs.basic.purpose import ExistCheck
-from lalcheck.digraph import Digraph
-from lalcheck.constants import lits
-from lalcheck import dot_printer
-
-from collecting_semantics import collect_semantics
-
-from xml.sax.saxutils import escape
 from collections import defaultdict
+from xml.sax.saxutils import escape
+
+import lalcheck.irs.basic.tree as irt
+from lalcheck import dot_printer
+from lalcheck.constants import lits
+from lalcheck.digraph import Digraph
+from lalcheck.irs.basic.analyses import collecting_semantics
+from lalcheck.irs.basic.purpose import ExistCheck
+from lalcheck.irs.basic.tools import PrettyPrinter
 
 
 def html_render_node(node):
@@ -103,7 +102,7 @@ class AnalysisResult(object):
 
 def check_variants(prog, model, merge_pred_builder):
 
-    analysis = collect_semantics(
+    analysis = collecting_semantics.collect_semantics(
         prog,
         model,
         merge_pred_builder

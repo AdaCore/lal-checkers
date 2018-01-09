@@ -3,12 +3,11 @@ Contain common parts for test helpers that are based on the "collecting
 semantics" analysis.
 """
 import lalcheck.irs.basic.frontends.lal as lal2basic
-from lalcheck.irs.basic.tools import Models
 from lalcheck.interpretations import default_type_interpreter
-from checkers.collecting_semantics import (
+from lalcheck.irs.basic.tools import Models
+from lalcheck.irs.basic.analyses.collecting_semantics import (
     MergePredicateBuilder
 )
-
 
 default_merge_predicates = {
     'le_t_eq_v': (

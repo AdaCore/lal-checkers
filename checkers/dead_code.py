@@ -1,9 +1,9 @@
-import collecting_semantics
-from lalcheck.irs.basic.tools import PrettyPrinter
-from lalcheck.digraph import Digraph
-from lalcheck import dot_printer
-
 from xml.sax.saxutils import escape
+
+from lalcheck import dot_printer
+from lalcheck.digraph import Digraph
+from lalcheck.irs.basic.analyses import collecting_semantics
+from lalcheck.irs.basic.tools import PrettyPrinter
 
 
 def html_render_node(node):

@@ -21,7 +21,7 @@ from xml.sax.saxutils import escape
 from collections import defaultdict
 
 
-class VarTracker(visitors.CFGNodeVisitor):
+class _VarTracker(visitors.CFGNodeVisitor):
     def __init__(self, var_set, vars_domain, vars_idx, evaluator, c_solver):
         self.vars = var_set
         self.vars_domain = vars_domain
@@ -57,12 +57,12 @@ class VarTracker(visitors.CFGNodeVisitor):
         return state
 
 
-class SimpleTraceLattice(domains.FiniteSubsetLattice):
+class _SimpleTraceLattice(domains.FiniteSubsetLattice):
     def __init__(self, *args):
-        super(SimpleTraceLattice, self).__init__(*args)
+        super(_SimpleTraceLattice, self).__init__(*args)
 
     def update(self, a, b, widen=False):
-        return super(SimpleTraceLattice, self).update(a, b, False)
+        return super(_SimpleTraceLattice, self).update(a, b, False)
 
 
 class MergePredicateBuilder(object):
@@ -113,13 +113,13 @@ MergePredicateBuilder.Le_Traces = MergePredicateBuilder(_mp_le_traces)
 MergePredicateBuilder.Eq_Vals = MergePredicateBuilder(_mp_eq_vals)
 
 
-def html_render_node(node):
+def _html_render_node(node):
     return escape(PrettyPrinter.pretty_print(node))
 
 
-def save_cfg_to(file_name, cfg):
+def _save_cfg_to(file_name, cfg):
     def render_node(node):
-        return (html_render_node(node),) if node is not None else ()
+        return (_html_render_node(node),) if node is not None else ()
 
     def render_widening_point(is_widening_point):
         return (escape('<widening_point>'),) if is_widening_point else ()
@@ -131,11 +131,7 @@ def save_cfg_to(file_name, cfg):
         ]))
 
 
-def repr_trace(trace):
-    return tuple(p.name for p in trace)
-
-
-def build_resulting_graph(file_name, cfg, results, trace_domain, model):
+def _build_resulting_graph(file_name, cfg, results, trace_domain, model):
     paths = defaultdict(list)
 
     var_set = {
@@ -181,7 +177,7 @@ def build_resulting_graph(file_name, cfg, results, trace_domain, model):
     def print_orig(orig):
         if orig.data.node is not None:
             return (
-                '<i>{}</i>'.format(html_render_node(orig.data.node)),
+                '<i>{}</i>'.format(_html_render_node(orig.data.node)),
             )
         return ()
 
@@ -216,14 +212,14 @@ class AnalysisResults(object):
         """
         Prints the control-flow graph as a DOT file to the given file name.
         """
-        save_cfg_to(file_name, self.cfg)
+        _save_cfg_to(file_name, self.cfg)
 
     def save_results_to_file(self, file_name):
         """
         Prints the resulting graph as a DOT file to the given file name.
         Displays the state of each variable at each program point.
         """
-        build_resulting_graph(
+        _build_resulting_graph(
             file_name,
             self.cfg,
             self.semantics,
@@ -249,7 +245,7 @@ def collect_semantics(prog, model, merge_pred_builder):
     var_set = set(visitors.findall(prog, lambda n: isinstance(n, Variable)))
     vars_idx = {v: i for i, v in enumerate(var_set)}
     vars_domain = domains.Product(*(model[v].domain for v in var_set))
-    trace_domain = SimpleTraceLattice(cfg.nodes)
+    trace_domain = _SimpleTraceLattice(cfg.nodes)
 
     evaluator = ExprEvaluator(model)
     solver = ExprSolver(model)
@@ -261,7 +257,7 @@ def collect_semantics(prog, model, merge_pred_builder):
         # will widen when counter == widen_delay, then narrow
         return counter == widening_delay
 
-    do_stmt = VarTracker(var_set, vars_domain, vars_idx, evaluator, solver)
+    do_stmt = _VarTracker(var_set, vars_domain, vars_idx, evaluator, solver)
 
     lat = domains.Set(
         domains.Product(

@@ -1,17 +1,16 @@
+import argparse
+from collections import defaultdict
+from xml.sax.saxutils import escape
+
 import lalcheck.irs.basic.frontends.lal as lal2basic
 import lalcheck.irs.basic.tree as irt
-from lalcheck.irs.basic.tools import PrettyPrinter, Models
-from lalcheck.irs.basic.purpose import DerefCheck
+from lalcheck import dot_printer
+from lalcheck.constants import lits
 from lalcheck.digraph import Digraph
 from lalcheck.interpretations import default_type_interpreter
-from lalcheck.constants import lits
-from lalcheck import dot_printer
-
-from collecting_semantics import collect_semantics, MergePredicateBuilder
-
-from xml.sax.saxutils import escape
-from collections import defaultdict
-import argparse
+from lalcheck.irs.basic.purpose import DerefCheck
+from lalcheck.irs.basic.tools import PrettyPrinter, Models
+from lalcheck.irs.basic.analyses import collecting_semantics
 
 
 def html_render_node(node):
@@ -100,7 +99,7 @@ class AnalysisResult(object):
 
 def check_derefs(prog, model, merge_pred_builder):
 
-    analysis = collect_semantics(
+    analysis = collecting_semantics.collect_semantics(
         prog,
         model,
         merge_pred_builder
@@ -176,10 +175,11 @@ def run(args):
 
     if args.path_sensitive:
         merge_predicate = (
-            MergePredicateBuilder.Le_Traces | MergePredicateBuilder.Eq_Vals
+            collecting_semantics.MergePredicateBuilder.Le_Traces |
+            collecting_semantics.MergePredicateBuilder.Eq_Vals
         )
     else:
-        merge_predicate = MergePredicateBuilder.Always
+        merge_predicate = collecting_semantics.MergePredicateBuilder.Always
 
     analyses = {
         prog: check_derefs(prog, model, merge_predicate)
