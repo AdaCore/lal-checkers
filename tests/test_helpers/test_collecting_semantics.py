@@ -39,7 +39,8 @@ def format_analysis_results(results, model):
 def run(args):
     results, model = collecting_semantics_helpers.do_analysis(
         collecting_semantics.collect_semantics,
-        collecting_semantics_helpers.default_merge_predicates
+        collecting_semantics_helpers.default_merge_predicates,
+        args.call_strategy
     )
 
     if args.output_dir is not None:

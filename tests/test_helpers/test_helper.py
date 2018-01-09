@@ -8,6 +8,7 @@ import os
 
 parser = argparse.ArgumentParser(description="Generic Test Helper")
 parser.add_argument('--output_dir', required=False)
+parser.add_argument('--call_strategy', required=False, default='unknown')
 
 
 def run(fun):

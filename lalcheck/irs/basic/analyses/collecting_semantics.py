@@ -14,6 +14,7 @@ from lalcheck.irs.basic.purpose import SyntheticVariable
 from lalcheck.irs.basic import visitors
 from lalcheck.utils import KeyCounter
 from lalcheck.digraph import Digraph
+from lalcheck.interpretations import def_provider
 from lalcheck import domains
 from lalcheck import dot_printer
 
@@ -111,6 +112,114 @@ MergePredicateBuilder.Always = MergePredicateBuilder(_mp_always)
 MergePredicateBuilder.Never = MergePredicateBuilder(_mp_never)
 MergePredicateBuilder.Le_Traces = MergePredicateBuilder(_mp_le_traces)
 MergePredicateBuilder.Eq_Vals = MergePredicateBuilder(_mp_eq_vals)
+
+
+class ExternalCallStrategy(object):
+    def __call__(self, sig):
+        """
+        :param lalcheck.interpretations.Signature sig:
+        :return:
+        """
+        raise NotImplementedError
+
+    def as_def_provider(self):
+        return def_provider(self.__call__)
+
+
+class KnownTargetCallStrategy(ExternalCallStrategy):
+    def __init__(self, progs):
+        self.progs = progs
+
+    def _get_provider(self, sig, prog):
+        raise NotImplementedError
+
+    def __call__(self, sig):
+        for prog in self.progs:
+            if sig.name == prog.data.fun_id:
+                return self._get_provider(sig, prog)
+
+
+class UnknownTargetCallStrategy(ExternalCallStrategy):
+    def __init__(self):
+        super(UnknownTargetCallStrategy, self).__init__()
+
+    def __call__(self, sig):
+        def f(*_):
+            if len(sig.out_param_indices) == 0:
+                return (sig.output_domain.top
+                        if sig.output_domain else ())
+
+            return tuple(
+                sig.input_domains[i].top
+                for i in sig.out_param_indices
+            ) + ((sig.output_domain.top,) if sig.output_domain else ())
+
+        def inv(expected, *vals):
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
+
+        return f, inv
+
+
+class TopDownCallStrategy(KnownTargetCallStrategy):
+    def __init__(self, progs, get_model, get_merge_pred_builder):
+        super(TopDownCallStrategy, self).__init__(progs)
+        self.get_model = get_model
+        self.get_merge_pred_builder = get_merge_pred_builder
+
+    def _get_provider(self, sig, prog):
+        def f(*args):
+            arg_values = {
+                param: value
+                for param, value in zip(prog.data.param_vars, args)
+            }
+
+            model = self.get_model()
+
+            analysis = collect_semantics(
+                prog,
+                model,
+                self.get_merge_pred_builder(),
+                arg_values
+            )
+
+            envs = [
+                values
+                for leaf in analysis.cfg.leafs()
+                for _, values in analysis.semantics[leaf].iteritems()
+            ]
+
+            param_values = [
+                reduce(
+                    model[var].domain.join,
+                    (env[var] for env in envs)
+                )
+                if var in model
+                else arg_values[var]
+                for var in prog.data.param_vars
+            ]
+
+            result_var = prog.data.result_var
+            result_value = reduce(
+                model[result_var].domain.join,
+                (env[result_var] for env in envs)
+            ) if result_var is not None else None
+
+            if len(sig.out_param_indices) == 0:
+                return (result_value
+                        if sig.output_domain else ())
+
+            return tuple(
+                param_values[i]
+                for i in sig.out_param_indices
+            ) + ((result_value,) if sig.output_domain else ())
+
+        def inv(*_):
+            raise NotImplementedError
+
+        return f, inv
 
 
 def _html_render_node(node):
@@ -238,11 +347,12 @@ class AnalysisResults(object):
         }
 
 
-def collect_semantics(prog, model, merge_pred_builder):
+def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
 
     cfg = prog.visit(CFGBuilder())
 
     var_set = set(visitors.findall(prog, lambda n: isinstance(n, Variable)))
+
     vars_idx = {v: i for i, v in enumerate(var_set)}
     vars_domain = domains.Product(*(model[v].domain for v in var_set))
     trace_domain = _SimpleTraceLattice(cfg.nodes)
@@ -271,12 +381,19 @@ def collect_semantics(prog, model, merge_pred_builder):
         None  # We don't need a top element here.
     )
 
+    vars_top = vars_domain.build(*(
+        arg_values[var]
+        if arg_values is not None and var in arg_values
+        else model[var].domain.top
+        for var in var_set
+    ))
+
     def it(states):
         new_states = states.copy()
 
         for node in cfg.nodes:
             inputs = [new_states[anc] for anc in cfg.ancestors(node)]
-            res = (lat.build([(trace_domain.bottom, vars_domain.top)])
+            res = (lat.build([(trace_domain.bottom, vars_top)])
                    if len(inputs) == 0 else reduce(lat.join, inputs))
 
             res = lat.build([

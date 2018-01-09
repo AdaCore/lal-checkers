@@ -166,9 +166,19 @@ def run(args):
 
     progs = ctx.extract_programs(args.file)
 
+    call_strategies = {
+        'unknown': collecting_semantics.UnknownTargetCallStrategy(),
+        'topdown': collecting_semantics.TopDownCallStrategy(
+            progs,
+            lambda: model,
+            lambda: merge_predicate
+        )
+    }
+
     model_builder = Models(
         ctx.default_typer(),
-        default_type_interpreter
+        default_type_interpreter,
+        call_strategies[args.call_strategy].as_def_provider()
     )
 
     model = model_builder.of(*progs)
@@ -203,6 +213,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Null deref checker")
     parser.add_argument('--output-format', required=True, default="codepeer")
     parser.add_argument('--path-sensitive', action='store_true')
+    parser.add_argument('--call-strategy', default="unknown")
     parser.add_argument('file')
 
     run(parser.parse_args())

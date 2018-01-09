@@ -921,7 +921,7 @@ def _gen_ir(ctx, subp):
 
         if expr.f_name.is_a(lal.Identifier):
             ref = expr.f_name.p_referenced_decl
-            if ref.is_a(lal.SubpBody):
+            if ref.is_a(lal.SubpBody, lal.SubpDecl):
                 # The call target is statically known.
 
                 out_params = list(_get_out_parameters(ref))
@@ -1435,7 +1435,7 @@ def _gen_ir(ctx, subp):
                     for var_id in decl.f_ids
                 ]
 
-        elif decl.is_a(lal.SubpBody):
+        elif decl.is_a(lal.SubpBody, lal.SubpDecl):
             return []
 
         unimplemented(decl)
@@ -1718,8 +1718,9 @@ def _gen_ir(ctx, subp):
         transform_decls(subp.f_decls.f_decls) +
         transform_stmts(subp.f_stmts.f_stmts) +
         [func_end_label],
+        fun_id=subp,
         orig_node=subp,
-        result_var=result_var.value,
+        result_var=result_var.value.var if result_var.value else None,
         param_vars=param_vars
     )
 

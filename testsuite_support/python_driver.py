@@ -40,6 +40,11 @@ class PythonDriver(TestDriver):
     Timeout (in seconds) to run the Python script.
     """
 
+    call_strategy = "unknown"
+    """
+    The call strategy for tests base on the collecting_semantics analysis.
+    """
+
     @property
     def python_interpreter(self):
         """
@@ -69,7 +74,14 @@ class PythonDriver(TestDriver):
                 self.test_helpers_dir,
                 self.test_env['helper']
             )
-            return [py_file, '--output_dir=output']
+
+            return [
+                py_file,
+                '--output_dir=output',
+                '--call_strategy={}'.format(
+                    self.test_env.get('call_strategy', self.call_strategy)
+                )
+            ]
         else:
             return [self.py_file]
 

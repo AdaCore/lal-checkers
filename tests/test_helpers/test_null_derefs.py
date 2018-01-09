@@ -27,7 +27,8 @@ def format_analysis_results(results):
 def run(args):
     results, _ = collecting_semantics_helpers.do_analysis(
         check_derefs,
-        collecting_semantics_helpers.default_merge_predicates
+        collecting_semantics_helpers.default_merge_predicates,
+        args.call_strategy
     )
 
     if args.output_dir is not None:
