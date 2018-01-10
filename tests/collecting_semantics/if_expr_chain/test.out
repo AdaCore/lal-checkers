@@ -468,6 +468,46 @@
     "assign4": [
       {
         "trace:": [
+          "assign0",
+          "assign4",
+          "assume0",
+          "read0",
+          "read1",
+          "read2",
+          "read3",
+          "split_join2",
+          "start0"
+        ],
+        "values": {
+          "C1": "{True}",
+          "C2": "{False, True}",
+          "C3": "{False, True}",
+          "x": "[1, 1]"
+        }
+      },
+      {
+        "trace:": [
+          "assign1",
+          "assign4",
+          "assume1",
+          "assume2",
+          "read0",
+          "read1",
+          "read2",
+          "read3",
+          "split_join1",
+          "split_join2",
+          "start0"
+        ],
+        "values": {
+          "C1": "{False}",
+          "C2": "{True}",
+          "C3": "{False, True}",
+          "x": "[2, 2]"
+        }
+      },
+      {
+        "trace:": [
           "assign2",
           "assign4",
           "assume1",
@@ -510,46 +550,6 @@
           "C2": "{False}",
           "C3": "{False}",
           "x": "[4, 4]"
-        }
-      },
-      {
-        "trace:": [
-          "assign0",
-          "assign4",
-          "assume0",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join2",
-          "start0"
-        ],
-        "values": {
-          "C1": "{True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[1, 1]"
-        }
-      },
-      {
-        "trace:": [
-          "assign1",
-          "assign4",
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join1",
-          "split_join2",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False}",
-          "C2": "{True}",
-          "C3": "{False, True}",
-          "x": "[2, 2]"
         }
       }
     ],
@@ -732,26 +732,6 @@
     "split_join0": [
       {
         "trace:": [
-          "assign3",
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      },
-      {
-        "trace:": [
           "assign2",
           "assume1",
           "assume3",
@@ -769,9 +749,7 @@
           "C3": "{True}",
           "x": "[-2147483648, 2147483647]"
         }
-      }
-    ],
-    "split_join1": [
+      },
       {
         "trace:": [
           "assign3",
@@ -783,7 +761,6 @@
           "read2",
           "read3",
           "split_join0",
-          "split_join1",
           "start0"
         ],
         "values": {
@@ -792,7 +769,9 @@
           "C3": "{False}",
           "x": "[-2147483648, 2147483647]"
         }
-      },
+      }
+    ],
+    "split_join1": [
       {
         "trace:": [
           "assign1",
@@ -832,30 +811,6 @@
           "C3": "{True}",
           "x": "[-2147483648, 2147483647]"
         }
-      }
-    ],
-    "split_join2": [
-      {
-        "trace:": [
-          "assign2",
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
-          "split_join2",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
-          "x": "[-2147483648, 2147483647]"
-        }
       },
       {
         "trace:": [
@@ -869,7 +824,6 @@
           "read3",
           "split_join0",
           "split_join1",
-          "split_join2",
           "start0"
         ],
         "values": {
@@ -878,7 +832,9 @@
           "C3": "{False}",
           "x": "[-2147483648, 2147483647]"
         }
-      },
+      }
+    ],
+    "split_join2": [
       {
         "trace:": [
           "assign0",
@@ -914,6 +870,50 @@
           "C1": "{False}",
           "C2": "{True}",
           "C3": "{False, True}",
+          "x": "[-2147483648, 2147483647]"
+        }
+      },
+      {
+        "trace:": [
+          "assign2",
+          "assume1",
+          "assume3",
+          "assume4",
+          "read0",
+          "read1",
+          "read2",
+          "read3",
+          "split_join0",
+          "split_join1",
+          "split_join2",
+          "start0"
+        ],
+        "values": {
+          "C1": "{False}",
+          "C2": "{False}",
+          "C3": "{True}",
+          "x": "[-2147483648, 2147483647]"
+        }
+      },
+      {
+        "trace:": [
+          "assign3",
+          "assume1",
+          "assume3",
+          "assume5",
+          "read0",
+          "read1",
+          "read2",
+          "read3",
+          "split_join0",
+          "split_join1",
+          "split_join2",
+          "start0"
+        ],
+        "values": {
+          "C1": "{False}",
+          "C2": "{False}",
+          "C3": "{False}",
           "x": "[-2147483648, 2147483647]"
         }
       }

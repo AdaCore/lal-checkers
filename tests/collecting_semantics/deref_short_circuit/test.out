@@ -487,21 +487,6 @@
       {
         "trace:": [
           "assign0",
-          "assign3",
-          "assume4",
-          "assume6",
-          "read0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "x": "{null}",
-          "y": "[0, 0]"
-        }
-      },
-      {
-        "trace:": [
-          "assign0",
           "assign2",
           "assume0",
           "assume1",
@@ -514,6 +499,21 @@
         ],
         "values": {
           "x": "{notnull}",
+          "y": "[0, 0]"
+        }
+      },
+      {
+        "trace:": [
+          "assign0",
+          "assign3",
+          "assume4",
+          "assume6",
+          "read0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "x": "{null}",
           "y": "[0, 0]"
         }
       }
@@ -534,10 +534,10 @@
       {
         "trace:": [
           "assign0",
-          "assign2",
+          "assign1",
           "assume0",
           "assume1",
-          "assume3",
+          "assume2",
           "read0",
           "split_join0",
           "start0"
@@ -550,10 +550,10 @@
       {
         "trace:": [
           "assign0",
-          "assign1",
+          "assign2",
           "assume0",
           "assume1",
-          "assume2",
+          "assume3",
           "read0",
           "split_join0",
           "start0"
@@ -568,20 +568,6 @@
       {
         "trace:": [
           "assign0",
-          "assign3",
-          "assume4",
-          "read0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "x": "{null}",
-          "y": "[0, 0]"
-        }
-      },
-      {
-        "trace:": [
-          "assign0",
           "assign1",
           "assume0",
           "assume1",
@@ -610,6 +596,20 @@
         ],
         "values": {
           "x": "{notnull}",
+          "y": "[0, 0]"
+        }
+      },
+      {
+        "trace:": [
+          "assign0",
+          "assign3",
+          "assume4",
+          "read0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "x": "{null}",
           "y": "[0, 0]"
         }
       }
@@ -638,22 +638,6 @@
       {
         "trace:": [
           "assign0",
-          "assign3",
-          "assume4",
-          "assume6",
-          "read0",
-          "split_join1",
-          "split_join2",
-          "start0"
-        ],
-        "values": {
-          "x": "{null}",
-          "y": "[0, 0]"
-        }
-      },
-      {
-        "trace:": [
-          "assign0",
           "assign2",
           "assume0",
           "assume1",
@@ -667,6 +651,22 @@
         ],
         "values": {
           "x": "{notnull}",
+          "y": "[0, 0]"
+        }
+      },
+      {
+        "trace:": [
+          "assign0",
+          "assign3",
+          "assume4",
+          "assume6",
+          "read0",
+          "split_join1",
+          "split_join2",
+          "start0"
+        ],
+        "values": {
+          "x": "{null}",
           "y": "[0, 0]"
         }
       }

@@ -11,6 +11,10 @@ from lalcheck.irs.basic.analyses import collecting_semantics
 from lalcheck.irs.basic.purpose import SyntheticVariable
 
 
+def trace_id(trace):
+    return "".join(sorted([n.name for n in trace]))
+
+
 def format_analysis_results(results, model):
     return json.dumps({
         pred_name: {
@@ -24,7 +28,7 @@ def format_analysis_results(results, model):
                     }
                 }
                 for trace, values in sorted(
-                    state.iteritems(), key=lambda x: x[0]
+                    state.iteritems(), key=lambda x: trace_id(x[0])
                 )
             ]
             for node, state in sorted(

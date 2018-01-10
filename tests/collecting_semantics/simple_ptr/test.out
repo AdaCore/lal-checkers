@@ -522,25 +522,6 @@
       {
         "trace:": [
           "assign0",
-          "assign2",
-          "assign3",
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "b": "{False}",
-          "x": "{null}",
-          "y": "[2, 2]"
-        }
-      },
-      {
-        "trace:": [
-          "assign0",
           "assign1",
           "assign4",
           "assume0",
@@ -556,6 +537,25 @@
           "b": "{True}",
           "x": "{notnull}",
           "y": "[-2147483648, 2147483647]"
+        }
+      },
+      {
+        "trace:": [
+          "assign0",
+          "assign2",
+          "assign3",
+          "assume1",
+          "assume2",
+          "read0",
+          "read1",
+          "split_join0",
+          "split_join1",
+          "start0"
+        ],
+        "values": {
+          "b": "{False}",
+          "x": "{null}",
+          "y": "[2, 2]"
         }
       }
     ],
