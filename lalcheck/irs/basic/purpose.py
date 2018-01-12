@@ -56,11 +56,14 @@ class ContractCheck(Purpose):
     Attached to a node that was created for the purpose of checking that a
     Pre/Post condition is satisfied.
     """
-    def __init__(self, contract_name):
+    def __init__(self, contract_name, call_expr):
         """
         :param str contract_name: "Precondition" or "Postcondition"
+        :param tree.Expr call_expr: The call expression associated to the
+            contract check.
         """
         self.contract_name = contract_name
+        self.call_expr = call_expr
 
 
 class SyntheticVariable(Purpose):

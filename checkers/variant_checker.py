@@ -8,6 +8,7 @@ from lalcheck.digraph import Digraph
 from lalcheck.irs.basic.analyses import collecting_semantics
 from lalcheck.irs.basic.purpose import ExistCheck
 from lalcheck.irs.basic.tools import PrettyPrinter
+from checker import CheckerResults, Checker
 
 
 def html_render_node(node):
@@ -79,13 +80,12 @@ def build_resulting_graph(file_name, cfg, infeasibles):
         ]))
 
 
-class AnalysisResult(object):
+class AnalysisResult(CheckerResults):
     """
     Contains the results of the null dereference checker.
     """
     def __init__(self, sem_analysis, infeasibles):
-        self.sem_analysis = sem_analysis
-        self.infeasibles = infeasibles
+        super(AnalysisResult, self).__init__(sem_analysis, infeasibles)
 
     def save_results_to_file(self, file_name):
         """
@@ -95,8 +95,8 @@ class AnalysisResult(object):
         """
         build_resulting_graph(
             file_name,
-            self.sem_analysis.cfg,
-            self.infeasibles
+            self.analysis_results.cfg,
+            self.diagnostics
         )
 
 
@@ -144,3 +144,32 @@ def check_variants(prog, model, merge_pred_builder):
     ]
 
     return AnalysisResult(analysis, infeasibles)
+
+
+class VariantChecker(Checker):
+    def __init__(self):
+        super(VariantChecker, self).__init__(
+            "variant_checker",
+            "Finds invalid field access in variant records",
+            check_variants
+        )
+
+    def report(self, diag):
+        trace, purpose, precise = diag
+        prefix = purpose.accessed_expr.data.orig_node.text
+        qualifier = "I" if precise else "Potentially i"
+        return ("{}nfeasible access {}.{} due to invalid "
+                "condition on discriminant {}.{}").format(
+            qualifier,
+            prefix,
+            escape(purpose.field_name),
+            prefix,
+            escape(purpose.discr_name)
+        )
+
+    def position(self, diag):
+        return diag[1].accessed_expr.data.orig_node.sloc_range.start
+
+
+if __name__ == "__main__":
+    VariantChecker().run()

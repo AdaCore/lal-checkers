@@ -2,7 +2,7 @@
 Output the JSON-formatted results of the "collecting semantics" analysis.
 """
 
-from checkers.dead_code import check_dead_code
+from checkers.deadcode_checker import check_dead_code
 import collecting_semantics_helpers
 import test_helper
 
@@ -12,7 +12,7 @@ import os
 
 def format_analysis_results(results):
     return json.dumps({
-        pred_name: sorted([n.name for n in analysis.dead_nodes])
+        pred_name: sorted([n.name for n in analysis.diagnostics])
         for pred_name, analysis in results.iteritems()
     }, sort_keys=True, indent=2)
 
@@ -30,11 +30,11 @@ def run(args):
 
     for pred_name, analysis in results.iteritems():
         if args.output_dir is not None:
-            analysis.sem_analysis.save_cfg_to_file(os.path.join(
+            analysis.analysis_results.save_cfg_to_file(os.path.join(
                 args.output_dir,
                 'cfg.dot'
             ))
-            analysis.sem_analysis.save_results_to_file(os.path.join(
+            analysis.analysis_results.save_results_to_file(os.path.join(
                 args.output_dir,
                 'sem_{}.dot'.format(pred_name)
             ))

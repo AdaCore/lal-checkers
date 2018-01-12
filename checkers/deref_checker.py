@@ -5,22 +5,23 @@ import lalcheck.irs.basic.tree as irt
 from lalcheck import dot_printer
 from lalcheck.constants import lits
 from lalcheck.digraph import Digraph
-from lalcheck.irs.basic.analyses import collecting_semantics
-from lalcheck.irs.basic.purpose import ContractCheck
+from lalcheck.irs.basic.purpose import DerefCheck
 from lalcheck.irs.basic.tools import PrettyPrinter
+from lalcheck.irs.basic.analyses import collecting_semantics
+from checker import Checker, CheckerResults
 
 
 def html_render_node(node):
     return escape(PrettyPrinter.pretty_print(node))
 
 
-def build_resulting_graph(file_name, cfg, invalids):
+def build_resulting_graph(file_name, cfg, null_derefs):
     def trace_id(trace):
         return str(trace)
 
     paths = defaultdict(list)
 
-    for trace, derefed, precise in invalids:
+    for trace, derefed, precise in null_derefs:
         for node in trace:
             paths[node].append((trace, derefed, precise))
 
@@ -51,12 +52,11 @@ def build_resulting_graph(file_name, cfg, invalids):
             )
         return ()
 
-    def print_path_to_violated_contract(value):
-        purpose, precise = value
+    def print_path_to_null_deref(value):
+        derefed, precise = value
         qualifier = "" if precise else "potential "
-        res_str = "path to {}violated {}".format(
-            qualifier,
-            purpose.contract_name
+        res_str = "path to {}null dereference of {}".format(
+            qualifier, html_render_node(derefed)
         )
         return (
             '<font color="{}">{}</font>'.format('red', res_str),
@@ -68,34 +68,33 @@ def build_resulting_graph(file_name, cfg, invalids):
         ] + [
             dot_printer.DataPrinter(
                 trace_id(trace),
-                print_path_to_violated_contract
+                print_path_to_null_deref
             )
-            for trace, _, _ in invalids
+            for trace, _, _ in null_derefs
         ]))
 
 
-class AnalysisResult(object):
+class AnalysisResult(CheckerResults):
     """
     Contains the results of the null dereference checker.
     """
-    def __init__(self, sem_analysis, invalids):
-        self.sem_analysis = sem_analysis
-        self.invalids = invalids
+    def __init__(self, sem_analysis, null_derefs):
+        super(AnalysisResult, self).__init__(sem_analysis, null_derefs)
 
     def save_results_to_file(self, file_name):
         """
         Prints the resulting graph as a DOT file to the given file name.
         At each program point, displays where the node is part of a path
-        that leads to a (potential) infeasible field access.
+        that leads to a (potential) null dereference.
         """
         build_resulting_graph(
             file_name,
-            self.sem_analysis.cfg,
-            self.invalids
+            self.analysis_results.cfg,
+            self.diagnostics
         )
 
 
-def check_contracts(prog, model, merge_pred_builder):
+def check_derefs(prog, model, merge_pred_builder):
 
     analysis = collecting_semantics.collect_semantics(
         prog,
@@ -112,30 +111,49 @@ def check_contracts(prog, model, merge_pred_builder):
 
     # Collect those that are assume statements and that have a 'purpose' tag
     # which indicates that this assume statement was added to check
-    # existence of a field.
-    contract_checks = (
-        (node, ast_node.expr, ast_node.data.purpose)
+    # dereferences.
+    deref_checks = (
+        (node, ast_node.data.purpose.expr)
         for node, ast_node in nodes_with_ast
         if isinstance(ast_node, irt.AssumeStmt)
-        if ContractCheck.is_purpose_of(ast_node)
+        if DerefCheck.is_purpose_of(ast_node)
     )
 
     # Use the semantic analysis to evaluate at those program points the
     # corresponding expression being dereferenced.
-    contract_check_values = (
-        (frozenset(trace) | {node}, purpose, value)
-        for node, expr, purpose in contract_checks
+    derefed_values = (
+        (frozenset(trace) | {node}, derefed, value)
+        for node, derefed in deref_checks
         for anc in analysis.cfg.ancestors(node)
-        for trace, value in analysis.eval_at(anc, expr).iteritems()
+        for trace, value in analysis.eval_at(anc, derefed).iteritems()
     )
 
     # Finally, keep those that might be null.
     # Store the program trace, the dereferenced expression, and whether
     # the expression "might be null" or "is always null".
-    invalids = [
-        (trace, purpose, len(value) == 1)
-        for trace, purpose, value in contract_check_values
-        if lits.FALSE in value
+    null_derefs = [
+        (trace, derefed, len(value) == 1)
+        for trace, derefed, value in derefed_values
+        if lits.NULL in value
     ]
 
-    return AnalysisResult(analysis, invalids)
+    return AnalysisResult(analysis, null_derefs)
+
+
+class DerefChecker(Checker):
+    def __init__(self):
+        super(DerefChecker, self).__init__(
+            "deref_checker",
+            "Finds null dereference",
+            check_derefs
+        )
+
+    def report(self, diag):
+        return "Null dereference of '{}'!".format(diag[1].data.orig_node.text)
+
+    def position(self, diag):
+        return diag[1].data.orig_node.sloc_range.start
+
+
+if __name__ == "__main__":
+    DerefChecker().run()

@@ -894,7 +894,7 @@ def _gen_ir(ctx, subp):
             )
         ]
 
-    def gen_contract_conditions(proc, args_in, args_out, ret):
+    def gen_contract_conditions(proc, args_in, args_out, ret, call):
         """
         Generates assume statements for checking pre/post conditions of the
         given procedure.
@@ -910,6 +910,8 @@ def _gen_ir(ctx, subp):
 
         :param irt.Expr | None ret: The expression used to retrieve the result
             of the function, if any.
+
+        :param irt.Expr call: The generated call expression.
         """
         if proc.f_aspects is None:
             return [], []
@@ -932,7 +934,7 @@ def _gen_ir(ctx, subp):
             for stmts, expr in [transform_expr(pre)]
             for stmt in stmts + [irt.AssumeStmt(
                 expr,
-                purpose=purpose.ContractCheck("precondition"),
+                purpose=purpose.ContractCheck("precondition", call),
                 orig_node=pre
             )]
         ]
@@ -953,7 +955,7 @@ def _gen_ir(ctx, subp):
             for stmts, expr in [transform_expr(post)]
             for stmt in stmts + [irt.AssumeStmt(
                 expr,
-                purpose=purpose.ContractCheck("postcondition"),
+                purpose=purpose.ContractCheck("postcondition", call),
                 orig_node=post
             )]
         ]
@@ -1040,15 +1042,17 @@ def _gen_ir(ctx, subp):
                         orig_node=orig_node
                     )
 
+                    call_expr = irt.FunCall(
+                        ref,
+                        suffix_exprs,
+                        orig_node=orig_node,
+                        type_hint=ret_tpe,
+                        callee_type=prefix.p_expression_type
+                    )
+
                     call = [irt.AssignStmt(
                         ret_var,
-                        irt.FunCall(
-                            ref,
-                            suffix_exprs,
-                            orig_node=orig_node,
-                            type_hint=ret_tpe,
-                            callee_type=prefix.p_expression_type
-                        )
+                        call_expr
                     )]
 
                     out_arg_exprs = {
@@ -1083,7 +1087,8 @@ def _gen_ir(ctx, subp):
                         ref,
                         suffix_exprs,
                         out_arg_exprs,
-                        res
+                        res,
+                        call_expr
                     )
 
                     return (

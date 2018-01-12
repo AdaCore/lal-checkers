@@ -4,6 +4,7 @@ from lalcheck import dot_printer
 from lalcheck.digraph import Digraph
 from lalcheck.irs.basic.analyses import collecting_semantics
 from lalcheck.irs.basic.tools import PrettyPrinter
+from checker import Checker, CheckerResults
 
 
 def html_render_node(node):
@@ -52,13 +53,12 @@ def build_resulting_graph(file_name, cfg, dead_nodes):
         ]))
 
 
-class AnalysisResult(object):
+class AnalysisResult(CheckerResults):
     """
     Contains the results of the dead code checker.
     """
     def __init__(self, sem_analysis, dead_nodes):
-        self.sem_analysis = sem_analysis
-        self.dead_nodes = dead_nodes
+        super(AnalysisResult, self).__init__(sem_analysis, dead_nodes)
 
     def save_results_to_file(self, file_name):
         """
@@ -67,13 +67,12 @@ class AnalysisResult(object):
         """
         build_resulting_graph(
             file_name,
-            self.sem_analysis.cfg,
-            self.dead_nodes
+            self.analysis_results.cfg,
+            self.diagnostics
         )
 
 
 def check_dead_code(prog, model, merge_pred_builder):
-
     analysis = collecting_semantics.collect_semantics(
         prog,
         model,
@@ -87,3 +86,26 @@ def check_dead_code(prog, model, merge_pred_builder):
     ]
 
     return AnalysisResult(analysis, dead_nodes)
+
+
+class DeadCodeChecker(Checker):
+    def __init__(self):
+        super(DeadCodeChecker, self).__init__(
+            "deadcode_checker",
+            "Finds dead code",
+            check_dead_code
+        )
+
+    def report(self, diag):
+        if 'orig_node' in diag.data.node.data:
+            return "Unreachable code '{}'!".format(
+                diag.data.node.data.orig_node.text
+            )
+
+    def position(self, diag):
+        if 'orig_node' in diag.data.node.data:
+            return diag.data.node.data.orig_node.sloc_range.start
+
+
+if __name__ == "__main__":
+    DeadCodeChecker().run()
