@@ -188,10 +188,11 @@ def _proc_parameters(proc):
     def gen():
         i = 0
 
-        for param in spec.f_subp_params.f_params:
-            for name in param.f_ids:
-                yield (i, name, param)
-                i += 1
+        if spec.f_subp_params is not None:
+            for param in spec.f_subp_params.f_params:
+                for name in param.f_ids:
+                    yield (i, name, param)
+                    i += 1
 
     return list(gen())
 
@@ -959,7 +960,7 @@ def _gen_ir(ctx, subp):
 
         return pre_stmts, post_stmts
 
-    def transform_call_expr(expr):
+    def gen_call_expr(prefix, args, type_hint, orig_node):
         """
         Call expressions are transformed the following way:
 
@@ -983,13 +984,16 @@ def _gen_ir(ctx, subp):
 
         Additionally, contract checks are added around the call.
 
-        :param lal.CallExpr expr: The call expression to transform
+        :param lal.Expr prefix: The object being called.
+        :param iterable[lal.Expr] args: The arguments passed.
+        :param lal.AdaNode type_hint: The type of the call expression.
+        :param lal.AdaNode orig_node: The original call node.
         :rtype: (list[irt.Stmt], irt.Expr)
         """
 
         suffixes = [
             transform_expr(suffix.f_r_expr)
-            for suffix in expr.f_suffix
+            for suffix in args
         ]
         suffix_pre_stmts = [
             suffix_stmt
@@ -998,8 +1002,8 @@ def _gen_ir(ctx, subp):
         ]
         suffix_exprs = [suffix[1] for suffix in suffixes]
 
-        if expr.f_name.is_a(lal.Identifier):
-            ref = expr.f_name.p_referenced_decl
+        if prefix.is_a(lal.Identifier):
+            ref = prefix.p_referenced_decl
             if ref.is_a(lal.SubpBody, lal.SubpDecl):
                 # The call target is statically known.
 
@@ -1013,27 +1017,27 @@ def _gen_ir(ctx, subp):
                     return suffix_pre_stmts, irt.FunCall(
                         ref,
                         suffix_exprs,
-                        orig_node=expr,
-                        type_hint=expr.p_expression_type,
-                        callee_type=expr.f_name.p_expression_type
+                        orig_node=orig_node,
+                        type_hint=type_hint,
+                        callee_type=prefix.p_expression_type
                     )
                 else:
                     ret_tpe = _ExtendedCallReturnType(
                         [index for index, _, _ in out_params],
                         [spec.f_type_expr for _, _, spec in out_params],
-                        expr.p_expression_type
-                    ) if len(out_params) != 0 else expr.p_expression_type
+                        type_hint
+                    ) if len(out_params) != 0 else type_hint
 
                     ret_var = irt.Identifier(
                         irt.Variable(
                             fresh_name("ret"),
                             purpose=purpose.SyntheticVariable(),
                             type_hint=ret_tpe,
-                            orig_node=expr,
+                            orig_node=orig_node,
                             mode=Mode.Local
                         ),
                         type_hint=ret_tpe,
-                        orig_node=expr
+                        orig_node=orig_node
                     )
 
                     call = [irt.AssignStmt(
@@ -1041,9 +1045,9 @@ def _gen_ir(ctx, subp):
                         irt.FunCall(
                             ref,
                             suffix_exprs,
-                            orig_node=expr,
+                            orig_node=orig_node,
                             type_hint=ret_tpe,
-                            callee_type=expr.f_name.p_expression_type
+                            callee_type=prefix.p_expression_type
                         )
                     )]
 
@@ -1051,8 +1055,7 @@ def _gen_ir(ctx, subp):
                         j: irt.FunCall(
                             ops.get(i),
                             [ret_var],
-                            type_hint=expr.f_suffix[j].
-                            f_r_expr.p_expression_type
+                            type_hint=args[j].f_r_expr.p_expression_type
                         )
                         for i, (j, _, spec) in enumerate(out_params)
                     }
@@ -1061,11 +1064,11 @@ def _gen_ir(ctx, subp):
                         stmt
                         for i, _, spec in out_params
                         for stmt in gen_assignment(
-                            expr.f_suffix[i].f_r_expr, [], out_arg_exprs[i]
+                            args[i].f_r_expr, [], out_arg_exprs[i]
                         )
                     ]
 
-                    if expr.p_expression_type is None:
+                    if type_hint is None:
                         res = None
                     elif len(out_params) == 0:
                         res = ret_var
@@ -1073,7 +1076,7 @@ def _gen_ir(ctx, subp):
                         res = irt.FunCall(
                             ops.get(len(out_params)),
                             [ret_var],
-                            type_hint=expr.p_expression_type
+                            type_hint=type_hint
                         )
 
                     pre_conds, post_conds = gen_contract_conditions(
@@ -1092,15 +1095,15 @@ def _gen_ir(ctx, subp):
                         res
                     )
 
-        if _is_array_type_decl(expr.f_name.p_expression_type):
-            prefix_pre_stmts, prefix_expr = transform_expr(expr.f_name)
+        if _is_array_type_decl(prefix.p_expression_type):
+            prefix_pre_stmts, prefix_expr = transform_expr(prefix)
 
             return prefix_pre_stmts + suffix_pre_stmts, irt.FunCall(
                 ops.CALL,
                 [prefix_expr] + suffix_exprs,
-                type_hint=expr.p_expression_type,
-                orig_node=expr,
-                callee_type=expr.f_name.p_expression_type
+                type_hint=type_hint,
+                orig_node=orig_node,
+                callee_type=prefix.p_expression_type
             )
 
     def transform_dereference(derefed_expr, deref_type, deref_orig):
@@ -1259,7 +1262,12 @@ def _gen_ir(ctx, subp):
             )
 
         elif expr.is_a(lal.CallExpr):
-            return transform_call_expr(expr)
+            return gen_call_expr(
+                expr.f_name,
+                expr.f_suffix,
+                expr.p_expression_type,
+                expr
+            )
 
         elif expr.is_a(lal.IfExpr):
             # If expressions are transformed as such:
@@ -1361,9 +1369,8 @@ def _gen_ir(ctx, subp):
                     type_hint=var.data.type_hint,
                     orig_node=expr
                 )
-            elif ref.is_a(lal.SubpBody):
-                # todo
-                pass
+            elif ref.is_a(lal.SubpBody, lal.SubpDecl):
+                return gen_call_expr(expr, [], expr.p_expression_type, expr)
             elif ref.is_a(lal.EnumLiteralDecl):
                 return [], irt.Lit(
                     expr.text,
@@ -1573,7 +1580,12 @@ def _gen_ir(ctx, subp):
             return gen_assignment(stmt.f_dest, expr_pre_stmts, expr, stmt)
 
         elif stmt.is_a(lal.CallStmt):
-            return transform_call_expr(stmt.f_call)[0]
+            return gen_call_expr(
+                stmt.f_call.f_name,
+                stmt.f_call.f_suffix,
+                stmt.f_call.p_expression_type,
+                stmt
+            )[0]
 
         elif stmt.is_a(lal.DeclBlock):
             decls = transform_decls(stmt.f_decls.f_decls)
