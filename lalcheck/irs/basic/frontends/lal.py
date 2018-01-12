@@ -173,6 +173,29 @@ def _record_fields(record_decl):
     return res
 
 
+@memoize
+def _proc_parameters(proc):
+    """
+    Returns the parameters from the given subprogram that have the "Out" mode.
+
+    :param lal.SubpBody | lal.SubpDecl proc: The procedure for which to
+        retrieve the parameters.
+
+    :rtype: iterable[(int, lal.Identifier, lal.ParamSpec)]
+    """
+    spec = proc.f_subp_spec
+
+    def gen():
+        i = 0
+
+        for param in spec.f_subp_params.f_params:
+            for name in param.f_ids:
+                yield (i, name, param)
+                i += 1
+
+    return list(gen())
+
+
 def _find_cousin_conditions(record_fields, cond_prefix):
     """
     Returns the set of conditions that come after the given prefix list of
@@ -226,23 +249,6 @@ def _is_array_type_decl(tpe):
     return False
 
 
-def _get_out_parameters(subp):
-    """
-    Returns the parameters from the given subprogram that have the "Out" mode.
-
-    :param lal.SubpBody subp:
-    :rtype: iterable[(int, lal.Identifier, lal.ParamSpec)]
-    """
-    spec = subp.f_subp_spec
-    i = 0
-
-    for param in spec.f_subp_params.f_params:
-        for name in param.f_ids:
-            if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut):
-                yield (i, name, param)
-            i += 1
-
-
 def _gen_ir(ctx, subp):
     """
     Generates Basic intermediate representation from a lal subprogram body.
@@ -282,6 +288,11 @@ def _gen_ir(ctx, subp):
     # Store the loops which we are currently in while traversing the syntax
     # tree. The tuple (loop_statement, exit_label) is stored.
     loop_stack = []
+
+    # Store a mapping of (str, lal.AdaNode) to irt.Node. Whenever a
+    # lal.Identifier refers to such a key present in the mapping, it is
+    # substituted by the corresponding irt node.
+    substitutions = {}
 
     def fresh_name(name):
         """
@@ -882,6 +893,72 @@ def _gen_ir(ctx, subp):
             )
         ]
 
+    def gen_contract_conditions(proc, args_in, args_out, ret):
+        """
+        Generates assume statements for checking pre/post conditions of the
+        given procedure.
+
+        :param lal.SubpBody | lal.SubpDecl proc: The procedure for which to
+            generate contract checking conditions.
+
+        :param list[irt.Expr] args_in: The expressions used to retrieve
+            the input arguments of the function, indexed by their position.
+
+        :param dict[int, irt.Expr] args_out: The expressions used to retrieve
+            the output arguments of the function, indexed by their position.
+
+        :param irt.Expr | None ret: The expression used to retrieve the result
+            of the function, if any.
+        """
+        if proc.f_aspects is None:
+            return [], []
+
+        pres, posts = (
+            [
+                aspect.f_expr
+                for aspect in proc.f_aspects.f_aspect_assocs
+                if aspect.f_id.text == contract_id
+            ]
+            for contract_id in ('Pre', 'Post')
+        )
+
+        for i, name, param in _proc_parameters(proc):
+            substitutions[name.text, param] = ([], args_in[i])
+
+        pre_stmts = [
+            stmt
+            for pre in pres
+            for stmts, expr in [transform_expr(pre)]
+            for stmt in stmts + [irt.AssumeStmt(
+                expr,
+                purpose=purpose.ContractCheck("precondition"),
+                orig_node=pre
+            )]
+        ]
+
+        substitutions[
+            proc.f_subp_spec.f_subp_name.text + "'Result",
+            proc
+        ] = ([], ret)
+
+        for i, name, param in _proc_parameters(proc):
+            if i in args_out:
+                substitutions[name.text + "'Old", param] = ([], args_in[i])
+                substitutions[name.text, param] = ([], args_out[i])
+
+        post_stmts = [
+            stmt
+            for post in posts
+            for stmts, expr in [transform_expr(post)]
+            for stmt in stmts + [irt.AssumeStmt(
+                expr,
+                purpose=purpose.ContractCheck("postcondition"),
+                orig_node=post
+            )]
+        ]
+
+        return pre_stmts, post_stmts
+
     def transform_call_expr(expr):
         """
         Call expressions are transformed the following way:
@@ -904,6 +981,8 @@ def _gen_ir(ctx, subp):
         x_2 := Get_1(tmp)
         r := Get_2(tmp)
 
+        Additionally, contract checks are added around the call.
+
         :param lal.CallExpr expr: The call expression to transform
         :rtype: (list[irt.Stmt], irt.Expr)
         """
@@ -924,9 +1003,13 @@ def _gen_ir(ctx, subp):
             if ref.is_a(lal.SubpBody, lal.SubpDecl):
                 # The call target is statically known.
 
-                out_params = list(_get_out_parameters(ref))
+                out_params = [
+                    (i, name, param)
+                    for i, name, param in _proc_parameters(ref)
+                    if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut)
+                ]
 
-                if len(out_params) == 0:
+                if len(out_params) == 0 and ref.f_aspects is None:
                     return suffix_pre_stmts, irt.FunCall(
                         ref,
                         suffix_exprs,
@@ -939,7 +1022,7 @@ def _gen_ir(ctx, subp):
                         [index for index, _, _ in out_params],
                         [spec.f_type_expr for _, _, spec in out_params],
                         expr.p_expression_type
-                    )
+                    ) if len(out_params) != 0 else expr.p_expression_type
 
                     ret_var = irt.Identifier(
                         irt.Variable(
@@ -964,28 +1047,50 @@ def _gen_ir(ctx, subp):
                         )
                     )]
 
+                    out_arg_exprs = {
+                        j: irt.FunCall(
+                            ops.get(i),
+                            [ret_var],
+                            type_hint=expr.f_suffix[j].
+                            f_r_expr.p_expression_type
+                        )
+                        for i, (j, _, spec) in enumerate(out_params)
+                    }
+
                     assignments = [
                         stmt
-                        for i, (j, _, spec) in enumerate(out_params)
+                        for i, _, spec in out_params
                         for stmt in gen_assignment(
-                            expr.f_suffix[j].f_r_expr,
-                            [],
-                            irt.FunCall(
-                                ops.get(i),
-                                [ret_var],
-                                type_hint=expr.f_suffix[j].
-                                f_r_expr.p_expression_type
-                            )
+                            expr.f_suffix[i].f_r_expr, [], out_arg_exprs[i]
                         )
                     ]
 
-                    res = irt.FunCall(
-                        ops.get(len(out_params)),
-                        [ret_var],
-                        type_hint=ret_tpe.ret_type
-                    ) if ret_tpe.ret_type is not None else None
+                    if expr.p_expression_type is None:
+                        res = None
+                    elif len(out_params) == 0:
+                        res = ret_var
+                    else:
+                        res = irt.FunCall(
+                            ops.get(len(out_params)),
+                            [ret_var],
+                            type_hint=expr.p_expression_type
+                        )
 
-                    return suffix_pre_stmts + call + assignments, res
+                    pre_conds, post_conds = gen_contract_conditions(
+                        ref,
+                        suffix_exprs,
+                        out_arg_exprs,
+                        res
+                    )
+
+                    return (
+                        (suffix_pre_stmts +
+                         pre_conds +
+                         call +
+                         post_conds +
+                         assignments),
+                        res
+                    )
 
         if _is_array_type_decl(expr.f_name.p_expression_type):
             prefix_pre_stmts, prefix_expr = transform_expr(expr.f_name)
@@ -1246,7 +1351,10 @@ def _gen_ir(ctx, subp):
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
             ref = expr.p_referenced_decl
-            if ref.is_a(lal.ObjectDecl, lal.ParamSpec):
+
+            if (expr.text, ref) in substitutions:
+                return substitutions[expr.text, ref]
+            elif ref.is_a(lal.ObjectDecl, lal.ParamSpec):
                 var = var_decls[ref, expr.text]
                 return [], irt.Identifier(
                     var,
@@ -1341,14 +1449,24 @@ def _gen_ir(ctx, subp):
 
         elif expr.is_a(lal.AttributeRef):
             # AttributeRefs are transformed using an unary operator.
-
-            prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
-            return prefix_pre_stmts, irt.FunCall(
-                _attr_to_unop[expr.f_attribute.text],
-                [prefix],
-                type_hint=expr.p_expression_type,
-                orig_node=expr
-            )
+            if expr.f_attribute.text in _attr_to_unop:
+                prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
+                return prefix_pre_stmts, irt.FunCall(
+                    _attr_to_unop[expr.f_attribute.text],
+                    [prefix],
+                    type_hint=expr.p_expression_type,
+                    orig_node=expr
+                )
+            elif expr.f_attribute.text == 'Result':
+                return substitutions[
+                    expr.f_prefix.text + "'Result",
+                    expr.f_prefix.p_referenced_decl
+                ]
+            elif expr.f_attribute.text == 'Old':
+                return substitutions[
+                    expr.f_prefix.text + "'Old",
+                    expr.f_prefix.p_referenced_decl
+                ]
 
         unimplemented(expr)
 

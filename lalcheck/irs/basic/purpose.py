@@ -51,6 +51,18 @@ class ExistCheck(Purpose):
         self.discr_name = discr_name
 
 
+class ContractCheck(Purpose):
+    """
+    Attached to a node that was created for the purpose of checking that a
+    Pre/Post condition is satisfied.
+    """
+    def __init__(self, contract_name):
+        """
+        :param str contract_name: "Precondition" or "Postcondition"
+        """
+        self.contract_name = contract_name
+
+
 class SyntheticVariable(Purpose):
     """
     Attached to an identifier that was created synthetically. (For example,
