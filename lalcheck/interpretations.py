@@ -191,6 +191,26 @@ def default_boolean_interpreter(tpe):
         )
 
 
+def default_char_interpreter(int_range_interpreter):
+    @Transformer.as_transformer
+    def is_char_tpe(tpe):
+        if tpe.is_a(types.ASCIICharacter):
+            return tpe
+
+    @Transformer.as_transformer
+    def char_interpreter(int_interp):
+        def builder(val):
+            return int_interp.builder(ord(val))
+
+        return TypeInterpretation(
+            int_interp.domain,
+            int_interp.def_provider,
+            builder
+        )
+
+    return is_char_tpe >> int_range_interpreter >> char_interpreter
+
+
 @type_interpreter
 def default_int_range_interpreter(tpe):
     if tpe.is_a(types.IntRange):
@@ -528,7 +548,7 @@ def default_array_interpreter(attribute_interpreter):
         return TypeInterpretation(
             array_dom,
             dict_to_provider(defs),
-            id
+            sparse_array_ops.lit
         )
 
     return (
@@ -543,6 +563,7 @@ def default_array_interpreter(attribute_interpreter):
 def default_type_interpreter():
     return (
         default_boolean_interpreter |
+        default_char_interpreter(default_int_range_interpreter) |
         default_int_range_interpreter |
         default_enum_interpreter |
         default_simple_pointer_interpreter(default_type_interpreter) |

@@ -44,6 +44,14 @@ class IntRange(Type):
         self.frm, self.to = frm, to
 
 
+class ASCIICharacter(IntRange):
+    """
+    Represents an ASCII Character.
+    """
+    def __init__(self):
+        super(ASCIICharacter, self).__init__(0, 255)
+
+
 class Enum(Type):
     """
     Represents an enum type.

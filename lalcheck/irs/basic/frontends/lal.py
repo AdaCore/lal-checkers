@@ -1445,6 +1445,31 @@ def _gen_ir(ctx, subp):
                 orig_node=expr
             )
 
+        elif expr.is_a(lal.StringLiteral):
+            lit = new_expression_replacing_var("tmp", expr)
+            text = expr.f_tok.text[1:-1]
+
+            def build_lit(i):
+                if i == len(text):
+                    return lit
+                else:
+                    return irt.FunCall(
+                        ops.UPDATED,
+                        [
+                            build_lit(i + 1),
+                            irt.Lit(text[i], type_hint=ctx.evaluator.char),
+                            irt.Lit(
+                                i + 1,
+                                type_hint=ctx.evaluator.universal_int
+                            ),
+                        ],
+                        type_hint=expr.p_expression_type,
+                        orig_node=expr,
+                        purpose=purpose.CallAssignment(expr.p_expression_type)
+                    )
+
+            return [irt.AssignStmt(lit, build_lit(0))], lit
+
         elif expr.is_a(lal.Aggregate):
             type_def = expr.p_expression_type.f_type_def
             if type_def.is_a(lal.RecordTypeDef):
@@ -1479,6 +1504,17 @@ def _gen_ir(ctx, subp):
                     expr.f_prefix.text + "'Old",
                     expr.f_prefix.p_referenced_decl
                 ]
+            elif expr.f_attribute.text == 'Image':
+                if expr.f_prefix.p_referenced_decl == expr.p_int_type:
+                    arg_pre_stmts, arg_expr = transform_expr(
+                        expr.f_args[0].f_r_expr
+                    )
+                    return arg_pre_stmts, irt.FunCall(
+                        ops.IMAGE,
+                        [arg_expr],
+                        type_hint=expr.p_expression_type,
+                        orig_node=expr
+                    )
 
         unimplemented(expr)
 
@@ -2024,16 +2060,19 @@ class ConstExprEvaluator(IRImplicitVisitor):
         (ops.GET_LAST, 1): lambda x: x.last
     }
 
-    def __init__(self, bool_type, int_type, u_int_type, u_real_type):
+    def __init__(self, bool_type, int_type, char_type, u_int_type,
+                 u_real_type):
         """
         :param lal.AdaNode bool_type: The standard boolean type.
         :param lal.AdaNode int_type: The standard int type.
+        :param lal.AdaNode char_type: The standard char type.
         :param lal.AdaNode u_int_type: The standard universal int type.
         :param lal.AdaNode u_real_type: The standard universal real type.
         """
         super(ConstExprEvaluator, self).__init__()
         self.bool = bool_type
         self.int = int_type
+        self.char = char_type
         self.universal_int = u_int_type
         self.universal_real = u_real_type
 
@@ -2213,6 +2252,7 @@ def name_typer(inner_typer):
         :rtype: lal.BaseTypeDecl
         """
         if hint.is_a(lal.SubtypeIndication):
+            # todo: Take constraint into account
             return hint.f_name.p_referenced_decl
 
     return resolved_name >> inner_typer
@@ -2298,6 +2338,19 @@ def subp_ret_typer(inner):
     )
 
 
+def subtyper(inner):
+    """
+    :param types.Typer[lal.AdaNode] inner: Typer for base types.
+    :rtype: types.Typer[lal.AdaNode]
+    """
+    @types.typer
+    def get_subtype(hint):
+        if hint.is_a(lal.SubtypeDecl):
+            return hint.f_subtype
+
+    return get_subtype >> inner
+
+
 class ExtractionContext(object):
     """
     The libadalang-based frontend interface. Provides method for extracting
@@ -2316,9 +2369,15 @@ class ExtractionContext(object):
             "<dummy>", 'package Dummy is end;'
         ).root
 
+        # Find the Character TypeDecl.
+        char_type = dummy.p_standard_unit.root.find(
+            lambda x: x.is_a(lal.TypeDecl) and x.f_type_id.text == "Character"
+        )
+
         self.evaluator = ConstExprEvaluator(
             dummy.p_bool_type,
             dummy.p_int_type,
+            char_type,
             dummy.p_universal_int_type,
             dummy.p_universal_real_type
         )
@@ -2376,6 +2435,7 @@ class ExtractionContext(object):
         """
         bool_type = self.evaluator.bool
         int_type = self.evaluator.int
+        char_type = self.evaluator.char
 
         @types.typer
         def typer(hint):
@@ -2388,6 +2448,8 @@ class ExtractionContext(object):
                 return types.Boolean()
             elif hint == int_type:
                 return types.IntRange(-2 ** 31, 2 ** 31 - 1)
+            elif hint == char_type:
+                return types.ASCIICharacter()
 
         return typer
 
@@ -2415,6 +2477,7 @@ class ExtractionContext(object):
                     name_typer(typer) |
                     anonymous_typer(typer) |
                     array_typer(typer, typer) |
-                    subp_ret_typer(typer))
+                    subp_ret_typer(typer) |
+                    subtyper(typer))
 
         return typer

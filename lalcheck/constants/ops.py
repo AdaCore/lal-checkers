@@ -21,6 +21,8 @@ GET_LAST = 'GetLast'
 CALL = "Call"
 UPDATED = "Updated"
 
+IMAGE = "Image"
+
 
 def get(x):
     """
