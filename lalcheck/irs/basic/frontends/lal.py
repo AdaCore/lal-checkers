@@ -2361,8 +2361,13 @@ class ExtractionContext(object):
     compatible. Also, this extraction context must be kept alive as long
     as the programs parsed with it are intended to be used.
     """
-    def __init__(self):
-        self.lal_ctx = lal.AnalysisContext()
+    def __init__(self, project_file=None):
+        if project_file is None:
+            self.lal_ctx = lal.AnalysisContext()
+        else:
+            self.lal_ctx = lal.AnalysisContext(
+                unit_provider=lal.UnitProvider.for_project(project_file)
+            )
 
         # Get a dummy node, needed to call static properties of libadalang.
         dummy = self.lal_ctx.get_from_buffer(
@@ -2382,16 +2387,7 @@ class ExtractionContext(object):
             dummy.p_universal_real_type
         )
 
-    def _parse_file(self, ada_file):
-        """
-        Parses the given file.
-
-        :param str ada_file: The path to the file to parse.
-        :rtype: lal.AnalysisUnit
-        """
-        return self.lal_ctx.get_from_file(ada_file)
-
-    def extract_programs(self, ada_file):
+    def extract_programs_from_file(self, ada_file):
         """
         :param str ada_file: A path to the Ada source file from which to
             extract programs.
@@ -2401,10 +2397,16 @@ class ExtractionContext(object):
 
         :rtype: iterable[irt.Program]
         """
-        unit = self._parse_file(ada_file)
+        return self._extract_from_unit(self.lal_ctx.get_from_file(ada_file))
 
+    def extract_programs_from_provider(self, name, kind):
+        return self._extract_from_unit(self.lal_ctx.get_from_provider(
+            name, kind
+        ))
+
+    def _extract_from_unit(self, unit):
         if unit.root is None:
-            print('Could not parse {}:'.format(ada_file))
+            print('Could not parse {}:'.format(unit.filename))
             for diag in unit.diagnostics:
                 print('   {}'.format(diag))
                 return

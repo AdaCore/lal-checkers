@@ -20,7 +20,7 @@ ctx = lal2basic.ExtractionContext()
 
 def do_analysis(checker, merge_predicates, call_strategy_name):
 
-    progs = ctx.extract_programs("test.adb")
+    progs = ctx.extract_programs_from_file("test.adb")
 
     call_strategies = {
         'unknown': collecting_semantics.UnknownTargetCallStrategy(),

@@ -55,7 +55,7 @@ class Checker(object):
         args = self.args = self.parser.parse_args()
         ctx = lal2basic.ExtractionContext()
 
-        progs = ctx.extract_programs(args.file)
+        progs = ctx.extract_programs_from_file(args.file)
 
         call_strategies = {
             'unknown': collecting_semantics.UnknownTargetCallStrategy(),

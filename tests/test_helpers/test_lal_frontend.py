@@ -12,7 +12,7 @@ import test_helper
 def run(args):
     ctx = lal2basic.ExtractionContext()
 
-    progs = ctx.extract_programs("test.adb")
+    progs = ctx.extract_programs_from_file("test.adb")
 
     output = PrettyPrinter.pretty_print(
         progs[0],
