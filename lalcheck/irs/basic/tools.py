@@ -437,34 +437,35 @@ class ExprEvaluator(visitors.Visitor):
     """
     Can be used to evaluate expressions in the Basic IR.
     """
-    def __init__(self, model):
+    def __init__(self, model, vars_idx):
         """
         :param dict[tree.Node, Bunch] model: A model that must have an entry
             for each node that needs be evaluated by this evaluator.
         """
         self.model = model
+        self.vars_idx = vars_idx
 
-    def eval(self, expr, env):
+    def eval(self, expr, state):
         """
         :param tree.Expr expr: The expression to evaluate.
 
-        :param dict[tree.Variable, object] env: The environment, containing
+        :param tuple[object] state: The state, containing
             an entry for each Variable traversed during evaluation.
 
         :return: The value this expression evaluates to.
 
         :rtype: object
         """
-        return expr.visit(self, env)
+        return expr.visit(self, state)
 
-    def visit_ident(self, ident, env):
-        return env[ident.var]
+    def visit_ident(self, ident, state):
+        return state[self.vars_idx[ident.var]]
 
-    def visit_funcall(self, funcall, env):
-        args = [arg.visit(self, env) for arg in funcall.args]
+    def visit_funcall(self, funcall, state):
+        args = [arg.visit(self, state) for arg in funcall.args]
         return self.model[funcall].definition(*args)
 
-    def visit_lit(self, lit, env):
+    def visit_lit(self, lit, state):
         return self.model[lit].builder(lit.val)
 
 
@@ -472,15 +473,16 @@ class ExprSolver(visitors.Visitor):
     """
     Can be used to solve expressions in the Basic IR.
     """
-    def __init__(self, model):
+    def __init__(self, model, vars_idx):
         """
         :param dict[tree.Node, Bunch] model: A model that must have an entry
             for each node that needs be solved by this solver.
         """
         self.model = model
-        self.eval = ExprEvaluator(model).eval
+        self.vars_idx = vars_idx
+        self.eval = ExprEvaluator(model, vars_idx).eval
 
-    def solve(self, expr, env):
+    def solve(self, expr, state):
         """
         :param tree.Expr expr: The predicate expression to solve.
 
@@ -498,18 +500,18 @@ class ExprSolver(visitors.Visitor):
         thus making it sound for abstract interpretation.
         """
 
-        new_env = env.copy()
-        if not expr.visit(self, new_env, boolean_ops.true):
-            return {}
-        return new_env
+        new_state = list(state)
+        res = expr.visit(self, new_state, boolean_ops.true)
+        return tuple(new_state), res
 
-    def visit_ident(self, ident, env, expected):
+    def visit_ident(self, ident, state, expected):
         dom = self.model[ident.var].domain
-        env[ident.var] = dom.meet(env[ident.var], expected)
+        var_idx = self.vars_idx[ident.var]
+        state[var_idx] = dom.meet(state[var_idx], expected)
         return True
 
-    def visit_funcall(self, funcall, env, expected):
-        args_val = [self.eval(arg, env) for arg in funcall.args]
+    def visit_funcall(self, funcall, state, expected):
+        args_val = [self.eval(arg, state) for arg in funcall.args]
         inv_res = self.model[funcall].inverse(
             expected, *args_val
         )
@@ -521,11 +523,11 @@ class ExprSolver(visitors.Visitor):
             inv_res = [inv_res]
 
         return all(
-            arg.visit(self, env, expected_arg)
+            arg.visit(self, state, expected_arg)
             for arg, expected_arg in zip(funcall.args, inv_res)
         )
 
-    def visit_lit(self, lit, env, expected):
+    def visit_lit(self, lit, state, expected):
         lit_dom = self.model[lit].domain
-        lit_val = self.eval(lit, env)
+        lit_val = self.eval(lit, state)
         return not lit_dom.is_empty(lit_dom.meet(expected, lit_val))

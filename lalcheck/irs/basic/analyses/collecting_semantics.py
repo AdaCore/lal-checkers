@@ -30,25 +30,17 @@ class _VarTracker(visitors.CFGNodeVisitor):
         self.evaluator = evaluator
         self.constr_solver = c_solver
 
-    def state_to_env(self, state):
-        return {v: state[self.vars_idx[v]] for v in self.vars}
-
-    def env_to_state(self, env):
-        if len(env) == 0:
-            return self.vars_domain.bottom
-        else:
-            return tuple(env[v] for v in self.vars)
-
     def visit_assign(self, assign, state):
-        env = self.state_to_env(state)
-        env[assign.id.var] = self.evaluator.eval(assign.expr, env)
-        return self.env_to_state(env)
+        return tuple(
+            self.evaluator.eval(assign.expr, state)
+            if i == self.vars_idx[assign.id.var]
+            else state[i]
+            for i, v in enumerate(state)
+        )
 
     def visit_assume(self, assume, state):
-        return self.env_to_state(self.constr_solver.solve(
-            assume.expr,
-            self.state_to_env(state)
-        ))
+        new_state, success = self.constr_solver.solve(assume.expr, state)
+        return new_state if success else self.vars_domain.bottom
 
     def visit_read(self, read, state):
         return tuple(self.vars_domain.top[i] if i == self.vars_idx[read.id.var]
@@ -336,13 +328,22 @@ class AnalysisResults(object):
             self.evaluator.model
         )
 
+    def _to_state(self, env):
+        state_list = [None] * len(env)
+        for var, value in env.iteritems():
+            state_list[self.evaluator.vars_idx[var]] = value
+        return tuple(state_list)
+
     def eval_at(self, node, expr):
         """
         Given a program point, evaluates for each program trace available at
         this program point the given expression.
         """
         return {
-            trace: self.evaluator.eval(expr, env)
+            trace: self.evaluator.eval(
+                expr,
+                self._to_state(env)
+            )
             for trace, env in self.semantics[node].iteritems()
         }
 
@@ -357,8 +358,8 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
     vars_domain = domains.Product(*(model[v].domain for v in var_set))
     trace_domain = _SimpleTraceLattice(cfg.nodes)
 
-    evaluator = ExprEvaluator(model)
-    solver = ExprSolver(model)
+    evaluator = ExprEvaluator(model, vars_idx)
+    solver = ExprSolver(model, vars_idx)
 
     widening_counter = KeyCounter()
     widening_delay = 10
