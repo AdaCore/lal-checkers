@@ -1671,7 +1671,7 @@ def _gen_ir(ctx, subp):
 
         elif expr.is_a(lal.IntLiteral):
             return [], irt.Lit(
-                int(expr.f_tok.text),
+                int(expr.text),
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
