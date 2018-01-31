@@ -70,11 +70,8 @@ class Pointer(Type):
     """
     Given a type, represents the type of pointers on that type.
     """
-    def __init__(self, elem_type):
-        self.elem_type = elem_type
-
-    def children(self):
-        yield self.elem_type
+    def __init__(self):
+        pass
 
 
 class Product(Type):

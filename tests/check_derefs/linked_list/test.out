@@ -1,0 +1,52 @@
+{
+  "always": [
+    {
+      "precise": false,
+      "trace": [
+        "assign0",
+        "assign1",
+        "assign2",
+        "assign3",
+        "assume0",
+        "assume1",
+        "assume2",
+        "assume3",
+        "assume4",
+        "assume5",
+        "assume6",
+        "assume8",
+        "assume9",
+        "loop_join0",
+        "loop_start0",
+        "read0",
+        "read1",
+        "split_join0",
+        "start0"
+      ]
+    }
+  ],
+  "le_t_eq_v": [
+    {
+      "precise": true,
+      "trace": [
+        "assign0",
+        "assign1",
+        "assign3",
+        "assume0",
+        "assume1",
+        "assume2",
+        "assume4",
+        "assume5",
+        "assume6",
+        "assume8",
+        "assume9",
+        "loop_join0",
+        "loop_start0",
+        "read0",
+        "read1",
+        "split_join0",
+        "start0"
+      ]
+    }
+  ]
+}

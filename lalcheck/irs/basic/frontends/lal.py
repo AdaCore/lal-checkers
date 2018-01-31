@@ -1067,6 +1067,7 @@ def _gen_ir(ctx, subp):
                 ),
                 [stack],
                 type_hint=_PointerType(expr.p_expression_type),
+                additional_arg=expr.p_expression_type,
                 orig_node=expr
             )
 
@@ -1077,6 +1078,7 @@ def _gen_ir(ctx, subp):
                 access_paths.Field(updated_index),
                 [gen_access_path(expr.f_prefix)],
                 type_hint=_PointerType(expr.p_expression_type),
+                additional_arg=expr.p_expression_type,
                 orig_node=expr
             )
 
@@ -1650,7 +1652,8 @@ def _gen_ir(ctx, subp):
 
             if expr.f_prefix.p_expression_type.p_is_access_type:
                 access_type_def = expr.f_prefix.p_expression_type.f_type_def
-                accessed_type = access_type_def.f_subtype_indication
+                accessed_ind = access_type_def.f_subtype_indication
+                accessed_type = accessed_ind.p_designated_type_decl_from(expr)
                 prefix_pre_stmts, prefix = transform_dereference(
                     expr.f_prefix, accessed_type, expr.f_prefix
                 )
@@ -1850,6 +1853,9 @@ def _gen_ir(ctx, subp):
                 ]
 
         elif decl.is_a(lal.SubpBody, lal.SubpDecl):
+            return []
+
+        elif decl.is_a(lal.IncompleteTypeDecl):
             return []
 
         unimplemented(decl)
@@ -2412,37 +2418,21 @@ def enum_typer(hint):
             return types.Enum([lit.f_enum_identifier.text for lit in literals])
 
 
-_to_pointer = Transformer.make_memoizing(
-    Transformer.as_transformer(
-        types.Pointer
-    )
-)
+_pointer_type = types.Pointer()
 
 
-def access_typer(inner_typer):
+@types.Typer
+def access_typer(hint):
     """
-    :param types.Typer[lal.AdaNode] inner_typer: A typer for elements
-        being accessed.
-
-    :return: A Typer for Ada's access types.
-
-    :rtype: types.Typer[lal.AdaNode]
+    :param lal.AdaNode hint: the lal type.
+    :return: The lal type being accessed.
+    :rtype: lal.AdaNode
     """
-
-    @Transformer.as_transformer
-    def accessed_type(hint):
-        """
-        :param lal.AdaNode hint: the lal type.
-        :return: The lal type being accessed.
-        :rtype: lal.AdaNode
-        """
-        if hint.is_a(lal.TypeDecl):
-            if hint.p_is_access_type:
-                return hint.f_type_def.f_subtype_indication
-        elif hint.is_a(_PointerType):
-            return hint.elem_type
-
-    return accessed_type >> inner_typer >> _to_pointer
+    if hint.is_a(lal.TypeDecl):
+        if hint.p_is_access_type:
+            return _pointer_type
+    elif hint.is_a(_PointerType):
+        return _pointer_type
 
 
 def record_component_typer(inner_typer):
@@ -2509,7 +2499,7 @@ def name_typer(inner_typer):
         """
         if hint.is_a(lal.SubtypeIndication):
             # todo: Take constraint into account
-            return hint.f_name.p_referenced_decl
+            return hint.p_designated_type_decl
 
     return resolved_name >> inner_typer
 
@@ -2736,7 +2726,7 @@ class ExtractionContext(object):
             return (standard_typer |
                     int_range_typer |
                     enum_typer |
-                    access_typer(typer) |
+                    access_typer |
                     record_typer(record_component_typer(typer)) |
                     name_typer(typer) |
                     anonymous_typer(typer) |

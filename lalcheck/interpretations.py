@@ -577,20 +577,19 @@ def custom_pointer_interpreter(inner_interpreter):
         :rtype: type.Type
         """
         if tpe.is_a(types.Pointer):
-            return tpe.elem_type
+            return tpe
 
     @Transformer.as_transformer
-    def pointer_interpreter(elem_interpretation):
+    def pointer_interpreter(_):
         """
-        :param TypeInterpretation elem_interpretation: The interpretation of
-            the pointer element.
-
         :return: A type interpreter for pointers of such elements.
         :rtype: TypeInterpreter
         """
+        def merge_predicate(a, b):
+            return path_dom.le(a, b) or path_dom.touches(a, b)
+
         path_dom = domains.AccessPathsLattice()
-        ptr_dom = domains.Set(path_dom, path_dom.le, [path_dom.top])
-        elem_dom = elem_interpretation.domain
+        ptr_dom = domains.Set(path_dom, merge_predicate, [path_dom.top])
         bool_dom = boolean_ops.Boolean
 
         bin_rel_sig = _signer((ptr_dom, ptr_dom), bool_dom)
@@ -600,6 +599,7 @@ def custom_pointer_interpreter(inner_interpreter):
             if isinstance(sig.name, access_paths.Var):
                 if sig.output_domain == ptr_dom:
                     idx = sig.name.var_obj
+                    elem_dom = sig.input_domains[1]
                     return (
                         access_paths_ops.var_address(ptr_dom, elem_dom, idx),
                         access_paths_ops.inv_var_address(ptr_dom, idx)
@@ -608,6 +608,7 @@ def custom_pointer_interpreter(inner_interpreter):
             elif isinstance(sig.name, access_paths.Field):
                 if sig.output_domain == ptr_dom:
                     idx = sig.name.field_obj
+                    elem_dom = sig.input_domains[1]
                     return (
                         access_paths_ops.field_address(ptr_dom, elem_dom, idx),
                         access_paths_ops.inv_field_address(idx)
@@ -615,7 +616,7 @@ def custom_pointer_interpreter(inner_interpreter):
 
             elif sig.name == ops.DEREF and sig.input_domains[0] == ptr_dom:
                 return (
-                    access_paths_ops.deref(ptr_dom, elem_dom),
+                    access_paths_ops.deref(ptr_dom, sig.output_domain),
                     access_paths_ops.inv_deref(ptr_dom, sig.input_domains[1])
                 )
 
@@ -633,7 +634,7 @@ def custom_pointer_interpreter(inner_interpreter):
             access_paths_ops.lit(ptr_dom)
         )
 
-    return get_pointer_element >> inner_interpreter >> pointer_interpreter
+    return get_pointer_element >> pointer_interpreter
 
 
 @type_interpreter

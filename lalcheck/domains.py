@@ -1202,6 +1202,9 @@ class AccessPathsLattice(AbstractDomain):
             else:
                 return [self]
 
+        def touches(self, other):
+            return False
+
         def __hash__(self):
             return hash((self.val, self.dom))
 

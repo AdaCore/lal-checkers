@@ -352,9 +352,19 @@ class Models(visitors.Visitor):
             out_indices = ()
             ret_dom = dom
 
+        input_doms = tuple(node_domains[arg] for arg in funcall.args)
+
+        if 'additional_arg' in funcall.data:
+            arg_interp = self._interp_of(
+                self._type_of(
+                    funcall.data.additional_arg
+                )
+            )
+            input_doms = input_doms + (arg_interp.domain,)
+
         sig = Signature(
             funcall.fun_id,
-            tuple(node_domains[arg] for arg in funcall.args),
+            input_doms,
             ret_dom,
             out_indices
         )

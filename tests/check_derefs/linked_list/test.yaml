@@ -1,0 +1,3 @@
+driver: python
+helper: test_null_derefs.py
+call_strategy: unknown
