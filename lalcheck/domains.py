@@ -504,8 +504,7 @@ class Set(AbstractDomain):
         return all(self.dom.is_empty(e) for e in x)
 
     def size(self, x):
-        # Not relevant
-        raise NotImplementedError
+        return sum((self.dom.size(e) for e in x), 0)
 
     def _reduce(self, xs):
         """
@@ -546,10 +545,9 @@ class Set(AbstractDomain):
 
     def meet(self, a, b):
         return self._reduce(
-            x for x in a if any(
-                self.merge_predicate(x, y)
-                for y in b
-            )
+            self.dom.meet(x, y)
+            for x in a
+            for y in b
         )
 
     def update(self, a, b, widen=False):
@@ -560,21 +558,23 @@ class Set(AbstractDomain):
 
     def le(self, a, b):
         return all(any(
-            self.merge_predicate(x, y)
+            self.dom.le(x, y)
             for y in b
         ) for x in a)
 
     def lt(self, a, b):
-        return self.le(a, b) and any(any(
-            not self.merge_predicate(x, y)
-            for y in b
-        ) for x in a)
+        return self.le(a, b) and not self.le(b, a)
 
     def eq(self, a, b):
         return self.le(a, b) and self.le(b, a)
 
     def split(self, elem, separator):
-        raise NotImplementedError
+        return self._reduce(
+            e
+            for x in elem
+            for y in separator
+            for e in self.dom.split(x, y)
+        )
 
     def generator(self):
         raise NotImplementedError
