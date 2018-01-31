@@ -186,7 +186,7 @@ def _record_fields(record_decl):
             for variant in variant_part.f_variant:
                 add_component_fields(variant.f_components, conds + [(
                     variant_part.f_discr_name,
-                    variant.f_choice_list
+                    variant.f_choices
                 )])
 
     if record_decl.f_discriminants is not None:
@@ -1688,7 +1688,7 @@ def _gen_ir(ctx, subp):
 
         elif expr.is_a(lal.StringLiteral):
             lit = new_expression_replacing_var("tmp", expr)
-            text = expr.f_tok.text[1:-1]
+            text = expr.text[1:-1]
 
             def build_lit(i):
                 if i == len(text):
@@ -1875,12 +1875,18 @@ def _gen_ir(ctx, subp):
             return gen_assignment(stmt.f_dest, expr_pre_stmts, expr, stmt)
 
         elif stmt.is_a(lal.CallStmt):
-            return gen_call_expr(
-                stmt.f_call.f_name,
-                stmt.f_call.f_suffix,
-                stmt.f_call.p_expression_type,
-                stmt
-            )[0]
+            call_expr = stmt.f_call
+            if call_expr.is_a(lal.Identifier, lal.DottedName):
+                return gen_call_expr(
+                    call_expr, [], call_expr.p_expression_type, stmt
+                )[0]
+            else:
+                return gen_call_expr(
+                    call_expr.f_name,
+                    call_expr.f_suffix,
+                    call_expr.p_expression_type,
+                    stmt
+                )[0]
 
         elif stmt.is_a(lal.DeclBlock):
             decls = transform_decls(stmt.f_decls.f_decls)
@@ -1968,8 +1974,8 @@ def _gen_ir(ctx, subp):
             # instead of in a chain of if-elsifs.
 
             return gen_case_base(
-                stmt.f_case_expr,
-                stmt.f_case_alts,
+                stmt.f_expr,
+                stmt.f_alternatives,
                 case_stmt_alt_transformer,
                 stmt
             )
@@ -2076,13 +2082,13 @@ def _gen_ir(ctx, subp):
             loop_exit_label = exited_loop[1]
             exit_goto = irt.GotoStmt(loop_exit_label)
 
-            if stmt.f_condition is None:
+            if stmt.f_cond_expr is None:
                 # If there is no "when" part, only generate a goto statement.
                 return [exit_goto]
             else:
                 # Else emulate the behavior with split-assume statements.
                 return gen_split_stmt(
-                    stmt.f_condition,
+                    stmt.f_cond_expr,
                     [exit_goto],
                     [],
                     orig_node=stmt
@@ -2415,7 +2421,7 @@ def enum_typer(hint):
     if hint.is_a(lal.TypeDecl):
         if hint.f_type_def.is_a(lal.EnumTypeDef):
             literals = hint.f_type_def.findall(lal.EnumLiteralDecl)
-            return types.Enum([lit.f_enum_identifier.text for lit in literals])
+            return types.Enum([lit.f_name.text for lit in literals])
 
 
 _pointer_type = types.Pointer()
@@ -2628,7 +2634,7 @@ class ExtractionContext(object):
 
         # Find the Character TypeDecl.
         char_type = dummy.p_standard_unit.root.find(
-            lambda x: x.is_a(lal.TypeDecl) and x.f_type_id.text == "Character"
+            lambda x: x.is_a(lal.TypeDecl) and x.f_name.text == "Character"
         )
 
         self.evaluator = ConstExprEvaluator(
