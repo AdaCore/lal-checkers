@@ -8,9 +8,11 @@ from lalcheck.domain_ops import (
     interval_ops,
     finite_lattice_ops,
     product_ops,
-    sparse_array_ops
+    sparse_array_ops,
+    access_paths_ops,
+    ram_ops
 )
-from lalcheck.constants import ops, lits
+from lalcheck.constants import ops, lits, access_paths
 from lalcheck.utils import Transformer
 from lalcheck import types
 from lalcheck import domains
@@ -452,7 +454,7 @@ def default_product_interpreter(elem_interpreter):
         }
 
         defs.update({
-            sig(ops.get(i)): (
+            sig(ops.GetName(i)): (
                 product_ops.getter(i),
                 product_ops.inv_getter(prod_dom, i)
             )
@@ -460,7 +462,7 @@ def default_product_interpreter(elem_interpreter):
         })
 
         defs.update({
-            sig(ops.updated(i)): (
+            sig(ops.UpdatedName(i)): (
                 product_ops.updater(i),
                 product_ops.inv_updater(prod_dom, i)
             )
@@ -558,6 +560,128 @@ def default_array_interpreter(attribute_interpreter):
     )
 
 
+def custom_pointer_interpreter(inner_interpreter):
+    """
+    Builds a simple type interpreter for pointers, representing them as either
+    null or nonnull. Provides comparison ops and deref/address.
+
+    :param TypeInterpreter inner_interpreter: interpreter for pointer elements.
+    :rtype: TypeInterpreter
+    """
+
+    @Transformer.as_transformer
+    def get_pointer_element(tpe):
+        """
+        :param types.Type tpe: The type.
+        :return: The type of the element of the pointer, if relevant.
+        :rtype: type.Type
+        """
+        if tpe.is_a(types.Pointer):
+            return tpe.elem_type
+
+    @Transformer.as_transformer
+    def pointer_interpreter(elem_interpretation):
+        """
+        :param TypeInterpretation elem_interpretation: The interpretation of
+            the pointer element.
+
+        :return: A type interpreter for pointers of such elements.
+        :rtype: TypeInterpreter
+        """
+        path_dom = domains.AccessPathsLattice()
+        ptr_dom = domains.Set(path_dom, path_dom.le, [path_dom.top])
+        elem_dom = elem_interpretation.domain
+        bool_dom = boolean_ops.Boolean
+
+        bin_rel_sig = _signer((ptr_dom, ptr_dom), bool_dom)
+
+        @def_provider
+        def provider(sig):
+            if isinstance(sig.name, access_paths.Var):
+                if sig.output_domain == ptr_dom:
+                    idx = sig.name.var_obj
+                    return (
+                        access_paths_ops.var_address(ptr_dom, elem_dom, idx),
+                        access_paths_ops.inv_var_address(ptr_dom, idx)
+                    )
+
+            elif isinstance(sig.name, access_paths.Field):
+                if sig.output_domain == ptr_dom:
+                    idx = sig.name.field_obj
+                    return (
+                        access_paths_ops.field_address(ptr_dom, elem_dom, idx),
+                        access_paths_ops.inv_field_address(idx)
+                    )
+
+            elif sig.name == ops.DEREF and sig.input_domains[0] == ptr_dom:
+                return (
+                    access_paths_ops.deref(ptr_dom, elem_dom),
+                    access_paths_ops.inv_deref(ptr_dom, sig.input_domains[1])
+                )
+
+            elif sig == bin_rel_sig(ops.EQ):
+                return (access_paths_ops.eq(ptr_dom),
+                        access_paths_ops.inv_eq(ptr_dom))
+
+            elif sig == bin_rel_sig(ops.NEQ):
+                return (access_paths_ops.neq(ptr_dom),
+                        access_paths_ops.inv_neq(ptr_dom))
+
+        return TypeInterpretation(
+            ptr_dom,
+            provider,
+            access_paths_ops.lit(ptr_dom)
+        )
+
+    return get_pointer_element >> inner_interpreter >> pointer_interpreter
+
+
+@type_interpreter
+def default_ram_interpreter(hint):
+    if hint.is_a(types.DataStorage):
+        mem_dom = domains.RandomAccessMemory()
+        bin_rel_signer = _signer((mem_dom, mem_dom), boolean_ops.Boolean)
+        cpy_offset_sig = _signer((mem_dom, mem_dom), mem_dom)(ops.COPY_OFFSET)
+
+        def not_implemented(*_):
+            raise NotImplementedError
+
+        @def_provider
+        def provider(sig):
+            if isinstance(sig.name, ops.GetName):
+                if sig.input_domains[0] == mem_dom:
+                    return (
+                        ram_ops.getter(sig.name.index, sig.output_domain),
+                        ram_ops.inv_getter(sig.name.index, sig.output_domain)
+                    )
+
+            elif isinstance(sig.name, ops.UpdatedName):
+                if sig.input_domains[0] == mem_dom:
+                    idx = sig.name.index
+                    return (
+                        ram_ops.updater(idx, sig.input_domains[1]),
+                        ram_ops.inv_updater(idx, sig.input_domains[1])
+                    )
+
+            elif isinstance(sig.name, ops.OffsetName):
+                if sig.input_domains[0] == mem_dom:
+                    return (ram_ops.offseter(sig.name.index),
+                            ram_ops.inv_offseter(sig.name.index))
+
+            elif sig == cpy_offset_sig:
+                return ram_ops.copy_offset, ram_ops.inv_copy_offset
+
+            elif (sig == bin_rel_signer(ops.EQ) or
+                  sig == bin_rel_signer(ops.NEQ)):
+                return not_implemented, not_implemented
+
+        return TypeInterpretation(
+            mem_dom,
+            provider,
+            ram_ops.builder
+        )
+
+
 @memoizing_type_interpreter
 @delegating_type_interpreter
 def default_type_interpreter():
@@ -566,7 +690,8 @@ def default_type_interpreter():
         default_char_interpreter(default_int_range_interpreter) |
         default_int_range_interpreter |
         default_enum_interpreter |
-        default_simple_pointer_interpreter(default_type_interpreter) |
+        custom_pointer_interpreter(default_type_interpreter) |
         default_product_interpreter(default_type_interpreter) |
-        default_array_interpreter(default_type_interpreter)
+        default_array_interpreter(default_type_interpreter) |
+        default_ram_interpreter
     )

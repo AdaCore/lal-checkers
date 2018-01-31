@@ -371,16 +371,11 @@ class Models(visitors.Visitor):
         return ident.var.visit(self, node_domains, defs, builders)
 
     def visit_var(self, var, node_domains, defs, builders):
-        return Bunch(
-            domain=node_domains[var]
-        )
+        return Bunch(domain=node_domains[var])
 
     def visit_lit(self, lit, node_domains, defs, builders):
         dom = node_domains[lit]
-        return Bunch(
-            domain=dom,
-            builder=builders[dom]
-        )
+        return Bunch(domain=dom, builder=builders[dom])
 
     @staticmethod
     def _has_type_hint(node):
@@ -437,13 +432,12 @@ class ExprEvaluator(visitors.Visitor):
     """
     Can be used to evaluate expressions in the Basic IR.
     """
-    def __init__(self, model, vars_idx):
+    def __init__(self, model):
         """
         :param dict[tree.Node, Bunch] model: A model that must have an entry
             for each node that needs be evaluated by this evaluator.
         """
         self.model = model
-        self.vars_idx = vars_idx
 
     def eval(self, expr, state):
         """
@@ -459,7 +453,7 @@ class ExprEvaluator(visitors.Visitor):
         return expr.visit(self, state)
 
     def visit_ident(self, ident, state):
-        return state[self.vars_idx[ident.var]]
+        return state[ident.var.data.index]
 
     def visit_funcall(self, funcall, state):
         args = [arg.visit(self, state) for arg in funcall.args]
@@ -473,20 +467,19 @@ class ExprSolver(visitors.Visitor):
     """
     Can be used to solve expressions in the Basic IR.
     """
-    def __init__(self, model, vars_idx):
+    def __init__(self, model):
         """
         :param dict[tree.Node, Bunch] model: A model that must have an entry
             for each node that needs be solved by this solver.
         """
         self.model = model
-        self.vars_idx = vars_idx
-        self.eval = ExprEvaluator(model, vars_idx).eval
+        self.eval = ExprEvaluator(model).eval
 
     def solve(self, expr, state):
         """
         :param tree.Expr expr: The predicate expression to solve.
 
-        :param dict[tree.Variable, object] env: The environment, containing
+        :param dict[tree.Variable, object] state: The environment, containing
             an entry for each variable traversed while solving.
 
         :return: A new environment for which evaluating the given expression
@@ -505,8 +498,8 @@ class ExprSolver(visitors.Visitor):
         return tuple(new_state), res
 
     def visit_ident(self, ident, state, expected):
-        dom = self.model[ident.var].domain
-        var_idx = self.vars_idx[ident.var]
+        var_idx = ident.var.data.index
+        dom = self.model[ident].domain
         state[var_idx] = dom.meet(state[var_idx], expected)
         return True
 

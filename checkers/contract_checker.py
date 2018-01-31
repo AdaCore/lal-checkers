@@ -158,7 +158,7 @@ class ContractChecker(Checker):
         )
 
     def position(self, diag):
-        return diag[1].call_expr.data.orig_node.sloc_range.start
+        return diag[1].orig_call.sloc_range.start
 
 
 if __name__ == "__main__":

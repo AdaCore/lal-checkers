@@ -28,6 +28,12 @@ class Type(object):
         """
         return isinstance(self, tpe)
 
+    def children(self):
+        """
+        Returns the list of inner types of this type.
+        """
+        return iter(())
+
 
 class Boolean(Type):
     """
@@ -67,6 +73,9 @@ class Pointer(Type):
     def __init__(self, elem_type):
         self.elem_type = elem_type
 
+    def children(self):
+        yield self.elem_type
+
 
 class Product(Type):
     """
@@ -77,6 +86,9 @@ class Product(Type):
         :param list[Type] elem_types: types of the elements of the product.
         """
         self.elem_types = elem_types
+
+    def children(self):
+        return self.elem_types
 
 
 class FunOutput(Product):
@@ -110,3 +122,13 @@ class Array(Type):
     def __init__(self, index_types, component_type):
         self.index_types = index_types
         self.component_type = component_type
+
+    def children(self):
+        for tpe in self.index_types:
+            yield tpe
+        yield self.component_type
+
+
+class DataStorage(Type):
+    def __init__(self):
+        pass

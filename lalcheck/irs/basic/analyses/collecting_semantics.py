@@ -22,19 +22,25 @@ from xml.sax.saxutils import escape
 from collections import defaultdict
 
 
+def updated_state(state, var, value):
+    return tuple(
+        value if i == var.data.index else x
+        for i, x in enumerate(state)
+    )
+
+
 class _VarTracker(visitors.CFGNodeVisitor):
     def __init__(self, var_set, vars_domain, evaluator, c_solver):
         self.vars = var_set
-        self.vars_domain = vars_domain
         self.evaluator = evaluator
         self.constr_solver = c_solver
+        self.vars_domain = vars_domain
 
     def visit_assign(self, assign, state):
-        return tuple(
+        return updated_state(
+            state,
+            assign.id.var,
             self.evaluator.eval(assign.expr, state)
-            if i == assign.id.var.data.index
-            else state[i]
-            for i, v in enumerate(state)
         )
 
     def visit_assume(self, assume, state):
@@ -42,8 +48,11 @@ class _VarTracker(visitors.CFGNodeVisitor):
         return new_state if success else self.vars_domain.bottom
 
     def visit_read(self, read, state):
-        return tuple(self.vars_domain.top[i] if i == read.id.var.data.index
-                     else x for i, x in enumerate(state))
+        return updated_state(
+            state,
+            read.id.var,
+            self.evaluator.model[read.id.var].domain.top
+        )
 
     def visit_use(self, use, state):
         return state
@@ -329,9 +338,12 @@ class AnalysisResults(object):
 
     @staticmethod
     def _to_state(env):
-        state_list = [None] * len(env)
+        last_index = max([v.data.index for v in env.keys()]) + 1
+        state_list = [None] * last_index
+
         for var, value in env.iteritems():
             state_list[var.data.index] = value
+
         return tuple(state_list)
 
     def eval_at(self, node, expr):
@@ -348,20 +360,25 @@ class AnalysisResults(object):
         }
 
 
-def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
+_unit_domain = domains.Product()
 
+
+def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
     cfg = prog.visit(CFGBuilder())
 
     var_set = set(visitors.findall(prog, lambda n: isinstance(n, Variable)))
 
-    vars_domain = domains.Product(
-        *(model[v].domain for v in sorted(
-            var_set,
-            key=lambda v: v.data.index
-        ))
-    )
+    indexed_vars = {
+        var.data.index: var
+        for var in var_set
+    }
+    last_index = max(indexed_vars.keys()) if len(indexed_vars) > 0 else -1
 
     trace_domain = _SimpleTraceLattice(cfg.nodes)
+    vars_domain = domains.Product(*(
+        model[indexed_vars[i]].domain if i in indexed_vars else _unit_domain
+        for i in range(last_index + 1)
+    ))
 
     evaluator = ExprEvaluator(model)
     solver = ExprSolver(model)
@@ -387,19 +404,21 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
         None  # We don't need a top element here.
     )
 
-    vars_top = vars_domain.build(*(
-        arg_values[var]
-        if arg_values is not None and var in arg_values
-        else model[var].domain.top
-        for var in var_set
-    ))
+    init = tuple(
+        arg_values[indexed_vars[i]]
+        if (i in indexed_vars and
+            arg_values is not None and
+            indexed_vars[i] in arg_values)
+        else vars_domain.domains[i].top
+        for i in range(last_index + 1)
+    )
 
     def it(states):
         new_states = states.copy()
 
         for node in cfg.nodes:
             inputs = [new_states[anc] for anc in cfg.ancestors(node)]
-            res = (lat.build([(trace_domain.bottom, vars_top)])
+            res = (lat.build([(trace_domain.bottom, init)])
                    if len(inputs) == 0 else reduce(lat.join, inputs))
 
             res = lat.build([
@@ -423,21 +442,9 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
 
         return new_states
 
-    def different(a, b):
-        if a is None:
-            return b is not None
-        elif b is None:
-            return a is not None
-
-        for n, x in a.iteritems():
-            y = b[n]
-            if not lat.eq(x, y):
-                return True
-        return False
-
-    result = {n: lat.bottom for n in cfg.nodes}
-    last = None
-    while different(last, result):
+    last = {n: lat.bottom for n in cfg.nodes}
+    result = it(last)
+    while any(not lat.eq(x, result[i]) for i, x in last.iteritems()):
         last, result = result, it(result)
 
     formatted_results = {

@@ -8,10 +8,10 @@ Program:
     assume(!(==(x#1, null)))
     assume(!=(x#1, null))
     split:
-      assume(==(*(x#1), y#2))
+      assume(==(*(x#1, $stack#4), y#2))
       tmp0#3 = True
     |:
-      assume(!(==(*(x#1), y#2)))
+      assume(!(==(*(x#1, $stack#4), y#2)))
       tmp0#3 = False
   split:
     assume(tmp0#3)

@@ -8,7 +8,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[0, 0]"
         }
       }
@@ -25,7 +26,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -42,7 +44,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -57,6 +60,7 @@
           "start0"
         ],
         "values": {
+          "$stack": "({}, 0)",
           "x": "{null}",
           "y": "[0, 0]"
         }
@@ -82,7 +86,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[42, 42]"
         }
       }
@@ -96,7 +101,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -111,7 +117,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -127,7 +134,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -143,7 +151,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -157,6 +166,7 @@
           "start0"
         ],
         "values": {
+          "$stack": "({}, 0)",
           "x": "{null}",
           "y": "[0, 0]"
         }
@@ -181,7 +191,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[0, 0]"
         }
       }
@@ -205,7 +216,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[0, 0]"
         }
       }
@@ -217,7 +229,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[-2147483648, 2147483647]"
         }
       }
@@ -237,7 +250,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -260,7 +274,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[0, 0]"
         }
       }
@@ -287,7 +302,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[0, 42]"
         }
       }
@@ -298,7 +314,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[-2147483648, 2147483647]"
         }
       }
@@ -313,7 +330,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[0, 0]"
         }
       }
@@ -330,7 +348,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -347,7 +366,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -362,6 +382,7 @@
           "start0"
         ],
         "values": {
+          "$stack": "({}, 0)",
           "x": "{null}",
           "y": "[0, 0]"
         }
@@ -383,7 +404,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[42, 42]"
         }
       }
@@ -397,7 +419,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -412,7 +435,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -428,7 +452,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -444,7 +469,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -458,6 +484,7 @@
           "start0"
         ],
         "values": {
+          "$stack": "({}, 0)",
           "x": "{null}",
           "y": "[0, 0]"
         }
@@ -478,7 +505,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -498,7 +526,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       },
@@ -513,6 +542,7 @@
           "start0"
         ],
         "values": {
+          "$stack": "({}, 0)",
           "x": "{null}",
           "y": "[0, 0]"
         }
@@ -525,7 +555,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[-2147483648, 2147483647]"
         }
       }
@@ -543,7 +574,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       },
@@ -559,7 +591,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       }
@@ -578,7 +611,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       },
@@ -595,7 +629,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       },
@@ -609,6 +644,7 @@
           "start0"
         ],
         "values": {
+          "$stack": "({}, 0)",
           "x": "{null}",
           "y": "[0, 0]"
         }
@@ -631,7 +667,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[42, 42]"
         }
       },
@@ -650,7 +687,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull}",
+          "$stack": "({}, 0)",
+          "x": "{[non-null]}",
           "y": "[0, 0]"
         }
       },
@@ -666,6 +704,7 @@
           "start0"
         ],
         "values": {
+          "$stack": "({}, 0)",
           "x": "{null}",
           "y": "[0, 0]"
         }
@@ -677,7 +716,8 @@
           "start0"
         ],
         "values": {
-          "x": "{notnull, null}",
+          "$stack": "({}, 0)",
+          "x": "{[all-path]}",
           "y": "[-2147483648, 2147483647]"
         }
       }

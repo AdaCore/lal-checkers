@@ -6,7 +6,7 @@ import libadalang as lal
 
 from lalcheck.irs.basic import tree as irt, purpose
 from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
-from lalcheck.constants import ops, lits
+from lalcheck.constants import ops, lits, access_paths
 from lalcheck.utils import KeyCounter, Transformer
 from lalcheck import types
 
@@ -31,7 +31,6 @@ _lal_op_type_to_symbol = {
 }
 
 _attr_to_unop = {
-    'Access': ops.ADDRESS,
     'First': ops.GET_FIRST,
     'Last': ops.GET_LAST,
 }
@@ -108,6 +107,35 @@ class _ExtendedCallReturnType(object):
         self.out_indices = out_indices
         self.out_types = out_types
         self.ret_type = ret_type
+
+    def __eq__(self, other):
+        return (isinstance(other, _ExtendedCallReturnType) and
+                self.out_indices == other.out_indices and
+                self.out_types == other.out_types and
+                self.ret_type == other.ret_type)
+
+    def is_a(self, tpe):
+        return isinstance(self, tpe)
+
+
+class _PointerType(object):
+    def __init__(self, elem_type):
+        self.elem_type = elem_type
+
+    def __eq__(self, other):
+        return (isinstance(other, _PointerType) and
+                self.elem_type == other.elem_type)
+
+    def is_a(self, tpe):
+        return isinstance(self, tpe)
+
+
+class _StackType(object):
+    def __init__(self):
+        pass
+
+    def __eq__(self, other):
+        return isinstance(other, _StackType)
 
     def is_a(self, tpe):
         return isinstance(self, tpe)
@@ -250,6 +278,72 @@ def _is_array_type_decl(tpe):
     return False
 
 
+_IGNORES_GLOBAL_STATE = 0
+_READS_GLOBAL_STATE = 1
+_WRITES_GLOBAL_STATE = 2
+
+
+@memoize
+def _contains_access_type(typer, type_hint):
+    """
+    Returns True if the given type is an access type or contains one, None if
+    unknown.
+
+    :param types.Typer[lal.AdaNode] typer:
+    :param lal.AdaNode type_hint:
+    :rtype: bool | None.
+    """
+    def has_pointer(tpe):
+        return tpe.is_a(types.Pointer) or any(
+            has_pointer(child) for child in tpe.children()
+        )
+
+    try:
+        return has_pointer(typer.get(type_hint))
+    except ValueError:
+        return None
+
+
+@memoize
+def _find_global_access(typer, proc):
+    """
+    Analyzes the side effects of the given subprogram. returns the following:
+    - _IGNORES_GLOBAL_STATE if the function doesn't access the global state.
+    - _READS_GLOBAL_STATE if the function may read from the global state.
+    - _WRITES_GLOBAL_STATE if the function may write to the global state.
+
+    :param types.Typer[lal.AdaNode] typer:
+    :param lal.SubpBody | lal.SubpDecl proc:
+    :return:
+    """
+    for i, id, param in _proc_parameters(proc):
+        if _contains_access_type(typer, param.f_type_expr):
+            return _WRITES_GLOBAL_STATE
+
+    return _IGNORES_GLOBAL_STATE
+
+
+@memoize
+def _find_vars_to_spill(node):
+    """
+    :param lal.AdaNode node:
+    :return:
+    """
+    def accessed_var(expr):
+        if expr.is_a(lal.Identifier):
+            return expr.p_referenced_decl
+        elif expr.is_a(lal.DottedName):
+            return accessed_var(expr.f_prefix)
+        else:
+            return None
+
+    access_nodes = node.findall(
+        lambda x: x.is_a(lal.AttributeRef) and x.f_attribute.text == 'Access'
+    )
+
+    return {accessed_var(node.f_prefix) for node in access_nodes}
+
+
 def _gen_ir(ctx, subp):
     """
     Generates Basic intermediate representation from a lal subprogram body.
@@ -264,7 +358,7 @@ def _gen_ir(ctx, subp):
     """
 
     var_decls = {}
-    param_vars = set()
+    param_vars = []
     tmp_vars = KeyCounter()
 
     # Used to assign a unique index to each variable.
@@ -301,6 +395,18 @@ def _gen_ir(ctx, subp):
     # lal.Identifier refers to such a key present in the mapping, it is
     # substituted by the corresponding irt node.
     substitutions = {}
+
+    # Contains variables that are spilled.
+    to_spill = _find_vars_to_spill(subp)
+    stack = irt.Identifier(
+        irt.Variable(
+            "$stack",
+            type_hint=_StackType(),
+            mode=Mode.Local,
+            index=next_var_idx()
+        ),
+        type_hint=_StackType()
+    )
 
     def fresh_name(name):
         """
@@ -358,6 +464,63 @@ def _gen_ir(ctx, subp):
             type_hint=replaced_expr.p_expression_type,
             orig_node=replaced_expr
         )
+
+    def get_var(expr, ref):
+        """
+        :param lal.Expr expr:
+        :param lal.ObjectDecl ref:
+        :return:
+        """
+        var = var_decls[ref, expr.text]
+        if ref in to_spill:
+            return irt.FunCall(
+                ops.GetName(var.data.index),
+                [stack],
+                type_hint=var.data.type_hint,
+                orig_node=expr
+            )
+        else:
+            return irt.Identifier(
+                var,
+                type_hint=var.data.type_hint,
+                orig_node=expr
+            )
+
+    def update_var(expr, ref):
+        var = var_decls[ref, expr.text]
+        if ref in to_spill:
+            return irt.FunCall(
+                ops.GetName(var.data.index),
+                [stack],
+                type_hint=var.data.type_hint,
+                orig_node=expr
+            )
+        else:
+            return irt.Identifier(
+                var,
+                type_hint=var.data.type_hint,
+                orig_node=expr
+            )
+
+    def read_var(expr, ref):
+        """
+        :param lal.Expr expr:
+        :param lal.ObjectDecl ref:
+        :return:
+        """
+        var = var_decls[ref, expr.text]
+        if ref in to_spill:
+            return irt.FunCall(
+                ops.GetName(var.data.index),
+                [stack],
+                type_hint=var.data.type_hint,
+                orig_node=expr
+            )
+        else:
+            return [irt.ReadStmt(
+                get_var(expr, ref),
+                orig_node=expr
+            )]
 
     def gen_split_stmt(cond, then_stmts, else_stmts, **data):
         """
@@ -749,14 +912,33 @@ def _gen_ir(ctx, subp):
         :rtype: list[irt.Stmt], irt.Identifier, irt.Expr
         """
         if dest.is_a(lal.Identifier):
-            return [], (irt.Identifier(
-                var_decls[
-                    dest.p_referenced_decl,
-                    dest.text
-                ],
-                type_hint=dest.p_expression_type,
-                orig_node=dest
-            ), expr)
+            ref = dest.p_referenced_decl
+            if ref is None:
+                if dest.parent.parent.is_a(lal.ObjectDecl):
+                    ref = dest.parent.parent
+
+            var = var_decls[ref, dest.text]
+            if ref in to_spill:
+                updated_index = var.data.index
+                return [], (
+                    stack,
+                    irt.FunCall(
+                        ops.UpdatedName(updated_index),
+                        [stack, expr],
+                        type_hint=stack.data.type_hint,
+                        orig_node=dest,
+                        purpose=purpose.FieldAssignment(
+                            updated_index,
+                            var.data.type_hint
+                        )
+                    )
+                )
+            else:
+                return [], (irt.Identifier(
+                    var,
+                    type_hint=var.data.type_hint,
+                    orig_node=dest
+                ), expr)
 
         elif dest.is_a(lal.DottedName):
             updated_index = _field_info(dest.f_suffix).index
@@ -768,7 +950,7 @@ def _gen_ir(ctx, subp):
             )
 
             pre_stmts, ret = gen_actual_dest(dest.f_prefix, irt.FunCall(
-                ops.updated(updated_index),
+                ops.UpdatedName(updated_index),
                 [prefix_expr, expr],
                 type_hint=dest.f_prefix.p_expression_type,
                 orig_node=dest.f_prefix,
@@ -822,7 +1004,7 @@ def _gen_ir(ctx, subp):
         res = []
         for i, (discr, alternatives) in enumerate(info.conds):
             discr_getter = irt.FunCall(
-                ops.get(_field_info(discr).index), [prefix],
+                ops.GetName(_field_info(discr).index), [prefix],
                 type_hint=discr.p_expression_type
             )
 
@@ -877,6 +1059,29 @@ def _gen_ir(ctx, subp):
 
         return res
 
+    def gen_access_path(expr):
+        if expr.is_a(lal.Identifier):
+            return irt.FunCall(
+                access_paths.Var(
+                    var_decls[expr.p_referenced_decl, expr.text].data.index
+                ),
+                [stack],
+                type_hint=_PointerType(expr.p_expression_type),
+                orig_node=expr
+            )
+
+        elif expr.is_a(lal.DottedName):
+            updated_index = _field_info(expr.f_suffix).index
+
+            return irt.FunCall(
+                access_paths.Field(updated_index),
+                [gen_access_path(expr.f_prefix)],
+                type_hint=_PointerType(expr.p_expression_type),
+                orig_node=expr
+            )
+
+        unimplemented(expr)
+
     def gen_assignment(assign_dest, expr_pre_stmts, expr, orig_node=None):
         """
         Returns the statements equivalent to the assignment of the given
@@ -902,7 +1107,7 @@ def _gen_ir(ctx, subp):
             )
         ]
 
-    def gen_contract_conditions(proc, args_in, args_out, ret, call):
+    def gen_contract_conditions(proc, args_in, args_out, ret, orig_call):
         """
         Generates assume statements for checking pre/post conditions of the
         given procedure.
@@ -919,7 +1124,7 @@ def _gen_ir(ctx, subp):
         :param irt.Expr | None ret: The expression used to retrieve the result
             of the function, if any.
 
-        :param irt.Expr call: The generated call expression.
+        :param lal.AdaNode orig_call: The original call node.
         """
         if proc.f_aspects is None:
             return [], []
@@ -942,7 +1147,7 @@ def _gen_ir(ctx, subp):
             for stmts, expr in [transform_expr(pre)]
             for stmt in stmts + [irt.AssumeStmt(
                 expr,
-                purpose=purpose.ContractCheck("precondition", call),
+                purpose=purpose.ContractCheck("precondition", orig_call),
                 orig_node=pre
             )]
         ]
@@ -963,7 +1168,7 @@ def _gen_ir(ctx, subp):
             for stmts, expr in [transform_expr(post)]
             for stmt in stmts + [irt.AssumeStmt(
                 expr,
-                purpose=purpose.ContractCheck("postcondition", call),
+                purpose=purpose.ContractCheck("postcondition", orig_call),
                 orig_node=post
             )]
         ]
@@ -1012,16 +1217,49 @@ def _gen_ir(ctx, subp):
         ]
         suffix_exprs = [suffix[1] for suffix in suffixes]
 
+        def gen_out_arg_assignment(i):
+            def do(out_expr):
+                return gen_assignment(args[i].f_r_expr, [], out_expr)
+            return do
+
         if prefix.is_a(lal.Identifier):
             ref = prefix.p_referenced_decl
             if ref.is_a(lal.SubpBody, lal.SubpDecl):
                 # The call target is statically known.
 
                 out_params = [
-                    (i, name, param)
-                    for i, name, param in _proc_parameters(ref)
+                    (i, param.f_type_expr, gen_out_arg_assignment(i))
+                    for i, _, param in _proc_parameters(ref)
                     if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut)
                 ]
+
+                # Pass stack too
+
+                global_access = _find_global_access(ctx.default_typer(), ref)
+
+                if (global_access == _READS_GLOBAL_STATE or
+                        global_access == _WRITES_GLOBAL_STATE):
+                    offset = var_idx.value
+
+                    suffix_exprs.append(irt.FunCall(
+                        ops.OffsetName(offset),
+                        [stack],
+                        type_hint=stack.data.type_hint
+                    ))
+
+                    if global_access == _WRITES_GLOBAL_STATE:
+                        out_params.append((
+                            len(_proc_parameters(ref)),
+                            stack.data.type_hint,
+                            lambda expr: [irt.AssignStmt(
+                                stack,
+                                irt.FunCall(
+                                    ops.COPY_OFFSET,
+                                    [stack, expr],
+                                    type_hint=stack.data.type_hint
+                                )
+                            )]
+                        ))
 
                 if len(out_params) == 0 and ref.f_aspects is None:
                     return suffix_pre_stmts, irt.FunCall(
@@ -1034,7 +1272,7 @@ def _gen_ir(ctx, subp):
                 else:
                     ret_tpe = _ExtendedCallReturnType(
                         [index for index, _, _ in out_params],
-                        [spec.f_type_expr for _, _, spec in out_params],
+                        [param_type for _, param_type, _ in out_params],
                         type_hint
                     ) if len(out_params) != 0 else type_hint
 
@@ -1051,34 +1289,30 @@ def _gen_ir(ctx, subp):
                         orig_node=orig_node
                     )
 
-                    call_expr = irt.FunCall(
-                        ref,
-                        suffix_exprs,
-                        orig_node=orig_node,
-                        type_hint=ret_tpe,
-                        callee_type=prefix.p_expression_type
-                    )
-
                     call = [irt.AssignStmt(
                         ret_var,
-                        call_expr
+                        irt.FunCall(
+                            ref,
+                            suffix_exprs,
+                            orig_node=orig_node,
+                            type_hint=ret_tpe,
+                            callee_type=prefix.p_expression_type
+                        )
                     )]
 
                     out_arg_exprs = {
                         j: irt.FunCall(
-                            ops.get(i),
+                            ops.GetName(i),
                             [ret_var],
-                            type_hint=args[j].f_r_expr.p_expression_type
+                            type_hint=tpe
                         )
-                        for i, (j, _, spec) in enumerate(out_params)
+                        for i, (j, tpe, _) in enumerate(out_params)
                     }
 
                     assignments = [
                         stmt
-                        for i, _, spec in out_params
-                        for stmt in gen_assignment(
-                            args[i].f_r_expr, [], out_arg_exprs[i]
-                        )
+                        for i, _, assign_out in out_params
+                        for stmt in assign_out(out_arg_exprs[i])
                     ]
 
                     if type_hint is None:
@@ -1087,7 +1321,7 @@ def _gen_ir(ctx, subp):
                         res = ret_var
                     else:
                         res = irt.FunCall(
-                            ops.get(len(out_params)),
+                            ops.GetName(len(out_params)),
                             [ret_var],
                             type_hint=type_hint
                         )
@@ -1097,7 +1331,7 @@ def _gen_ir(ctx, subp):
                         suffix_exprs,
                         out_arg_exprs,
                         res,
-                        call_expr
+                        orig_node
                     )
 
                     return (
@@ -1160,7 +1394,7 @@ def _gen_ir(ctx, subp):
             purpose=purpose.DerefCheck(expr)
         )], irt.FunCall(
             ops.DEREF,
-            [expr],
+            [expr, stack],
             type_hint=deref_type,
             orig_node=deref_orig
         )
@@ -1212,7 +1446,7 @@ def _gen_ir(ctx, subp):
             else:
                 return build_record(
                     irt.FunCall(
-                        ops.updated(i),
+                        ops.UpdatedName(i),
                         [record_expr, field_init[i]],
                         type_hint=record_expr.data.type_hint,
                         orig_node=expr,
@@ -1377,12 +1611,7 @@ def _gen_ir(ctx, subp):
             if (expr.text, ref) in substitutions:
                 return substitutions[expr.text, ref]
             elif ref.is_a(lal.ObjectDecl, lal.ParamSpec):
-                var = var_decls[ref, expr.text]
-                return [], irt.Identifier(
-                    var,
-                    type_hint=var.data.type_hint,
-                    orig_node=expr
-                )
+                return [], get_var(expr, ref)
             elif ref.is_a(lal.SubpBody, lal.SubpDecl):
                 return gen_call_expr(expr, [], expr.p_expression_type, expr)
             elif ref.is_a(lal.EnumLiteralDecl):
@@ -1434,7 +1663,7 @@ def _gen_ir(ctx, subp):
             )
 
             return prefix_pre_stmts + exists_stmts, irt.FunCall(
-                ops.get(_field_info(expr.f_suffix).index),
+                ops.GetName(_field_info(expr.f_suffix).index),
                 [prefix],
                 type_hint=expr.p_expression_type,
                 orig_node=expr
@@ -1449,7 +1678,7 @@ def _gen_ir(ctx, subp):
 
         elif expr.is_a(lal.NullLiteral):
             return [], irt.Lit(
-                lits.NULL,
+                access_paths.Null(),
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
@@ -1503,6 +1732,8 @@ def _gen_ir(ctx, subp):
                     type_hint=expr.p_expression_type,
                     orig_node=expr
                 )
+            elif expr.f_attribute.text == 'Access':
+                return [], gen_access_path(expr.f_prefix)
             elif expr.f_attribute.text == 'Result':
                 return substitutions[
                     expr.f_prefix.text + "'Result",
@@ -1548,7 +1779,7 @@ def _gen_ir(ctx, subp):
                     index=next_var_idx()
                 )
                 var_decls[param, var_id.text] = param_var
-                param_vars.add(param_var)
+                param_vars.append(param_var)
 
         if spec.f_subp_returns is not None:
             result_var.value = irt.Identifier(
@@ -1559,6 +1790,10 @@ def _gen_ir(ctx, subp):
                 ),
                 type_hint=spec.f_subp_returns
             )
+
+        if (_find_global_access(ctx.default_typer(), subp) ==
+                _WRITES_GLOBAL_STATE):
+            param_vars.append(stack.var)
 
         return []
 
@@ -1600,17 +1835,18 @@ def _gen_ir(ctx, subp):
                 ]
             else:
                 dval_pre_stmts, dval_expr = transform_expr(decl.f_default_expr)
-                return dval_pre_stmts + [
-                    irt.AssignStmt(
-                        irt.Identifier(
-                            var_decls[decl, var_id.text],
-                            type_hint=tdecl,
-                            orig_node=var_id
-                        ),
-                        dval_expr,
-                        orig_node=decl
-                    )
+
+                actuals_dests = [
+                    gen_actual_dest(var_id, dval_expr)
                     for var_id in decl.f_ids
+                ]
+
+                return dval_pre_stmts + [
+                    stmt
+                    for dest_pre_stmts, (dest, updated) in actuals_dests
+                    for stmt in dest_pre_stmts + [
+                        irt.AssignStmt(dest, updated, orig_node=decl)
+                    ]
                 ]
 
         elif decl.is_a(lal.SubpBody, lal.SubpDecl):
@@ -2176,6 +2412,13 @@ def enum_typer(hint):
             return types.Enum([lit.f_enum_identifier.text for lit in literals])
 
 
+_to_pointer = Transformer.make_memoizing(
+    Transformer.as_transformer(
+        types.Pointer
+    )
+)
+
+
 def access_typer(inner_typer):
     """
     :param types.Typer[lal.AdaNode] inner_typer: A typer for elements
@@ -2196,9 +2439,10 @@ def access_typer(inner_typer):
         if hint.is_a(lal.TypeDecl):
             if hint.p_is_access_type:
                 return hint.f_type_def.f_subtype_indication
+        elif hint.is_a(_PointerType):
+            return hint.elem_type
 
-    to_pointer = Transformer.as_transformer(types.Pointer)
-    return accessed_type >> inner_typer >> to_pointer
+    return accessed_type >> inner_typer >> _to_pointer
 
 
 def record_component_typer(inner_typer):
@@ -2363,6 +2607,12 @@ def subtyper(inner):
     return get_subtype >> inner
 
 
+@types.typer
+def ram_typer(hint):
+    if hint.is_a(_StackType):
+        return types.DataStorage()
+
+
 class ExtractionContext(object):
     """
     The libadalang-based frontend interface. Provides method for extracting
@@ -2492,6 +2742,7 @@ class ExtractionContext(object):
                     anonymous_typer(typer) |
                     array_typer(typer, typer) |
                     subp_ret_typer(typer) |
-                    subtyper(typer))
+                    subtyper(typer) |
+                    ram_typer)
 
         return typer

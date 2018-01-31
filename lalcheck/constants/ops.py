@@ -23,18 +23,34 @@ UPDATED = "Updated"
 
 IMAGE = "Image"
 
-
-def get(x):
-    """
-    Returns the name of a record getter for the given element index.
-    :param int x: The index to get.
-    """
-    return "Get_{}".format(x)
+COPY_OFFSET = "CopyOffset"
 
 
-def updated(x):
-    """
-    Returns the name of a record updater for the given element index.
-    :param int x: The index to update.
-    """
-    return "Updated_{}".format(x)
+class _IndexedName(object):
+    def __init__(self, index, frmt):
+        self.index = index
+        self.frmt = frmt
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.index == other.index
+
+    def __hash__(self):
+        return hash(self.index)
+
+    def __str__(self):
+        return self.frmt.format(self.index)
+
+
+class GetName(_IndexedName):
+    def __init__(self, index):
+        super(GetName, self).__init__(index, "Get_{}")
+
+
+class UpdatedName(_IndexedName):
+    def __init__(self, index):
+        super(UpdatedName, self).__init__(index, "Updated_{}")
+
+
+class OffsetName(_IndexedName):
+    def __init__(self, index):
+        super(OffsetName, self).__init__(index, "Offset_{}")

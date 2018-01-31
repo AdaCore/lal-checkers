@@ -113,7 +113,7 @@ def check_derefs(prog, model, merge_pred_builder):
     # which indicates that this assume statement was added to check
     # dereferences.
     deref_checks = (
-        (node, ast_node.data.purpose.expr)
+        (node, ast_node.expr, ast_node.data.purpose.expr)
         for node, ast_node in nodes_with_ast
         if isinstance(ast_node, irt.AssumeStmt)
         if DerefCheck.is_purpose_of(ast_node)
@@ -123,9 +123,9 @@ def check_derefs(prog, model, merge_pred_builder):
     # corresponding expression being dereferenced.
     derefed_values = (
         (frozenset(trace) | {node}, derefed, value)
-        for node, derefed in deref_checks
+        for node, check_expr, derefed in deref_checks
         for anc in analysis.cfg.ancestors(node)
-        for trace, value in analysis.eval_at(anc, derefed).iteritems()
+        for trace, value in analysis.eval_at(anc, check_expr).iteritems()
     )
 
     # Finally, keep those that might be null.
@@ -134,7 +134,7 @@ def check_derefs(prog, model, merge_pred_builder):
     null_derefs = [
         (trace, derefed, len(value) == 1)
         for trace, derefed, value in derefed_values
-        if lits.NULL in value
+        if lits.FALSE in value
     ]
 
     return AnalysisResult(analysis, null_derefs)

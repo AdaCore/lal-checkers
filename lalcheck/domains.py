@@ -2,7 +2,7 @@
 Provides some basic abstract domains.
 """
 
-from utils import powerset
+from utils import powerset, zip_dicts
 import itertools
 import collections
 
@@ -339,7 +339,7 @@ class Intervals(AbstractDomain):
         return self.build(min(concrete), max(concrete))
 
     def str(self, x):
-        return "<empty>" if x == self.bottom else "[{}, {}]".format(*x)
+        return "[empty]" if x == self.bottom else "[{}, {}]".format(*x)
 
 
 class Product(AbstractDomain):
@@ -949,3 +949,539 @@ class SparseArray(AbstractDomain):
             )
             for idx, elem in x)
         ))
+
+
+class AccessPathsLattice(AbstractDomain):
+    class NullDeref(LookupError):
+        pass
+
+    class TopValue(LookupError):
+        pass
+
+    class BottomValue(LookupError):
+        pass
+
+    class AccessPath(object):
+        def size(self):
+            raise NotImplementedError
+
+        def access(self, state):
+            raise NotImplementedError
+
+        def set(self, state, value):
+            raise NotImplementedError
+
+        def __or__(self, other):
+            raise NotImplementedError
+
+        def __and__(self, other):
+            raise NotImplementedError
+
+        def __eq__(self, other):
+            raise NotImplementedError
+
+        def __lt__(self, other):
+            raise NotImplementedError
+
+        def __le__(self, other):
+            return self < other or self == other
+
+        def __gt__(self, other):
+            return other < self
+
+        def __ge__(self, other):
+            return other <= self
+
+        def split(self, separator):
+            raise NotImplementedError
+
+        def touches(self, other):
+            raise NotImplementedError
+
+        def __hash__(self):
+            raise NotImplementedError
+
+    class AllPath(AccessPath):
+        def __init__(self):
+            pass
+
+        def size(self):
+            return float('inf')
+
+        def access(self, state):
+            raise AccessPathsLattice.TopValue
+
+        def set(self, state, value):
+            raise AccessPathsLattice.TopValue
+
+        def __or__(self, other):
+            return self
+
+        def __and__(self, other):
+            return other
+
+        def __eq__(self, other):
+            return isinstance(other, AccessPathsLattice.AllPath)
+
+        def __lt__(self, other):
+            return False
+
+        def split(self, separator):
+            if isinstance(separator, AccessPathsLattice.NonNull):
+                return [AccessPathsLattice.Null()]
+            elif isinstance(separator, AccessPathsLattice.Null):
+                return [AccessPathsLattice.NonNull()]
+            elif isinstance(separator, AccessPathsLattice.AllPath):
+                return []
+            else:
+                return [self]
+
+        def touches(self, other):
+            return False
+
+        def __hash__(self):
+            return hash(())
+
+        def __str__(self):
+            return "[all-path]"
+
+    class Null(AccessPath):
+        def __init__(self):
+            pass
+
+        def size(self):
+            return 1
+
+        def access(self, state):
+            raise AccessPathsLattice.NullDeref
+
+        def set(self, state, value):
+            raise AccessPathsLattice.NullDeref
+
+        def __or__(self, other):
+            if (isinstance(other, AccessPathsLattice.Null) or
+                    isinstance(other, AccessPathsLattice.BottomValue)):
+                return self
+            else:
+                return AccessPathsLattice.AllPath()
+
+        def __and__(self, other):
+            if (isinstance(other, AccessPathsLattice.Null) or
+                    isinstance(other, AccessPathsLattice.AllPath)):
+                return self
+            else:
+                return AccessPathsLattice.NoPath()
+
+        def __eq__(self, other):
+            return isinstance(other, AccessPathsLattice.Null)
+
+        def __lt__(self, other):
+            return isinstance(other, AccessPathsLattice.AllPath)
+
+        def split(self, separator):
+            if (isinstance(separator, AccessPathsLattice.Null) or
+                    isinstance(separator, AccessPathsLattice.AllPath)):
+                return []
+            else:
+                return [self]
+
+        def touches(self, other):
+            return isinstance(other, AccessPathsLattice.NonNull)
+
+        def __hash__(self):
+            return hash(())
+
+        def __str__(self):
+            return "null"
+
+    class NonNull(AccessPath):
+        def __init__(self):
+            pass
+
+        def size(self):
+            return float('inf')
+
+        def access(self, state):
+            raise AccessPathsLattice.TopValue
+
+        def set(self, state, value):
+            raise AccessPathsLattice.TopValue
+
+        def __or__(self, other):
+            if (isinstance(other, AccessPathsLattice.Null) or
+                    isinstance(other, AccessPathsLattice.AllPath)):
+                return AccessPathsLattice.AllPath()
+            else:
+                return self
+
+        def __and__(self, other):
+            if (isinstance(other, AccessPathsLattice.NonNull) or
+                    isinstance(other, AccessPathsLattice.AllPath)):
+                return self
+            elif (isinstance(other, AccessPathsLattice.Address) or
+                  isinstance(other, AccessPathsLattice.ProductGet)):
+                return other
+            else:
+                return AccessPathsLattice.NoPath()
+
+        def __eq__(self, other):
+            return isinstance(other, AccessPathsLattice.NonNull)
+
+        def __lt__(self, other):
+            return isinstance(other, AccessPathsLattice.AllPath)
+
+        def split(self, separator):
+            if (isinstance(separator, AccessPathsLattice.AllPath) or
+                    isinstance(separator, AccessPathsLattice.NonNull)):
+                return []
+            else:
+                return [self]
+
+        def touches(self, other):
+            return isinstance(other, AccessPathsLattice.Null)
+
+        def __hash__(self):
+            return hash(())
+
+        def __str__(self):
+            return "[non-null]"
+
+    class Address(AccessPath):
+        def __init__(self, val, dom):
+            self.val = val
+            self.dom = dom
+
+        def size(self):
+            return 1
+
+        def access(self, state):
+            if self.val in state[0]:
+                return state[0][self.val][1]
+            else:
+                raise AccessPathsLattice.TopValue
+
+        def set(self, state, value):
+            state[0][self.val] = (self.dom, value)
+
+        def __or__(self, other):
+            if self <= other:
+                return other
+            elif other < self:
+                return self
+            elif (isinstance(other, AccessPathsLattice.Address) or
+                  isinstance(other, AccessPathsLattice.ProductGet)):
+                return AccessPathsLattice.NonNull()
+            elif isinstance(other, AccessPathsLattice.Null):
+                return AccessPathsLattice.AllPath()
+            else:
+                return self
+
+        def __and__(self, other):
+            if self <= other:
+                return self
+            elif other < self:
+                return other
+            else:
+                return AccessPathsLattice.NoPath()
+
+        def __eq__(self, other):
+            return (isinstance(other, AccessPathsLattice.Address) and
+                    self.val == other.val and self.dom == other.dom)
+
+        def __lt__(self, other):
+            if (isinstance(other, AccessPathsLattice.NonNull) or
+                    isinstance(other, AccessPathsLattice.AllPath)):
+                return True
+            return False
+
+        def split(self, separator):
+            if (isinstance(separator, AccessPathsLattice.NonNull) or
+                    isinstance(separator, AccessPathsLattice.AllPath) or
+                    self == separator):
+                return []
+            else:
+                return [self]
+
+        def __hash__(self):
+            return hash((self.val, self.dom))
+
+        def __str__(self):
+            return "0x{}".format(format(self.val, '08x'))
+
+    class ProductGet(AccessPath):
+        def __init__(self, prefix, component, dom):
+            self.prefix = prefix
+            self.component = component
+            self.dom = dom
+
+        def size(self):
+            return self.prefix.size()
+
+        def access(self, state):
+            return self.prefix.access(state)[self.component]
+
+        def set(self, state, value):
+            self.prefix.set(state, tuple(
+                value if i == self.component else x
+                for i, x in enumerate(self.prefix.dom.top)
+            ))
+
+        def __or__(self, other):
+            if self <= other:
+                return other
+            elif other < self:
+                return self
+            elif (isinstance(other, AccessPathsLattice.Address) or
+                  isinstance(other, AccessPathsLattice.ProductGet)):
+                return AccessPathsLattice.NonNull()
+            elif isinstance(other, AccessPathsLattice.Null):
+                return AccessPathsLattice.AllPath()
+            else:
+                return self
+
+        def __and__(self, other):
+            if self <= other:
+                return self
+            elif other < self:
+                return other
+            else:
+                return AccessPathsLattice.NoPath()
+
+        def __eq__(self, other):
+            return (isinstance(other, AccessPathsLattice.ProductGet) and
+                    self.prefix == other.prefix and
+                    self.component == other.component and
+                    self.dom == other.dom)
+
+        def __lt__(self, other):
+            if (isinstance(other, AccessPathsLattice.NonNull) or
+                    isinstance(other, AccessPathsLattice.AllPath)):
+                return True
+            elif (isinstance(other, AccessPathsLattice.ProductGet) and
+                  self.component == other.component and
+                  self.dom == other.dom):
+                return self.prefix < other.prefix
+            return False
+
+        def split(self, separator):
+            if (isinstance(separator, AccessPathsLattice.NonNull) or
+                    isinstance(separator, AccessPathsLattice.AllPath) or
+                    self == separator):
+                return []
+            else:
+                return [self]
+
+        def touches(self, other):
+            return False
+
+        def __hash__(self):
+            return hash((self.prefix, self.component, self.dom))
+
+        def __str__(self):
+            return "Get_{}({})".format(self.component, self.prefix)
+
+    class NoPath(AccessPath):
+        def __init__(self):
+            pass
+
+        def size(self):
+            return 0
+
+        def access(self, state):
+            raise AccessPathsLattice.BottomValue
+
+        def set(self, state, value):
+            raise AccessPathsLattice.BottomValue
+
+        def __or__(self, other):
+            return other
+
+        def __and__(self, other):
+            return self
+
+        def __eq__(self, other):
+            return isinstance(other, AccessPathsLattice.NoPath)
+
+        def __hash__(self):
+            return hash(())
+
+        def split(self, separator):
+            return []
+
+        def touches(self, other):
+            return True
+
+        def __lt__(self, other):
+            return not isinstance(other, AccessPathsLattice.NoPath)
+
+        def __str__(self):
+            return "[no-path]"
+
+    def __init__(self):
+        self.bottom = AccessPathsLattice.NoPath()
+        self.top = AccessPathsLattice.AllPath()
+
+    def build(self, *args):
+        raise NotImplementedError
+
+    def size(self, x):
+        return x.size()
+
+    def join(self, a, b):
+        return a | b
+
+    def meet(self, a, b):
+        return a & b
+
+    def update(self, a, b, widen=False):
+        return self.join(a, b)
+
+    def lt(self, a, b):
+        return a < b
+
+    def eq(self, a, b):
+        return a == b
+
+    def le(self, a, b):
+        return a <= b
+
+    def split(self, elem, separator):
+        return elem.split(separator)
+
+    def touches(self, a, b):
+        return a.touches(b)
+
+    def generator(self):
+        raise NotImplementedError
+
+    def concretize(self, abstract):
+        raise NotImplementedError
+
+    def abstract(self, concrete):
+        raise NotImplementedError
+
+    def str(self, x):
+        return str(x)
+
+
+class RandomAccessMemory(AbstractDomain):
+    def __init__(self):
+        self.bottom = object()
+        self.top = ({}, 0)
+
+    def build(self, args):
+        assert isinstance(args, dict)
+        return args, 0
+
+    def size(self, x):
+        return 0 if x == self.bottom or any(
+            dom.is_empty(elem) for dom, elem in x[0].values()
+        ) else float('inf')
+
+    def join(self, a, b):
+        if a == self.bottom:
+            return b
+        elif b == self.bottom:
+            return a
+        elif a[1] != b[1]:
+            raise NotImplementedError
+        else:
+            res = {}
+            dct = zip_dicts(a[0], b[0], False)
+            for k, ((x_dom, x_elem), (y_dom, y_elem)) in dct.iteritems():
+                if x_dom == y_dom:
+                    res[k] = (x_dom, x_dom.join(x_elem, y_elem))
+            return res, a[1]
+
+    def meet(self, a, b):
+        if a == self.bottom or b == self.bottom:
+            return self.bottom
+        elif a[1] != b[1]:
+            raise NotImplementedError
+        else:
+            res = {}
+            dct = zip_dicts(a[0], b[0], True)
+
+            for k, (x, y) in dct.iteritems():
+                if x is None:
+                    res[k] = y
+                elif y is None:
+                    res[k] = x
+                elif x[0] == y[0]:
+                    res[k] = (x[0], x[0].meet(x[1], y[1]))
+                else:
+                    return self.bottom
+
+            return res, a[1]
+
+    def update(self, a, b, widen=False):
+        if widen:
+            if a == self.bottom:
+                return b
+            elif b == self.bottom:
+                return a
+            elif a[1] != b[1]:
+                raise NotImplementedError
+            else:
+                res = {}
+                dct = zip_dicts(a[0], b[0], False)
+                for k, ((x_dom, x_elem), (y_dom, y_elem)) in dct.iteritems():
+                    if x_dom == y_dom:
+                        res[k] = (x_dom, x_dom.update(x_elem, y_elem, True))
+                return res, a[1]
+        else:
+            return self.join(a, b)
+
+    def lt(self, a, b):
+        return self.le(a, b) and not self.eq(a, b)
+
+    def eq(self, a, b):
+        if a == self.bottom:
+            return b == self.bottom
+        elif a[1] != b[1]:
+            return NotImplementedError
+        else:
+            return len(a[0]) == len(b[0]) and all(
+                (i in b[0] and
+                 b[0][i][0] == x_dom and
+                 x_dom.eq(x_elem, b[0][i][1]))
+                for i, (x_dom, x_elem) in a[0].iteritems()
+            )
+
+    def le(self, a, b):
+        if b == self.top:
+            return a != self.top
+        elif a == self.top:
+            return False
+        elif a[1] != b[1]:
+            return NotImplementedError
+        else:
+            return all(
+                x_dom == b[0][i][0] and x_dom.le(x_elem, b[0][i][1])
+                if i in b[0] else True
+                for i, (x_dom, x_elem) in a[0].iteritems()
+            )
+
+    def split(self, elem, separator):
+        raise NotImplementedError
+
+    def touches(self, a, b):
+        raise NotImplementedError
+
+    def generator(self):
+        raise NotImplementedError
+
+    def concretize(self, abstract):
+        raise NotImplementedError
+
+    def abstract(self, concrete):
+        raise NotImplementedError
+
+    def str(self, x):
+        return "({}, {})".format(
+            {
+                i: x[0][i][0].str(x[0][i][1])
+                for i in sorted(x[0].keys())
+            },
+            x[1]
+        )

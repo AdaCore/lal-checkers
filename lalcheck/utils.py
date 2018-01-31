@@ -65,6 +65,31 @@ def partition(it, predicate):
     return res_true, res_false
 
 
+def zip_dicts(a, b, all=True):
+    """
+    Returns a dictionary, which contains a key for each key present in either
+    a or b / both a and b, depending on whether all is set to True or not.
+    To each key is associated a pair which first element is the value
+    associated to this key in the first dict (None if absent), and which
+    second element is the value associated to this key in the second dict (None
+    if absent).
+
+    :param dict a: The first dict.
+
+    :param dict b: The second dict.
+
+    :param bool all: If True, the resulting dict's key set is the union of the
+        key sets of the two given dicts, otherwise its intersection.
+
+    :rtype: dict
+    """
+    op = frozenset.__or__ if all else frozenset.__and__
+    return {
+        k: (a.get(k, None), b.get(k, None))
+        for k in op(frozenset(a.keys()), frozenset(b.keys()))
+    }
+
+
 class Transformer(object):
     def __init__(self, fun):
         """
