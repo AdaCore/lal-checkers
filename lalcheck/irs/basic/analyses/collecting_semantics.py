@@ -418,9 +418,21 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
 
         return new_states
 
+    def different(a, b):
+        if a is None:
+            return b is not None
+        elif b is None:
+            return a is not None
+
+        for n, x in a.iteritems():
+            y = b[n]
+            if not lat.eq(x, y):
+                return True
+        return False
+
     result = {n: lat.bottom for n in cfg.nodes}
     last = None
-    while result != last:
+    while different(last, result):
         last, result = result, it(result)
 
     formatted_results = {
