@@ -267,6 +267,13 @@ def _gen_ir(ctx, subp):
     param_vars = set()
     tmp_vars = KeyCounter()
 
+    # Used to assign a unique index to each variable.
+    var_idx = _ValueHolder(0)
+
+    def next_var_idx():
+        var_idx.value += 1
+        return var_idx.value - 1
+
     # A synthetic variable used to store the result of a function (what is
     # returned). Use a ValueHolder so it can be rebound by closures (e.g.
     # transform_spec).
@@ -345,7 +352,8 @@ def _gen_ir(ctx, subp):
                 purpose=purpose.SyntheticVariable(),
                 type_hint=replaced_expr.p_expression_type,
                 orig_node=replaced_expr,
-                mode=Mode.Local
+                mode=Mode.Local,
+                index=next_var_idx()
             ),
             type_hint=replaced_expr.p_expression_type,
             orig_node=replaced_expr
@@ -1036,7 +1044,8 @@ def _gen_ir(ctx, subp):
                             purpose=purpose.SyntheticVariable(),
                             type_hint=ret_tpe,
                             orig_node=orig_node,
-                            mode=Mode.Local
+                            mode=Mode.Local,
+                            index=next_var_idx()
                         ),
                         type_hint=ret_tpe,
                         orig_node=orig_node
@@ -1535,7 +1544,8 @@ def _gen_ir(ctx, subp):
                     var_id.text,
                     type_hint=param.f_type_expr,
                     orig_node=var_id,
-                    mode=mode
+                    mode=mode,
+                    index=next_var_idx()
                 )
                 var_decls[param, var_id.text] = param_var
                 param_vars.add(param_var)
@@ -1544,7 +1554,8 @@ def _gen_ir(ctx, subp):
             result_var.value = irt.Identifier(
                 irt.Variable(
                     fresh_name("result"),
-                    type_hint=spec.f_subp_returns
+                    type_hint=spec.f_subp_returns,
+                    index=next_var_idx()
                 ),
                 type_hint=spec.f_subp_returns
             )
@@ -1571,7 +1582,8 @@ def _gen_ir(ctx, subp):
                     var_id.text,
                     type_hint=tdecl,
                     orig_node=var_id,
-                    mode=Mode.Out
+                    mode=Mode.Out,
+                    index=next_var_idx()
                 )
 
             if decl.f_default_expr is None:

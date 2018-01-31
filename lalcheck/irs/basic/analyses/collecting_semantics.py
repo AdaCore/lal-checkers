@@ -23,17 +23,16 @@ from collections import defaultdict
 
 
 class _VarTracker(visitors.CFGNodeVisitor):
-    def __init__(self, var_set, vars_domain, vars_idx, evaluator, c_solver):
+    def __init__(self, var_set, vars_domain, evaluator, c_solver):
         self.vars = var_set
         self.vars_domain = vars_domain
-        self.vars_idx = vars_idx
         self.evaluator = evaluator
         self.constr_solver = c_solver
 
     def visit_assign(self, assign, state):
         return tuple(
             self.evaluator.eval(assign.expr, state)
-            if i == self.vars_idx[assign.id.var]
+            if i == assign.id.var.data.index
             else state[i]
             for i, v in enumerate(state)
         )
@@ -43,7 +42,7 @@ class _VarTracker(visitors.CFGNodeVisitor):
         return new_state if success else self.vars_domain.bottom
 
     def visit_read(self, read, state):
-        return tuple(self.vars_domain.top[i] if i == self.vars_idx[read.id.var]
+        return tuple(self.vars_domain.top[i] if i == read.id.var.data.index
                      else x for i, x in enumerate(state))
 
     def visit_use(self, use, state):
@@ -328,10 +327,11 @@ class AnalysisResults(object):
             self.evaluator.model
         )
 
-    def _to_state(self, env):
+    @staticmethod
+    def _to_state(env):
         state_list = [None] * len(env)
         for var, value in env.iteritems():
-            state_list[self.evaluator.vars_idx[var]] = value
+            state_list[var.data.index] = value
         return tuple(state_list)
 
     def eval_at(self, node, expr):
@@ -354,12 +354,17 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
 
     var_set = set(visitors.findall(prog, lambda n: isinstance(n, Variable)))
 
-    vars_idx = {v: i for i, v in enumerate(var_set)}
-    vars_domain = domains.Product(*(model[v].domain for v in var_set))
+    vars_domain = domains.Product(
+        *(model[v].domain for v in sorted(
+            var_set,
+            key=lambda v: v.data.index
+        ))
+    )
+
     trace_domain = _SimpleTraceLattice(cfg.nodes)
 
-    evaluator = ExprEvaluator(model, vars_idx)
-    solver = ExprSolver(model, vars_idx)
+    evaluator = ExprEvaluator(model)
+    solver = ExprSolver(model)
 
     widening_counter = KeyCounter()
     widening_delay = 10
@@ -368,7 +373,7 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
         # will widen when counter == widen_delay, then narrow
         return counter == widening_delay
 
-    do_stmt = _VarTracker(var_set, vars_domain, vars_idx, evaluator, solver)
+    do_stmt = _VarTracker(var_set, vars_domain, evaluator, solver)
 
     lat = domains.Set(
         domains.Product(
@@ -438,7 +443,7 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
     formatted_results = {
         node: {
             trace: {
-                v: values[vars_idx[v]] for v in var_set
+                v: values[v.data.index] for v in var_set
             }
             for trace, values in state
         }
