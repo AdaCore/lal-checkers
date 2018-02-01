@@ -323,12 +323,24 @@ def _find_global_access(typer, proc):
     return _IGNORES_GLOBAL_STATE
 
 
+def _index_of(elem, iterable):
+    i = 0
+    for x in iterable:
+        if x == elem:
+            return i
+        i += 1
+    return -1
+
+
 @memoize
 def _find_vars_to_spill(node):
     """
     :param lal.AdaNode node:
     :return:
     """
+    if node is None:
+        return set()
+
     def accessed_var(expr):
         if expr.is_a(lal.Identifier):
             return expr.p_referenced_decl
@@ -337,11 +349,35 @@ def _find_vars_to_spill(node):
         else:
             return None
 
-    access_nodes = node.findall(
-        lambda x: x.is_a(lal.AttributeRef) and x.f_attribute.text == 'Access'
-    )
+    def is_accessed(node):
+        if node.parent.is_a(lal.AttributeRef):
+            if node.parent.f_attribute.text == 'Access':
+                if node.parent.f_prefix == node:
+                    return True
+        elif node.parent.is_a(lal.ParamAssoc):
+            try:
+                call_expr = node.parent.parent.parent
+                if call_expr.is_a(lal.CallExpr):
+                    ref = call_expr.f_name.p_referenced_decl
+                    if (ref is not None and
+                            ref.is_a(lal.SubpBody, lal.SubpDecl)):
+                        params_to_spill = _find_vars_to_spill(ref.f_aspects)
 
-    return {accessed_var(node.f_prefix) for node in access_nodes}
+                        if len(params_to_spill) > 0:
+                            param_indexes_to_spill = {
+                                _index_of(param, param.parent)
+                                for param in params_to_spill
+                            }
+                            arg_index = _index_of(
+                                node.parent, node.parent.parent
+                            )
+                            return arg_index in param_indexes_to_spill
+
+            except lal.PropertyError:
+                pass
+        return False
+
+    return {accessed_var(n) for n in node.findall(is_accessed)}
 
 
 def _gen_ir(ctx, subp):
@@ -918,6 +954,7 @@ def _gen_ir(ctx, subp):
                     ref = dest.parent.parent
 
             var = var_decls[ref, dest.text]
+
             if ref in to_spill:
                 updated_index = var.data.index
                 return [], (
@@ -1061,10 +1098,16 @@ def _gen_ir(ctx, subp):
 
     def gen_access_path(expr):
         if expr.is_a(lal.Identifier):
+            ref = expr.p_referenced_decl
+
+            if (expr.text, ref) in substitutions:
+                expr = substitutions[expr.text, ref][1].data.orig_node
+                ref = expr.p_referenced_decl
+
+            var = var_decls[ref, expr.text]
+
             return irt.FunCall(
-                access_paths.Var(
-                    var_decls[expr.p_referenced_decl, expr.text].data.index
-                ),
+                access_paths.Var(var.data.index),
                 [stack],
                 type_hint=_PointerType(expr.p_expression_type),
                 additional_arg=expr.p_expression_type,
@@ -1135,9 +1178,9 @@ def _gen_ir(ctx, subp):
             [
                 aspect.f_expr
                 for aspect in proc.f_aspects.f_aspect_assocs
-                if aspect.f_id.text == contract_id
+                if aspect.f_id.text in contract_ids
             ]
-            for contract_id in ('Pre', 'Post')
+            for contract_ids in ({'Model_Pre', 'Pre'}, {'Model_Post', 'Post'})
         )
 
         for i, name, param in _proc_parameters(proc):
