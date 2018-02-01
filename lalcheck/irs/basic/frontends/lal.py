@@ -114,6 +114,9 @@ class _ExtendedCallReturnType(object):
                 self.out_types == other.out_types and
                 self.ret_type == other.ret_type)
 
+    def __hash__(self):
+        return hash((self.out_indices, self.out_types, self.ret_type))
+
     def is_a(self, tpe):
         return isinstance(self, tpe)
 
@@ -126,6 +129,9 @@ class _PointerType(object):
         return (isinstance(other, _PointerType) and
                 self.elem_type == other.elem_type)
 
+    def __hash__(self):
+        return hash(self.elem_type)
+
     def is_a(self, tpe):
         return isinstance(self, tpe)
 
@@ -136,6 +142,9 @@ class _StackType(object):
 
     def __eq__(self, other):
         return isinstance(other, _StackType)
+
+    def __hash__(self):
+        return hash(self.__class__)
 
     def is_a(self, tpe):
         return isinstance(self, tpe)
@@ -1316,8 +1325,8 @@ def _gen_ir(ctx, subp):
                     )
                 else:
                     ret_tpe = _ExtendedCallReturnType(
-                        [index for index, _, _ in out_params],
-                        [param_type for _, param_type, _ in out_params],
+                        tuple(index for index, _, _ in out_params),
+                        tuple(param_type for _, param_type, _ in out_params),
                         type_hint
                     ) if len(out_params) != 0 else type_hint
 
@@ -2618,7 +2627,7 @@ def subp_ret_typer(inner):
             return (
                 hint.out_indices,
                 hint.out_types if hint.ret_type is None
-                else hint.out_types + [hint.ret_type]
+                else hint.out_types + (hint.ret_type,)
             )
 
     @Transformer.as_transformer
