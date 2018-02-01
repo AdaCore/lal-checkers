@@ -190,11 +190,11 @@ class TopDownCallStrategy(KnownTargetCallStrategy):
                 for leaf in analysis.cfg.leafs()
                 for _, values in analysis.semantics[leaf].iteritems()
             ]
-
             param_values = [
                 reduce(
                     model[var].domain.join,
-                    (env[var] for env in envs)
+                    (env[var] for env in envs),
+                    model[var].domain.bottom
                 )
                 if var in model
                 else arg_values[var]
@@ -204,7 +204,8 @@ class TopDownCallStrategy(KnownTargetCallStrategy):
             result_var = prog.data.result_var
             result_value = reduce(
                 model[result_var].domain.join,
-                (env[result_var] for env in envs)
+                (env[result_var] for env in envs),
+                model[result_var].domain.bottom
             ) if result_var is not None else None
 
             if len(sig.out_param_indices) == 0:
