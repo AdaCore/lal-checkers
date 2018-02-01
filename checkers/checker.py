@@ -57,19 +57,25 @@ class Checker(object):
 
         progs = ctx.extract_programs_from_file(args.file)
 
-        call_strategies = {
-            'unknown': collecting_semantics.UnknownTargetCallStrategy(),
-            'topdown': collecting_semantics.TopDownCallStrategy(
+        call_strategy_unknown = (
+            collecting_semantics.UnknownTargetCallStrategy().as_def_provider()
+        )
+
+        call_strategy_topdown = collecting_semantics.TopDownCallStrategy(
                 progs,
                 lambda: model,
                 lambda: merge_predicate
-            )
+            ).as_def_provider()
+
+        call_strategies = {
+            'unknown': call_strategy_unknown,
+            'topdown': call_strategy_topdown | call_strategy_unknown
         }
 
         model_builder = Models(
             ctx.default_typer(),
             default_type_interpreter,
-            call_strategies[args.call_strategy].as_def_provider()
+            call_strategies[args.call_strategy]
         )
 
         model = model_builder.of(*progs)
