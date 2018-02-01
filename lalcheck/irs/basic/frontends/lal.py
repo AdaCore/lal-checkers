@@ -204,7 +204,12 @@ def _record_fields(record_decl):
                 res.append(_RecordField(discr, name, i.value))
                 i.value += 1
 
-    record_def = record_decl.f_type_def.f_record_def
+    tp_def = record_decl.f_type_def
+
+    if tp_def.is_a(lal.DerivedTypeDef):
+        record_def = tp_def.f_record_extension
+    else:
+        record_def = tp_def.f_record_def
 
     add_component_fields(record_def.f_components)
     return res
@@ -282,7 +287,7 @@ def _is_array_type_decl(tpe):
     Returns True iff the given type is an array type decl.
     :param lal.AdaNode tpe: The type to check.
     """
-    if tpe.is_a(lal.TypeDecl):
+    if tpe is not None and tpe.is_a(lal.TypeDecl):
         return tpe.f_type_def.is_a(lal.ArrayTypeDef)
     return False
 
@@ -1260,6 +1265,10 @@ def _gen_ir(ctx, subp):
         :rtype: (list[irt.Stmt], irt.Expr)
         """
 
+        if isinstance(args, lal.BinOp):
+            # array slices
+            unimplemented(args)
+
         suffixes = [
             transform_expr(suffix.f_r_expr)
             for suffix in args
@@ -1276,9 +1285,9 @@ def _gen_ir(ctx, subp):
                 return gen_assignment(args[i].f_r_expr, [], out_expr)
             return do
 
-        if prefix.is_a(lal.Identifier):
+        if prefix.is_a(lal.Identifier, lal.DottedName):
             ref = prefix.p_referenced_decl
-            if ref.is_a(lal.SubpBody, lal.SubpDecl):
+            if ref is not None and ref.is_a(lal.SubpBody, lal.SubpDecl):
                 # The call target is statically known.
 
                 out_params = [
@@ -1407,6 +1416,8 @@ def _gen_ir(ctx, subp):
                 orig_node=orig_node,
                 callee_type=prefix.p_expression_type
             )
+
+        unimplemented(orig_node)
 
     def transform_dereference(derefed_expr, deref_type, deref_orig):
         """
@@ -1661,8 +1672,9 @@ def _gen_ir(ctx, subp):
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
             ref = expr.p_referenced_decl
-
-            if (expr.text, ref) in substitutions:
+            if ref is None:
+                unimplemented(expr)
+            elif (expr.text, ref) in substitutions:
                 return substitutions[expr.text, ref]
             elif ref.is_a(lal.ObjectDecl, lal.ParamSpec):
                 return [], get_var(expr, ref)
@@ -1701,6 +1713,8 @@ def _gen_ir(ctx, subp):
             # relevant for variant records).
             # Additionally, if an implicit dereference takes place, the
             # relevant assume statements are also inserted.
+            if expr.f_prefix.p_expression_type is None:
+                unimplemented(expr)
 
             if expr.f_prefix.p_expression_type.p_is_access_type:
                 access_type_def = expr.f_prefix.p_expression_type.f_type_def
@@ -2174,6 +2188,12 @@ def _gen_ir(ctx, subp):
 
         unimplemented(stmt)
 
+    def print_warning(subject, exception):
+        print("warning: ignored '{}'".format(subject))
+        message = getattr(exception, 'message', None)
+        if message is not None:
+            print("\treason: {}".format(message))
+
     def transform_decls(decls):
         """
         :param iterable[lal.BasicDecl] decls: An iterable of decls
@@ -2182,7 +2202,10 @@ def _gen_ir(ctx, subp):
         """
         res = []
         for decl in decls:
-            res.extend(transform_decl(decl))
+            try:
+                res.extend(transform_decl(decl))
+            except (lal.PropertyError, NotImplementedError, KeyError) as e:
+                print_warning(decl.text, e)
         return res
 
     def transform_stmts(stmts):
@@ -2193,7 +2216,10 @@ def _gen_ir(ctx, subp):
         """
         res = []
         for stmt in stmts:
-            res.extend(transform_stmt(stmt))
+            try:
+                res.extend(transform_stmt(stmt))
+            except (lal.PropertyError, NotImplementedError, KeyError) as e:
+                print_warning(stmt.text, e)
         return res
 
     return irt.Program(
@@ -2659,6 +2685,12 @@ def subtyper(inner):
 def ram_typer(hint):
     if hint.is_a(_StackType):
         return types.DataStorage()
+
+
+@types.memoizing_typer
+@types.typer
+def unknown_typer(_):
+    return types.Product([])
 
 
 class ExtractionContext(object):
