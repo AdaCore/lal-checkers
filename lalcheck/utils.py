@@ -9,8 +9,8 @@ class Bunch(dict):
     can be used to get keys. Once constructed, the object is immutable.
     """
     def __init__(self, **kw):
-        kw['_hash'] = tuple(sorted(self.iteritems())).__hash__()
         dict.__init__(self, kw)
+        kw['_hash'] = hash(tuple(sorted(kw.keys())))
         self.__dict__.update(kw)
 
     def __setattr__(self, key, value):
