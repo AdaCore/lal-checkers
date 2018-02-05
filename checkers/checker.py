@@ -29,6 +29,8 @@ class Checker(object):
         self.parser.add_argument('--output-format', default="codepeer")
         self.parser.add_argument('--path-sensitive', action='store_true')
         self.parser.add_argument('--call-strategy', default="unknown")
+        self.parser.add_argument('--project', default=None)
+        self.parser.add_argument('--model', default=None)
         self.parser.add_argument('file')
         self.args = None
 
@@ -53,9 +55,16 @@ class Checker(object):
 
     def run(self):
         args = self.args = self.parser.parse_args()
-        ctx = lal2basic.ExtractionContext()
 
-        progs = ctx.extract_programs_from_file(args.file)
+        ctx = lal2basic.ExtractionContext(args.project)
+
+        if args.project is None:
+            progs = ctx.extract_programs_from_file(args.file)
+        else:
+            if args.model is not None:
+                ctx.use_model(args.model)
+
+            progs = ctx.extract_programs_from_provider(args.file, 'body')
 
         call_strategy_unknown = (
             collecting_semantics.UnknownTargetCallStrategy().as_def_provider()

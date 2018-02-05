@@ -347,7 +347,7 @@ def _index_of(elem, iterable):
 
 
 @memoize
-def _find_vars_to_spill(node):
+def _find_vars_to_spill(ctx, node):
     """
     :param lal.AdaNode node:
     :return:
@@ -359,6 +359,8 @@ def _find_vars_to_spill(node):
         if expr.is_a(lal.Identifier):
             return expr.p_referenced_decl
         elif expr.is_a(lal.DottedName):
+            return accessed_var(expr.f_prefix)
+        elif expr.is_a(lal.AttributeRef) and expr.f_attribute.text == 'Model':
             return accessed_var(expr.f_prefix)
         else:
             return None
@@ -375,23 +377,61 @@ def _find_vars_to_spill(node):
                     ref = call_expr.f_name.p_referenced_decl
                     if (ref is not None and
                             ref.is_a(lal.SubpBody, lal.SubpDecl)):
-                        params_to_spill = _find_vars_to_spill(ref.f_aspects)
+                        procs = [ref]
+                        model = ctx.fun_models.get(ref, None)
+                        if model is not None:
+                            procs.append(model)
 
-                        if len(params_to_spill) > 0:
-                            param_indexes_to_spill = {
-                                _index_of(param, param.parent)
-                                for param in params_to_spill
-                            }
-                            arg_index = _index_of(
-                                node.parent, node.parent.parent
+                        for proc in procs:
+                            params_to_spill = _find_vars_to_spill(
+                                ctx,
+                                proc.f_aspects
                             )
-                            return arg_index in param_indexes_to_spill
+
+                            if len(params_to_spill) > 0:
+                                param_indexes_to_spill = {
+                                    _index_of(param, param.parent)
+                                    for param in params_to_spill
+                                }
+                                arg_index = _index_of(
+                                    node.parent, node.parent.parent
+                                )
+                                return arg_index in param_indexes_to_spill
 
             except lal.PropertyError:
                 pass
         return False
 
     return {accessed_var(n) for n in node.findall(is_accessed)}
+
+
+@memoize
+def retrieve_function_contracts(ctx, proc):
+    """
+    :param lal.SubpDecl | lal.SubpBody proc:
+    :return:
+    """
+    pres, posts = [], []
+
+    def collect_pre_posts(proc):
+        if proc.f_aspects is not None:
+            for aspect in proc.f_aspects.f_aspect_assocs:
+                if aspect.f_id.text == 'Pre':
+                    pres.append((aspect.f_expr, True))
+                elif aspect.f_id.text == 'Model_Pre':
+                    pres.append((aspect.f_expr, True))
+                elif aspect.f_id.text == 'Post':
+                    posts.append((aspect.f_expr, True))
+                elif aspect.f_id.text == 'Model_Post':
+                    posts.append((aspect.f_expr, False))
+
+    collect_pre_posts(proc)
+
+    model = ctx.fun_models.get(proc, None)
+    if model is not None:
+        collect_pre_posts(model)
+
+    return pres, posts
 
 
 def _gen_ir(ctx, subp):
@@ -447,7 +487,7 @@ def _gen_ir(ctx, subp):
     substitutions = {}
 
     # Contains variables that are spilled.
-    to_spill = _find_vars_to_spill(subp)
+    to_spill = _find_vars_to_spill(ctx, subp)
     stack = irt.Identifier(
         irt.Variable(
             "$stack",
@@ -1139,6 +1179,17 @@ def _gen_ir(ctx, subp):
                 orig_node=expr
             )
 
+        elif expr.is_a(lal.AttributeRef) and expr.f_attribute.text == "Model":
+            updated_index = 1
+
+            return irt.FunCall(
+                access_paths.Field(updated_index),
+                [gen_access_path(expr.f_prefix)],
+                type_hint=_PointerType(expr.p_expression_type),
+                additional_arg=expr.p_expression_type,
+                orig_node=expr
+            )
+
         unimplemented(expr)
 
     def gen_assignment(assign_dest, expr_pre_stmts, expr, orig_node=None):
@@ -1166,13 +1217,18 @@ def _gen_ir(ctx, subp):
             )
         ]
 
-    def gen_contract_conditions(proc, args_in, args_out, ret, orig_call):
+    def gen_contract_conditions(proc, pres, posts,
+                                args_in, args_out, ret, orig_call):
         """
         Generates assume statements for checking pre/post conditions of the
         given procedure.
 
         :param lal.SubpBody | lal.SubpDecl proc: The procedure for which to
             generate contract checking conditions.
+
+        :param list[lal.Expr] pres: The list of precondition expressions.
+
+        :param list[lal.Expr] posts: The list of postcondition expressions.
 
         :param list[irt.Expr] args_in: The expressions used to retrieve
             the input arguments of the function, indexed by their position.
@@ -1185,24 +1241,19 @@ def _gen_ir(ctx, subp):
 
         :param lal.AdaNode orig_call: The original call node.
         """
-        if proc.f_aspects is None:
-            return [], []
 
-        pres, posts = (
-            [
-                aspect.f_expr
-                for aspect in proc.f_aspects.f_aspect_assocs
-                if aspect.f_id.text in contract_ids
-            ]
-            for contract_ids in ({'Model_Pre', 'Pre'}, {'Model_Post', 'Post'})
-        )
+        procs = [proc]
+        model = ctx.fun_models.get(proc, None)
+        if model is not None:
+            procs.append(model)
 
-        for i, name, param in _proc_parameters(proc):
-            substitutions[name.text, param] = ([], args_in[i])
+        for proc in procs:
+            for i, name, param in _proc_parameters(proc):
+                substitutions[name.text, param] = ([], args_in[i])
 
         pre_stmts = [
             stmt
-            for pre in pres
+            for pre, must_check in pres
             for stmts, expr in [transform_expr(pre)]
             for stmt in stmts + [irt.AssumeStmt(
                 expr,
@@ -1211,23 +1262,28 @@ def _gen_ir(ctx, subp):
             )]
         ]
 
-        substitutions[
-            proc.f_subp_spec.f_subp_name.text + "'Result",
-            proc
-        ] = ([], ret)
+        for proc in procs:
+            substitutions[
+                proc.f_subp_spec.f_subp_name.text + "'Result",
+                proc
+            ] = ([], ret)
 
-        for i, name, param in _proc_parameters(proc):
-            if i in args_out:
-                substitutions[name.text + "'Old", param] = ([], args_in[i])
-                substitutions[name.text, param] = ([], args_out[i])
+        for proc in procs:
+            for i, name, param in _proc_parameters(proc):
+                if i in args_out:
+                    substitutions[name.text + "'Old", param] = ([], args_in[i])
+                    substitutions[name.text, param] = ([], args_out[i])
 
         post_stmts = [
             stmt
-            for post in posts
+            for post, must_check in posts
             for stmts, expr in [transform_expr(post)]
             for stmt in stmts + [irt.AssumeStmt(
                 expr,
-                purpose=purpose.ContractCheck("postcondition", orig_call),
+                purpose=(
+                    purpose.ContractCheck("postcondition", orig_call)
+                    if must_check else None
+                ),
                 orig_node=post
             )]
         ]
@@ -1324,7 +1380,9 @@ def _gen_ir(ctx, subp):
                             )]
                         ))
 
-                if len(out_params) == 0 and ref.f_aspects is None:
+                pres, posts = retrieve_function_contracts(ctx, ref)
+
+                if len(out_params) == len(pres) == len(posts) == 0:
                     return suffix_pre_stmts, irt.FunCall(
                         ref,
                         suffix_exprs,
@@ -1391,6 +1449,8 @@ def _gen_ir(ctx, subp):
 
                     pre_conds, post_conds = gen_contract_conditions(
                         ref,
+                        pres,
+                        posts,
                         suffix_exprs,
                         out_arg_exprs,
                         res,
@@ -1793,7 +1853,10 @@ def _gen_ir(ctx, subp):
 
         elif expr.is_a(lal.AttributeRef):
             # AttributeRefs are transformed using an unary operator.
-            if expr.f_attribute.text in _attr_to_unop:
+
+            attribute_text = expr.f_attribute.text
+
+            if attribute_text in _attr_to_unop:
                 prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
                 return prefix_pre_stmts, irt.FunCall(
                     _attr_to_unop[expr.f_attribute.text],
@@ -1801,19 +1864,21 @@ def _gen_ir(ctx, subp):
                     type_hint=expr.p_expression_type,
                     orig_node=expr
                 )
-            elif expr.f_attribute.text == 'Access':
+            elif attribute_text == 'Access':
                 return [], gen_access_path(expr.f_prefix)
-            elif expr.f_attribute.text == 'Result':
+            elif attribute_text == 'Result':
                 return substitutions[
                     expr.f_prefix.text + "'Result",
                     expr.f_prefix.p_referenced_decl
                 ]
-            elif expr.f_attribute.text == 'Old':
+            elif attribute_text == 'Old':
                 return substitutions[
                     expr.f_prefix.text + "'Old",
                     expr.f_prefix.p_referenced_decl
                 ]
-            elif expr.f_attribute.text == 'Image':
+            elif attribute_text == 'Model':
+                return transform_expr(expr.f_prefix)
+            elif attribute_text == 'Image':
                 if expr.f_prefix.p_referenced_decl == expr.p_int_type:
                     arg_pre_stmts, arg_expr = transform_expr(
                         expr.f_args[0].f_r_expr
@@ -2729,6 +2794,9 @@ class ExtractionContext(object):
             dummy.p_universal_real_type
         )
 
+        self.type_models = {}
+        self.fun_models = {}
+
     def extract_programs_from_file(self, ada_file):
         """
         :param str ada_file: A path to the Ada source file from which to
@@ -2745,6 +2813,49 @@ class ExtractionContext(object):
         return self._extract_from_unit(self.lal_ctx.get_from_provider(
             name, kind
         ))
+
+    def use_model(self, name):
+        model_unit = self.lal_ctx.get_from_provider(name, "specification")
+        for diag in model_unit.diagnostics:
+            print('   {}'.format(diag))
+            return
+
+        model_ofs = model_unit.root.findall(
+            lambda x: x.is_a(lal.AspectAssoc) and x.f_id.text == "Model_Of"
+        )
+
+        type_models = {
+            aspect.parent.parent.parent: aspect.f_expr.p_name_designated_type
+            for aspect in model_ofs
+            if aspect.parent.parent.parent.is_a(lal.TypeDecl, lal.SubtypeDecl)
+        }
+
+        fun_models = {
+            aspect.parent.parent.parent: aspect.f_expr.p_referenced_decl
+            for aspect in model_ofs
+            if aspect.parent.parent.parent.is_a(lal.SubpDecl)
+        }
+
+        if len(type_models) + len(fun_models) != len(model_ofs):
+            print("warning: detected usage of Model_Of in an unknown context.")
+
+        for tdecl, ref in type_models.iteritems():
+            if ref is None:
+                print("warning: Model_Of used on '{}' refers to an unknown "
+                      "type.".format(tdecl.f_name.text))
+            else:
+                self.type_models[ref] = tdecl
+
+        for fdecl, ref in fun_models.iteritems():
+            if ref is None:
+                print(
+                    "warning: Model_Of used on '{}' refers to an unknown "
+                    "procedure/function.".format(
+                        fdecl.f_subp_spec.f_subp_name.text
+                    )
+                )
+            else:
+                self.fun_models[ref] = fdecl
 
     def _extract_from_unit(self, unit):
         if unit.root is None:
@@ -2797,7 +2908,14 @@ class ExtractionContext(object):
 
         return typer
 
-    def default_typer(self):
+    def model_typer(self, inner_typer):
+        @Transformer.as_transformer
+        def find_modeled_type(hint):
+            return self.type_models.get(hint, None)
+
+        return find_modeled_type >> inner_typer
+
+    def default_typer(self, fallback_typer=None):
         """
         :return: The default Typer for Ada programs parsed using this
             extraction context.
@@ -2810,10 +2928,15 @@ class ExtractionContext(object):
         @types.memoizing_typer
         @types.delegating_typer
         def typer():
+            return self.model_typer(typer_without_model) | typer_without_model
+
+        @types.memoizing_typer
+        @types.delegating_typer
+        def typer_without_model():
             """
             :rtype: types.Typer[lal.AdaNode]
             """
-            return (standard_typer |
+            typr = (standard_typer |
                     int_range_typer |
                     enum_typer |
                     access_typer |
@@ -2824,5 +2947,7 @@ class ExtractionContext(object):
                     subp_ret_typer(typer) |
                     subtyper(typer) |
                     ram_typer)
+
+            return typr if fallback_typer is None else typr | fallback_typer
 
         return typer
