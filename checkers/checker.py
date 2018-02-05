@@ -4,6 +4,7 @@ import lalcheck.irs.basic.frontends.lal as lal2basic
 from lalcheck.interpretations import default_type_interpreter
 from lalcheck.irs.basic.tools import Models
 from lalcheck.irs.basic.analyses import collecting_semantics
+import time
 
 
 def lal_subprogram_info(subp):
@@ -31,6 +32,7 @@ class Checker(object):
         self.parser.add_argument('--call-strategy', default="unknown")
         self.parser.add_argument('--project', default=None)
         self.parser.add_argument('--model', default=None)
+        self.parser.add_argument('--timings', action='store_true')
         self.parser.add_argument('file')
         self.args = None
 
@@ -54,9 +56,13 @@ class Checker(object):
         raise NotImplementedError
 
     def run(self):
+        start_time = time.clock()
+
         args = self.args = self.parser.parse_args()
 
         ctx = lal2basic.ExtractionContext(args.project)
+
+        frontend_start_time = time.clock()
 
         if args.project is None:
             progs = ctx.extract_programs_from_file(args.file)
@@ -81,6 +87,8 @@ class Checker(object):
             'topdown': call_strategy_topdown | call_strategy_unknown
         }
 
+        model_gen_start_time = time.clock()
+
         model_builder = Models(
             ctx.default_typer(),
             default_type_interpreter,
@@ -97,10 +105,28 @@ class Checker(object):
         else:
             merge_predicate = collecting_semantics.MergePredicateBuilder.Always
 
+        analysis_start_time = time.clock()
+
         analyses = {
             prog: self.checker_fun(prog, model, merge_predicate)
             for prog in progs
         }
+
+        end_time = time.clock()
+
+        if args.timings:
+            print("IR Generation: {} seconds.".format(
+                model_gen_start_time - frontend_start_time
+            ))
+            print("Model Generation: {} seconds.".format(
+                analysis_start_time - model_gen_start_time
+            ))
+            print("Analysis: {} seconds.".format(
+                end_time - analysis_start_time
+            ))
+            print("Total: {} seconds.".format(
+                end_time - start_time
+            ))
 
         if args.output_format == 'codepeer':
             emit_message = self._emit_codepeer_message

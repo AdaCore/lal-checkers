@@ -7,7 +7,7 @@ import libadalang as lal
 from lalcheck.irs.basic import tree as irt, purpose
 from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
 from lalcheck.constants import ops, lits, access_paths
-from lalcheck.utils import KeyCounter, Transformer
+from lalcheck.utils import KeyCounter, Transformer, profile
 from lalcheck import types
 
 from funcy.calc import memoize
@@ -346,6 +346,7 @@ def _index_of(elem, iterable):
     return -1
 
 
+@profile()
 @memoize
 def _find_vars_to_spill(ctx, node):
     """
@@ -434,6 +435,7 @@ def retrieve_function_contracts(ctx, proc):
     return pres, posts
 
 
+@profile()
 def _gen_ir(ctx, subp):
     """
     Generates Basic intermediate representation from a lal subprogram body.
@@ -1217,6 +1219,7 @@ def _gen_ir(ctx, subp):
             )
         ]
 
+    @profile()
     def gen_contract_conditions(proc, pres, posts,
                                 args_in, args_out, ret, orig_call):
         """
@@ -1290,6 +1293,7 @@ def _gen_ir(ctx, subp):
 
         return pre_stmts, post_stmts
 
+    @profile()
     def gen_call_expr(prefix, args, type_hint, orig_node):
         """
         Call expressions are transformed the following way:
@@ -1596,6 +1600,7 @@ def _gen_ir(ctx, subp):
         print(array_def.dump())
         unimplemented(expr)
 
+    @profile()
     def transform_expr(expr):
         """
         :param lal.Expr expr: The expression to transform.
@@ -1991,6 +1996,7 @@ def _gen_ir(ctx, subp):
 
         unimplemented(decl)
 
+    @profile()
     def transform_stmt(stmt):
         """
         :param lal.Stmt stmt: The lal statement to transform.
@@ -2814,6 +2820,7 @@ class ExtractionContext(object):
             name, kind
         ))
 
+    @profile()
     def use_model(self, name):
         model_unit = self.lal_ctx.get_from_provider(name, "specification")
         for diag in model_unit.diagnostics:
@@ -2857,6 +2864,7 @@ class ExtractionContext(object):
             else:
                 self.fun_models[ref] = fdecl
 
+    @profile()
     def _extract_from_unit(self, unit):
         if unit.root is None:
             print('Could not parse {}:'.format(unit.filename))

@@ -1,6 +1,7 @@
 from itertools import chain, combinations
 from collections import defaultdict
 from funcy.calc import memoize
+import time
 
 
 class Bunch(dict):
@@ -222,3 +223,77 @@ class Transformer(object):
         :rtype: Transformer
         """
         return Transformer(memoize(transformer._transform))
+
+
+class _StopWatch(object):
+    @staticmethod
+    def get_output_file():
+        try:
+            with open('profiler_config', 'r') as f:
+                return f.readline()
+        except IOError:
+            return ''
+
+    def __init__(self):
+        self.timings = {}
+        self.started = {}
+
+    def register(self, name):
+        self.timings[name] = 0
+
+    def start(self, name):
+        if name not in self.started:
+            self.started[name] = [0,  time.clock()]
+        else:
+            self.started[name][0] += 1
+
+    def stop(self, name):
+        info = self.started[name]
+        if info[0] == 0:
+            self.timings[name] += time.clock() - info[1]
+            del self.started[name]
+        else:
+            self.started[name][0] -= 1
+
+    def inc(self, name, t):
+        self.timings[name] += t
+
+    def __del__(self):
+        output_file = self.get_output_file()
+        if len(output_file) == 0:
+            return
+
+        text = '\n---- Profiling Results ----\n\n' + '\n'.join(
+            "Total time spent in {}: {} seconds.".format(name, t)
+            for name, t in self.timings.iteritems()
+        )
+
+        if output_file == '<stdout>':
+            print(text)
+        else:
+            with open(output_file, 'w') as f:
+                f.write(text)
+
+
+_stopwatch = _StopWatch()
+
+
+def profile(use_name=None):
+    if len(_stopwatch.get_output_file()) == 0:
+        return lambda f: f
+
+    def do(fun):
+        f_name = fun.__name__ if use_name is None else use_name
+
+        _stopwatch.register(f_name)
+
+        def f(*args, **kwargs):
+            _stopwatch.start(f_name)
+            try:
+                return fun(*args, **kwargs)
+            finally:
+                _stopwatch.stop(f_name)
+
+        return f
+
+    return do
