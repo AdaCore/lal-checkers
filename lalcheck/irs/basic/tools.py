@@ -523,7 +523,7 @@ class ExprSolver(visitors.Visitor):
             return False
 
         if len(args_val) == 1:
-            inv_res = [inv_res]
+            inv_res = (inv_res,)
 
         return all(
             arg.visit(self, state, expected_arg)

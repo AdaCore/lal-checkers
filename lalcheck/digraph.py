@@ -74,8 +74,16 @@ class Digraph(object):
         return len(self.successors(node)) == 0
 
     @memoize
+    def is_root(self, node):
+        return len(self.ancestors(node)) == 0
+
+    @memoize
     def leafs(self):
         return frozenset(node for node in self.nodes if self.is_leaf(node))
+
+    @memoize
+    def roots(self):
+        return frozenset(node for node in self.nodes if self.is_root(node))
 
     def __repr__(self):
         return "({}, {})".format(self.nodes, self.edges)

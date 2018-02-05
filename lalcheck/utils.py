@@ -91,6 +91,10 @@ def zip_dicts(a, b, all=True):
     }
 
 
+def concat_dicts(a, b):
+    return dict(a, **b)
+
+
 class Transformer(object):
     def __init__(self, fun):
         """

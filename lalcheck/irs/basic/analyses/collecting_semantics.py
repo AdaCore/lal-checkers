@@ -12,7 +12,7 @@ from lalcheck.irs.basic.tree import Variable
 from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.irs.basic.purpose import SyntheticVariable
 from lalcheck.irs.basic import visitors
-from lalcheck.utils import KeyCounter
+from lalcheck.utils import KeyCounter, concat_dicts
 from lalcheck.digraph import Digraph
 from lalcheck.interpretations import def_provider
 from lalcheck import domains
@@ -365,25 +365,10 @@ _unit_domain = domains.Product()
 
 
 def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
-    cfg = prog.visit(CFGBuilder())
-
-    var_set = set(visitors.findall(prog, lambda n: isinstance(n, Variable)))
-
-    indexed_vars = {
-        var.data.index: var
-        for var in var_set
-    }
-    last_index = max(indexed_vars.keys()) if len(indexed_vars) > 0 else -1
-
-    trace_domain = _SimpleTraceLattice(cfg.nodes)
-    vars_domain = domains.Product(*(
-        model[indexed_vars[i]].domain if i in indexed_vars else _unit_domain
-        for i in range(last_index + 1)
-    ))
-
     evaluator = ExprEvaluator(model)
     solver = ExprSolver(model)
 
+    # setup widening configuration
     widening_counter = KeyCounter()
     widening_delay = 10
 
@@ -391,8 +376,27 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
         # will widen when counter == widen_delay, then narrow
         return counter == widening_delay
 
-    do_stmt = _VarTracker(var_set, vars_domain, evaluator, solver)
+    cfg = prog.visit(CFGBuilder())
+    roots = cfg.roots()
+    non_roots = [n for n in cfg.nodes if n not in roots]
 
+    # find the variables that appear in the program
+    var_set = set(visitors.findall(prog, lambda n: isinstance(n, Variable)))
+
+    # build an index
+    indexed_vars = {var.data.index: var for var in var_set}
+    last_index = max(indexed_vars.keys()) if len(indexed_vars) > 0 else -1
+
+    # define the variables domain
+    vars_domain = domains.Product(*(
+        model[indexed_vars[i]].domain if i in indexed_vars else _unit_domain
+        for i in range(last_index + 1)
+    ))
+
+    # define the trace domain
+    trace_domain = _SimpleTraceLattice(cfg.nodes)
+
+    # define the State domain that we track at each program point.
     lat = domains.Set(
         domains.Product(
             trace_domain,
@@ -405,7 +409,47 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
         None  # We don't need a top element here.
     )
 
-    init = tuple(
+    # the transfer function
+    transfer_func = _VarTracker(var_set, vars_domain, evaluator, solver)
+
+    def transfer(new_states, node, inputs):
+        transferred = (
+            (
+                trace,
+                node.data.node.visit(transfer_func, values)
+                if node.data.node is not None else values
+            )
+            for trace, values in inputs
+        )
+
+        output = lat.build([
+            (
+                trace_domain.join(trace, trace_domain.build([node])),
+                values
+            )
+            for trace, values in transferred
+            if not vars_domain.is_empty(values)
+        ])
+
+        if node.data.is_widening_point:
+            if do_widen(widening_counter.get_incr(node)):
+                output = lat.update(new_states[node], output, True)
+
+        return output
+
+    def it(states):
+        new_states = states.copy()
+
+        for node in non_roots:
+            new_states[node] = transfer(new_states, node, reduce(
+                lat.join,
+                (new_states[anc] for anc in cfg.ancestors(node))
+            ))
+
+        return new_states
+
+    # initial state of the variables at the entry of the program
+    init_vars = tuple(
         arg_values[indexed_vars[i]]
         if (i in indexed_vars and
             arg_values is not None and
@@ -414,37 +458,19 @@ def collect_semantics(prog, model, merge_pred_builder, arg_values=None):
         for i in range(last_index + 1)
     )
 
-    def it(states):
-        new_states = states.copy()
+    # initial state at the the entry of the program
+    init_lat = lat.build([(trace_domain.bottom, init_vars)])
 
-        for node in cfg.nodes:
-            inputs = [new_states[anc] for anc in cfg.ancestors(node)]
-            res = (lat.build([(trace_domain.bottom, init)])
-                   if len(inputs) == 0 else reduce(lat.join, inputs))
+    # last state of the program (all program points)
+    last = concat_dicts(
+        {n: transfer({}, n, init_lat) for n in roots},
+        {n: lat.bottom for n in non_roots}
+    )
 
-            res = lat.build([
-                (
-                    trace_domain.join(trace, trace_domain.build([node])),
-                    updated_val
-                )
-                for trace, values in res
-                for updated_val in [
-                    node.data.node.visit(do_stmt, values)
-                    if node.data.node is not None else values
-                ]
-                if not vars_domain.is_empty(updated_val)
-            ])
-
-            if node.data.is_widening_point:
-                if do_widen(widening_counter.get_incr(node)):
-                    res = lat.update(new_states[node], res, True)
-
-            new_states[node] = res
-
-        return new_states
-
-    last = {n: lat.bottom for n in cfg.nodes}
+    # current state of the program (all program points)
     result = it(last)
+
+    # find a fix-point.
     while any(not lat.eq(x, result[i]) for i, x in last.iteritems()):
         last, result = result, it(result)
 
