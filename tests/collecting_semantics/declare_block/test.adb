@@ -3,7 +3,7 @@ procedure Ex1 is
    res : Integer;
 begin
    declare
-     y : Integer := 12
+     y : Integer := 12;
    begin
      res := x + y;
    end;
