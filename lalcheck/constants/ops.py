@@ -25,6 +25,8 @@ IMAGE = "Image"
 
 COPY_OFFSET = "CopyOffset"
 
+GET_MODEL = 'GetModel'
+
 
 class _IndexedName(object):
     def __init__(self, index, frmt):

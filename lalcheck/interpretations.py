@@ -90,6 +90,34 @@ class Signature(object):
         self.output_domain = output_domain
         self.out_param_indices = out_param_indices
 
+    def contains(self, domain):
+        """
+        Returns True if this signature contains the given domain, either as
+        one of its input domain, or as the output domain.
+
+        :param domains.AbstractDomain domain: The domain to consider.
+        """
+        return domain in self.input_domains or domain == self.output_domain
+
+    def substituted(self, domain, by):
+        """
+        Returns a new signature in which every occurrence of a given domain is
+        replaced by another domain.
+
+        :param domains.AbstractDomain domain: The domain to replace in this
+            signature
+        :param domains.AbstractDomain by: The domain to replace it with.
+        """
+        return Signature(
+            self.name,
+            tuple(
+                (by if dom == domain else dom)
+                for dom in self.input_domains
+            ),
+            by if domain == self.output_domain else self.output_domain,
+            self.out_param_indices
+        )
+
     def __hash__(self):
         return hash((
             self.name,
@@ -638,8 +666,8 @@ def custom_pointer_interpreter(inner_interpreter):
 
 
 @type_interpreter
-def default_ram_interpreter(hint):
-    if hint.is_a(types.DataStorage):
+def default_ram_interpreter(tpe):
+    if tpe.is_a(types.DataStorage):
         mem_dom = domains.RandomAccessMemory()
         bin_rel_signer = _signer((mem_dom, mem_dom), boolean_ops.Boolean)
         cpy_offset_sig = _signer((mem_dom, mem_dom), mem_dom)(ops.COPY_OFFSET)
@@ -683,6 +711,87 @@ def default_ram_interpreter(hint):
         )
 
 
+def default_modeled_interpreter(inner):
+    @Transformer.as_transformer
+    def get_inner_types(tpe):
+        if tpe.is_a(types.ModeledType):
+            return tpe.actual_type, tpe.model_type
+
+    @Transformer.as_transformer
+    def modeled_interpreter(interps):
+        actual_interp, model_interp = interps
+
+        dom = domains.Product(actual_interp.domain, model_interp.domain)
+
+        @Transformer.as_transformer
+        def original_signature(sig):
+            if sig.contains(dom):
+                return sig, sig.substituted(dom, actual_interp.domain)
+
+        @Transformer.as_transformer
+        def transform_implementation(sig_impl):
+            sig, (def_impl, inv_impl) = sig_impl
+            implicitly_converted_inputs = set(
+                i for i, d in enumerate(sig.input_domains) if d == dom
+            )
+            implicitly_converted_output = sig.output_domain == dom
+            model_top = model_interp.domain.top
+
+            def new_def_impl(*args):
+                res = def_impl(*(
+                    arg[0] if i in implicitly_converted_inputs else arg
+                    for i, arg in enumerate(args)
+                ))
+
+                return (res, model_top) if implicitly_converted_output else res
+
+            def new_inv_impl(expected, *constrs):
+                new_expected = (
+                    expected[0] if implicitly_converted_output else expected
+                )
+                new_constrs = tuple(
+                    constrs[i][0]
+                    if i in implicitly_converted_inputs
+                    else constrs[i]
+                    for i in range(len(constrs))
+                )
+                res = inv_impl(new_expected, *new_constrs)
+
+                return tuple(
+                    (res[i], model_top)
+                    if i in implicitly_converted_inputs
+                    else res[i]
+                    for i in range(len(res))
+                )
+
+            return new_def_impl, new_inv_impl
+
+        @Transformer.as_transformer
+        def model_provider(sig):
+            if sig.name == ops.GET_MODEL and sig.input_domains[0] == dom:
+                return product_ops.getter(1), product_ops.inv_getter(dom, 1)
+
+        @Transformer.make_memoizing
+        @Transformer.from_transformer_builder
+        def provider():
+            return (
+                original_signature >>
+                (Transformer.identity() & actual_interp.def_provider) >>
+                transform_implementation
+            ) | model_provider
+
+        def builder(lit):
+            return actual_interp.builder(lit), model_interp.domain.top
+
+        return TypeInterpretation(
+            dom,
+            provider,
+            builder
+        )
+
+    return get_inner_types >> inner.lifted() >> modeled_interpreter
+
+
 @memoizing_type_interpreter
 @delegating_type_interpreter
 def default_type_interpreter():
@@ -694,5 +803,6 @@ def default_type_interpreter():
         custom_pointer_interpreter(default_type_interpreter) |
         default_product_interpreter(default_type_interpreter) |
         default_array_interpreter(default_type_interpreter) |
-        default_ram_interpreter
+        default_ram_interpreter |
+        default_modeled_interpreter(default_type_interpreter)
     )

@@ -90,7 +90,7 @@ class Checker(object):
         model_gen_start_time = time.clock()
 
         model_builder = Models(
-            ctx.default_typer(),
+            ctx.default_typer(lal2basic.unknown_typer),
             default_type_interpreter,
             call_strategies[args.call_strategy]
         )

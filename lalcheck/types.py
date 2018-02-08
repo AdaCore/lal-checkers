@@ -129,3 +129,16 @@ class Array(Type):
 class DataStorage(Type):
     def __init__(self):
         pass
+
+
+class ModeledType(Type):
+    """
+    Represents a type that is modeled by another type.
+    """
+    def __init__(self, actual_type, model_type):
+        self.actual_type = actual_type
+        self.model_type = model_type
+
+    def children(self):
+        yield self.actual_type
+        yield self.model_type

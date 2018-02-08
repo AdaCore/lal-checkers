@@ -33,6 +33,7 @@ _lal_op_type_to_symbol = {
 _attr_to_unop = {
     'First': ops.GET_FIRST,
     'Last': ops.GET_LAST,
+    'Model': ops.GET_MODEL
 }
 
 
@@ -1881,8 +1882,6 @@ def _gen_ir(ctx, subp):
                     expr.f_prefix.text + "'Old",
                     expr.f_prefix.p_referenced_decl
                 ]
-            elif attribute_text == 'Model':
-                return transform_expr(expr.f_prefix)
             elif attribute_text == 'Image':
                 if expr.f_prefix.p_referenced_decl == expr.p_int_type:
                     arg_pre_stmts, arg_expr = transform_expr(
@@ -2835,7 +2834,7 @@ class ExtractionContext(object):
         )
 
         type_models = {
-            aspect.parent.parent.parent: aspect.f_expr.p_name_designated_type
+            aspect.parent.parent.parent: aspect.f_expr.p_referenced_decl
             for aspect in model_ofs
             if aspect.parent.parent.parent.is_a(lal.TypeDecl, lal.SubtypeDecl)
         }
@@ -2922,9 +2921,15 @@ class ExtractionContext(object):
     def model_typer(self, inner_typer):
         @Transformer.as_transformer
         def find_modeled_type(hint):
-            return self.type_models.get(hint, None)
+            model = self.type_models.get(hint, None)
+            if model is not None:
+                return hint, model
 
-        return find_modeled_type >> inner_typer
+        @Transformer.as_transformer
+        def to_model_type(tpes):
+            return types.ModeledType(*tpes)
+
+        return find_modeled_type >> inner_typer.lifted() >> to_model_type
 
     def default_typer(self, fallback_typer=None):
         """
