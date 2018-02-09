@@ -2684,6 +2684,16 @@ def anonymous_typer(inner_typer):
     return get_type_decl >> inner_typer
 
 
+def derived_typer(inner_typer):
+    @Transformer.as_transformer
+    def get_derived_type(hint):
+        if hint.is_a(lal.TypeDecl):
+            if hint.f_type_def.is_a(lal.DerivedTypeDef):
+                return hint.f_type_def.f_subtype_indication
+
+    return get_derived_type >> inner_typer
+
+
 def array_typer(indices_typer, component_typer):
     """
     :param types.Typer[lal.AdaNode] indices_typer: Typer for array indices.
@@ -2959,6 +2969,7 @@ class ExtractionContext(object):
                     record_typer(record_component_typer(typer)) |
                     name_typer(typer) |
                     anonymous_typer(typer) |
+                    derived_typer(typer) |
                     array_typer(typer, typer) |
                     subp_ret_typer(typer) |
                     subtyper(typer) |
