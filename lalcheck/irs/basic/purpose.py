@@ -98,3 +98,15 @@ class CallAssignment(Purpose):
         :param lal.AdaNode callee_type: The type of the "callee".
         """
         self.callee_type = callee_type
+
+
+class DerefAssignment(Purpose):
+    """
+    Attached to a function call that is the result of the translation of a
+    "deref assignement". (x.all = 2 ==> $stack = Updated($stack, x, 2))
+    """
+    def __init__(self, accessed_type_hint):
+        """
+        :param accessed_type_hint: The type of the values accessed.
+        """
+        self.accessed_type_hint = accessed_type_hint

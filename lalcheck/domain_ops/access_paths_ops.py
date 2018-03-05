@@ -27,20 +27,43 @@ def deref(ptr_dom, elem_dom):
 def inv_deref(ptr_dom, mem_dom):
     path_dom = ptr_dom.dom
 
-    def try_set(ptr, memory, elem):
+    def try_inv_access(ptr, memory, elem):
         try:
-            ptr.set(memory, elem)
+            ptr.inv_access(memory, elem)
         except (path_dom.NullDeref, path_dom.TopValue, path_dom.BottomValue):
             pass
 
     def do(elem, addr_constr, mem_constr):
         memory = (mem_constr[0].copy(), mem_constr[1])
         for addr in addr_constr:
-            try_set(addr, memory, elem)
+            try_inv_access(addr, memory, elem)
 
         return addr_constr, mem_dom.meet(mem_constr, memory)
 
     return do
+
+
+def updated(ptr_dom):
+    path_dom = ptr_dom.dom
+
+    def try_update(ptr, memory, elem):
+        try:
+            ptr.update(memory, elem)
+        except (path_dom.NullDeref, path_dom.TopValue, path_dom.BottomValue):
+            pass
+
+    def do(mem, ptr, val):
+        updated_mem = (mem[0].copy(), mem[1])
+        for addr in ptr:
+            try_update(addr, updated_mem, val)
+
+        return updated_mem
+
+    return do
+
+
+def inv_updated(*_):
+    raise NotImplementedError
 
 
 def var_address(ptr_dom, elem_dom, var_index):

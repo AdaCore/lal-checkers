@@ -648,6 +648,13 @@ def custom_pointer_interpreter(inner_interpreter):
                     access_paths_ops.inv_deref(ptr_dom, sig.input_domains[1])
                 )
 
+            elif (sig.name == ops.UPDATED and len(sig.input_domains) == 3
+                  and sig.input_domains[1] == ptr_dom):
+                return (
+                    access_paths_ops.updated(ptr_dom),
+                    access_paths_ops.inv_updated,
+                )
+
             elif sig == bin_rel_sig(ops.EQ):
                 return (access_paths_ops.eq(ptr_dom),
                         access_paths_ops.inv_eq(ptr_dom))

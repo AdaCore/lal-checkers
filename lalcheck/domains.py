@@ -968,8 +968,11 @@ class AccessPathsLattice(AbstractDomain):
         def access(self, state):
             raise NotImplementedError
 
-        def set(self, state, value):
+        def inv_access(self, state, value):
             raise NotImplementedError
+
+        def update(self, state, value):
+            return self.inv_access(state, value)
 
         def __or__(self, other):
             raise NotImplementedError
@@ -1011,7 +1014,7 @@ class AccessPathsLattice(AbstractDomain):
         def access(self, state):
             raise AccessPathsLattice.TopValue
 
-        def set(self, state, value):
+        def inv_access(self, state, value):
             raise AccessPathsLattice.TopValue
 
         def __or__(self, other):
@@ -1055,7 +1058,7 @@ class AccessPathsLattice(AbstractDomain):
         def access(self, state):
             raise AccessPathsLattice.NullDeref
 
-        def set(self, state, value):
+        def inv_access(self, state, value):
             raise AccessPathsLattice.NullDeref
 
         def __or__(self, other):
@@ -1104,7 +1107,7 @@ class AccessPathsLattice(AbstractDomain):
         def access(self, state):
             raise AccessPathsLattice.TopValue
 
-        def set(self, state, value):
+        def inv_access(self, state, value):
             raise AccessPathsLattice.TopValue
 
         def __or__(self, other):
@@ -1160,7 +1163,7 @@ class AccessPathsLattice(AbstractDomain):
             else:
                 raise AccessPathsLattice.TopValue
 
-        def set(self, state, value):
+        def inv_access(self, state, value):
             state[0][self.val] = (self.dom, value)
 
         def __or__(self, other):
@@ -1223,10 +1226,16 @@ class AccessPathsLattice(AbstractDomain):
         def access(self, state):
             return self.prefix.access(state)[self.component]
 
-        def set(self, state, value):
-            self.prefix.set(state, tuple(
+        def inv_access(self, state, value):
+            self.prefix.inv_access(state, tuple(
                 value if i == self.component else x
                 for i, x in enumerate(self.prefix.dom.top)
+            ))
+
+        def update(self, state, value):
+            self.prefix.inv_access(state, tuple(
+                value if i == self.component else x
+                for i, x in enumerate(self.prefix.access(state))
             ))
 
         def __or__(self, other):
@@ -1293,7 +1302,7 @@ class AccessPathsLattice(AbstractDomain):
         def access(self, state):
             raise AccessPathsLattice.BottomValue
 
-        def set(self, state, value):
+        def inv_access(self, state, value):
             raise AccessPathsLattice.BottomValue
 
         def __or__(self, other):

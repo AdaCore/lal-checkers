@@ -1079,6 +1079,17 @@ def _gen_ir(ctx, subp):
                 ret
             )
 
+        elif dest.is_a(lal.ExplicitDeref):
+            prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
+
+            return prefix_pre_stmts, (stack, irt.FunCall(
+                ops.UPDATED,
+                [stack, prefix_expr, expr],
+                type_hint=stack.data.type_hint,
+                orig_node=dest,
+                purpose=purpose.DerefAssignment(dest.p_expression_type)
+            ))
+
         unimplemented(dest)
 
     def gen_field_existence_condition(prefix, field):
@@ -2400,6 +2411,13 @@ class ConvertUniversalTypes(IRImplicitVisitor):
                         self.try_convert_expr(arg, indices[i])
                         for i, arg in enumerate(funcall.args[2:])
                     ]
+            elif purpose.DerefAssignment.is_purpose_of(funcall):
+                # Case where the function is an update call replacing a
+                # deref assignment. (x.all = y)
+                funcall.args[2] = self.try_convert_expr(
+                    funcall.args[2],
+                    funcall.data.purpose.accessed_type_hint
+                )
             else:
                 # Otherwise, assume that functions that accept one argument
                 # as universal int/real need all their arguments to be of the
