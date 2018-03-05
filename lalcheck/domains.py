@@ -321,7 +321,7 @@ class Intervals(AbstractDomain):
 
     def touches(self, a, b):
         return (a == self.bottom or b == self.bottom or
-                a[1] == b[0] or a[0] == b[1])
+                a[1] == b[0] - 1 or a[0] == b[1] + 1)
 
     def generator(self):
         dom_from, dom_to = self.top[0], self.top[1]
