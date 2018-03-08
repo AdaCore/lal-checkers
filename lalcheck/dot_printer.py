@@ -17,34 +17,39 @@ class _Color(object):
     """
     Handy holder to compute colors.
     """
-    def __init__(self, red, green, blue):
+    def __init__(self, red, green, blue, alpha=255):
         self.red = _clamp(red, 0, 255)
         self.green = _clamp(green, 0, 255)
         self.blue = _clamp(blue, 0, 255)
+        self.alpha = _clamp(alpha, 0, 255)
 
     def __add__(self, color):
         return _Color(self.red + color.red,
                       self.green + color.green,
-                      self.blue + color.blue)
+                      self.blue + color.blue,
+                      self.alpha + color.alpha)
 
     def __mul__(self, scalar):
         return _Color(self.red * scalar,
                       self.green * scalar,
-                      self.blue * scalar)
+                      self.blue * scalar,
+                      self.alpha)
 
     def __repr__(self):
-        return '#{:02x}{:02x}{:02x}'.format(int(self.red),
-                                            int(self.green),
-                                            int(self.blue))
+        return '#{:02x}{:02x}{:02x}{:02x}'.format(int(self.red),
+                                                  int(self.green),
+                                                  int(self.blue),
+                                                  int(self.alpha))
 
 
 _WHITE = _Color(255, 255, 255)
+_BLACK = _Color(0, 0, 0)
 _BLUE_AQUA = _Color(0, 128, 255)
 
-_BACKGROUND = _WHITE * 0.1
+_BACKGROUND = _Color(0, 0, 0, 0)  # _WHITE * 0.1
 _LINES = _WHITE * 0.3
 _TITLE = _WHITE * 0.2 + _BLUE_AQUA * 0.4
-_REGULAR_LABEL = _WHITE * 0.5
+_REGULAR_LABEL = _BLACK * 0.8  # _WHITE * 0.5
 _OTHER_LABEL = _WHITE * 0.3
 
 
@@ -157,7 +162,7 @@ def gen_dot(digraph, data_printers):
             break
 
     return ('digraph g {' +
-            'graph [rangkdir="LR", ' +
+            'graph [rankdir="TB", ' +
             'splines=true, bgcolor="{}", fontname="Sans"];'.format(
                 _BACKGROUND
             ) +
