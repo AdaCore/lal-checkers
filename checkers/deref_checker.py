@@ -149,7 +149,12 @@ class DerefChecker(Checker):
         )
 
     def report(self, diag):
-        return "Null dereference of '{}'!".format(diag[1].data.orig_node.text)
+        trace, purpose, precise = diag
+        qualifier = "N" if precise else "Potential n"
+        return "{}ull dereference of '{}'".format(
+            qualifier,
+            diag[1].data.orig_node.text
+        )
 
     def position(self, diag):
         return diag[1].data.orig_node.sloc_range.start
