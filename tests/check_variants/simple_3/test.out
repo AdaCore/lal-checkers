@@ -1,0 +1,22 @@
+{
+  "always": [
+    {
+      "precise": true,
+      "trace": [
+        "assume2",
+        "assume3",
+        "start0"
+      ]
+    }
+  ],
+  "le_t_eq_v": [
+    {
+      "precise": true,
+      "trace": [
+        "assume2",
+        "assume3",
+        "start0"
+      ]
+    }
+  ]
+}

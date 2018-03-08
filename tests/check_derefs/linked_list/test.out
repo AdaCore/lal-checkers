@@ -18,8 +18,6 @@
         "assume9",
         "loop_join0",
         "loop_start0",
-        "read0",
-        "read1",
         "split_join0",
         "start0"
       ]
@@ -42,8 +40,6 @@
         "assume9",
         "loop_join0",
         "loop_start0",
-        "read0",
-        "read1",
         "split_join0",
         "start0"
       ]

@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Access_Test is
    type Point is record
       x : Integer;
       y : Integer;
@@ -8,8 +8,12 @@ procedure Ex1 is
       bot_right : access Point;
    end record;
 
-   p : Point := (1, 2);
+   p : Point;
    r : Rectangle := (p'Access, p'Access);
 begin
-   r.top_left.all.x := 3;
-end Ex1;
+   if r.top_left.all.x = 1 then
+      r.bot_right.all.y := 2;
+   else
+      p := (1, 2);
+   end if;
+end Access_Test;
