@@ -2604,8 +2604,11 @@ def access_typer(hint):
     :rtype: lal.AdaNode
     """
     if hint.is_a(lal.TypeDecl):
-        if hint.p_is_access_type:
-            return _pointer_type
+        try:
+            if hint.p_is_access_type:
+                return _pointer_type
+        except lal.PropertyError:
+            pass
     elif hint.is_a(_PointerType):
         return _pointer_type
 
@@ -2674,7 +2677,10 @@ def name_typer(inner_typer):
         """
         if hint.is_a(lal.SubtypeIndication):
             # todo: Take constraint into account
-            return hint.p_designated_type_decl
+            try:
+                return hint.p_designated_type_decl
+            except lal.PropertyError:
+                pass
 
     return resolved_name >> inner_typer
 
@@ -2792,6 +2798,13 @@ def ram_typer(hint):
 @types.typer
 def unknown_typer(_):
     return types.Product([])
+
+
+@types.memoizing_typer
+@types.typer
+def none_typer(hint):
+    if hint is None:
+        return types.Product([])
 
 
 class ExtractionContext(object):
@@ -2980,7 +2993,8 @@ class ExtractionContext(object):
             """
             :rtype: types.Typer[lal.AdaNode]
             """
-            typr = (standard_typer |
+            typr = (none_typer |
+                    standard_typer |
                     int_range_typer |
                     enum_typer |
                     access_typer |
