@@ -33,6 +33,7 @@ class Checker(object):
         self.parser.add_argument('--project', default=None)
         self.parser.add_argument('--model', default=None)
         self.parser.add_argument('--timings', action='store_true')
+        self.parser.add_argument('--print-analysis', action='store_true')
         self.parser.add_argument('file')
         self.args = None
 
@@ -135,6 +136,11 @@ class Checker(object):
 
         for prog, analysis in analyses.iteritems():
             prog_info = lal_subprogram_info(prog.data.orig_node)
+            if args.print_analysis:
+                analysis.analysis_results.save_results_to_file(
+                    prog_info[0] + ".dot"
+                )
+
             for diag in analysis.diagnostics:
                 pos = self.position(diag)
                 msg = self.report(diag)
