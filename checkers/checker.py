@@ -3,7 +3,7 @@ import argparse
 import lalcheck.irs.basic.frontends.lal as lal2basic
 from lalcheck.interpretations import default_type_interpreter
 from lalcheck.irs.basic.tools import Models
-from lalcheck.irs.basic.analyses import collecting_semantics
+from lalcheck.irs.basic.analyses import abstract_semantics
 import time
 
 
@@ -74,10 +74,10 @@ class Checker(object):
             progs = ctx.extract_programs_from_provider(args.file, 'body')
 
         call_strategy_unknown = (
-            collecting_semantics.UnknownTargetCallStrategy().as_def_provider()
+            abstract_semantics.UnknownTargetCallStrategy().as_def_provider()
         )
 
-        call_strategy_topdown = collecting_semantics.TopDownCallStrategy(
+        call_strategy_topdown = abstract_semantics.TopDownCallStrategy(
                 progs,
                 lambda: model,
                 lambda: merge_predicate
@@ -100,11 +100,11 @@ class Checker(object):
 
         if args.path_sensitive:
             merge_predicate = (
-                collecting_semantics.MergePredicateBuilder.Le_Traces |
-                collecting_semantics.MergePredicateBuilder.Eq_Vals
+                abstract_semantics.MergePredicateBuilder.Le_Traces |
+                abstract_semantics.MergePredicateBuilder.Eq_Vals
             )
         else:
-            merge_predicate = collecting_semantics.MergePredicateBuilder.Always
+            merge_predicate = abstract_semantics.MergePredicateBuilder.Always
 
         analysis_start_time = time.clock()
 

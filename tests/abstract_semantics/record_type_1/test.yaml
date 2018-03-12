@@ -1,0 +1,3 @@
+driver: python
+helper: test_abstract_semantics.py
+expect_failure: Waiting for https://github.com/AdaCore/libadalang/issues/41

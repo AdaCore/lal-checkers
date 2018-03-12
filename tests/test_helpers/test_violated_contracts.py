@@ -1,9 +1,9 @@
 """
-Output the JSON-formatted results of the "collecting semantics" analysis.
+Output the JSON-formatted results of the "abstract semantics" analysis.
 """
 
 from checkers.contract_checker import check_contracts
-import collecting_semantics_helpers
+import abstract_semantics_helpers
 import test_helper
 
 import json
@@ -25,9 +25,9 @@ def format_analysis_results(results):
 
 @test_helper.run
 def run(args):
-    results, _ = collecting_semantics_helpers.do_analysis(
+    results, _ = abstract_semantics_helpers.do_analysis(
         check_contracts,
-        collecting_semantics_helpers.default_merge_predicates,
+        abstract_semantics_helpers.default_merge_predicates,
         args.call_strategy
     )
 

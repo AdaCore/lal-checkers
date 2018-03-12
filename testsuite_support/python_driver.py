@@ -42,7 +42,7 @@ class PythonDriver(TestDriver):
 
     call_strategy = "unknown"
     """
-    The call strategy for tests base on the collecting_semantics analysis.
+    The call strategy for tests base on the abstract_semantics analysis.
     """
 
     @property

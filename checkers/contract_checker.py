@@ -5,7 +5,7 @@ import lalcheck.irs.basic.tree as irt
 from lalcheck import dot_printer
 from lalcheck.constants import lits
 from lalcheck.digraph import Digraph
-from lalcheck.irs.basic.analyses import collecting_semantics
+from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.purpose import ContractCheck
 from lalcheck.irs.basic.tools import PrettyPrinter
 from checker import Checker, CheckerResults
@@ -97,7 +97,7 @@ class AnalysisResult(CheckerResults):
 
 def check_contracts(prog, model, merge_pred_builder):
 
-    analysis = collecting_semantics.collect_semantics(
+    analysis = abstract_semantics.compute_semantics(
         prog,
         model,
         merge_pred_builder

@@ -2,7 +2,7 @@ from xml.sax.saxutils import escape
 
 from lalcheck import dot_printer
 from lalcheck.digraph import Digraph
-from lalcheck.irs.basic.analyses import collecting_semantics
+from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.tools import PrettyPrinter
 from checker import Checker, CheckerResults
 
@@ -73,7 +73,7 @@ class AnalysisResult(CheckerResults):
 
 
 def check_dead_code(prog, model, merge_pred_builder):
-    analysis = collecting_semantics.collect_semantics(
+    analysis = abstract_semantics.compute_semantics(
         prog,
         model,
         merge_pred_builder
@@ -98,7 +98,7 @@ class DeadCodeChecker(Checker):
 
     def report(self, diag):
         if 'orig_node' in diag.data.node.data:
-            return "Unreachable code '{}'!".format(
+            return "Unreachable code '{}'".format(
                 diag.data.node.data.orig_node.text
             )
 
