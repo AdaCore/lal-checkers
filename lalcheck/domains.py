@@ -470,7 +470,7 @@ class Product(AbstractDomain):
         ))
 
 
-class Set(AbstractDomain):
+class Powerset(AbstractDomain):
     """
     An abstract domain used to represent sets of sets of concrete values.
     Two sets of concrete values are considered equal according to the provided

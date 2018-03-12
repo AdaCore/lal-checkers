@@ -617,7 +617,7 @@ def custom_pointer_interpreter(inner_interpreter):
             return path_dom.le(a, b) or path_dom.touches(a, b)
 
         path_dom = domains.AccessPathsLattice()
-        ptr_dom = domains.Set(path_dom, merge_predicate, [path_dom.top])
+        ptr_dom = domains.Powerset(path_dom, merge_predicate, [path_dom.top])
         bool_dom = boolean_ops.Boolean
 
         bin_rel_sig = _signer((ptr_dom, ptr_dom), bool_dom)

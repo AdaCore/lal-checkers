@@ -397,7 +397,7 @@ def compute_semantics(prog, model, merge_pred_builder, arg_values=None):
     trace_domain = _SimpleTraceLattice(cfg.nodes)
 
     # define the State domain that we track at each program point.
-    lat = domains.Set(
+    lat = domains.Powerset(
         domains.Product(
             trace_domain,
             vars_domain
