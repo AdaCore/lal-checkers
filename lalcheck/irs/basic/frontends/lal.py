@@ -359,7 +359,7 @@ def _find_vars_to_spill(ctx, node):
 
     def accessed_var(expr):
         if expr.is_a(lal.Identifier):
-            return expr.p_referenced_decl
+            return expr.p_xref
         elif expr.is_a(lal.DottedName):
             return accessed_var(expr.f_prefix)
         elif expr.is_a(lal.AttributeRef) and expr.f_attribute.text == 'Model':
@@ -484,13 +484,14 @@ def _gen_ir(ctx, subp):
     # tree. The tuple (loop_statement, exit_label) is stored.
     loop_stack = []
 
-    # Store a mapping of (str, lal.AdaNode) to irt.Node. Whenever a
+    # Store a mapping of lal.AdaNode to irt.Node. Whenever a
     # lal.Identifier refers to such a key present in the mapping, it is
     # substituted by the corresponding irt node.
     substitutions = {}
 
     # Contains variables that are spilled.
     to_spill = _find_vars_to_spill(ctx, subp)
+
     stack = irt.Identifier(
         irt.Variable(
             "$stack",
@@ -564,7 +565,7 @@ def _gen_ir(ctx, subp):
         :param lal.ObjectDecl ref:
         :return:
         """
-        var = var_decls[ref, expr.text]
+        var = var_decls[ref]
         if ref in to_spill:
             return irt.FunCall(
                 ops.GetName(var.data.index),
@@ -580,7 +581,7 @@ def _gen_ir(ctx, subp):
             )
 
     def update_var(expr, ref):
-        var = var_decls[ref, expr.text]
+        var = var_decls[ref]
         if ref in to_spill:
             return irt.FunCall(
                 ops.GetName(var.data.index),
@@ -601,7 +602,7 @@ def _gen_ir(ctx, subp):
         :param lal.ObjectDecl ref:
         :return:
         """
-        var = var_decls[ref, expr.text]
+        var = var_decls[ref]
         if ref in to_spill:
             return irt.FunCall(
                 ops.GetName(var.data.index),
@@ -1004,13 +1005,10 @@ def _gen_ir(ctx, subp):
         :param irt.Expr expr: The expression to assign (rhs).
         :rtype: list[irt.Stmt], irt.Identifier, irt.Expr
         """
-        if dest.is_a(lal.Identifier):
-            ref = dest.p_referenced_decl
-            if ref is None:
-                if dest.parent.parent.is_a(lal.ObjectDecl):
-                    ref = dest.parent.parent
+        if dest.is_a(lal.Identifier, lal.DefiningName):
+            ref = dest.p_xref if dest.is_a(lal.Identifier) else dest
 
-            var = var_decls[ref, dest.text]
+            var = var_decls[ref]
 
             if ref in to_spill:
                 updated_index = var.data.index
@@ -1166,13 +1164,13 @@ def _gen_ir(ctx, subp):
 
     def gen_access_path(expr):
         if expr.is_a(lal.Identifier):
-            ref = expr.p_referenced_decl
+            ref = expr.p_xref
 
-            if (expr.text, ref) in substitutions:
-                expr = substitutions[expr.text, ref][1].data.orig_node
-                ref = expr.p_referenced_decl
+            if ref in substitutions:
+                expr = substitutions[ref][1].data.orig_node
+                ref = expr.p_xref
 
-            var = var_decls[ref, expr.text]
+            var = var_decls[ref]
 
             return irt.FunCall(
                 access_paths.Var(var.data.index),
@@ -1264,7 +1262,7 @@ def _gen_ir(ctx, subp):
 
         for proc in procs:
             for i, name, param in _proc_parameters(proc):
-                substitutions[name.text, param] = ([], args_in[i])
+                substitutions[name] = ([], args_in[i])
 
         pre_stmts = [
             stmt
@@ -1278,16 +1276,13 @@ def _gen_ir(ctx, subp):
         ]
 
         for proc in procs:
-            substitutions[
-                proc.f_subp_spec.f_subp_name.text + "'Result",
-                proc
-            ] = ([], ret)
+            substitutions[proc, 'result'] = ([], ret)
 
         for proc in procs:
             for i, name, param in _proc_parameters(proc):
                 if i in args_out:
-                    substitutions[name.text + "'Old", param] = ([], args_in[i])
-                    substitutions[name.text, param] = ([], args_out[i])
+                    substitutions[name, 'old'] = ([], args_in[i])
+                    substitutions[name] = ([], args_out[i])
 
         post_stmts = [
             stmt
@@ -1748,28 +1743,29 @@ def _gen_ir(ctx, subp):
 
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
-            ref = expr.p_referenced_decl
+            ref = expr.p_xref
+            decl = ref.p_basic_decl
             if ref is None:
                 unimplemented(expr)
-            elif (expr.text, ref) in substitutions:
-                return substitutions[expr.text, ref]
-            elif ref.is_a(lal.ObjectDecl, lal.ParamSpec):
+            elif ref in substitutions:
+                return substitutions[ref]
+            elif decl.is_a(lal.ObjectDecl, lal.ParamSpec):
                 return [], get_var(expr, ref)
-            elif ref.is_a(lal.SubpBody, lal.SubpDecl):
+            elif decl.is_a(lal.SubpBody, lal.SubpDecl):
                 return gen_call_expr(expr, [], expr.p_expression_type, expr)
-            elif ref.is_a(lal.EnumLiteralDecl):
+            elif decl.is_a(lal.EnumLiteralDecl):
                 return [], irt.Lit(
                     expr.text,
-                    type_hint=ref.parent.parent.parent,
+                    type_hint=decl.parent.parent.parent,
                     orig_node=expr
                 )
-            elif ref.is_a(lal.NumberDecl):
-                return transform_expr(ref.f_expr)
-            elif ref.is_a(lal.TypeDecl):
-                if ref.f_type_def.is_a(lal.SignedIntTypeDef):
-                    return transform_expr(ref.f_type_def.f_range.f_range)
-            elif ref.is_a(lal.SubtypeDecl):
-                constr = ref.f_subtype.f_constraint
+            elif decl.is_a(lal.NumberDecl):
+                return transform_expr(decl.f_expr)
+            elif decl.is_a(lal.TypeDecl):
+                if decl.f_type_def.is_a(lal.SignedIntTypeDef):
+                    return transform_expr(decl.f_type_def.f_range.f_range)
+            elif decl.is_a(lal.SubtypeDecl):
+                constr = decl.f_subtype.f_constraint
                 if constr.is_a(lal.RangeConstraint):
                     return transform_expr(constr.f_range.f_range)
 
@@ -1884,15 +1880,9 @@ def _gen_ir(ctx, subp):
             elif attribute_text == 'Access':
                 return [], gen_access_path(expr.f_prefix)
             elif attribute_text == 'Result':
-                return substitutions[
-                    expr.f_prefix.text + "'Result",
-                    expr.f_prefix.p_referenced_decl
-                ]
+                return substitutions[expr.f_prefix.p_referenced_decl, 'result']
             elif attribute_text == 'Old':
-                return substitutions[
-                    expr.f_prefix.text + "'Old",
-                    expr.f_prefix.p_referenced_decl
-                ]
+                return substitutions[expr.f_prefix.p_referenced_decl, 'old']
             elif attribute_text == 'Image':
                 if expr.f_prefix.p_referenced_decl == expr.p_int_type:
                     arg_pre_stmts, arg_expr = transform_expr(
@@ -1927,7 +1917,7 @@ def _gen_ir(ctx, subp):
                     mode=mode,
                     index=next_var_idx()
                 )
-                var_decls[param, var_id.text] = param_var
+                var_decls[var_id] = param_var
                 param_vars.append(param_var)
 
         if spec.f_subp_returns is not None:
@@ -1962,7 +1952,7 @@ def _gen_ir(ctx, subp):
             tdecl = decl.f_type_expr
 
             for var_id in decl.f_ids:
-                var_decls[decl, var_id.text] = irt.Variable(
+                var_decls[var_id] = irt.Variable(
                     var_id.text,
                     type_hint=tdecl,
                     orig_node=var_id,
@@ -1974,7 +1964,7 @@ def _gen_ir(ctx, subp):
                 return [
                     irt.ReadStmt(
                         irt.Identifier(
-                            var_decls[decl, var_id.text],
+                            var_decls[var_id],
                             type_hint=tdecl,
                             orig_node=var_id
                         ),
