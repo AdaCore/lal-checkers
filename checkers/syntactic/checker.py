@@ -6,6 +6,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--project', default=None, help='The project file',
                     type=str)
+parser.add_argument('--codepeer-output', action='store_true')
 parser.add_argument('files', help='The files to analyze',
                     type=str, nargs='+', metavar='F')
 
@@ -21,6 +22,16 @@ class Checker(object):
             checker.
         """
         self.ctx = lal.AnalysisContext(unit_provider=provider)
+        self.output_format = 'default'
+
+    def set_output_format(self, output_format):
+        """
+        Sets the output format to use.
+
+        :param output_format: The formatting to use when report messages.
+            Either 'default' or 'codepeer'.
+        """
+        self.output_format = output_format
 
     @classmethod
     def name(cls):
@@ -64,6 +75,9 @@ class Checker(object):
             checker = cls.for_project(args.project)
         else:
             checker = cls.auto(args.files)
+
+        if args.codepeer_output:
+            checker.set_output_format('codepeer')
 
         checker.check_files(*args.files)
 
@@ -126,9 +140,12 @@ class Checker(object):
         proc_filename = filename
         proc_pos = spec.sloc_range.start
 
-        print("{}:{}:{} warning: {}:{}:{}:{}: {} {}".format(
-            filename, pos.line, pos.column,
-            proc_name, proc_filename, proc_pos.line, proc_pos.column,
-            msg,
-            "[{}]".format(flag)
-        ))
+        if self.output_format == 'codepeer':
+            print("{}:{}:{} warning: {}:{}:{}:{}: {} {}".format(
+                filename, pos.line, pos.column,
+                proc_name, proc_filename, proc_pos.line, proc_pos.column,
+                msg,
+                "[{}]".format(flag)
+            ))
+        else:
+            print("{}:{}:{} {}".format(filename, pos.line, pos.column, msg))
