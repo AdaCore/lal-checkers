@@ -2,12 +2,12 @@
 Output the JSON-formatted results of the "abstract semantics" analysis.
 """
 
-from checkers.variant_checker import check_variants
-import abstract_semantics_helpers
-import test_helper
-
 import json
 import os
+
+import abstract_semantics_helpers
+import test_helper
+from checkers.dataflow.variant_checker import check_variants
 
 
 def format_analysis_results(results):

@@ -2,12 +2,12 @@
 Output the JSON-formatted results of the "abstract semantics" analysis.
 """
 
-from checkers.deref_checker import check_derefs
-import abstract_semantics_helpers
-import test_helper
-
 import json
 import os
+
+import abstract_semantics_helpers
+import test_helper
+from checkers.dataflow.deref_checker import check_derefs
 
 
 def format_analysis_results(results):
