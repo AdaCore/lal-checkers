@@ -528,6 +528,20 @@ def _gen_ir(ctx, subp):
             'Cannot transform "{}" ({})'.format(node.text, type(node))
         )
 
+    def unimplemented_expr(expr):
+        """
+        :param lal.Expr expr: The expr that this routine fails to transform.
+        :rtype: (list[irt.Stmt], irt.Expr)
+        """
+        return [], new_expression_replacing_var("unimpl", expr)
+
+    def unimplemented_dest(dest):
+        """
+        :param lal.Expr dest:
+        :rtype: list[irt.Stmt], (irt.Identifier, irt.Expr)
+        """
+        unimplemented(dest)
+
     def new_expression_replacing_var(name, replaced_expr):
         """
         Some lal expressions such as if expressions and case expressions
@@ -1003,7 +1017,7 @@ def _gen_ir(ctx, subp):
 
         :param lal.Expr dest: The destination of the assignment (lhs).
         :param irt.Expr expr: The expression to assign (rhs).
-        :rtype: list[irt.Stmt], irt.Identifier, irt.Expr
+        :rtype: list[irt.Stmt], (irt.Identifier, irt.Expr)
         """
         if dest.is_a(lal.Identifier, lal.DefiningName):
             ref = dest.p_xref if dest.is_a(lal.Identifier) else dest
@@ -1055,6 +1069,10 @@ def _gen_ir(ctx, subp):
 
         elif dest.is_a(lal.CallExpr):
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_name)
+
+            if dest.f_suffix.is_a(lal.BinOp):
+                return unimplemented_dest(dest)
+
             suffixes = [
                 transform_expr(suffix.f_r_expr)
                 for suffix in dest.f_suffix
@@ -1088,7 +1106,7 @@ def _gen_ir(ctx, subp):
                 purpose=purpose.DerefAssignment(dest.p_expression_type)
             ))
 
-        unimplemented(dest)
+        return unimplemented_dest(dest)
 
     def gen_field_existence_condition(prefix, field):
         """
@@ -1326,7 +1344,7 @@ def _gen_ir(ctx, subp):
         Additionally, contract checks are added around the call.
 
         :param lal.Expr prefix: The object being called.
-        :param iterable[lal.Expr] args: The arguments passed.
+        :param lal.BinOp|lal.AssocList args: The arguments passed.
         :param lal.AdaNode type_hint: The type of the call expression.
         :param lal.AdaNode orig_node: The original call node.
         :rtype: (list[irt.Stmt], irt.Expr)
@@ -1334,12 +1352,14 @@ def _gen_ir(ctx, subp):
 
         if isinstance(args, lal.BinOp):
             # array slices
-            unimplemented(args)
+            return unimplemented_expr(args)
 
-        suffixes = [
-            transform_expr(suffix.f_r_expr)
-            for suffix in args
-        ]
+        if any(x.f_designator is not None for x in args):
+            return unimplemented_expr(orig_node)
+
+        arg_exprs = [suffix.f_r_expr for suffix in args]
+
+        suffixes = [transform_expr(e) for e in arg_exprs]
         suffix_pre_stmts = [
             suffix_stmt
             for suffix in suffixes
@@ -1349,13 +1369,17 @@ def _gen_ir(ctx, subp):
 
         def gen_out_arg_assignment(i):
             def do(out_expr):
-                return gen_assignment(args[i].f_r_expr, [], out_expr)
+                return gen_assignment(arg_exprs[i], [], out_expr)
             return do
 
         if prefix.is_a(lal.Identifier, lal.DottedName):
             ref = prefix.p_referenced_decl
             if ref is not None and ref.is_a(lal.SubpBody, lal.SubpDecl):
                 # The call target is statically known.
+
+                if any(p.f_default_expr is not None
+                       for _, _, p in _proc_parameters(ref)):
+                    return unimplemented_expr(orig_node)
 
                 out_params = [
                     (i, param.f_type_expr, gen_out_arg_assignment(i))
@@ -1478,17 +1502,17 @@ def _gen_ir(ctx, subp):
                     )
 
         if _is_array_type_decl(prefix.p_expression_type):
-            prefix_pre_stmts, prefix_expr = transform_expr(prefix)
+            prefix_pre_stmts, prefix_expr_tr = transform_expr(prefix)
 
             return prefix_pre_stmts + suffix_pre_stmts, irt.FunCall(
                 ops.CALL,
-                [prefix_expr] + suffix_exprs,
+                [prefix_expr_tr] + suffix_exprs,
                 type_hint=type_hint,
                 orig_node=orig_node,
                 callee_type=prefix.p_expression_type
             )
 
-        unimplemented(orig_node)
+        return unimplemented_expr(orig_node)
 
     def transform_dereference(derefed_expr, deref_type, deref_orig):
         """
@@ -1603,9 +1627,9 @@ def _gen_ir(ctx, subp):
         :return: its IR transformation.
         :rtype: (list[irt.Stmt], irt.Expr)
         """
-        array_def = expr.p_expression_type.f_type_def
-        print(array_def.dump())
-        unimplemented(expr)
+        # array_def = expr.p_expression_type.f_type_def
+
+        return unimplemented_expr(expr)
 
     @profile()
     def transform_expr(expr):
@@ -1744,10 +1768,10 @@ def _gen_ir(ctx, subp):
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
             ref = expr.p_xref
-            decl = ref.p_basic_decl
             if ref is None:
-                unimplemented(expr)
-            elif ref in substitutions:
+                return unimplemented_expr(expr)
+            decl = ref.p_basic_decl
+            if ref in substitutions:
                 return substitutions[ref]
             elif decl.is_a(lal.ObjectDecl, lal.ParamSpec):
                 return [], get_var(expr, ref)
@@ -1894,8 +1918,18 @@ def _gen_ir(ctx, subp):
                         type_hint=expr.p_expression_type,
                         orig_node=expr
                     )
+            elif attribute_text == 'Length':
+                return [], irt.Identifier(
+                    irt.Variable(
+                        "unimpl",
+                        type_hint=ctx.evaluator.int,
+                        orig_node=expr
+                    ),
+                    type_hint=ctx.evaluator.int,
+                    orig_node=expr
+                )
 
-        unimplemented(expr)
+        return unimplemented_expr(expr)
 
     def transform_spec(spec):
         """
@@ -1945,7 +1979,8 @@ def _gen_ir(ctx, subp):
 
         :rtype: list[irt.Stmt]
         """
-        if decl.is_a(lal.TypeDecl, lal.SubtypeDecl, lal.NumberDecl):
+        if decl.is_a(lal.TypeDecl, lal.SubtypeDecl,
+                     lal.NumberDecl, lal.PackageDecl, lal.PackageBody):
             return []
 
         elif decl.is_a(lal.ObjectDecl):
@@ -2017,6 +2052,8 @@ def _gen_ir(ctx, subp):
                 return gen_call_expr(
                     call_expr, [], call_expr.p_expression_type, stmt
                 )[0]
+            elif call_expr.is_a(lal.AttributeRef):
+                unimplemented(stmt)
             else:
                 return gen_call_expr(
                     call_expr.f_name,
@@ -2909,10 +2946,7 @@ class ExtractionContext(object):
 
         progs = [
             _gen_ir(self, subp)
-            for subp in unit.root.findall((
-                lal.SubpBody,
-                lal.ExprFunction
-            ))
+            for subp in unit.root.findall(lal.SubpBody)
         ]
 
         converter = ConvertUniversalTypes(self.evaluator)
