@@ -1381,6 +1381,19 @@ def _gen_ir(ctx, subp):
                        for _, _, p in _proc_parameters(ref)):
                     return unimplemented_expr(orig_node)
 
+                if ref.metadata.f_dottable_subp:
+                    # handle dot calls
+                    if prefix.is_a(lal.DottedName):
+                        prefix_expr = prefix.f_prefix
+                    else:
+                        return unimplemented_expr(orig_node)
+
+                    arg_exprs.insert(0, prefix_expr)
+                    prefix_expr_tr = transform_expr(prefix_expr)
+                    suffixes.insert(0, prefix_expr_tr)
+                    suffix_pre_stmts = prefix_expr_tr[0] + suffix_pre_stmts
+                    suffix_exprs.insert(0, prefix_expr_tr[1])
+
                 out_params = [
                     (i, param.f_type_expr, gen_out_arg_assignment(i))
                     for i, _, param in _proc_parameters(ref)
@@ -1810,10 +1823,17 @@ def _gen_ir(ctx, subp):
             # relevant for variant records).
             # Additionally, if an implicit dereference takes place, the
             # relevant assume statements are also inserted.
-            if expr.f_prefix.p_expression_type is None:
-                unimplemented(expr)
 
-            if expr.f_prefix.p_expression_type.p_is_access_type:
+            ref = expr.p_referenced_decl
+            if ref is None:
+                return unimplemented_expr(expr)
+            elif ref.is_a(lal.SubpDecl):
+                # The DottedName is actually a function/procedure call.
+                return gen_call_expr(expr, [], expr.p_expression_type, expr)
+
+            if expr.f_prefix.p_expression_type is None:
+                return unimplemented_expr(expr)
+            elif expr.f_prefix.p_expression_type.p_is_access_type:
                 access_type_def = expr.f_prefix.p_expression_type.f_type_def
                 accessed_ind = access_type_def.f_subtype_indication
                 accessed_type = accessed_ind.p_designated_type_decl_from(expr)
