@@ -62,10 +62,13 @@ class _RecordField(object):
     """
     Data structure that holds information about the field of a record.
     """
-    def __init__(self, decl, name, index, conditions=[]):
+    def __init__(self, decl, record_decl, name, index, conditions=[]):
         """
         :param lal.ComponentDecl | lal.DiscriminantSpec decl: The node where
             the field is declared.
+
+        :param lal.TypeDecl record_decl: The record declaration in which this
+            field is defined.
 
         :param lal.Identifier name: The identifier of the field.
 
@@ -77,6 +80,7 @@ class _RecordField(object):
             the value(s) that it must have for the condition to hold).
         """
         self.decl = decl
+        self.record_decl = record_decl
         self.name = name
         self.index = index
         self.conds = conditions
@@ -90,6 +94,18 @@ class _RecordField(object):
         """
         return (name.p_referenced_decl == self.decl and
                 name.text == self.name.text)
+
+    def field_type_expr(self):
+        """
+        Returns the type of this field, be it a component decl or a
+        discriminant spec.
+
+        :rtype: lal.BaseTypeDecl
+        """
+        if self.decl.is_a(lal.ComponentDecl):
+            return self.decl.f_component_def.f_type_expr
+        else:
+            return self.decl.f_type_expr
 
 
 class _ValueHolder(object):
@@ -188,7 +204,9 @@ def _record_fields(record_decl):
         for component in component_list.f_components:
             if not component.is_a(lal.NullComponentDecl):
                 for name in component.f_ids:
-                    res.append(_RecordField(component, name, i.value, conds))
+                    res.append(_RecordField(
+                        component, record_decl, name, i.value, conds)
+                    )
                     i.value += 1
 
         variant_part = component_list.f_variant_part
@@ -202,7 +220,7 @@ def _record_fields(record_decl):
     if record_decl.f_discriminants is not None:
         for discr in record_decl.f_discriminants.f_discr_specs:
             for name in discr.f_ids:
-                res.append(_RecordField(discr, name, i.value))
+                res.append(_RecordField(discr, record_decl, name, i.value))
                 i.value += 1
 
     tp_def = record_decl.f_type_def
@@ -238,6 +256,91 @@ def _proc_parameters(proc):
                     i += 1
 
     return list(gen())
+
+
+@memoize
+def _subprogram_param_types(subp):
+    """
+    Returns a tuple containing the types of each parameter of the given
+    subprogram.
+
+    :param lal.SubpDecl subp: The subprogram to consider.
+    :rtype: tuple[lal.BaseTypeDecl]
+    """
+    params = _proc_parameters(subp)
+    return tuple(p.f_type_expr for _, _, p in params)
+
+
+def _array_access_param_types(array_type_decl):
+    """
+    Returns a tuple containing the types of each parameter of the function
+    that accesses an element of an array of the given array type.
+
+    :param lal.TypeDecl array_type_decl: The array type to consider.
+    :rtype: tuple[lal.BaseTypeDecl]
+    """
+    array_def = array_type_decl.f_type_def
+    index_types = tuple(array_def.f_indices.f_list)
+    return (array_type_decl,) + index_types
+
+
+def _array_assign_param_types(array_type_decl):
+    """
+    Returns a tuple containing the types of each parameter of the function
+    that updates an element of an array of the given array type.
+
+    :param lal.TypeDecl array_type_decl: The array type to consider.
+    :rtype: tuple[lal.BaseTypeDecl]
+    """
+    array_def = array_type_decl.f_type_def
+    component_type = array_def.f_component_type.f_type_expr
+    index_types = tuple(array_def.f_indices.f_list)
+    return (array_type_decl, component_type) + index_types
+
+
+def _field_access_param_types(field_info):
+    """
+    Returns a tuple containing the types of each parameter of the function
+    that accesses the given field.
+
+    :param _RecordField field_info: The field to consider.
+    :rtype: tuple[lal.BaseTypeDecl]
+    """
+    return field_info.record_decl,
+
+
+def _field_assign_param_types(field_info):
+    """
+    Returns a tuple containing the types of each parameter of the function
+    that updates the given field.
+
+    :param _RecordField field_info: The field to consider.
+    :rtype: tuple[lal.BaseTypeDecl]
+    """
+    return field_info.record_decl, field_info.field_type_expr()
+
+
+def _stack_assign_param_types(var):
+    """
+    Returns a tuple containing the types of each parameter of the function
+    that updates the given variable that is stored in the stack.
+
+    :param irt.Variable var: The spilled variable to consider.
+    :rtype: tuple[lal.BaseTypeDecl]
+    """
+    return _StackType(), var.data.type_hint
+
+
+def _deref_assign_param_types(ptr_type, val_type):
+    """
+    Returns a tuple containing the types of each parameter of the function
+    that assigns a value of the given val_type to a pointer of type ptr_type.
+
+    :param lal.BaseTypeDecl ptr_type: The type of the access.
+    :param lal.BaseTypeDecl val_type: The type of the value.
+    :rtype: tuple[lal.BaseTypeDecl]
+    """
+    return _StackType(), ptr_type, val_type
 
 
 def _find_cousin_conditions(record_fields, cond_prefix):
@@ -449,13 +552,15 @@ def retrieve_function_contracts(ctx, proc):
 
 
 @profile()
-def _gen_ir(ctx, subp):
+def _gen_ir(ctx, subp, typer):
     """
     Generates Basic intermediate representation from a lal subprogram body.
 
     :param ExtractionContext ctx: The program extraction context.
 
     :param lal.SubpBody subp: The subprogram body from which to generate IR.
+
+    :param types.Typer[lal.AdaNode] typer: A typer for any lal AdaNode.
 
     :return: a Basic Program.
 
@@ -1058,10 +1163,7 @@ def _gen_ir(ctx, subp):
                         [stack, expr],
                         type_hint=stack.data.type_hint,
                         orig_node=dest,
-                        purpose=purpose.FieldAssignment(
-                            updated_index,
-                            var.data.type_hint
-                        )
+                        param_types=_stack_assign_param_types(var)
                     )
                 )
             else:
@@ -1072,7 +1174,8 @@ def _gen_ir(ctx, subp):
                 ), expr)
 
         elif dest.is_a(lal.DottedName) and _is_record_field(dest.f_suffix):
-            updated_index = _field_info(dest.f_suffix).index
+            field_info = _field_info(dest.f_suffix)
+            updated_index = field_info.index
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
 
             exist_stmts = gen_field_existence_condition(
@@ -1085,10 +1188,7 @@ def _gen_ir(ctx, subp):
                 [prefix_expr, expr],
                 type_hint=dest.f_prefix.p_expression_type,
                 orig_node=dest.f_prefix,
-                purpose=purpose.FieldAssignment(
-                    updated_index,
-                    dest.f_suffix.p_expression_type
-                )
+                param_types=_field_assign_param_types(field_info)
             ))
             return prefix_pre_stmts + exist_stmts + pre_stmts, ret
 
@@ -1100,6 +1200,13 @@ def _gen_ir(ctx, subp):
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_name)
 
             if dest.f_suffix.is_a(lal.BinOp, lal.AttributeRef):
+                return unimplemented_dest(dest)
+
+            try:
+                name_tpe = dest.f_name.p_expression_type
+                if not typer.get(name_tpe).is_a(types.Array):
+                    return unimplemented_dest(dest)
+            except ValueError:
                 return unimplemented_dest(dest)
 
             suffixes = [
@@ -1117,7 +1224,9 @@ def _gen_ir(ctx, subp):
                 [prefix_expr, expr] + suffix_exprs,
                 type_hint=dest.f_name.p_expression_type,
                 orig_node=dest,
-                purpose=purpose.CallAssignment(dest.f_name.p_expression_type)
+                param_types=_array_assign_param_types(
+                    dest.f_name.p_expression_type
+                )
             ))
             return (
                 prefix_pre_stmts + pre_stmts + suffix_pre_stmts,
@@ -1132,7 +1241,10 @@ def _gen_ir(ctx, subp):
                 [stack, prefix_expr, expr],
                 type_hint=stack.data.type_hint,
                 orig_node=dest,
-                purpose=purpose.DerefAssignment(dest.p_expression_type)
+                param_types=_deref_assign_param_types(
+                    dest.f_prefix.p_expression_type,
+                    dest.p_expression_type
+                )
             ))
 
         return unimplemented_dest(dest)
@@ -1431,7 +1543,7 @@ def _gen_ir(ctx, subp):
 
                 # Pass stack too
 
-                global_access = _find_global_access(ctx.default_typer(), ref)
+                global_access = _find_global_access(typer, ref)
 
                 if (global_access == _READS_GLOBAL_STATE or
                         global_access == _WRITES_GLOBAL_STATE):
@@ -1465,7 +1577,7 @@ def _gen_ir(ctx, subp):
                         suffix_exprs,
                         orig_node=orig_node,
                         type_hint=type_hint,
-                        callee_type=prefix.p_expression_type
+                        param_types=_subprogram_param_types(ref)
                     )
                 else:
                     ret_tpe = _ExtendedCallReturnType(
@@ -1494,7 +1606,7 @@ def _gen_ir(ctx, subp):
                             suffix_exprs,
                             orig_node=orig_node,
                             type_hint=ret_tpe,
-                            callee_type=prefix.p_expression_type
+                            param_types=_subprogram_param_types(ref)
                         )
                     )]
 
@@ -1551,7 +1663,7 @@ def _gen_ir(ctx, subp):
                 [prefix_expr_tr] + suffix_exprs,
                 type_hint=type_hint,
                 orig_node=orig_node,
-                callee_type=prefix.p_expression_type
+                param_types=_array_access_param_types(prefix.p_expression_type)
             )
 
         return unimplemented_expr(orig_node)
@@ -1652,9 +1764,7 @@ def _gen_ir(ctx, subp):
                         [record_expr, field_init[i]],
                         type_hint=record_expr.data.type_hint,
                         orig_node=expr,
-                        purpose=purpose.FieldAssignment(
-                            i, field_init[i].data.type_hint
-                        )
+                        param_types=_field_assign_param_types(all_fields[i])
                     ), i + 1
                 )
 
@@ -1884,11 +1994,13 @@ def _gen_ir(ctx, subp):
                     expr.f_suffix
                 )
 
+                field_info = _field_info(expr.f_suffix)
                 return prefix_pre_stmts + exists_stmts, irt.FunCall(
-                    ops.GetName(_field_info(expr.f_suffix).index),
+                    ops.GetName(field_info.index),
                     [prefix],
                     type_hint=expr.p_expression_type,
-                    orig_node=expr
+                    orig_node=expr,
+                    param_types=_field_access_param_types(field_info)
                 )
             else:
                 return transform_decl_ref(expr)
@@ -1930,7 +2042,9 @@ def _gen_ir(ctx, subp):
                         ],
                         type_hint=expr.p_expression_type,
                         orig_node=expr,
-                        purpose=purpose.CallAssignment(expr.p_expression_type)
+                        param_types=_array_assign_param_types(
+                            expr.p_expression_type
+                        )
                     )
 
             return [irt.AssignStmt(lit, build_lit(0))], lit
@@ -2029,7 +2143,7 @@ def _gen_ir(ctx, subp):
                 type_hint=spec.f_subp_returns
             )
 
-        if (_find_global_access(ctx.default_typer(), subp) ==
+        if (_find_global_access(typer, subp) ==
                 _WRITES_GLOBAL_STATE):
             param_vars.append(stack.var)
 
@@ -2418,13 +2532,15 @@ class ConvertUniversalTypes(IRImplicitVisitor):
     universal types from in node data's type hints.
     """
 
-    def __init__(self, evaluator):
+    def __init__(self, evaluator, typer):
         """
         :param ConstExprEvaluator evaluator: A const expr evaluator.
+        :param types.Typer[lal.AdaNode]: A typer
         """
         super(ConvertUniversalTypes, self).__init__()
 
         self.evaluator = evaluator
+        self.typer = typer
 
     def has_universal_type(self, expr):
         """
@@ -2439,6 +2555,45 @@ class ConvertUniversalTypes(IRImplicitVisitor):
             self.evaluator.universal_int,
             self.evaluator.universal_real
         ]
+
+    def is_integer_type(self, tpe):
+        """
+        Returns True if the given type denotes an integer type declaration.
+        :param lal.BaseTypeDecl tpe:
+        :rtype: bool
+        """
+        try:
+            return self.typer.get(tpe).is_a(types.IntRange)
+        except ValueError:
+            return False
+
+    def is_compatible(self, tpe, universal_tpe):
+        """
+        Returns True if the given type is compatible with the given universal
+        type. For example, Integer types are compatible with universal ints,
+        etc.
+
+        :param lal.BaseTypeDecl tpe: The type to check compatibility with.
+        :param lal.BaseTypeDecl universal_tpe: The universal type.
+        :rtype: bool
+        """
+        if universal_tpe == self.evaluator.universal_int:
+            return self.is_integer_type(tpe)
+        else:
+            raise NotImplementedError
+
+    def compatible_type(self, universal_tpe):
+        """
+        Returns a "concrete" type that is compatible with the given universal
+        type. For example, Integer can be returned for universal ints.
+
+        :param lal.BaseTypeDecl universal_tpe: The universal type.
+        :rtype: lal.BaseTypeDecl
+        """
+        if universal_tpe == self.evaluator.universal_int:
+            return self.evaluator.int
+        else:
+            raise NotImplementedError
 
     def try_convert_expr(self, expr, expected_type):
         """
@@ -2458,82 +2613,61 @@ class ConvertUniversalTypes(IRImplicitVisitor):
                 type_hint=expected_type
             )
         except NotConstExprError:
-            expr.visit(self)
+            if self.has_universal_type(expr):
+                expr.data = expr.data.copy(type_hint=expected_type)
+            expr.visit(self, expr.data.type_hint)
             return expr
 
     def visit_assign(self, assign):
         assign.expr = self.try_convert_expr(
             assign.expr,
-            assign.id.data.type_hint
+            assign.id.data.type_hint if not self.has_universal_type(assign.id)
+            else self.compatible_type(assign.id.data.type_hint)
         )
 
     def visit_assume(self, assume):
         assume.expr = self.try_convert_expr(assume.expr, self.evaluator.bool)
 
-    def visit_funcall(self, funcall):
+    def visit_funcall(self, funcall, expected_type):
         if any(self.has_universal_type(arg) for arg in funcall.args):
-            if 'callee_type' in funcall.data:
-                # Case where we have information about the callee type
-                tpe = funcall.data.callee_type
-                if _is_array_type_decl(tpe):
-                    # if the "callee" is an array
-                    indices = tpe.f_type_def.f_indices.f_list
-                    funcall.args[1:] = [
-                        self.try_convert_expr(arg, indices[i])
-                        for i, arg in enumerate(funcall.args[1:])
-                    ]
-            elif purpose.FieldAssignment.is_purpose_of(funcall):
-                # Case where the function is an update call replacing a
-                # field assignment. (p.x = y)
-                funcall.args[1] = self.try_convert_expr(
-                    funcall.args[1],
-                    funcall.data.purpose.field_type_hint
-                )
-            elif purpose.CallAssignment.is_purpose_of(funcall):
-                # Case where the function is an udpate call replacing a
-                # call assignment. (a(i) = b)
-                tpe = funcall.data.purpose.callee_type
-                if _is_array_type_decl(tpe):
-                    # if the "callee" is an array
-                    tdef = tpe.f_type_def
-                    indices = tdef.f_indices.f_list
-                    funcall.args[1] = self.try_convert_expr(
-                        funcall.args[1],
-                        tdef.f_component_type.f_type_expr
+            if 'param_types' in funcall.data:
+                funcall.args = [
+                    self.try_convert_expr(arg, param_type)
+                    for param_type, arg in zip(
+                        funcall.data.param_types,
+                        funcall.args
                     )
-                    funcall.args[2:] = [
-                        self.try_convert_expr(arg, indices[i])
-                        for i, arg in enumerate(funcall.args[2:])
-                    ]
-            elif purpose.DerefAssignment.is_purpose_of(funcall):
-                # Case where the function is an update call replacing a
-                # deref assignment. (x.all = y)
-                funcall.args[2] = self.try_convert_expr(
-                    funcall.args[2],
-                    funcall.data.purpose.accessed_type_hint
-                )
+                ]
             else:
                 # Otherwise, assume that functions that accept one argument
                 # as universal int/real need all their arguments to be of the
                 # same type, which is true for arithmetic ops, comparison ops,
                 # etc.
-                expected_type = next(
+                not_universals = [
                     arg.data.type_hint
                     for arg in funcall.args
                     if not self.has_universal_type(arg)
-                )
-
-                funcall.args = [
-                    self.try_convert_expr(arg, expected_type)
-                    for arg in funcall.args
                 ]
+                for i in range(len(funcall.args)):
+                    arg = funcall.args[i]
 
-        funcall.args = [
-            self.try_convert_expr(arg, arg.data.type_hint)
-            for arg in funcall.args
-        ]
+                    if not self.has_universal_type(arg):
+                        tpe = arg.data.type_hint
+                    elif (len(not_universals) > 0 and
+                            self.is_compatible(not_universals[0],
+                                               arg.data.type_hint)):
+                        tpe = not_universals[0]
+                    elif self.is_compatible(expected_type, arg.data.type_hint):
+                        tpe = expected_type
+                    else:
+                        tpe = self.compatible_type(arg.data.type_hint)
 
-        super(ConvertUniversalTypes, self).visit_funcall(funcall)
+                    funcall.args[i] = self.try_convert_expr(arg, tpe)
+        else:
+            funcall.args = [
+                self.try_convert_expr(arg, arg.data.type_hint)
+                for arg in funcall.args
+            ]
 
 
 class NotConstExprError(ValueError):
@@ -3010,13 +3144,14 @@ class ExtractionContext(object):
                 return
 
         unit.populate_lexical_env()
+        typer = self.default_typer()
 
         progs = [
-            _gen_ir(self, subp)
+            _gen_ir(self, subp, typer)
             for subp in unit.root.findall(lal.SubpBody)
         ]
 
-        converter = ConvertUniversalTypes(self.evaluator)
+        converter = ConvertUniversalTypes(self.evaluator, typer)
 
         for prog in progs:
             prog.visit(converter)
