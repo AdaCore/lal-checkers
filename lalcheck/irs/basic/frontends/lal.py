@@ -1895,7 +1895,7 @@ def _gen_ir(ctx, subp):
 
         elif expr.is_a(lal.IntLiteral):
             return [], irt.Lit(
-                int(expr.text),
+                expr.p_eval_as_int,
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
@@ -1906,6 +1906,9 @@ def _gen_ir(ctx, subp):
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
+
+        elif expr.is_a(lal.CharLiteral):
+            return [], irt.Lit(expr.text[1:-1], type_hint=ctx.evaluator.char)
 
         elif expr.is_a(lal.StringLiteral):
             lit = new_expression_replacing_var("tmp", expr)
