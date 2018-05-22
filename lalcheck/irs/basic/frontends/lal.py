@@ -274,13 +274,24 @@ def _field_info(field_id):
         field.
     :rtype: _RecordField
     """
-    record_decl = _closest(field_id.p_referenced_decl, lal.TypeDecl)
+    ref = field_id.p_referenced_decl
+    record_decl = _closest(ref, lal.TypeDecl)
 
     return next(
         field
         for field in _record_fields(record_decl)
         if field.is_referred_by(field_id)
     )
+
+
+def _is_record_field(ident):
+    """
+    Returns true if the given name refers to the field of a record.
+    :param lal.Identifier ident: The identifier to check.
+    """
+    ref = ident.p_referenced_decl
+    return (ref is not None and
+            ref.is_a(lal.ComponentDecl, lal.DiscriminantSpec))
 
 
 def _is_array_type_decl(tpe):
@@ -290,6 +301,7 @@ def _is_array_type_decl(tpe):
     """
     if tpe is not None and tpe.is_a(lal.TypeDecl):
         return tpe.f_type_def.is_a(lal.ArrayTypeDef)
+
     return False
 
 
@@ -1059,7 +1071,7 @@ def _gen_ir(ctx, subp):
                     orig_node=dest
                 ), expr)
 
-        elif dest.is_a(lal.DottedName):
+        elif dest.is_a(lal.DottedName) and _is_record_field(dest.f_suffix):
             updated_index = _field_info(dest.f_suffix).index
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
 
@@ -1081,9 +1093,13 @@ def _gen_ir(ctx, subp):
             return prefix_pre_stmts + exist_stmts + pre_stmts, ret
 
         elif dest.is_a(lal.CallExpr):
+            if dest.f_name.p_referenced_decl.is_a(lal.TypeDecl):
+                # type conversion
+                return unimplemented_dest(dest)
+
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_name)
 
-            if dest.f_suffix.is_a(lal.BinOp):
+            if dest.f_suffix.is_a(lal.BinOp, lal.AttributeRef):
                 return unimplemented_dest(dest)
 
             suffixes = [
@@ -1211,8 +1227,12 @@ def _gen_ir(ctx, subp):
                 orig_node=expr
             )
 
-        elif expr.is_a(lal.DottedName):
-            updated_index = _field_info(expr.f_suffix).index
+        elif expr.is_a(lal.DottedName) and _is_record_field(expr.f_suffix):
+            info = _field_info(expr.f_suffix)
+            if info is None:
+                unimplemented(expr)
+
+            updated_index = info.index
 
             return irt.FunCall(
                 access_paths.Field(updated_index),
@@ -1653,6 +1673,35 @@ def _gen_ir(ctx, subp):
 
         return unimplemented_expr(expr)
 
+    def transform_decl_ref(expr):
+        """
+        Transforms an expression that refers to a declaration.
+
+        :param lal.Expr expr: The expression to transform.
+        :rtype: irt.Expr
+        """
+        decl = expr.p_referenced_decl
+
+        if decl.is_a(lal.SubpBody, lal.SubpDecl):
+            return gen_call_expr(expr, [], expr.p_expression_type, expr)
+        elif decl.is_a(lal.EnumLiteralDecl):
+            return [], irt.Lit(
+                expr.text,
+                type_hint=decl.parent.parent.parent,
+                orig_node=expr
+            )
+        elif decl.is_a(lal.NumberDecl):
+            return transform_expr(decl.f_expr)
+        elif decl.is_a(lal.TypeDecl):
+            if decl.f_type_def.is_a(lal.SignedIntTypeDef):
+                return transform_expr(decl.f_type_def.f_range.f_range)
+        elif decl.is_a(lal.SubtypeDecl):
+            constr = decl.f_subtype.f_constraint
+            if constr.is_a(lal.RangeConstraint):
+                return transform_expr(constr.f_range.f_range)
+
+        return unimplemented_expr(expr)
+
     @profile()
     def transform_expr(expr):
         """
@@ -1792,28 +1841,12 @@ def _gen_ir(ctx, subp):
             ref = expr.p_xref
             if ref is None:
                 return unimplemented_expr(expr)
-            decl = ref.p_basic_decl
-            if ref in substitutions:
+            elif ref in substitutions:
                 return substitutions[ref]
-            elif decl.is_a(lal.ObjectDecl, lal.ParamSpec):
+            elif ref.p_basic_decl.is_a(lal.ObjectDecl, lal.ParamSpec):
                 return [], get_var(expr, ref)
-            elif decl.is_a(lal.SubpBody, lal.SubpDecl):
-                return gen_call_expr(expr, [], expr.p_expression_type, expr)
-            elif decl.is_a(lal.EnumLiteralDecl):
-                return [], irt.Lit(
-                    expr.text,
-                    type_hint=decl.parent.parent.parent,
-                    orig_node=expr
-                )
-            elif decl.is_a(lal.NumberDecl):
-                return transform_expr(decl.f_expr)
-            elif decl.is_a(lal.TypeDecl):
-                if decl.f_type_def.is_a(lal.SignedIntTypeDef):
-                    return transform_expr(decl.f_type_def.f_range.f_range)
-            elif decl.is_a(lal.SubtypeDecl):
-                constr = decl.f_subtype.f_constraint
-                if constr.is_a(lal.RangeConstraint):
-                    return transform_expr(constr.f_range.f_range)
+            else:
+                return transform_decl_ref(expr)
 
         elif expr.is_a(lal.DottedName):
             # Field access is transformed as such:
@@ -1833,36 +1866,32 @@ def _gen_ir(ctx, subp):
             # Additionally, if an implicit dereference takes place, the
             # relevant assume statements are also inserted.
 
-            ref = expr.p_referenced_decl
-            if ref is None:
-                return unimplemented_expr(expr)
-            elif ref.is_a(lal.SubpDecl):
-                # The DottedName is actually a function/procedure call.
-                return gen_call_expr(expr, [], expr.p_expression_type, expr)
-
             if expr.f_prefix.p_expression_type is None:
                 return unimplemented_expr(expr)
-            elif expr.f_prefix.p_expression_type.p_is_access_type:
-                access_type_def = expr.f_prefix.p_expression_type.f_type_def
-                accessed_ind = access_type_def.f_subtype_indication
-                accessed_type = accessed_ind.p_designated_type_decl_from(expr)
-                prefix_pre_stmts, prefix = transform_dereference(
-                    expr.f_prefix, accessed_type, expr.f_prefix
+            elif _is_record_field(expr.f_suffix):
+                if expr.f_prefix.p_expression_type.p_is_access_type:
+                    accessed_type = (expr.f_prefix.p_expression_type
+                                     .f_type_def.f_subtype_indication
+                                     .p_designated_type_decl_from(expr))
+                    prefix_pre_stmts, prefix = transform_dereference(
+                        expr.f_prefix, accessed_type, expr.f_prefix
+                    )
+                else:
+                    prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
+
+                exists_stmts = gen_field_existence_condition(
+                    prefix,
+                    expr.f_suffix
+                )
+
+                return prefix_pre_stmts + exists_stmts, irt.FunCall(
+                    ops.GetName(_field_info(expr.f_suffix).index),
+                    [prefix],
+                    type_hint=expr.p_expression_type,
+                    orig_node=expr
                 )
             else:
-                prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
-
-            exists_stmts = gen_field_existence_condition(
-                prefix,
-                expr.f_suffix
-            )
-
-            return prefix_pre_stmts + exists_stmts, irt.FunCall(
-                ops.GetName(_field_info(expr.f_suffix).index),
-                [prefix],
-                type_hint=expr.p_expression_type,
-                orig_node=expr
-            )
+                return transform_decl_ref(expr)
 
         elif expr.is_a(lal.IntLiteral):
             return [], irt.Lit(
@@ -1904,11 +1933,13 @@ def _gen_ir(ctx, subp):
             return [irt.AssignStmt(lit, build_lit(0))], lit
 
         elif expr.is_a(lal.Aggregate):
-            type_def = expr.p_expression_type.f_type_def
-            if type_def.is_a(lal.RecordTypeDef):
-                return transform_record_aggregate(expr)
-            elif type_def.is_a(lal.ArrayTypeDef):
-                return transform_array_aggregate(expr)
+            type_decl = expr.p_expression_type
+            if type_decl.is_a(lal.TypeDecl):
+                type_def = type_decl.f_type_def
+                if type_def.is_a(lal.RecordTypeDef):
+                    return transform_record_aggregate(expr)
+                elif type_def.is_a(lal.ArrayTypeDef):
+                    return transform_array_aggregate(expr)
 
         elif expr.is_a(lal.ExplicitDeref):
             return transform_dereference(
@@ -2346,7 +2377,8 @@ def _gen_ir(ctx, subp):
         for decl in decls:
             try:
                 res.extend(transform_decl(decl))
-            except (lal.PropertyError, NotImplementedError, KeyError) as e:
+            except (lal.PropertyError, NotImplementedError,
+                    KeyError, NotConstExprError) as e:
                 print_warning(decl.text, e)
         return res
 
@@ -2360,7 +2392,8 @@ def _gen_ir(ctx, subp):
         for stmt in stmts:
             try:
                 res.extend(transform_stmt(stmt))
-            except (lal.PropertyError, NotImplementedError, KeyError) as e:
+            except (lal.PropertyError, NotImplementedError,
+                    KeyError, NotConstExprError) as e:
                 print_warning(stmt.text, e)
         return res
 
