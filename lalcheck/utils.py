@@ -20,6 +20,11 @@ class Bunch(dict):
     def __setitem__(self, key, value):
         raise TypeError("Bunch does not support assignment")
 
+    def copy(self, **kwargs):
+        new_items = super(Bunch, self).copy()
+        new_items.update(kwargs)
+        return Bunch(**new_items)
+
     def __hash__(self):
         return self._hash
 
