@@ -1885,8 +1885,15 @@ def _gen_ir(ctx, subp):
                 return transform_decl_ref(expr)
 
         elif expr.is_a(lal.IntLiteral):
+            int_str = expr.text.replace('_', '')
+            base_delim = int_str.find('#')
+            if base_delim != -1:
+                base = int_str[:base_delim]
+                end = int_str.find('#', base_delim + 1)
+                value = int(int_str[base_delim+1:end], int(base))
+                int_str = str(value) + int_str[end+1:]
             return [], irt.Lit(
-                int(expr.text),
+                int(float(int_str)),
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
@@ -1897,6 +1904,9 @@ def _gen_ir(ctx, subp):
                 type_hint=expr.p_expression_type,
                 orig_node=expr
             )
+
+        elif expr.is_a(lal.CharLiteral):
+            return [], irt.Lit(expr.text, type_hint=ctx.evaluator.char)
 
         elif expr.is_a(lal.StringLiteral):
             lit = new_expression_replacing_var("tmp", expr)
