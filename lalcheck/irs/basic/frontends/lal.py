@@ -2994,12 +2994,15 @@ class ExtractionContext(object):
     compatible. Also, this extraction context must be kept alive as long
     as the programs parsed with it are intended to be used.
     """
-    def __init__(self, project_file=None):
+    def __init__(self, project_file=None, scenario_vars=None):
         if project_file is None:
             self.lal_ctx = lal.AnalysisContext()
         else:
             self.lal_ctx = lal.AnalysisContext(
-                unit_provider=lal.UnitProvider.for_project(project_file)
+                unit_provider=lal.UnitProvider.for_project(
+                    project_file,
+                    scenario_vars
+                )
             )
 
         # Get a dummy node, needed to call static properties of libadalang.

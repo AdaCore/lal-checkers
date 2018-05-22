@@ -64,6 +64,15 @@ class PythonDriver(TestDriver):
         return os.path.join(self.global_env['test_dir'], 'test_helpers')
 
     @property
+    def external_sources_dir(self):
+        """
+        Return the path to the "ext_src" directory.
+
+        :rtype: str
+        """
+        return os.path.join(self.global_env['test_dir'], 'ext_src')
+
+    @property
     def python_interpreter_args(self):
         """
         Return the arguments to pass to the python interpreter.
@@ -144,9 +153,11 @@ class PythonDriver(TestDriver):
     def run(self):
         # Run the Python script and redirect its output to `self.out_file`.
         argv = [self.python_interpreter] + self.python_interpreter_args
+        env = os.environ.copy()
+        env['EXT_SRC'] = self.external_sources_dir
 
         p = Run(argv, timeout=self.timeout, output=PIPE, error=STDOUT,
-                cwd=self.test_working_dir())
+                cwd=self.test_working_dir(), env=env)
 
         with open(self.test_working_dir(self.out_file), 'a') as f:
             f.write(p.out)
