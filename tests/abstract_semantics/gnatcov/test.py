@@ -35,11 +35,12 @@ def do_analysis(checker, merge_predicates, call_strategy_name):
         input_files = [os.path.join(gnatcoverage_dir, args.file[0])]
     else:
         input_files = []
-        filename_re = re.compile(r'.*\.(ad.|a|spc|bdy)')
+        filename_re = re.compile(r'.*\.(ad.|a|spc|bdy)$')
         for dirpath, dirnames, filenames in os.walk(gnatcoverage_dir):
             for f in filenames:
                 if filename_re.match(f):
                     input_files.append(os.path.join(dirpath, f))
+        input_files = sorted(input_files)
 
     progs = []
     for i, f in enumerate(input_files):

@@ -276,6 +276,8 @@ def _array_access_param_types(array_type_decl):
 
 
 def _array_assign_param_types(array_type_decl):
+    if array_type_decl is None:
+        raise NotImplementedError
     array_def = array_type_decl.f_type_def
     component_type = array_def.f_component_type.f_type_expr
     index_types = tuple(array_def.f_indices.f_list)
@@ -2002,7 +2004,7 @@ def _gen_ir(ctx, subp, typer):
 
         elif expr.is_a(lal.Aggregate):
             type_decl = expr.p_expression_type
-            if type_decl.is_a(lal.TypeDecl):
+            if type_decl is not None and type_decl.is_a(lal.TypeDecl):
                 type_def = type_decl.f_type_def
                 if type_def.is_a(lal.RecordTypeDef):
                     return transform_record_aggregate(expr)
@@ -2428,6 +2430,7 @@ def _gen_ir(ctx, subp, typer):
         unimplemented(stmt)
 
     def print_warning(subject, exception):
+	return
         print("warning: ignored '{}'".format(subject))
         message = getattr(exception, 'message', None)
         if message is not None:
