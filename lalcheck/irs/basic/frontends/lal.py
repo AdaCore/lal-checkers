@@ -445,35 +445,32 @@ def _find_vars_to_spill(ctx, node):
                 if node.parent.f_prefix == node:
                     return True
         elif node.parent.is_a(lal.ParamAssoc):
-            try:
-                call_expr = node.parent.parent.parent
-                if call_expr.is_a(lal.CallExpr):
-                    ref = call_expr.f_name.p_referenced_decl
-                    if (ref is not None and
-                            ref.is_a(lal.SubpBody, lal.SubpDecl)):
-                        procs = [ref]
-                        model = ctx.fun_models.get(ref, None)
-                        if model is not None:
-                            procs.append(model)
+            call_expr = node.parent.parent.parent
+            if call_expr.is_a(lal.CallExpr):
+                ref = call_expr.f_name.p_referenced_decl
+                if (ref is not None and
+                        ref.is_a(lal.SubpBody, lal.SubpDecl)):
+                    procs = [ref]
+                    model = ctx.fun_models.get(ref, None)
+                    if model is not None:
+                        procs.append(model)
 
-                        for proc in procs:
-                            params_to_spill = _find_vars_to_spill(
-                                ctx,
-                                proc.f_aspects
+                    for proc in procs:
+                        params_to_spill = _find_vars_to_spill(
+                            ctx,
+                            proc.f_aspects
+                        )
+
+                        if len(params_to_spill) > 0:
+                            param_indexes_to_spill = {
+                                _index_of(param, param.parent)
+                                for param in params_to_spill
+                            }
+                            arg_index = _index_of(
+                                node.parent, node.parent.parent
                             )
+                            return arg_index in param_indexes_to_spill
 
-                            if len(params_to_spill) > 0:
-                                param_indexes_to_spill = {
-                                    _index_of(param, param.parent)
-                                    for param in params_to_spill
-                                }
-                                arg_index = _index_of(
-                                    node.parent, node.parent.parent
-                                )
-                                return arg_index in param_indexes_to_spill
-
-            except lal.PropertyError:
-                pass
         return False
 
     return {accessed_var(n) for n in node.findall(is_accessed)}
@@ -2446,7 +2443,7 @@ def _gen_ir(ctx, subp, typer):
         for decl in decls:
             try:
                 res.extend(transform_decl(decl))
-            except (lal.PropertyError, NotImplementedError,
+            except (NotImplementedError,
                     KeyError, NotConstExprError) as e:
                 print_warning(decl.text, e)
         return res
@@ -2461,7 +2458,7 @@ def _gen_ir(ctx, subp, typer):
         for stmt in stmts:
             try:
                 res.extend(transform_stmt(stmt))
-            except (lal.PropertyError, NotImplementedError,
+            except (NotImplementedError,
                     KeyError, NotConstExprError) as e:
                 print_warning(stmt.text, e)
         return res
@@ -2784,11 +2781,8 @@ def access_typer(hint):
     :rtype: lal.AdaNode
     """
     if hint.is_a(lal.TypeDecl):
-        try:
-            if hint.p_is_access_type:
-                return _pointer_type
-        except lal.PropertyError:
-            pass
+        if hint.p_is_access_type:
+            return _pointer_type
     elif hint.is_a(_PointerType):
         return _pointer_type
 
@@ -2857,10 +2851,7 @@ def name_typer(inner_typer):
         """
         if hint.is_a(lal.SubtypeIndication):
             # todo: Take constraint into account
-            try:
-                return hint.p_designated_type_decl
-            except lal.PropertyError:
-                pass
+            return hint.p_designated_type_decl
 
     return resolved_name >> inner_typer
 

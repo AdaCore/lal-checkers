@@ -34,13 +34,28 @@ def do_analysis(checker, merge_predicates, call_strategy_name):
     if args.file is not None:
         input_files = [os.path.join(gnatcoverage_dir, args.file[0])]
     else:
-        input_files = []
-        filename_re = re.compile(r'.*\.(ad.|a|spc|bdy)$')
-        for dirpath, dirnames, filenames in os.walk(gnatcoverage_dir):
-            for f in filenames:
-                if filename_re.match(f):
-                    input_files.append(os.path.join(dirpath, f))
-        input_files = sorted(input_files)
+        input_files = [
+            "ali_files.adb",
+            "ali_files.ads",
+            "annotations-dynamic_html.adb",
+            "annotations-dynamic_html.ads",
+            "annotations-html.adb",
+            "annotations-html.ads",
+            "annotations-report.adb",
+            "annotations-report.ads",
+            "annotations-xcov.adb",
+            "annotations-xcov.ads",
+            "annotations-xml.adb",
+            "annotations-xml.ads",
+            "annotations.adb",
+            "annotations.ads",
+            "arch__32.ads",
+            "arch__64.ads",
+            "argparse.adb",
+            "argparse.ads",
+            "binary_files.adb"
+        ]
+        input_files = [os.path.join(gnatcoverage_dir, f) for f in input_files]
 
     progs = []
     for i, f in enumerate(input_files):
