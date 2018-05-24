@@ -36,6 +36,13 @@ _attr_to_unop = {
     'Model': ops.GET_MODEL
 }
 
+seen_statements = []
+
+
+def test_stuff(e):
+    if "({}:{}:{})".format(e.sloc_range, e.unit.filename, e.text) == """(411:7-415:14:/home/romain/Documents/programming/Python/lal-checkers/tests/ext_src/gnatcoverage/ali_files.adb:if ALI_Index /= No_Source_File then\n         Report\n           ("ignoring duplicate ALI file " & ALI_Filename, Kind => Warning);\n         return No_Source_File;\n      end if;)""":
+        print("NOW")
+
 
 class Mode(object):
     """
@@ -2430,7 +2437,7 @@ def _gen_ir(ctx, subp, typer):
         unimplemented(stmt)
 
     def print_warning(subject, exception):
-	return
+        return
         print("warning: ignored '{}'".format(subject))
         message = getattr(exception, 'message', None)
         if message is not None:
@@ -2459,11 +2466,16 @@ def _gen_ir(ctx, subp, typer):
         """
         res = []
         for stmt in stmts:
+            test_stuff(stmt)
             try:
                 res.extend(transform_stmt(stmt))
+                is_ignored = False
             except (lal.PropertyError, NotImplementedError,
                     KeyError, NotConstExprError) as e:
+                is_ignored = True
                 print_warning(stmt.text, e)
+
+            seen_statements.append((stmt, is_ignored))
         return res
 
     return irt.Program(

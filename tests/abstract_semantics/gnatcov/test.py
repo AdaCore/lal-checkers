@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 import re
 import lalcheck.irs.basic.frontends.lal as lal2basic
@@ -29,6 +31,20 @@ ctx = lal2basic.ExtractionContext(
 )
 
 
+def print_ignored_histogram():
+    stmts = lal2basic.seen_statements
+    ignored = [stmt for stmt, i in stmts if i]
+    groups = {}
+    for stmt in ignored:
+        groups.setdefault(type(stmt), []).append(stmt)
+
+    for tpe, elems in sorted(groups.iteritems(), key=lambda k: len(k[1])):
+        print("{} ({}): {}".format(tpe, len(elems), [
+            "({}:{}:{})".format(e.sloc_range, e.unit.filename, e.text)
+            for e in elems
+        ]))
+
+
 def do_analysis(checker, merge_predicates, call_strategy_name):
     args = parser.parse_args()
     if args.file is not None:
@@ -40,15 +56,21 @@ def do_analysis(checker, merge_predicates, call_strategy_name):
             for f in filenames:
                 if filename_re.match(f):
                     input_files.append(os.path.join(dirpath, f))
-        input_files = sorted(input_files)
 
     progs = []
-    for i, f in enumerate(input_files):
-        print("{:02d}%: {}".format(
-            int(((i + 1.0) / len(input_files)) * 100),
-            f
-        ))
-        progs.extend(ctx.extract_programs_from_file(f))
+    try:
+        for i, f in enumerate(input_files):
+            print("{:02d}%: {} (current sratio: {}%)".format(
+                int(((i + 1.0) / len(input_files)) * 100),
+                f,
+                int((sum(1 for _, i in lal2basic.seen_statements if i) /
+                     len(lal2basic.seen_statements)) * 100)
+                if len(lal2basic.seen_statements) > 0 else "n/a"
+            ))
+            progs.extend(ctx.extract_programs_from_file(f))
+    except lal2basic.lal.PropertyError as e:
+        print_ignored_histogram()
+        raise e
 
     call_strategies = {
         'unknown': abstract_semantics.UnknownTargetCallStrategy(),
