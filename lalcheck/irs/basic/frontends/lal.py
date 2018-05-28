@@ -2793,19 +2793,32 @@ class ConstExprEvaluator(IRImplicitVisitor):
         return lit.val
 
 
-@types.typer
-def int_range_typer(hint):
+@types.delegating_typer
+def int_range_typer():
     """
-    :param lal.AdaNode hint: the lal type.
-    :return: The corresponding lalcheck type.
-    :rtype: types.IntRange
+    :return: A typer for int ranges.
+    :rtype: types.Typer[lal.AdaNodetypes]
     """
-    if hint.is_a(lal.TypeDecl):
-        if hint.f_type_def.is_a(lal.SignedIntTypeDef):
-            rng = hint.f_type_def.f_range.f_range
-            frm = int(rng.f_left.text)
-            to = int(rng.f_right.text)
-            return types.IntRange(frm, to)
+
+    @Transformer.as_transformer
+    def get_operands(hint):
+        if hint.is_a(lal.TypeDecl):
+            if hint.f_type_def.is_a(lal.SignedIntTypeDef):
+                rng = hint.f_type_def.f_range.f_range
+                return rng.f_left, rng.f_right
+
+    @Transformer.as_transformer
+    def eval_as_int(x):
+        try:
+            return x.p_eval_as_int
+        except (lal.PropertyError, lal.NativeException):
+            return None
+
+    @types.Typer
+    def to_int_range(xs):
+        return types.IntRange(*xs)
+
+    return get_operands >> (eval_as_int & eval_as_int) >> to_int_range
 
 
 @types.typer
