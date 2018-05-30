@@ -3089,6 +3089,7 @@ class ExtractionContext(object):
 
         self.type_models = {}
         self.fun_models = {}
+        self._internal_typer = self.default_typer()
 
     def extract_programs_from_file(self, ada_file):
         """
@@ -3160,14 +3161,13 @@ class ExtractionContext(object):
                 return
 
         unit.populate_lexical_env()
-        typer = self.default_typer()
 
         progs = [
-            _gen_ir(self, subp, typer)
+            _gen_ir(self, subp, self._internal_typer)
             for subp in unit.root.findall(lal.SubpBody)
         ]
 
-        converter = ConvertUniversalTypes(self.evaluator, typer)
+        converter = ConvertUniversalTypes(self.evaluator, self._internal_typer)
 
         for prog in progs:
             prog.visit(converter)
