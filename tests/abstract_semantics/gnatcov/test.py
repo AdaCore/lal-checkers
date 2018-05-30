@@ -206,23 +206,35 @@ def do_analysis(checker, merge_predicates, call_strategy_name):
 
     model = model_builder.of(*progs)
 
-    res = {}
-    for pred_name, pred in merge_predicates.iteritems():
-        res[pred_name] = checker(progs[0], model, pred)
+    for prog in progs:
+        for pred_name, pred in merge_predicates.iteritems():
+            ada_prog = prog.data.fun_id
+            dir_path = "output/{}/{}".format(pred_name, ada_prog.unit.filename)
+            ensure_dir(dir_path)
+            analysis = checker(prog, model, pred)
+            path = "{}/{}.dot".format(
+                dir_path,
+                ada_prog.f_subp_spec.f_subp_name.text
+            )
+            analysis.save_results_to_file(path)
 
-    return res, model
+
+def ensure_dir(path):
+    """
+    Ensure that the directory at the given path exists. (Creates it if it
+    doesn't).
+
+    :param str path: The desired path to the directory.
+    """
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 def run():
-    results, model = do_analysis(
+    do_analysis(
         abstract_semantics.compute_semantics,
         default_merge_predicates, 'unknown'
     )
-
-    for pred_name, analysis in results.iteritems():
-        print(pred_name)
-        print(analysis)
-        print("-------------------")
 
 
 run()
