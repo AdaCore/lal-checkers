@@ -302,7 +302,12 @@ def default_int_range_interpreter(tpe):
 @type_interpreter
 def default_enum_interpreter(tpe):
     if tpe.is_a(types.Enum):
-        enum_dom = domains.FiniteLattice.of_subsets(set(tpe.lits))
+        elems = set(tpe.lits)
+        if len(tpe.lits) < 5:
+            enum_dom = domains.FiniteLattice.of_subsets(elems)
+        else:
+            enum_dom = domains.FiniteSubsetLattice(elems)
+
         bool_dom = boolean_ops.Boolean
 
         bin_rel_sig = _signer((enum_dom, enum_dom), bool_dom)
