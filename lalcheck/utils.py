@@ -179,6 +179,24 @@ class Transformer(object):
 
         return f
 
+    def catch(self, error_type):
+        """
+        Creates a transformer which catches errors of the given error type.
+        If such an error is raising during transformation, this transformer
+        will simply return None instead of propagating the error further.
+
+        :param type error_type: The error type.
+        :rtype: Transformer
+        """
+        @self.as_transformer
+        def f(hint):
+            try:
+                return self._transform(hint)
+            except error_type:
+                return None
+
+        return f
+
     def get(self, x):
         """
         Forces transformation of the given argument.
@@ -197,6 +215,27 @@ class Transformer(object):
         @Transformer.as_transformer
         def f(x):
             return x
+        return f
+
+    @staticmethod
+    def first_of(*others):
+        """
+        Given a list of transformers, creates a transformer which attempts to
+        transform the given input with each transformer successively until
+        an attempt succeeds.
+
+        Note: is functionally equivalent to combining every transformer with
+        the | operator.
+
+        :param *Transformer others: The transformers to consider.
+        :rtype: Transformer
+        """
+        @Transformer.as_transformer
+        def f(hint):
+            for other in others:
+                x = other._transform(hint)
+                if x is not None:
+                    return x
         return f
 
     @staticmethod
