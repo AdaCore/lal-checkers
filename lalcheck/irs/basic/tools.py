@@ -309,8 +309,8 @@ class Models(visitors.Visitor):
         :param lalcheck.types.TypeInterpreter type_interpreter: The type
             interpreter that maps lalcheck types to interpretations.
 
-        :param lalcheck.interpretations.DefProvider external_def_provider:
-            An external def provider.
+        :param function external_def_provider:
+            An external def provider builder.
         """
         self.typer = typer
         self.type_interpreter = type_interpreter
@@ -396,6 +396,19 @@ class Models(visitors.Visitor):
         """
         return 'type_hint' in node.data
 
+    def _make_def_provider(self, def_provider_builders):
+        @Transformer.make_memoizing
+        @Transformer.from_transformer_builder
+        def provider():
+            aggregate_provider = Transformer.first_of(
+                *(p(provider) for p in def_provider_builders)
+            )
+            return (aggregate_provider
+                    if self.external_def_provider is None
+                    else (aggregate_provider |
+                          self.external_def_provider(provider)))
+        return provider
+
     def of(self, *programs):
         """
         :param iterable[irt.Program] programs: Programs for which to build
@@ -411,7 +424,7 @@ class Models(visitors.Visitor):
 
         model = {}
         node_domains = {}
-        def_providers = set()
+        def_provider_builders = set()
         builders = {}
 
         for prog in programs:
@@ -421,17 +434,16 @@ class Models(visitors.Visitor):
                 interp = self._typeable_to_interp(node)
 
                 node_domains[node] = interp.domain
-                def_providers.add(interp.def_provider)
+                def_provider_builders.add(interp.def_provider_builder)
                 builders[interp.domain] = interp.builder
 
-        aggregate_provider = reduce(Transformer.or_else, def_providers)
+        final_provider = self._make_def_provider(def_provider_builders)
 
         for node in node_domains.keys():
             model[node] = node.visit(
                 self,
                 node_domains,
-                aggregate_provider if self.external_def_provider is None
-                else aggregate_provider | self.external_def_provider,
+                final_provider,
                 builders
             )
 

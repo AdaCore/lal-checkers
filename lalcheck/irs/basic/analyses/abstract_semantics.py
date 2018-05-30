@@ -14,7 +14,7 @@ from lalcheck.irs.basic.purpose import SyntheticVariable
 from lalcheck.irs.basic import visitors
 from lalcheck.utils import KeyCounter, concat_dicts
 from lalcheck.digraph import Digraph
-from lalcheck.interpretations import def_provider
+from lalcheck.interpretations import def_provider_builder
 from lalcheck import domains
 from lalcheck import dot_printer
 
@@ -123,7 +123,7 @@ class ExternalCallStrategy(object):
         raise NotImplementedError
 
     def as_def_provider(self):
-        return def_provider(self.__call__)
+        return def_provider_builder(self.__call__)
 
 
 class KnownTargetCallStrategy(ExternalCallStrategy):

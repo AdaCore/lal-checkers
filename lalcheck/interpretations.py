@@ -25,12 +25,12 @@ class TypeInterpretation(object):
     represent elements of the type, the implementation of the different
     operations available for that type, etc.
     """
-    def __init__(self, domain, def_provider, builder):
+    def __init__(self, domain, def_provider_builder, builder):
         """
         :param domains.AbstractDomain domain: The abstract domain used to
             represent the type.
 
-        :param Signature->(function, function) def_provider:
+        :param Signature->(function, function) def_provider_builder:
             A function which can be called with the signature of the desired
             definition to retrieve it and its inverse.
 
@@ -38,7 +38,7 @@ class TypeInterpretation(object):
             domain from literal values.
         """
         self.domain = domain
-        self.def_provider = def_provider
+        self.def_provider_builder = def_provider_builder
         self.builder = builder
 
 
@@ -158,16 +158,21 @@ DefProvider[T] is equivalent to Transformer[Signature, (function, function)]
 def_provider = Transformer.as_transformer
 
 
+def def_provider_builder(f):
+    def make(_):
+        return def_provider(f)
+    return make
+
+
 def dict_to_provider(def_dict):
     """
     Converts a dictionary of definitions indexed by their names and domain
     signatures to a def provider.
     """
-    @def_provider
+    @def_provider_builder
     def provider(sig):
         if sig in def_dict:
             return def_dict[sig]
-
     return provider
 
 
@@ -234,7 +239,7 @@ def default_char_interpreter(int_range_interpreter):
 
         return TypeInterpretation(
             int_interp.domain,
-            int_interp.def_provider,
+            int_interp.def_provider_builder,
             builder
         )
 
@@ -447,11 +452,6 @@ def default_product_interpreter(elem_interpreter):
             for interp in elem_interpretations
         ]
 
-        elem_eq_defs = [
-            interp.def_provider.get(sig(ops.EQ))[0]
-            for sig, interp in zip(elem_bin_rel_sigs, elem_interpretations)
-        ]
-
         getter_sig = [
             _signer((prod_dom,), e_dom)
             for e_dom in elem_doms
@@ -462,44 +462,88 @@ def default_product_interpreter(elem_interpreter):
             for e_dom in elem_doms
         ]
 
-        elem_inv_eq_defs, elem_inv_neq_defs = (
-            [
-                interp.def_provider.get(sig(op))[1]
-                for sig, interp in zip(elem_bin_rel_sigs, elem_interpretations)
-            ]
-            for op in [ops.EQ, ops.NEQ]
-        )
+        def provider_builder(inner_prov):
+            """
+            Given a definition provider for the components of this product
+            (the types of its fields), creates a provider for the whole product
+            type. It defines the equal, not equal operators as well as
+            accessors for its fields.
 
-        defs = {
-            bin_rel_sig(ops.EQ): (
-                product_ops.eq(elem_eq_defs),
-                product_ops.inv_eq(prod_dom, elem_inv_eq_defs, elem_eq_defs)
-            ),
-            bin_rel_sig(ops.NEQ): (
-                product_ops.neq(elem_eq_defs),
-                product_ops.inv_neq(prod_dom, elem_inv_eq_defs, elem_eq_defs)
-            )
-        }
+            :param DefProvider inner_prov: The provider for this product's
+                components.
 
-        defs.update({
-            sig(ops.GetName(i)): (
-                product_ops.getter(i),
-                product_ops.inv_getter(prod_dom, i)
-            )
-            for i, sig in enumerate(getter_sig)
-        })
+            :return: A provider for this product type.
+            """
 
-        defs.update({
-            sig(ops.UpdatedName(i)): (
-                product_ops.updater(i),
-                product_ops.inv_updater(prod_dom, i)
+            # This provider is composed of several transformers such that:
+            # 1. If the definition of the "equal" operator is asked:
+            #    a. A first transformer (case_bin_op(ops.EQ)) creates the
+            #       signature of the "equal" operators of each field of the
+            #       product.
+            #    b. A second transformer (prov_lifted) uses the given provider
+            #       "inner_prov" to retrieve the definitions of the "equal"
+            #       operators of the fields using their signature.
+            #    c. A third transformer (bin_eq_provider) uses these
+            #       definitions to generate a definition of for the "equal"
+            #       operator of this particular product domain.
+            #
+            # 2. If the definition of the "not equal" operator is asked, the
+            #    process is similar.
+            #
+            # 3. If a definition of a field accessors/updaters is asked, the
+            #    case_get_update transformer provides it.
+
+            prov_lifted = inner_prov.lifted()
+
+            def case_bin_op(op):
+                @Transformer.as_transformer
+                def components_eq_sigs(sig):
+                    if sig.name == op and sig == bin_rel_sig(op):
+                        return [s(ops.EQ) for s in elem_bin_rel_sigs]
+
+                return components_eq_sigs
+
+            def bin_op_provider_builder(op_impl, inv_op_impl):
+                @Transformer.as_transformer
+                def bin_op_provider(comp_eqs):
+                    eq_defs = [eq_def[0] for eq_def in comp_eqs]
+                    eq_inv_defs = [eq_def[1] for eq_def in comp_eqs]
+
+                    return (
+                        op_impl(eq_defs),
+                        inv_op_impl(prod_dom, eq_inv_defs, eq_defs)
+                    )
+                return bin_op_provider
+
+            @def_provider
+            def case_get_update(sig):
+                if (isinstance(sig.name, ops.GetName)
+                        and sig.name.index < len(getter_sig)
+                        and sig == getter_sig[sig.name.index](sig.name)):
+                    return (product_ops.getter(sig.name.index),
+                            product_ops.inv_getter(prod_dom, sig.name.index))
+                elif (isinstance(sig.name, ops.UpdatedName)
+                        and sig.name.index < len(updated_sig)
+                        and sig == updated_sig[sig.name.index](sig.name)):
+                    return (product_ops.updater(sig.name.index),
+                            product_ops.inv_updater(prod_dom, sig.name.index))
+
+            bin_eq_provider = bin_op_provider_builder(
+                product_ops.eq, product_ops.inv_eq
             )
-            for i, sig in enumerate(updated_sig)
-        })
+            bin_neq_provider = bin_op_provider_builder(
+                product_ops.neq, product_ops.inv_neq
+            )
+
+            return (
+                (case_bin_op(ops.EQ) >> prov_lifted >> bin_eq_provider) |
+                (case_bin_op(ops.NEQ) >> prov_lifted >> bin_neq_provider) |
+                case_get_update
+            )
 
         return TypeInterpretation(
             prod_dom,
-            dict_to_provider(defs),
+            provider_builder,
             product_ops.lit
         )
 
@@ -622,7 +666,7 @@ def custom_pointer_interpreter(inner_interpreter):
 
         bin_rel_sig = _signer((ptr_dom, ptr_dom), bool_dom)
 
-        @def_provider
+        @def_provider_builder
         def provider(sig):
             if isinstance(sig.name, access_paths.Var):
                 if sig.output_domain == ptr_dom:
@@ -682,7 +726,7 @@ def default_ram_interpreter(tpe):
         def not_implemented(*_):
             raise NotImplementedError
 
-        @def_provider
+        @def_provider_builder
         def provider(sig):
             if isinstance(sig.name, ops.GetName):
                 if sig.input_domains[0] == mem_dom:
@@ -783,7 +827,8 @@ def default_modeled_interpreter(inner):
         def provider():
             return (
                 original_signature >>
-                (Transformer.identity() & actual_interp.def_provider) >>
+                (Transformer.identity() &
+                 actual_interp.def_provider_builder) >>
                 transform_implementation
             ) | model_provider
 
@@ -792,7 +837,7 @@ def default_modeled_interpreter(inner):
 
         return TypeInterpretation(
             dom,
-            provider,
+            lambda _: provider,
             builder
         )
 
