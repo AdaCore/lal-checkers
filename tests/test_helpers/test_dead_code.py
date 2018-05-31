@@ -22,7 +22,8 @@ def run(args):
     results, _ = abstract_semantics_helpers.do_analysis(
         check_dead_code,
         abstract_semantics_helpers.default_merge_predicates,
-        args.call_strategy
+        args.call_strategy,
+        args.typer
     )
 
     if args.output_dir is not None:

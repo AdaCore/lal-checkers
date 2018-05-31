@@ -44,7 +44,8 @@ def run(args):
     results, model = abstract_semantics_helpers.do_analysis(
         abstract_semantics.compute_semantics,
         abstract_semantics_helpers.default_merge_predicates,
-        args.call_strategy
+        args.call_strategy,
+        args.typer
     )
 
     if args.output_dir is not None:

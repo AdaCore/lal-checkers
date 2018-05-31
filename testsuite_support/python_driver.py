@@ -42,7 +42,12 @@ class PythonDriver(TestDriver):
 
     call_strategy = "unknown"
     """
-    The call strategy for tests base on the abstract_semantics analysis.
+    The call strategy for tests based on the abstract_semantics analysis.
+    """
+
+    typer = "default"
+    """
+    The typer to use for tests based on the abstract_semantics analysis.
     """
 
     @property
@@ -89,6 +94,9 @@ class PythonDriver(TestDriver):
                 '--output_dir=output',
                 '--call_strategy={}'.format(
                     self.test_env.get('call_strategy', self.call_strategy)
+                ),
+                '--typer={}'.format(
+                    self.test_env.get('typer', self.typer)
                 )
             ]
         else:

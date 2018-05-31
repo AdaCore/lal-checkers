@@ -17,8 +17,15 @@ default_merge_predicates = {
 
 ctx = lal2basic.ExtractionContext()
 
+typers = {
+    'default': ctx.default_typer()
+}
 
-def do_analysis(checker, merge_predicates, call_strategy_name):
+
+def do_analysis(checker,
+                merge_predicates='always',
+                call_strategy_name='unknown',
+                typer='default'):
 
     progs = ctx.extract_programs_from_file("test.adb")
 
@@ -32,7 +39,7 @@ def do_analysis(checker, merge_predicates, call_strategy_name):
     }
 
     model_builder = Models(
-        ctx.default_typer(),
+        typers[typer],
         default_type_interpreter,
         call_strategies[call_strategy_name].as_def_provider()
     )
