@@ -849,6 +849,25 @@ def default_modeled_interpreter(inner):
     return get_inner_types >> inner.lifted() >> modeled_interpreter
 
 
+@type_interpreter
+def default_unknown_interpreter(tpe):
+    if tpe.is_a(types.Unknown):
+        dom = domains.Universe()
+
+        def not_implemented(*_):
+            return dom.top
+
+        @def_provider_builder
+        def provider(_):
+            pass
+
+        return TypeInterpretation(
+            dom,
+            provider,
+            not_implemented
+        )
+
+
 @memoizing_type_interpreter
 @delegating_type_interpreter
 def default_type_interpreter():
@@ -861,5 +880,6 @@ def default_type_interpreter():
         default_product_interpreter(default_type_interpreter) |
         default_array_interpreter(default_type_interpreter) |
         default_ram_interpreter |
-        default_modeled_interpreter(default_type_interpreter)
+        default_modeled_interpreter(default_type_interpreter) |
+        default_unknown_interpreter
     )

@@ -3038,7 +3038,7 @@ def ram_typer(hint):
 @types.memoizing_typer
 @types.typer
 def unknown_typer(_):
-    return types.Product([])
+    return types.Unknown()
 
 
 @types.memoizing_typer

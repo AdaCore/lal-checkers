@@ -1497,3 +1497,52 @@ class RandomAccessMemory(AbstractDomain):
             },
             x[1]
         )
+
+
+class Universe(AbstractDomain):
+    def __init__(self):
+        self.top = object()
+        self.bottom = object()
+
+    def build(self):
+        return self.top
+
+    def size(self, x):
+        return 0 if x == self.bottom else float('inf')
+
+    def join(self, a, b):
+        return (self.bottom
+                if a == self.bottom and b == self.bottom
+                else self.top)
+
+    def meet(self, a, b):
+        return (self.bottom
+                if a == self.bottom or b == self.bottom
+                else self.top)
+
+    def lt(self, a, b):
+        return a == self.bottom and b == self.top
+
+    def eq(self, a, b):
+        return a == b
+
+    def le(self, a, b):
+        return self.lt(a, b) or self.eq(a, b)
+
+    def split(self, elem, separator):
+        raise NotImplementedError
+
+    def touches(self, a, b):
+        return a == self.bottom or b == self.bottom
+
+    def generator(self):
+        raise NotImplementedError
+
+    def concretize(self, abstract):
+        raise NotImplementedError
+
+    def abstract(self, concrete):
+        raise NotImplementedError
+
+    def str(self, x):
+        return "[any]" if x == self.top else "[none]"

@@ -18,7 +18,8 @@ default_merge_predicates = {
 ctx = lal2basic.ExtractionContext()
 
 typers = {
-    'default': ctx.default_typer()
+    'default': ctx.default_typer(),
+    'unknown': lal2basic.unknown_typer
 }
 
 

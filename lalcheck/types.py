@@ -142,3 +142,11 @@ class ModeledType(Type):
     def children(self):
         yield self.actual_type
         yield self.model_type
+
+
+class Unknown(Type):
+    """
+    Represents an unknown type.
+    """
+    def __init__(self):
+        pass
