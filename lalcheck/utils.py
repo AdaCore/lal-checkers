@@ -258,7 +258,8 @@ class Transformer(object):
 
         :rtype: Transformer
         """
-        return Transformer(lambda hint: builder()._transform(hint))
+        memoized_builder = memoize(builder)
+        return Transformer(lambda hint: memoized_builder()._transform(hint))
 
     @staticmethod
     def make_memoizing(transformer):
