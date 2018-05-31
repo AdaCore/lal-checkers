@@ -31,9 +31,9 @@ _lal_op_type_to_symbol = {
 }
 
 _attr_to_unop = {
-    'First': ops.GET_FIRST,
-    'Last': ops.GET_LAST,
-    'Model': ops.GET_MODEL
+    'first': ops.GET_FIRST,
+    'last': ops.GET_LAST,
+    'model': ops.GET_MODEL
 }
 
 
@@ -2067,25 +2067,24 @@ def _gen_ir(ctx, subp, typer):
 
         elif expr.is_a(lal.AttributeRef):
             # AttributeRefs are transformed using an unary operator.
-
-            attribute_text = expr.f_attribute.text
+            attribute_text = expr.f_attribute.text.lower()
 
             if (attribute_text in _attr_to_unop and
                     expr.f_prefix.p_expression_type is not None):
                 prefix_pre_stmts, prefix = transform_expr(expr.f_prefix)
                 return prefix_pre_stmts, irt.FunCall(
-                    _attr_to_unop[expr.f_attribute.text],
+                    _attr_to_unop[attribute_text],
                     [prefix],
                     type_hint=expr.p_expression_type,
                     orig_node=expr
                 )
-            elif attribute_text == 'Access':
+            elif attribute_text == 'access':
                 return [], gen_access_path(expr.f_prefix)
-            elif attribute_text == 'Result':
+            elif attribute_text == 'result':
                 return substitutions[expr.f_prefix.p_referenced_decl, 'result']
-            elif attribute_text == 'Old':
+            elif attribute_text == 'old':
                 return substitutions[expr.f_prefix.p_referenced_decl, 'old']
-            elif attribute_text == 'Image':
+            elif attribute_text == 'image':
                 if expr.f_prefix.p_referenced_decl == expr.p_int_type:
                     arg_pre_stmts, arg_expr = transform_expr(
                         expr.f_args[0].f_r_expr
@@ -2096,9 +2095,9 @@ def _gen_ir(ctx, subp, typer):
                         type_hint=expr.p_expression_type,
                         orig_node=expr
                     )
-            elif attribute_text == 'Length':
+            elif attribute_text == 'length':
                 return unimplemented_expr(expr)
-            elif attribute_text in ('First', 'Last'):
+            elif attribute_text in ('first', 'last'):
                 try:
                     return [], irt.Lit(
                         expr.p_eval_as_int,
