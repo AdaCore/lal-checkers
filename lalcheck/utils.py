@@ -274,6 +274,26 @@ class Transformer(object):
         return Transformer(memoize(transformer._transform))
 
 
+def dataclass(cls):
+    def new_eq(self, other):
+        return isinstance(other, cls) and vars(self) == vars(other)
+
+    def new_hash(self):
+        return hash(tuple(v for v in vars(self).values()))
+
+    def new_repr(self):
+        return "{}({})".format(
+            cls.__name__,
+            ", ".join("{}={}".format(k, v) for k, v in vars(self).iteritems())
+        )
+
+    cls.__eq__ = new_eq
+    cls.__hash__ = new_hash
+    cls.__repr__ = new_repr
+
+    return cls
+
+
 class _StopWatch(object):
     @staticmethod
     def get_output_file():
