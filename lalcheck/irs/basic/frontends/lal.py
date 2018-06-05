@@ -3057,16 +3057,8 @@ class ExtractionContext(object):
     compatible. Also, this extraction context must be kept alive as long
     as the programs parsed with it are intended to be used.
     """
-    def __init__(self, project_file=None, scenario_vars=None):
-        if project_file is None:
-            self.lal_ctx = lal.AnalysisContext()
-        else:
-            self.lal_ctx = lal.AnalysisContext(
-                unit_provider=lal.UnitProvider.for_project(
-                    project_file,
-                    scenario_vars
-                )
-            )
+    def __init__(self, lal_ctx=None):
+        self.lal_ctx = lal.AnalysisContext() if lal_ctx is None else lal_ctx
 
         # Get a dummy node, needed to call static properties of libadalang.
         dummy = self.lal_ctx.get_from_buffer(
@@ -3090,6 +3082,19 @@ class ExtractionContext(object):
         self.fun_models = {}
         self._internal_typer = self.default_typer()
 
+    @staticmethod
+    def for_project(project_file, scenario_vars={}):
+        return ExtractionContext(lal.AnalysisContext(
+            unit_provider=lal.UnitProvider.for_project(
+                project_file,
+                scenario_vars
+            )
+        ))
+
+    @staticmethod
+    def empty():
+        return ExtractionContext()
+
     def extract_programs_from_file(self, ada_file):
         """
         :param str ada_file: A path to the Ada source file from which to
@@ -3106,6 +3111,12 @@ class ExtractionContext(object):
         return self._extract_from_unit(self.lal_ctx.get_from_provider(
             name, kind
         ))
+
+    def extract_programs_from_unit(self, unit):
+        """
+        :param lal.AnalysisUnit unit: The already parsed compilation unit.
+        """
+        return self._extract_from_unit(unit)
 
     @profile()
     def use_model(self, name):

@@ -61,13 +61,13 @@ class Checker(object):
 
         args = self.args = self.parser.parse_args()
 
-        ctx = lal2basic.ExtractionContext(args.project)
-
         frontend_start_time = time.clock()
 
         if args.project is None:
+            ctx = lal2basic.ExtractionContext.empty()
             progs = ctx.extract_programs_from_file(args.file)
         else:
+            ctx = lal2basic.ExtractionContext.for_project(args.project)
             if args.model is not None:
                 ctx.use_model(args.model)
 

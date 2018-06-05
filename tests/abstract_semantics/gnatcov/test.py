@@ -18,10 +18,10 @@ default_merge_predicates = {
 
 gnatcoverage_dir = os.path.join(os.environ['EXT_SRC'], 'gnatcoverage')
 
-ctx = lal2basic.ExtractionContext(
+ctx = lal2basic.ExtractionContext.for_project(
     os.path.join(gnatcoverage_dir, 'gnatcov.gpr'),
-    {'BINUTILS_SRC_DIR': '/doesnotexists',
-     'BINUTILS_BUILD_DIR': '/doesnotexists'}
+    {'BINUTILS_SRC_DIR': '/doesnotexist',
+     'BINUTILS_BUILD_DIR': '/doesnotexist'}
 )
 
 
