@@ -125,6 +125,10 @@ def gen_dot(digraph, data_printers):
     user of data printers.
     When rendering a node, data printers will check for the existence of the
     data key inside the node and render its value accordingly.
+
+    :param lalcheck.digraph.Digraph digraph: The digraph for which to generate
+        a dot representation.
+    :param list[DataPrinter] data_printers: The data printers to use.
     """
     visited = set()
     result = []

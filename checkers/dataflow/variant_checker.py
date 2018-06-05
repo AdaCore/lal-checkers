@@ -2,13 +2,13 @@ from collections import defaultdict
 from xml.sax.saxutils import escape
 
 import lalcheck.irs.basic.tree as irt
-from lalcheck import dot_printer
+from checker import CheckerResults, Checker
 from lalcheck.constants import lits
 from lalcheck.digraph import Digraph
 from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.purpose import ExistCheck
 from lalcheck.irs.basic.tools import PrettyPrinter
-from checker import CheckerResults, Checker
+from tools import dot_printer
 
 
 def html_render_node(node):

@@ -1,10 +1,10 @@
 from xml.sax.saxutils import escape
 
-from lalcheck import dot_printer
+from checker import Checker, CheckerResults
 from lalcheck.digraph import Digraph
 from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.tools import PrettyPrinter
-from checker import Checker, CheckerResults
+from tools import dot_printer
 
 
 def html_render_node(node):
