@@ -245,7 +245,6 @@ class AbstractAnalyser(Task):
             'res': AbstractSemantics(
                 self.project_config,
                 self.model_config,
-                self.analyis_config,
                 self.filenames
             )
         }

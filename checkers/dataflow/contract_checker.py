@@ -2,13 +2,16 @@ from collections import defaultdict
 from xml.sax.saxutils import escape
 
 import lalcheck.irs.basic.tree as irt
-from checker import Checker, CheckerResults
 from lalcheck.constants import lits
 from lalcheck.digraph import Digraph
 from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.purpose import ContractCheck
 from lalcheck.irs.basic.tools import PrettyPrinter
 from tools import dot_printer
+from tools.scheduler import Task, Requirement
+from checkers.support.components import AbstractSemantics
+from checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.utils import dataclass
 
 
 def html_render_node(node):
@@ -75,7 +78,7 @@ def build_resulting_graph(file_name, cfg, invalids):
         ]))
 
 
-class Results(CheckerResults):
+class Results(AbstractSemanticsChecker.Results):
     """
     Contains the results of the null dereference checker.
     """
@@ -110,13 +113,16 @@ class Results(CheckerResults):
 
 
 def check_contracts(prog, model, merge_pred_builder):
-
     analysis = abstract_semantics.compute_semantics(
         prog,
         model,
         merge_pred_builder
     )
 
+    return find_violated_contracts(analysis)
+
+
+def find_violated_contracts(analysis):
     # Retrieve nodes in the CFG that correspond to program statements.
     nodes_with_ast = (
         (node, node.data.node)
@@ -155,14 +161,60 @@ def check_contracts(prog, model, merge_pred_builder):
     return Results(analysis, invalids)
 
 
-class ContractChecker(Checker):
-    def __init__(self):
-        super(ContractChecker, self).__init__(
-            "contract_checker",
-            "Finds violated pre/post-conditions",
-            check_contracts
-        )
+@Requirement.as_requirement
+def ViolatedContracts(project_config, model_config, files):
+    return [ContractViolationFinder(
+        project_config, model_config, files
+    )]
+
+
+@dataclass
+class ContractViolationFinder(Task):
+    def __init__(self, project_config, model_config, files):
+        self.project_config = project_config
+        self.model_config = model_config
+        self.files = files
+
+    def requires(self):
+        return {
+            'sem': AbstractSemantics(
+                self.project_config,
+                self.model_config,
+                self.files
+            )
+        }
+
+    def provides(self):
+        return {
+            'res': ViolatedContracts(
+                self.project_config,
+                self.model_config,
+                self.files
+            )
+        }
+
+    def run(self, sem):
+        return {
+            'res': [find_violated_contracts(analysis) for analysis in sem]
+        }
+
+
+class ContractChecker(AbstractSemanticsChecker):
+    @classmethod
+    def name(cls):
+        return "contract_checker"
+
+    @classmethod
+    def description(cls):
+        return "Finds violated pre/post-conditions"
+
+    @classmethod
+    def create_requirement(cls, *args, **kwargs):
+        return cls.requirement_creator(ViolatedContracts)(*args, **kwargs)
+
+
+checker = ContractChecker
 
 
 if __name__ == "__main__":
-    ContractChecker().run()
+    print("Please run this checker through the run-checkers.py script")

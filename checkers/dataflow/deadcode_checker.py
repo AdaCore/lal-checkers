@@ -1,10 +1,13 @@
 from xml.sax.saxutils import escape
 
-from checker import Checker, CheckerResults
 from lalcheck.digraph import Digraph
 from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.tools import PrettyPrinter
 from tools import dot_printer
+from tools.scheduler import Task, Requirement
+from checkers.support.components import AbstractSemantics
+from checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.utils import dataclass
 
 
 def html_render_node(node):
@@ -53,7 +56,7 @@ def build_resulting_graph(file_name, cfg, dead_nodes):
         ]))
 
 
-class Results(CheckerResults):
+class Results(AbstractSemanticsChecker.Results):
     """
     Contains the results of the dead code checker.
     """
@@ -95,6 +98,10 @@ def check_dead_code(prog, model, merge_pred_builder):
         merge_pred_builder
     )
 
+    return find_dead_code(analysis)
+
+
+def find_dead_code(analysis):
     dead_nodes = [
         node
         for node in analysis.cfg.nodes
@@ -104,14 +111,60 @@ def check_dead_code(prog, model, merge_pred_builder):
     return Results(analysis, dead_nodes)
 
 
-class DeadCodeChecker(Checker):
-    def __init__(self):
-        super(DeadCodeChecker, self).__init__(
-            "deadcode_checker",
-            "Finds dead code",
-            check_dead_code
-        )
+@Requirement.as_requirement
+def DeadCode(project_config, model_config, files):
+    return [DeadCodeFinder(
+        project_config, model_config, files
+    )]
+
+
+@dataclass
+class DeadCodeFinder(Task):
+    def __init__(self, project_config, model_config, files):
+        self.project_config = project_config
+        self.model_config = model_config
+        self.files = files
+
+    def requires(self):
+        return {
+            'sem': AbstractSemantics(
+                self.project_config,
+                self.model_config,
+                self.files
+            )
+        }
+
+    def provides(self):
+        return {
+            'res': DeadCode(
+                self.project_config,
+                self.model_config,
+                self.files
+            )
+        }
+
+    def run(self, sem):
+        return {
+            'res': [find_dead_code(analysis) for analysis in sem]
+        }
+
+
+class DeadCodeChecker(AbstractSemanticsChecker):
+    @classmethod
+    def name(cls):
+        return "deadcode_checker"
+
+    @classmethod
+    def description(cls):
+        return "Finds dead code"
+
+    @classmethod
+    def create_requirement(cls, *args, **kwargs):
+        return cls.requirement_creator(DeadCode)(*args, **kwargs)
+
+
+checker = DeadCodeChecker
 
 
 if __name__ == "__main__":
-    DeadCodeChecker().run()
+    print("Please run this checker through the run-checkers.py script")

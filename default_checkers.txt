@@ -1,0 +1,9 @@
+checkers.dataflow.contract_checker
+checkers.dataflow.deadcode_checker
+checkers.dataflow.deref_checker
+checkers.dataflow.variant_checker
+checkers.syntactic.check_bad_unequal
+checkers.syntactic.check_same_logic
+checkers.syntactic.check_same_operands
+checkers.syntactic.check_same_test
+checkers.syntactic.check_same_then_else

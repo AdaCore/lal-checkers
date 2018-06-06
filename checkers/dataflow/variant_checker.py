@@ -2,13 +2,16 @@ from collections import defaultdict
 from xml.sax.saxutils import escape
 
 import lalcheck.irs.basic.tree as irt
-from checker import CheckerResults, Checker
 from lalcheck.constants import lits
 from lalcheck.digraph import Digraph
 from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.purpose import ExistCheck
 from lalcheck.irs.basic.tools import PrettyPrinter
 from tools import dot_printer
+from tools.scheduler import Task, Requirement
+from checkers.support.components import AbstractSemantics
+from checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.utils import dataclass
 
 
 def html_render_node(node):
@@ -80,7 +83,7 @@ def build_resulting_graph(file_name, cfg, infeasibles):
         ]))
 
 
-class Results(CheckerResults):
+class Results(AbstractSemanticsChecker.Results):
     """
     Contains the results of the null dereference checker.
     """
@@ -123,13 +126,16 @@ class Results(CheckerResults):
 
 
 def check_variants(prog, model, merge_pred_builder):
-
     analysis = abstract_semantics.compute_semantics(
         prog,
         model,
         merge_pred_builder
     )
 
+    return find_invalid_accesses(analysis)
+
+
+def find_invalid_accesses(analysis):
     # Retrieve nodes in the CFG that correspond to program statements.
     nodes_with_ast = (
         (node, node.data.node)
@@ -168,14 +174,60 @@ def check_variants(prog, model, merge_pred_builder):
     return Results(analysis, infeasibles)
 
 
-class VariantChecker(Checker):
-    def __init__(self):
-        super(VariantChecker, self).__init__(
-            "variant_checker",
-            "Finds invalid field access in variant records",
-            check_variants
-        )
+@Requirement.as_requirement
+def InvalidAccesses(project_config, model_config, files):
+    return [InvalidAccessFinder(
+        project_config, model_config, files
+    )]
+
+
+@dataclass
+class InvalidAccessFinder(Task):
+    def __init__(self, project_config, model_config, files):
+        self.project_config = project_config
+        self.model_config = model_config
+        self.files = files
+
+    def requires(self):
+        return {
+            'sem': AbstractSemantics(
+                self.project_config,
+                self.model_config,
+                self.files
+            )
+        }
+
+    def provides(self):
+        return {
+            'res': InvalidAccesses(
+                self.project_config,
+                self.model_config,
+                self.files
+            )
+        }
+
+    def run(self, sem):
+        return {
+            'res': [find_invalid_accesses(analysis) for analysis in sem]
+        }
+
+
+class VariantChecker(AbstractSemanticsChecker):
+    @classmethod
+    def name(cls):
+        return "variant_checker"
+
+    @classmethod
+    def description(cls):
+        return "Finds invalid field access in variant records"
+
+    @classmethod
+    def create_requirement(cls, *args, **kwargs):
+        return cls.requirement_creator(InvalidAccesses)(*args, **kwargs)
+
+
+checker = VariantChecker
 
 
 if __name__ == "__main__":
-    VariantChecker().run()
+    print("Please run this checker through the run-checkers.py script")

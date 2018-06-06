@@ -2,13 +2,16 @@ from collections import defaultdict
 from xml.sax.saxutils import escape
 
 import lalcheck.irs.basic.tree as irt
-from checker import Checker, CheckerResults
 from lalcheck.constants import lits
 from lalcheck.digraph import Digraph
 from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.purpose import DerefCheck
 from lalcheck.irs.basic.tools import PrettyPrinter
 from tools import dot_printer
+from tools.scheduler import Task, Requirement
+from checkers.support.components import AbstractSemantics
+from checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.utils import dataclass
 
 
 def html_render_node(node):
@@ -74,7 +77,7 @@ def build_resulting_graph(file_name, cfg, null_derefs):
         ]))
 
 
-class Results(CheckerResults):
+class Results(AbstractSemanticsChecker.Results):
     """
     Contains the results of the null dereference checker.
     """
@@ -109,13 +112,16 @@ class Results(CheckerResults):
 
 
 def check_derefs(prog, model, merge_pred_builder):
-
     analysis = abstract_semantics.compute_semantics(
         prog,
         model,
         merge_pred_builder
     )
 
+    return find_null_derefs(analysis)
+
+
+def find_null_derefs(analysis):
     # Retrieve nodes in the CFG that correspond to program statements.
     nodes_with_ast = (
         (node, node.data.node)
@@ -154,14 +160,60 @@ def check_derefs(prog, model, merge_pred_builder):
     return Results(analysis, null_derefs)
 
 
-class DerefChecker(Checker):
-    def __init__(self):
-        super(DerefChecker, self).__init__(
-            "deref_checker",
-            "Finds null dereference",
-            check_derefs
-        )
+@Requirement.as_requirement
+def NullDerefs(project_config, model_config, files):
+    return [NullDerefFinder(
+        project_config, model_config, files
+    )]
+
+
+@dataclass
+class NullDerefFinder(Task):
+    def __init__(self, project_config, model_config, files):
+        self.project_config = project_config
+        self.model_config = model_config
+        self.files = files
+
+    def requires(self):
+        return {
+            'sem': AbstractSemantics(
+                self.project_config,
+                self.model_config,
+                self.files
+            )
+        }
+
+    def provides(self):
+        return {
+            'res': NullDerefs(
+                self.project_config,
+                self.model_config,
+                self.files
+            )
+        }
+
+    def run(self, sem):
+        return {
+            'res': [find_null_derefs(analysis) for analysis in sem]
+        }
+
+
+class DerefChecker(AbstractSemanticsChecker):
+    @classmethod
+    def name(cls):
+        return "deref_checker"
+
+    @classmethod
+    def description(cls):
+        return "Finds null dereferences"
+
+    @classmethod
+    def create_requirement(cls, *args, **kwargs):
+        return cls.requirement_creator(NullDerefs)(*args, **kwargs)
+
+
+checker = DerefChecker
 
 
 if __name__ == "__main__":
-    DerefChecker().run()
+    print("Please run this checker through the run-checkers.py script")

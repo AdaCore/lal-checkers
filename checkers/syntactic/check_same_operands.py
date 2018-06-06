@@ -6,56 +6,121 @@ which are syntactically identical in the input Ada sources.
 """
 
 from __future__ import (absolute_import, division, print_function)
-from checkers.syntactic.checker import Checker
 
 import libadalang as lal
+from tools.scheduler import Task, Requirement
+from checkers.support.components import AnalysisUnit
+from lalcheck.utils import dataclass
+from checkers.support.checker import SyntacticChecker
 
 
-def same_tokens(left, right):
-    """
-    Returns whether left and right contain tokens that are structurally
-    equivalent with regards to kind and contained text.
+class Results(SyntacticChecker.Results):
+    def __init__(self, diags):
+        super(Results, self).__init__(diags)
 
-    :rtype: bool
-    """
-    return len(left) == len(right) and all(
-        le.kind == ri.kind and le.text == ri.text
-        for le, ri in zip(left, right)
-    )
+    @classmethod
+    def diag_message(cls, diag):
+        return 'left and right operands of "{}" are identical'.format(
+            diag.f_op.text
+        )
 
-
-def has_same_operands(binop):
-    """
-    Checks whether binop has the same operands syntactically.
-
-    :type binop: lal.BinOp
-    :rtype: bool
-    """
-    return same_tokens(list(binop.f_left.tokens), list(binop.f_right.tokens))
+    @classmethod
+    def diag_position(cls, diag):
+        return diag
 
 
-def interesting_oper(op):
-    """
-    Predicate that returns whether op is an operator that is interesting in the
-    context of this script.
+def find_same_operands(unit):
+    def same_tokens(left, right):
+        """
+        Returns whether left and right contain tokens that are structurally
+        equivalent with regards to kind and contained text.
 
-    :rtype: bool
-    """
-    return not op.is_a(lal.OpMult, lal.OpPlus, lal.OpDoubleDot,
-                       lal.OpPow, lal.OpConcat)
+        :rtype: bool
+        """
+        return len(left) == len(right) and all(
+            le.kind == ri.kind and le.text == ri.text
+            for le, ri in zip(left, right)
+        )
+
+    def has_same_operands(binop):
+        """
+        Checks whether binop has the same operands syntactically.
+
+        :type binop: lal.BinOp
+        :rtype: bool
+        """
+        return same_tokens(list(binop.f_left.tokens),
+                           list(binop.f_right.tokens))
+
+    def interesting_oper(op):
+        """
+        Predicate that returns whether op is an operator that is interesting
+        in the context of this script.
+
+        :rtype: bool
+        """
+        return not op.is_a(lal.OpMult, lal.OpPlus, lal.OpDoubleDot,
+                           lal.OpPow, lal.OpConcat)
+
+    diags = []
+    for binop in unit.root.findall(lal.BinOp):
+        if interesting_oper(binop.f_op) and has_same_operands(binop):
+            diags.append(binop)
+
+    return Results(diags)
 
 
-class SameOperandsChecker(Checker):
+@Requirement.as_requirement
+def SameOperands(project_config, files):
+    return [SameOperandsFinder(
+        project_config, files
+    )]
+
+
+@dataclass
+class SameOperandsFinder(Task):
+    def __init__(self, project_config, files):
+        self.project_config = project_config
+        self.files = files
+
+    def requires(self):
+        return {
+            'unit_{}'.format(i): AnalysisUnit(self.project_config, f)
+            for i, f in enumerate(self.files)
+        }
+
+    def provides(self):
+        return {
+            'res': SameOperands(
+                self.project_config,
+                self.files
+            )
+        }
+
+    def run(self, **kwargs):
+        units = kwargs.values()
+        return {
+            'res': [find_same_operands(unit) for unit in units]
+        }
+
+
+class SameOperandsChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "SAME_OPERANDS"
+        return "same_operands_checker"
 
-    def run(self, unit):
-        for binop in unit.root.findall(lal.BinOp):
-            if interesting_oper(binop.f_op) and has_same_operands(binop):
-                self.report(binop, 'left and right operands of "{}" are'
-                            ' identical'.format(binop.f_op.text))
+    @classmethod
+    def description(cls):
+        return ("Finds logical or arithmetic expressions in which the two "
+                "operands are syntactically identical.")
+
+    @classmethod
+    def create_requirement(cls, *args, **kwargs):
+        return cls.requirement_creator(SameOperands)(*args, **kwargs)
 
 
-if __name__ == '__main__':
-    SameOperandsChecker.build_and_run()
+checker = SameOperandsChecker
+
+
+if __name__ == "__main__":
+    print("Please run this checker through the run-checkers.py script")
