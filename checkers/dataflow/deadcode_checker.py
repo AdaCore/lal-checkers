@@ -73,15 +73,19 @@ class Results(CheckerResults):
 
     @classmethod
     def diag_message(cls, diag):
-        if 'orig_node' in diag.data.node.data:
-            return "Unreachable code '{}'".format(
-                diag.data.node.data.orig_node.text
-            )
+        if diag.data.node is not None:
+            if ('orig_node' in diag.data.node.data
+                    and diag.data.node.data.orig_node is not None):
+                return "Unreachable code '{}'".format(
+                    diag.data.node.data.orig_node.text
+                )
 
     @classmethod
     def diag_position(cls, diag):
-        if 'orig_node' in diag.data.node.data:
-            return diag.data.node.data.orig_node.sloc_range.start
+        if diag.data.node is not None:
+            if ('orig_node' in diag.data.node.data
+                    and diag.data.node.data.orig_node is not None):
+                return diag.data.node.data.orig_node.sloc_range.start
 
 
 def check_dead_code(prog, model, merge_pred_builder):
