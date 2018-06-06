@@ -71,6 +71,18 @@ class AnalysisResult(CheckerResults):
             self.diagnostics
         )
 
+    @classmethod
+    def diag_message(cls, diag):
+        if 'orig_node' in diag.data.node.data:
+            return "Unreachable code '{}'".format(
+                diag.data.node.data.orig_node.text
+            )
+
+    @classmethod
+    def diag_position(cls, diag):
+        if 'orig_node' in diag.data.node.data:
+            return diag.data.node.data.orig_node.sloc_range.start
+
 
 def check_dead_code(prog, model, merge_pred_builder):
     analysis = abstract_semantics.compute_semantics(
@@ -95,16 +107,6 @@ class DeadCodeChecker(Checker):
             "Finds dead code",
             check_dead_code
         )
-
-    def report(self, diag):
-        if 'orig_node' in diag.data.node.data:
-            return "Unreachable code '{}'".format(
-                diag.data.node.data.orig_node.text
-            )
-
-    def position(self, diag):
-        if 'orig_node' in diag.data.node.data:
-            return diag.data.node.data.orig_node.sloc_range.start
 
 
 if __name__ == "__main__":

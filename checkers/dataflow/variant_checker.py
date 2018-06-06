@@ -99,6 +99,28 @@ class AnalysisResult(CheckerResults):
             self.diagnostics
         )
 
+    @classmethod
+    def diag_message(cls, diag):
+        trace, purpose, precise = diag
+        prefix = purpose.accessed_expr.data.orig_node.text
+        if precise:
+            frmt = ("Infeasible access {}.{} due to invalid "
+                    "condition on discriminant {}.{}")
+        else:
+            frmt = ("Potentially infeasible access {}.{} due to invalid "
+                    "condition on discriminant {}.{}")
+
+        return frmt.format(
+            prefix,
+            escape(purpose.field_name),
+            prefix,
+            escape(purpose.discr_name)
+        )
+
+    @classmethod
+    def diag_position(cls, diag):
+        return diag[1].accessed_expr.data.orig_node.sloc_range.start
+
 
 def check_variants(prog, model, merge_pred_builder):
 
@@ -153,22 +175,6 @@ class VariantChecker(Checker):
             "Finds invalid field access in variant records",
             check_variants
         )
-
-    def report(self, diag):
-        trace, purpose, precise = diag
-        prefix = purpose.accessed_expr.data.orig_node.text
-        qualifier = "I" if precise else "Potentially i"
-        return ("{}nfeasible access {}.{} due to invalid "
-                "condition on discriminant {}.{}").format(
-            qualifier,
-            prefix,
-            escape(purpose.field_name),
-            prefix,
-            escape(purpose.discr_name)
-        )
-
-    def position(self, diag):
-        return diag[1].accessed_expr.data.orig_node.sloc_range.start
 
 
 if __name__ == "__main__":

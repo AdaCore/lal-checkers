@@ -19,6 +19,14 @@ class CheckerResults(object):
         self.analysis_results = analysis_results
         self.diagnostics = diagnostics
 
+    @classmethod
+    def diag_message(cls, diag):
+        raise NotImplementedError
+
+    @classmethod
+    def diag_position(cls, diag):
+        raise NotImplementedError
+
 
 class Checker(object):
     def __init__(self, checker_name, checker_descr, checker_fun):
@@ -49,12 +57,6 @@ class Checker(object):
             msg,
             "[{}]".format(self.checker_name)
         ))
-
-    def report(self, diag):
-        raise NotImplementedError
-
-    def position(self, diag):
-        raise NotImplementedError
 
     def run(self):
         start_time = time.clock()
@@ -142,8 +144,8 @@ class Checker(object):
                 )
 
             for diag in analysis.diagnostics:
-                pos = self.position(diag)
-                msg = self.report(diag)
+                pos = analysis.diag_position(diag)
+                msg = analysis.diag_message(diag)
 
                 if msg is not None and pos is not None:
                     emit_message(

@@ -94,6 +94,20 @@ class AnalysisResult(CheckerResults):
             self.diagnostics
         )
 
+    @classmethod
+    def diag_message(cls, diag):
+        trace, purpose, precise = diag
+        if precise:
+            frmt = "Violated {}"
+        else:
+            frmt = "Potentially violated {}"
+
+        return frmt.format(purpose.contract_name)
+
+    @classmethod
+    def diag_position(cls, diag):
+        return diag[1].orig_call.sloc_range.start
+
 
 def check_contracts(prog, model, merge_pred_builder):
 
@@ -148,17 +162,6 @@ class ContractChecker(Checker):
             "Finds violated pre/post-conditions",
             check_contracts
         )
-
-    def report(self, diag):
-        trace, purpose, precise = diag
-        qualifier = "V" if precise else "Potentially v"
-        return "{}iolated {}".format(
-            qualifier,
-            purpose.contract_name
-        )
-
-    def position(self, diag):
-        return diag[1].orig_call.sloc_range.start
 
 
 if __name__ == "__main__":

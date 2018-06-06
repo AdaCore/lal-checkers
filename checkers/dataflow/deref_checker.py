@@ -93,6 +93,20 @@ class AnalysisResult(CheckerResults):
             self.diagnostics
         )
 
+    @classmethod
+    def diag_message(cls, diag):
+        trace, purpose, precise = diag
+        if precise:
+            frmt = "Null dereference of '{}'"
+        else:
+            frmt = "Potential null dereference of '{}'"
+
+        return frmt.format(diag[1].data.orig_node.text)
+
+    @classmethod
+    def diag_position(cls, diag):
+        return diag[1].data.orig_node.sloc_range.start
+
 
 def check_derefs(prog, model, merge_pred_builder):
 
@@ -147,17 +161,6 @@ class DerefChecker(Checker):
             "Finds null dereference",
             check_derefs
         )
-
-    def report(self, diag):
-        trace, purpose, precise = diag
-        qualifier = "N" if precise else "Potential n"
-        return "{}ull dereference of '{}'".format(
-            qualifier,
-            diag[1].data.orig_node.text
-        )
-
-    def position(self, diag):
-        return diag[1].data.orig_node.sloc_range.start
 
 
 if __name__ == "__main__":
