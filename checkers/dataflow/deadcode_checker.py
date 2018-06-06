@@ -53,12 +53,12 @@ def build_resulting_graph(file_name, cfg, dead_nodes):
         ]))
 
 
-class AnalysisResult(CheckerResults):
+class Results(CheckerResults):
     """
     Contains the results of the dead code checker.
     """
     def __init__(self, sem_analysis, dead_nodes):
-        super(AnalysisResult, self).__init__(sem_analysis, dead_nodes)
+        super(Results, self).__init__(sem_analysis, dead_nodes)
 
     def save_results_to_file(self, file_name):
         """
@@ -97,7 +97,7 @@ def check_dead_code(prog, model, merge_pred_builder):
         if len(analysis.semantics[node]) == 0
     ]
 
-    return AnalysisResult(analysis, dead_nodes)
+    return Results(analysis, dead_nodes)
 
 
 class DeadCodeChecker(Checker):

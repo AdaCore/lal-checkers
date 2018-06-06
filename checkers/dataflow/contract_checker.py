@@ -75,12 +75,12 @@ def build_resulting_graph(file_name, cfg, invalids):
         ]))
 
 
-class AnalysisResult(CheckerResults):
+class Results(CheckerResults):
     """
     Contains the results of the null dereference checker.
     """
     def __init__(self, sem_analysis, invalids):
-        super(AnalysisResult, self).__init__(sem_analysis, invalids)
+        super(Results, self).__init__(sem_analysis, invalids)
 
     def save_results_to_file(self, file_name):
         """
@@ -152,7 +152,7 @@ def check_contracts(prog, model, merge_pred_builder):
         if lits.FALSE in value
     ]
 
-    return AnalysisResult(analysis, invalids)
+    return Results(analysis, invalids)
 
 
 class ContractChecker(Checker):
