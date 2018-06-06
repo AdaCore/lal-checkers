@@ -144,10 +144,11 @@ class Checker(object):
                 )
 
             for diag in analysis.diagnostics:
-                pos = analysis.diag_position(diag)
+                node = analysis.diag_position(diag)
                 msg = analysis.diag_message(diag)
 
-                if msg is not None and pos is not None:
+                if msg is not None and node is not None:
+                    pos = node.sloc_range.start
                     emit_message(
                         args.file, pos.line, pos.column,
                         prog_info[0],

@@ -85,7 +85,7 @@ class Results(CheckerResults):
         if diag.data.node is not None:
             if ('orig_node' in diag.data.node.data
                     and diag.data.node.data.orig_node is not None):
-                return diag.data.node.data.orig_node.sloc_range.start
+                return diag.data.node.data.orig_node
 
 
 def check_dead_code(prog, model, merge_pred_builder):

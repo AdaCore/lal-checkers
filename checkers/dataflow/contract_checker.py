@@ -106,7 +106,7 @@ class Results(CheckerResults):
 
     @classmethod
     def diag_position(cls, diag):
-        return diag[1].orig_call.sloc_range.start
+        return diag[1].orig_call
 
 
 def check_contracts(prog, model, merge_pred_builder):

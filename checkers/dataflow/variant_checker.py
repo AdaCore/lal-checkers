@@ -119,7 +119,7 @@ class Results(CheckerResults):
 
     @classmethod
     def diag_position(cls, diag):
-        return diag[1].accessed_expr.data.orig_node.sloc_range.start
+        return diag[1].accessed_expr.data.orig_node
 
 
 def check_variants(prog, model, merge_pred_builder):

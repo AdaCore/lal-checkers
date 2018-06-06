@@ -105,7 +105,7 @@ class Results(CheckerResults):
 
     @classmethod
     def diag_position(cls, diag):
-        return diag[1].data.orig_node.sloc_range.start
+        return diag[1].data.orig_node
 
 
 def check_derefs(prog, model, merge_pred_builder):
