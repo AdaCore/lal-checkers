@@ -7,7 +7,7 @@ import os
 
 import abstract_semantics_helpers
 import test_helper
-from checkers.dataflow.contract_checker import check_contracts
+from checkers.violated_contract import check_contracts
 
 
 def format_analysis_results(results):

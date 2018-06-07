@@ -7,7 +7,7 @@ import os
 
 import abstract_semantics_helpers
 import test_helper
-from checkers.dataflow.deref_checker import check_derefs
+from checkers.null_deref import check_derefs
 
 
 def format_analysis_results(results):
