@@ -430,7 +430,7 @@ def _contains_access_type(typer, type_hint):
 
     try:
         return has_pointer(typer.get(type_hint))
-    except ValueError:
+    except Transformer.TransformationFailure:
         return None
 
 
@@ -1206,7 +1206,7 @@ def _gen_ir(ctx, subp, typer):
                 name_tpe = dest.f_name.p_expression_type
                 if not typer.get(name_tpe).is_a(types.Array):
                     return unimplemented_dest(dest)
-            except ValueError:
+            except Transformer.TransformationFailure:
                 return unimplemented_dest(dest)
 
             suffixes = [
@@ -2563,7 +2563,7 @@ class ConvertUniversalTypes(IRImplicitVisitor):
         """
         try:
             return self.typer.get(tpe).is_a(types.IntRange)
-        except ValueError:
+        except Transformer.TransformationFailure:
             return False
 
     def is_compatible(self, tpe, universal_tpe):

@@ -101,6 +101,10 @@ def concat_dicts(a, b):
 
 
 class Transformer(object):
+    class TransformationFailure(ValueError):
+        def __init__(self, *args):
+            super(Transformer.TransformationFailure, self).__init__(*args)
+
     def __init__(self, fun):
         """
         Creates a new transformer using the given function.
@@ -203,11 +207,13 @@ class Transformer(object):
 
         :param object x: The object to transform.
         :rtype: object
-        :raise ValueError: if the transformation failed.
+        :raise Transformer.TransformationFailure: if the transformation failed.
         """
         res = self._transform(x)
         if res is None:
-            raise ValueError("Could not transform {}".format(x))
+            raise self.TransformationFailure(
+                "Could not transform {}".format(x)
+            )
         return res
 
     @staticmethod
