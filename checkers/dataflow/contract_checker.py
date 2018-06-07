@@ -98,18 +98,18 @@ class Results(AbstractSemanticsChecker.Results):
         )
 
     @classmethod
-    def diag_message(cls, diag):
+    def diag_report(cls, diag):
         trace, purpose, precise = diag
         if precise:
             frmt = "Violated {}"
         else:
             frmt = "Potentially violated {}"
 
-        return frmt.format(purpose.contract_name)
-
-    @classmethod
-    def diag_position(cls, diag):
-        return diag[1].orig_call
+        return (
+            purpose.orig_call,
+            frmt.format(purpose.contract_name),
+            ContractChecker.name()
+        )
 
 
 def check_contracts(prog, model, merge_pred_builder):

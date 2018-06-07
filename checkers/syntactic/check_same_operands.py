@@ -19,14 +19,14 @@ class Results(SyntacticChecker.Results):
         super(Results, self).__init__(diags)
 
     @classmethod
-    def diag_message(cls, diag):
-        return 'left and right operands of "{}" are identical'.format(
-            diag.f_op.text
+    def diag_report(cls, diag):
+        return (
+            diag,
+            'left and right operands of "{}" are identical'.format(
+                diag.f_op.text
+            ),
+            SameOperandsChecker.name()
         )
-
-    @classmethod
-    def diag_position(cls, diag):
-        return diag
 
 
 def find_same_operands(unit):

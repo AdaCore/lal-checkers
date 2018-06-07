@@ -103,7 +103,7 @@ class Results(AbstractSemanticsChecker.Results):
         )
 
     @classmethod
-    def diag_message(cls, diag):
+    def diag_report(cls, diag):
         trace, purpose, precise = diag
         prefix = purpose.accessed_expr.data.orig_node.text
         if precise:
@@ -113,16 +113,16 @@ class Results(AbstractSemanticsChecker.Results):
             frmt = ("Potentially infeasible access {}.{} due to invalid "
                     "condition on discriminant {}.{}")
 
-        return frmt.format(
-            prefix,
-            escape(purpose.field_name),
-            prefix,
-            escape(purpose.discr_name)
+        return (
+            purpose.accessed_expr.data.orig_node,
+            frmt.format(
+                prefix,
+                escape(purpose.field_name),
+                prefix,
+                escape(purpose.discr_name)
+            ),
+            VariantChecker.name()
         )
-
-    @classmethod
-    def diag_position(cls, diag):
-        return diag[1].accessed_expr.data.orig_node
 
 
 def check_variants(prog, model, merge_pred_builder):

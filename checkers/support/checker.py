@@ -4,11 +4,14 @@ from components import ProjectConfig, ModelConfig
 
 class CheckerResults(object):
     @classmethod
-    def diag_message(cls, diag):
-        raise NotImplementedError
+    def diag_report(cls, diag):
+        """
+        Given a diagnostic, returns the position of the error, a message and
+        an error flag.
 
-    @classmethod
-    def diag_position(cls, diag):
+        :param object diag: The diagnostic.
+        :rtype: (lal.AdaNode, str, str)
+        """
         raise NotImplementedError
 
 
@@ -39,11 +42,7 @@ class AbstractSemanticsChecker(Checker):
             self.diagnostics = diagnostics
 
         @classmethod
-        def diag_message(cls, diag):
-            raise NotImplementedError
-
-        @classmethod
-        def diag_position(cls, diag):
+        def diag_report(cls, diag):
             raise NotImplementedError
 
     def __init__(self, args):
@@ -87,11 +86,7 @@ class SyntacticChecker(Checker):
             self.diagnostics = diagnostics
 
         @classmethod
-        def diag_message(cls, diag):
-            raise NotImplementedError
-
-        @classmethod
-        def diag_position(cls, diag):
+        def diag_report(cls, diag):
             raise NotImplementedError
 
     def __init__(self):

@@ -21,16 +21,14 @@ class Results(SyntacticChecker.Results):
         super(Results, self).__init__(diags)
 
     @classmethod
-    def diag_message(cls, diag):
+    def diag_report(cls, diag):
         op, fst_val, snd_val = diag
         return (
+            op,
             'expression is always true, "{}" is always different '
-            'from {} or {}'.format(op.text, fst_val.text, snd_val.text)
+            'from {} or {}'.format(op.text, fst_val.text, snd_val.text),
+            BadUnequalChecker.name()
         )
-
-    @classmethod
-    def diag_position(cls, diag):
-        return diag[0]
 
 
 def find_bad_unequals(unit):

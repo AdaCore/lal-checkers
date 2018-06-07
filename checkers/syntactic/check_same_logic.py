@@ -21,13 +21,13 @@ class Results(SyntacticChecker.Results):
         super(Results, self).__init__(diags)
 
     @classmethod
-    def diag_message(cls, diag):
+    def diag_report(cls, diag):
         fst_line = diag[0].sloc_range.start.line
-        return 'duplicate operand with line {}'.format(fst_line)
-
-    @classmethod
-    def diag_position(cls, diag):
-        return diag[1]
+        return (
+            diag[1],
+            'duplicate operand with line {}'.format(fst_line),
+            SameLogicChecker.name()
+        )
 
 
 def find_same_logic(unit):

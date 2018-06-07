@@ -97,18 +97,18 @@ class Results(AbstractSemanticsChecker.Results):
         )
 
     @classmethod
-    def diag_message(cls, diag):
+    def diag_report(cls, diag):
         trace, purpose, precise = diag
         if precise:
             frmt = "Null dereference of '{}'"
         else:
             frmt = "Potential null dereference of '{}'"
 
-        return frmt.format(diag[1].data.orig_node.text)
-
-    @classmethod
-    def diag_position(cls, diag):
-        return diag[1].data.orig_node
+        return (
+            purpose.data.orig_node,
+            frmt.format(diag[1].data.orig_node.text),
+            DerefChecker.name()
+        )
 
 
 def check_derefs(prog, model, merge_pred_builder):

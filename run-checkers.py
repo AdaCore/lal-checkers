@@ -86,7 +86,8 @@ def closest_enclosing(node, *tpes):
     return None
 
 
-def print_diag(node, msg):
+def report_diag(report):
+    node, msg, flag = report
     filename = node.unit.filename
     pos = node.sloc_range.start
 
@@ -105,7 +106,7 @@ def print_diag(node, msg):
         print("{}:{}:{} warning: {}:{}:{}:{}: {} [{}]".format(
             filename, pos.line, pos.column,
             proc_name, proc_filename, proc_pos.line, proc_pos.column,
-            msg, 'checker'
+            msg, flag
         ))
     else:
         print("{}:{}:{} {}".format(filename, pos.line, pos.column, msg))
@@ -117,10 +118,9 @@ def main():
     for checker_result in schedule.run().values():
         for program_result in checker_result:
             for diag in program_result.diagnostics:
-                node = program_result.diag_position(diag)
-                msg = program_result.diag_message(diag)
-                if node is not None and msg is not None:
-                    print_diag(node, msg)
+                report = program_result.diag_report(diag)
+                if report is not None:
+                    report_diag(report)
 
 
 if __name__ == "__main__":
