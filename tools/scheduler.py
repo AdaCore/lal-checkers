@@ -1,4 +1,4 @@
-from lalcheck.utils import dataclass
+from ai.utils import dataclass
 
 
 class Task(object):

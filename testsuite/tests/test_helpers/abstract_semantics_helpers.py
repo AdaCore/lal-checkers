@@ -2,10 +2,10 @@
 Contain common parts for test helpers that are based on the "abstract
 semantics" analysis.
 """
-import lalcheck.irs.basic.frontends.lal as lal2basic
-from lalcheck.interpretations import default_type_interpreter
-from lalcheck.irs.basic.tools import Models
-from lalcheck.irs.basic.analyses import abstract_semantics
+import ai.irs.basic.frontends.lal as lal2basic
+from ai.interpretations import default_type_interpreter
+from ai.irs.basic.tools import Models
+from ai.irs.basic.analyses import abstract_semantics
 
 default_merge_predicates = {
     'le_t_eq_v': (

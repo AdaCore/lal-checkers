@@ -12,7 +12,7 @@ import libadalang as lal
 from checkers.support.checker import SyntacticChecker
 from checkers.support.components import AnalysisUnit
 from checkers.support.utils import same_as_parent
-from lalcheck.utils import dataclass
+from ai.utils import dataclass
 from tools.scheduler import Task, Requirement
 
 

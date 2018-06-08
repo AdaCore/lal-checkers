@@ -2,9 +2,9 @@ from xml.sax.saxutils import escape
 
 from checkers.support.checker import AbstractSemanticsChecker
 from checkers.support.components import AbstractSemantics
-from lalcheck.irs.basic.analyses import abstract_semantics
-from lalcheck.irs.basic.tools import PrettyPrinter
-from lalcheck.utils import dataclass
+from ai.irs.basic.analyses import abstract_semantics
+from ai.irs.basic.tools import PrettyPrinter
+from ai.utils import dataclass
 from tools import dot_printer
 from tools.digraph import Digraph
 from tools.scheduler import Task, Requirement

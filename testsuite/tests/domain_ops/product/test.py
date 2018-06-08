@@ -1,5 +1,5 @@
-from lalcheck import domains
-from lalcheck.domain_ops import (
+from ai import domains
+from ai.domain_ops import (
     boolean_ops, interval_ops, finite_lattice_ops, product_ops
 )
 from itertools import product

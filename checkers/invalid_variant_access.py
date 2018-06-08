@@ -1,14 +1,14 @@
 from collections import defaultdict
 from xml.sax.saxutils import escape
 
-import lalcheck.irs.basic.tree as irt
+import ai.irs.basic.tree as irt
 from checkers.support.checker import AbstractSemanticsChecker
 from checkers.support.components import AbstractSemantics
-from lalcheck.constants import lits
-from lalcheck.irs.basic.analyses import abstract_semantics
-from lalcheck.irs.basic.purpose import ExistCheck
-from lalcheck.irs.basic.tools import PrettyPrinter
-from lalcheck.utils import dataclass
+from ai.constants import lits
+from ai.irs.basic.analyses import abstract_semantics
+from ai.irs.basic.purpose import ExistCheck
+from ai.irs.basic.tools import PrettyPrinter
+from ai.utils import dataclass
 from tools import dot_printer
 from tools.digraph import Digraph
 from tools.scheduler import Task, Requirement

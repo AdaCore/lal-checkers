@@ -3,7 +3,7 @@ Provides a collection of useful operations on interval domains.
 """
 
 
-from lalcheck import domains
+from ai import domains
 import boolean_ops
 
 

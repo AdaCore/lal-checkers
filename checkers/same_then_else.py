@@ -18,7 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 import libadalang as lal
 from tools.scheduler import Task, Requirement
 from checkers.support.components import AnalysisUnit
-from lalcheck.utils import dataclass
+from ai.utils import dataclass
 from checkers.support.checker import SyntacticChecker
 
 

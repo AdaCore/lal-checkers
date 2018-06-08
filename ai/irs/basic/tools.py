@@ -5,12 +5,12 @@ Provides tools for using the Basic IR.
 from __future__ import absolute_import
 from collections import defaultdict
 
-from lalcheck.irs.basic import visitors
-from lalcheck.irs.basic.tree import LabelStmt
-from lalcheck.domain_ops import boolean_ops
-from lalcheck.interpretations import Signature
-from lalcheck.types import FunOutput
-from lalcheck.utils import KeyCounter, Bunch, Transformer
+from ai.irs.basic import visitors
+from ai.irs.basic.tree import LabelStmt
+from ai.domain_ops import boolean_ops
+from ai.interpretations import Signature
+from ai.types import FunOutput
+from ai.utils import KeyCounter, Bunch, Transformer
 from tools.digraph import Digraph
 
 

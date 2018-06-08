@@ -4,11 +4,11 @@ Provides a libadalang frontend for the Basic IR.
 
 import libadalang as lal
 
-from lalcheck.irs.basic import tree as irt, purpose
-from lalcheck.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
-from lalcheck.constants import ops, lits, access_paths
-from lalcheck.utils import KeyCounter, Transformer, profile
-from lalcheck import types
+from ai.irs.basic import tree as irt, purpose
+from ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
+from ai.constants import ops, lits, access_paths
+from ai.utils import KeyCounter, Transformer, profile
+from ai import types
 
 from funcy.calc import memoize
 

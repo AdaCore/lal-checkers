@@ -3,7 +3,7 @@ Defines the TypeInterpreter interface, as well as a few common
 TypeInterpreters.
 """
 
-from lalcheck.domain_ops import (
+from ai.domain_ops import (
     boolean_ops,
     interval_ops,
     finite_lattice_ops,
@@ -12,10 +12,10 @@ from lalcheck.domain_ops import (
     access_paths_ops,
     ram_ops
 )
-from lalcheck.constants import ops, lits, access_paths
-from lalcheck.utils import Transformer
-from lalcheck import types
-from lalcheck import domains
+from ai.constants import ops, lits, access_paths
+from ai.utils import Transformer
+from ai import types
+from ai import domains
 
 
 class TypeInterpretation(object):

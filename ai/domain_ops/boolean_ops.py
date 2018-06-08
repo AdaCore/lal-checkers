@@ -4,8 +4,8 @@ common useful operations.
 """
 
 
-from lalcheck import domains
-from lalcheck.constants import lits
+from ai import domains
+from ai.constants import lits
 
 
 Boolean = domains.FiniteLattice.of_subsets({lits.TRUE, lits.FALSE})
