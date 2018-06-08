@@ -1,11 +1,11 @@
-tests/*.adb no-precommit-check
-tests/*.ads no-precommit-check
+testsuite/tests/*.adb no-precommit-check
+testsuite/tests/*.ads no-precommit-check
 
-tests/*/*.adb no-precommit-check
-tests/*/*.ads no-precommit-check
+testsuite/tests/*/*.adb no-precommit-check
+testsuite/tests/*/*.ads no-precommit-check
 
-tests/*/*/*.adb no-precommit-check
-tests/*/*/*.ads no-precommit-check
+testsuite/tests/*/*/*.adb no-precommit-check
+testsuite/tests/*/*/*.ads no-precommit-check
 
-tests/*/*/*/*.adb no-precommit-check
-tests/*/*/*/*.ads no-precommit-check
+testsuite/tests/*/*/*/*.adb no-precommit-check
+testsuite/tests/*/*/*/*.ads no-precommit-check

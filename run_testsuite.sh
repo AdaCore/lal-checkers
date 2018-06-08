@@ -1,4 +1,4 @@
 #! /bin/sh
 
 export PYTHONPATH=$PWD:$PYTHONPATH
-exec ./testsuite.py $@
+exec ./testsuite/testsuite.py $@

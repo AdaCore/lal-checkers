@@ -4,8 +4,8 @@ file.
 """
 
 import lalcheck.irs.basic.frontends.lal as lal2basic
-from lalcheck.irs.basic.tools import PrettyPrinter
 import test_helper
+from lalcheck.irs.basic.tools import PrettyPrinter
 
 
 @test_helper.run

@@ -1,6 +1,6 @@
 from gnatpython.testsuite import Testsuite as BaseTestsuite
 
-from testsuite_support import python_driver
+import python_driver
 
 
 class Testsuite(BaseTestsuite):

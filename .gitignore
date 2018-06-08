@@ -5,4 +5,4 @@
 misc/
 out/
 profiler_config
-tests/ext_src/
+testsuite/tests/ext_src/
