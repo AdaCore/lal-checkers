@@ -1,13 +1,13 @@
 from xml.sax.saxutils import escape
 
-from lalcheck.digraph import Digraph
+from checkers.support.checker import AbstractSemanticsChecker
+from checkers.support.components import AbstractSemantics
 from lalcheck.irs.basic.analyses import abstract_semantics
 from lalcheck.irs.basic.tools import PrettyPrinter
-from tools import dot_printer
-from tools.scheduler import Task, Requirement
-from checkers.support.components import AbstractSemantics
-from checkers.support.checker import AbstractSemanticsChecker
 from lalcheck.utils import dataclass
+from tools import dot_printer
+from tools.digraph import Digraph
+from tools.scheduler import Task, Requirement
 
 
 def html_render_node(node):

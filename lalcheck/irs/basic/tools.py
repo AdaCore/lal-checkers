@@ -2,15 +2,16 @@
 Provides tools for using the Basic IR.
 """
 
-from lalcheck.utils import KeyCounter, Bunch, Transformer
-from lalcheck.digraph import Digraph
-from lalcheck.domain_ops import boolean_ops
-from lalcheck.types import FunOutput
-from lalcheck.interpretations import Signature
-from tree import LabelStmt
-import visitors
-
+from __future__ import absolute_import
 from collections import defaultdict
+
+from lalcheck.irs.basic import visitors
+from lalcheck.irs.basic.tree import LabelStmt
+from lalcheck.domain_ops import boolean_ops
+from lalcheck.interpretations import Signature
+from lalcheck.types import FunOutput
+from lalcheck.utils import KeyCounter, Bunch, Transformer
+from tools.digraph import Digraph
 
 
 class PrettyPrinter(visitors.Visitor):

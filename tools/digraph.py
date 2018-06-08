@@ -1,4 +1,4 @@
-from utils import Bunch
+from lalcheck.utils import Bunch
 from funcy.calc import memoize
 
 

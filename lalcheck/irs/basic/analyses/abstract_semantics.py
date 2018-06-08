@@ -6,7 +6,6 @@ from collections import defaultdict
 from xml.sax.saxutils import escape
 
 from lalcheck import domains
-from lalcheck.digraph import Digraph
 from lalcheck.interpretations import def_provider_builder
 from lalcheck.irs.basic import visitors
 from lalcheck.irs.basic.purpose import SyntheticVariable
@@ -19,6 +18,7 @@ from lalcheck.irs.basic.tools import PrettyPrinter
 from lalcheck.irs.basic.tree import Variable
 from lalcheck.utils import KeyCounter, concat_dicts
 from tools import dot_printer
+from tools.digraph import Digraph
 
 
 def updated_state(state, var, value):
