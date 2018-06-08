@@ -48,12 +48,14 @@ def IRModel(provider_config, model_config, filenames):
 def AbstractSemantics(
         provider_config,
         model_config,
-        filenames):
+        filenames,
+        analysis_file):
     return [
         AbstractAnalyser(
             provider_config,
             model_config,
-            filenames
+            filenames,
+            analysis_file
         )
     ]
 
@@ -230,47 +232,43 @@ class AbstractAnalyser(Task):
     def __init__(self,
                  provider_config,
                  model_config,
-                 filenames):
+                 filenames,
+                 analysis_file):
         self.provider_config = provider_config
         self.model_config = model_config
         self.filenames = filenames
+        self.analysis_file = analysis_file
 
     def requires(self):
-        req = {
-            'ir_{}'.format(i): IRTrees(self.provider_config, filename)
-            for i, filename in enumerate(self.filenames)
-        }
-        req.update({'model': IRModel(
-            self.provider_config,
-            self.model_config,
-            self.filenames
-        )})
-        return req
-
-    def provides(self):
         return {
-            'res': AbstractSemantics(
+            'ir': IRTrees(self.provider_config, self.analysis_file),
+            'model_and_merge_pred': IRModel(
                 self.provider_config,
                 self.model_config,
                 self.filenames
             )
         }
 
-    def run(self, **kwargs):
-        model, merge_pred_builder = kwargs['model']
-        progs = [
-            prog
-            for key, ir in kwargs.iteritems()
-            if key.startswith('ir')
-            if ir is not None
-            for prog in ir
-        ]
+    def provides(self):
+        return {
+            'res': AbstractSemantics(
+                self.provider_config,
+                self.model_config,
+                self.filenames,
+                self.analysis_file
+            )
+        }
+
+    def run(self, ir, model_and_merge_pred):
+        model, merge_pred_builder = model_and_merge_pred
+        if ir is None:
+            return {'res': []}
 
         return {
             'res': [
                 abstract_analysis.compute_semantics(
                     prog, model, merge_pred_builder
                 )
-                for prog in progs
+                for prog in ir
             ]
         }

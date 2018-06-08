@@ -124,11 +124,13 @@ class DeadCodeFinder(Task):
 
     def requires(self):
         return {
-            'sem': AbstractSemantics(
+            'sem_{}'.format(i): AbstractSemantics(
                 self.provider_config,
                 self.model_config,
-                self.files
+                self.files,
+                f
             )
+            for i, f in enumerate(self.files)
         }
 
     def provides(self):
@@ -140,9 +142,13 @@ class DeadCodeFinder(Task):
             )
         }
 
-    def run(self, sem):
+    def run(self, **sems):
         return {
-            'res': [find_dead_code(analysis) for analysis in sem]
+            'res': [
+                find_dead_code(analysis)
+                for sem in sems.values()
+                for analysis in sem
+            ]
         }
 
 
