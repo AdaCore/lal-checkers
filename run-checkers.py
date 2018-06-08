@@ -2,6 +2,8 @@ import argparse
 import importlib
 import libadalang as lal
 from tools.scheduler import Scheduler
+from tools.digraph import Digraph
+from tools.dot_printer import gen_dot, DataPrinter
 from checkers.support.checker import Checker
 
 
@@ -24,6 +26,7 @@ checkers_group.add_argument('--checkers', metavar='CHECKERS', action='append',
                                            'semicolons.')
 
 parser.add_argument('--codepeer-output', action='store_true')
+parser.add_argument('--export-schedule', type=str)
 
 
 args = parser.parse_args()
@@ -93,6 +96,68 @@ def get_schedules(requirements):
     })
 
 
+def export_schedule(schedule, export_path):
+    nice_colors = [
+        '#093145', '#107896', '#829356', '#3C6478', '#43ABC9', '#B5C689',
+        '#BCA136', '#C2571A', '#9A2617', '#F26D21', '#C02F1D', '#F58B4C',
+        '#CD594A'
+    ]
+
+    def var_printer(var):
+        name = str(var)
+        color = nice_colors[hash(name) % len(nice_colors)]
+
+        def colored(x):
+            return '<font color="{}">{}</font>'.format(color, x)
+
+        def printer(x):
+            return (
+                '<i>{}</i>'.format(colored(name)),
+                colored(x)
+            )
+
+        return printer
+
+    tasks = frozenset(
+        task
+        for batch in schedule.batches
+        for task in batch
+    )
+
+    varset = frozenset(
+        var
+        for task in tasks
+        for var in vars(task).keys()
+    )
+
+    task_to_node = {
+        task: Digraph.Node(
+            task.__class__.__name__,
+            **vars(task)
+        )
+        for task in tasks
+    }
+
+    edges = [
+        Digraph.Edge(task_to_node[a], task_to_node[b])
+        for a in tasks
+        for b in tasks
+        if len(frozenset(a.provides().values()) &
+               frozenset(b.requires().values())) > 0
+    ]
+
+    digraph = Digraph(task_to_node.values(), edges)
+    dot = gen_dot(digraph, [
+        DataPrinter(
+            var,
+            var_printer(var)
+        )
+        for var in varset
+    ])
+    with open(export_path, 'w') as export_file:
+        export_file.write(dot)
+
+
 def closest_enclosing(node, *tpes):
     """
     Given a libadalang node n, returns its closest enclosing libadalang node of
@@ -138,6 +203,10 @@ def report_diag(report):
 def main():
     reqs = get_requirements()
     schedule = get_schedules(reqs)[0]
+
+    if args.export_schedule is not None:
+        export_schedule(schedule, args.export_schedule)
+
     for checker_result in schedule.run().values():
         for program_result in checker_result:
             for diag in program_result.diagnostics:
