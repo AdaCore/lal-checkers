@@ -7,8 +7,11 @@ import lalcheck.irs.basic.tools as irtools
 from lalcheck.utils import dataclass
 from tools.scheduler import Task, Requirement
 
-ProjectConfig = namedtuple(
-    'ProjectConfig', ['project_file', 'scenario_vars']
+ProjectProvider = namedtuple(
+    'ProjectProvider', ['project_file', 'scenario_vars']
+)
+AutoProvider = namedtuple(
+    'AutoProvider', ['files']
 )
 ModelConfig = namedtuple(
     'ModelConfig', ['typer', 'type_interpreter', 'call_strategy',
@@ -17,38 +20,38 @@ ModelConfig = namedtuple(
 
 
 @Requirement.as_requirement
-def AnalysisContext(project_config):
-    return [AnalysisContextCreator(project_config)]
+def AnalysisContext(provider_config):
+    return [AnalysisContextCreator(provider_config)]
 
 
 @Requirement.as_requirement
-def ExtractionContext(project_config):
-    return [ExtractionContextCreator(project_config)]
+def ExtractionContext(provider_config):
+    return [ExtractionContextCreator(provider_config)]
 
 
 @Requirement.as_requirement
-def AnalysisUnit(project_config, filename):
-    return [LALAnalyser(project_config, filename)]
+def AnalysisUnit(provider_config, filename):
+    return [LALAnalyser(provider_config, filename)]
 
 
 @Requirement.as_requirement
-def IRTrees(project_config, filename):
-    return [IRGenerator(project_config, filename)]
+def IRTrees(provider_config, filename):
+    return [IRGenerator(provider_config, filename)]
 
 
 @Requirement.as_requirement
-def IRModel(project_config, model_config, filenames):
-    return [ModelGenerator(project_config, model_config, filenames)]
+def IRModel(provider_config, model_config, filenames):
+    return [ModelGenerator(provider_config, model_config, filenames)]
 
 
 @Requirement.as_requirement
 def AbstractSemantics(
-        project_config,
+        provider_config,
         model_config,
         filenames):
     return [
         AbstractAnalyser(
-            project_config,
+            provider_config,
             model_config,
             filenames
         )
@@ -57,34 +60,38 @@ def AbstractSemantics(
 
 @dataclass
 class AnalysisContextCreator(Task):
-    def __init__(self, project_config):
-        self.project_config = project_config
+    def __init__(self, provider_config):
+        self.provider_config = provider_config
 
     def requires(self):
         return {}
 
     def provides(self):
-        return {'ctx': AnalysisContext(self.project_config)}
+        return {'ctx': AnalysisContext(self.provider_config)}
 
     def run(self):
-        return {'ctx': lal2basic.lal.AnalysisContext(
-            unit_provider=lal2basic.lal.UnitProvider.for_project(
-                self.project_config.project_file,
-                dict(self.project_config.scenario_vars)
+        if isinstance(self.provider_config, AutoProvider):
+            provider = lal2basic.lal.UnitProvider.auto(
+                self.provider_config.files
             )
-        )}
+        else:
+            provider = lal2basic.lal.UnitProvider.for_project(
+                self.provider_config.project_file,
+                dict(self.provider_config.scenario_vars)
+            )
+        return {'ctx': lal2basic.lal.AnalysisContext(unit_provider=provider)}
 
 
 @dataclass
 class ExtractionContextCreator(Task):
-    def __init__(self, project_config):
-        self.project_config = project_config
+    def __init__(self, provider_config):
+        self.provider_config = provider_config
 
     def requires(self):
-        return {'ctx': AnalysisContext(self.project_config)}
+        return {'ctx': AnalysisContext(self.provider_config)}
 
     def provides(self):
-        return {'res': ExtractionContext(self.project_config)}
+        return {'res': ExtractionContext(self.provider_config)}
 
     def run(self, ctx):
         return {'res': lal2basic.ExtractionContext(ctx)}
@@ -92,15 +99,15 @@ class ExtractionContextCreator(Task):
 
 @dataclass
 class LALAnalyser(Task):
-    def __init__(self, project_config, filename):
-        self.project_config = project_config
+    def __init__(self, provider_config, filename):
+        self.provider_config = provider_config
         self.filename = filename
 
     def requires(self):
-        return {'ctx': AnalysisContext(self.project_config)}
+        return {'ctx': AnalysisContext(self.provider_config)}
 
     def provides(self):
-        return {'res': AnalysisUnit(self.project_config, self.filename)}
+        return {'res': AnalysisUnit(self.provider_config, self.filename)}
 
     def run(self, ctx):
         return {'res': ctx.get_from_file(self.filename)}
@@ -108,18 +115,18 @@ class LALAnalyser(Task):
 
 @dataclass
 class IRGenerator(Task):
-    def __init__(self, project_config, filename):
-        self.project_config = project_config
+    def __init__(self, provider_config, filename):
+        self.provider_config = provider_config
         self.filename = filename
 
     def requires(self):
         return {
-            'ctx': ExtractionContext(self.project_config),
-            'unit': AnalysisUnit(self.project_config, self.filename)
+            'ctx': ExtractionContext(self.provider_config),
+            'unit': AnalysisUnit(self.provider_config, self.filename)
         }
 
     def provides(self):
-        return {'res': IRTrees(self.project_config, self.filename)}
+        return {'res': IRTrees(self.provider_config, self.filename)}
 
     def run(self, ctx, unit):
         return {'res': ctx.extract_programs_from_unit(unit)}
@@ -127,23 +134,23 @@ class IRGenerator(Task):
 
 @dataclass
 class ModelGenerator(Task):
-    def __init__(self, project_config, model_config, filenames):
-        self.project_config = project_config
+    def __init__(self, provider_config, model_config, filenames):
+        self.provider_config = provider_config
         self.model_config = model_config
         self.filenames = filenames
 
     def requires(self):
         req = {
-            'ir_{}'.format(i): IRTrees(self.project_config, filename)
+            'ir_{}'.format(i): IRTrees(self.provider_config, filename)
             for i, filename in enumerate(self.filenames)
         }
-        req.update({'ctx': ExtractionContext(self.project_config)})
+        req.update({'ctx': ExtractionContext(self.provider_config)})
         return req
 
     def provides(self):
         return {
             'model': IRModel(
-                self.project_config,
+                self.provider_config,
                 self.model_config,
                 self.filenames
             )
@@ -221,20 +228,20 @@ class ModelGenerator(Task):
 @dataclass
 class AbstractAnalyser(Task):
     def __init__(self,
-                 project_config,
+                 provider_config,
                  model_config,
                  filenames):
-        self.project_config = project_config
+        self.provider_config = provider_config
         self.model_config = model_config
         self.filenames = filenames
 
     def requires(self):
         req = {
-            'ir_{}'.format(i): IRTrees(self.project_config, filename)
+            'ir_{}'.format(i): IRTrees(self.provider_config, filename)
             for i, filename in enumerate(self.filenames)
         }
         req.update({'model': IRModel(
-            self.project_config,
+            self.provider_config,
             self.model_config,
             self.filenames
         )})
@@ -243,7 +250,7 @@ class AbstractAnalyser(Task):
     def provides(self):
         return {
             'res': AbstractSemantics(
-                self.project_config,
+                self.provider_config,
                 self.model_config,
                 self.filenames
             )

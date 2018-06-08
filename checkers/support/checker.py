@@ -1,5 +1,17 @@
 import argparse
-from components import ProjectConfig, ModelConfig
+from components import (
+    ProjectProvider, AutoProvider, ModelConfig
+)
+
+
+def _create_best_provider(project_file, scenario_vars, filenames):
+    if project_file is None:
+        return AutoProvider(tuple(filenames))
+    else:
+        return ProjectProvider(
+            project_file,
+            tuple(scenario_vars.iteritems())
+        )
 
 
 class CheckerResults(object):
@@ -54,8 +66,9 @@ class AbstractSemanticsChecker(Checker):
 
         def create_requirement(project_file, scenario_vars, filenames, args):
             arg_values = parser.parse_args(args)
+
             return requirement_class(
-                ProjectConfig(project_file, tuple(scenario_vars.iteritems())),
+                _create_best_provider(project_file, scenario_vars, filenames),
                 ModelConfig(arg_values.typer,
                             arg_values.type_interpreter,
                             arg_values.call_strategy,
@@ -96,7 +109,7 @@ class SyntacticChecker(Checker):
     def requirement_creator(requirement_class):
         def create_requirement(project_file, scenario_vars, filenames, args):
             return requirement_class(
-                ProjectConfig(project_file, tuple(scenario_vars.iteritems())),
+                _create_best_provider(project_file, scenario_vars, filenames),
                 tuple(filenames)
             )
 

@@ -162,23 +162,23 @@ def find_violated_contracts(analysis):
 
 
 @Requirement.as_requirement
-def ViolatedContracts(project_config, model_config, files):
+def ViolatedContracts(provider_config, model_config, files):
     return [ContractViolationFinder(
-        project_config, model_config, files
+        provider_config, model_config, files
     )]
 
 
 @dataclass
 class ContractViolationFinder(Task):
-    def __init__(self, project_config, model_config, files):
-        self.project_config = project_config
+    def __init__(self, provider_config, model_config, files):
+        self.provider_config = provider_config
         self.model_config = model_config
         self.files = files
 
     def requires(self):
         return {
             'sem': AbstractSemantics(
-                self.project_config,
+                self.provider_config,
                 self.model_config,
                 self.files
             )
@@ -187,7 +187,7 @@ class ContractViolationFinder(Task):
     def provides(self):
         return {
             'res': ViolatedContracts(
-                self.project_config,
+                self.provider_config,
                 self.model_config,
                 self.files
             )

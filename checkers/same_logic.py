@@ -105,28 +105,28 @@ def find_same_logic(unit):
 
 
 @Requirement.as_requirement
-def SameLogics(project_config, files):
+def SameLogics(provider_config, files):
     return [SameLogicFinder(
-        project_config, files
+        provider_config, files
     )]
 
 
 @dataclass
 class SameLogicFinder(Task):
-    def __init__(self, project_config, files):
-        self.project_config = project_config
+    def __init__(self, provider_config, files):
+        self.provider_config = provider_config
         self.files = files
 
     def requires(self):
         return {
-            'unit_{}'.format(i): AnalysisUnit(self.project_config, f)
+            'unit_{}'.format(i): AnalysisUnit(self.provider_config, f)
             for i, f in enumerate(self.files)
         }
 
     def provides(self):
         return {
             'res': SameLogics(
-                self.project_config,
+                self.provider_config,
                 self.files
             )
         }

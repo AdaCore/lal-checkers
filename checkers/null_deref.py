@@ -161,23 +161,23 @@ def find_null_derefs(analysis):
 
 
 @Requirement.as_requirement
-def NullDerefs(project_config, model_config, files):
+def NullDerefs(provider_config, model_config, files):
     return [NullDerefFinder(
-        project_config, model_config, files
+        provider_config, model_config, files
     )]
 
 
 @dataclass
 class NullDerefFinder(Task):
-    def __init__(self, project_config, model_config, files):
-        self.project_config = project_config
+    def __init__(self, provider_config, model_config, files):
+        self.provider_config = provider_config
         self.model_config = model_config
         self.files = files
 
     def requires(self):
         return {
             'sem': AbstractSemantics(
-                self.project_config,
+                self.provider_config,
                 self.model_config,
                 self.files
             )
@@ -186,7 +186,7 @@ class NullDerefFinder(Task):
     def provides(self):
         return {
             'res': NullDerefs(
-                self.project_config,
+                self.provider_config,
                 self.model_config,
                 self.files
             )

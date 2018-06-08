@@ -109,23 +109,23 @@ def find_dead_code(analysis):
 
 
 @Requirement.as_requirement
-def DeadCode(project_config, model_config, files):
+def DeadCode(provider_config, model_config, files):
     return [DeadCodeFinder(
-        project_config, model_config, files
+        provider_config, model_config, files
     )]
 
 
 @dataclass
 class DeadCodeFinder(Task):
-    def __init__(self, project_config, model_config, files):
-        self.project_config = project_config
+    def __init__(self, provider_config, model_config, files):
+        self.provider_config = provider_config
         self.model_config = model_config
         self.files = files
 
     def requires(self):
         return {
             'sem': AbstractSemantics(
-                self.project_config,
+                self.provider_config,
                 self.model_config,
                 self.files
             )
@@ -134,7 +134,7 @@ class DeadCodeFinder(Task):
     def provides(self):
         return {
             'res': DeadCode(
-                self.project_config,
+                self.provider_config,
                 self.model_config,
                 self.files
             )

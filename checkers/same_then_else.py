@@ -169,28 +169,28 @@ def find_same_then_elses(unit):
 
 
 @Requirement.as_requirement
-def SameThenElses(project_config, files):
+def SameThenElses(provider_config, files):
     return [SameThenElseFinder(
-        project_config, files
+        provider_config, files
     )]
 
 
 @dataclass
 class SameThenElseFinder(Task):
-    def __init__(self, project_config, files):
-        self.project_config = project_config
+    def __init__(self, provider_config, files):
+        self.provider_config = provider_config
         self.files = files
 
     def requires(self):
         return {
-            'unit_{}'.format(i): AnalysisUnit(self.project_config, f)
+            'unit_{}'.format(i): AnalysisUnit(self.provider_config, f)
             for i, f in enumerate(self.files)
         }
 
     def provides(self):
         return {
             'res': SameThenElses(
-                self.project_config,
+                self.provider_config,
                 self.files
             )
         }
