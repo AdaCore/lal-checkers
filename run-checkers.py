@@ -12,9 +12,16 @@ parser.add_argument('-P', default=None, metavar='PROJECT_FILE', type=str)
 parser.add_argument('-X', action='append', metavar='VAR=STR', type=str,
                     default=[])
 
-parser.add_argument('--files-from', metavar='PATH', type=str, required=True)
+files_group = parser.add_mutually_exclusive_group(required=True)
+files_group.add_argument('--files-from', metavar='FILE_PATH', type=str)
+files_group.add_argument('--files', metavar='FILE_PATHS', action='append',
+                         type=str, help='File paths separated by semicolons.')
 
-parser.add_argument('--checkers-from', metavar='PATH', type=str, required=True)
+checkers_group = parser.add_mutually_exclusive_group(required=True)
+checkers_group.add_argument('--checkers-from', metavar='FILE_PATH', type=str)
+checkers_group.add_argument('--checkers', metavar='CHECKERS', action='append',
+                            type=str, help='Checker commands separated by'
+                                           'semicolons.')
 
 parser.add_argument('--codepeer-output', action='store_true')
 
@@ -37,8 +44,24 @@ def get_requirements():
     if project_file is None and len(scenario_vars) > 0:
         print ("warning: use of scenario vars without a project file.")
 
-    files_to_check = lines_from_file(args.files_from)
-    checker_commands = lines_from_file(args.checkers_from)
+    if args.files_from:
+        files_to_check = lines_from_file(args.files_from)
+    else:
+        files_to_check = [
+            f
+            for fs in args.files
+            for f in fs.split(';')
+        ]
+
+    if args.checkers_from:
+        checker_commands = lines_from_file(args.checkers_from)
+    else:
+        checker_commands = [
+            c
+            for cs in args.checkers
+            for c in cs.split(';')
+        ]
+
     checker_args = [command.split() for command in checker_commands]
 
     requirements = []
