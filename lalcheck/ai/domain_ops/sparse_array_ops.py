@@ -1,7 +1,7 @@
 """
 Provides a collection of common useful operations on sparse array domains.
 """
-from ai.utils import partition
+from lalcheck.ai.utils import partition
 
 
 def get(domain):

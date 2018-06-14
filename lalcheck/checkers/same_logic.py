@@ -8,12 +8,12 @@ together in a chain of logical operators in the input Ada sources.
 from __future__ import (absolute_import, division, print_function)
 
 import libadalang as lal
+from lalcheck.ai.utils import dataclass
+from lalcheck.checkers.support.checker import SyntacticChecker
+from lalcheck.checkers.support.components import AnalysisUnit
+from lalcheck.checkers.support.utils import same_as_parent
 
-from checkers.support.checker import SyntacticChecker
-from checkers.support.components import AnalysisUnit
-from checkers.support.utils import same_as_parent
-from ai.utils import dataclass
-from tools.scheduler import Task, Requirement
+from lalcheck.tools.scheduler import Task, Requirement
 
 
 class Results(SyntacticChecker.Results):
@@ -22,30 +22,16 @@ class Results(SyntacticChecker.Results):
 
     @classmethod
     def diag_report(cls, diag):
-        op, fst_val, snd_val = diag
+        fst_line = diag[0].sloc_range.start.line
         return (
-            op,
-            'expression is always true, "{}" is always different '
-            'from {} or {}'.format(op.text, fst_val.text, snd_val.text),
-            BadUnequalChecker.name()
+            diag[1],
+            'duplicate operand with line {}'.format(fst_line),
+            SameLogicChecker.name()
         )
 
 
-def find_bad_unequals(unit):
-    def is_literal(expr):
-        if expr.is_a(lal.Identifier):
-            try:
-                ref = expr.p_xref
-                return (ref is not None
-                        and ref.p_basic_decl.is_a(lal.EnumLiteralDecl))
-            except lal.PropertyError:
-                pass
-        return isinstance(expr, (lal.CharLiteral,
-                                 lal.StringLiteral,
-                                 lal.IntLiteral,
-                                 lal.NullLiteral))
-
-    def list_left_unequal_operands(binop):
+def find_same_logic(unit):
+    def list_operands(binop):
         """
         List all the sub-operands of `binop`, as long as they have the same
         operator as `binop`.
@@ -61,21 +47,22 @@ def find_bad_unequals(unit):
             :type expr: lal.Expr
             :type op: lal.Op
             """
-            if isinstance(expr, lal.BinOp) and type(expr.f_op) is type(op):
+            if expr.is_a(lal.BinOp) and type(expr.f_op) is type(op):
                 return (list_sub_operands(expr.f_left, op)
                         + list_sub_operands(expr.f_right, op))
-
-            elif (isinstance(expr, lal.BinOp)
-                  and isinstance(expr.f_op, lal.OpNeq)
-                  and is_literal(expr.f_right)):
-                return [(expr.f_left, expr.f_right)]
-
             else:
-                return []
+                return [expr]
 
         op = binop.f_op
         return (list_sub_operands(binop.f_left, op)
                 + list_sub_operands(binop.f_right, op))
+
+    def is_bool_literal(expr):
+        """
+        Predicate to check whether `expr` is a boolean literal.
+        """
+        return (expr.is_a(lal.Identifier)
+                and expr.text.lower() in ['true', 'false'])
 
     def tokens_text(node):
         return tuple((t.kind, t.text) for t in node.tokens)
@@ -83,20 +70,19 @@ def find_bad_unequals(unit):
     def has_same_operands(expr):
         """
         For a logic relation, checks whether any combination of its
-        sub-operands are syntactically equivalent. If a duplicate operand is
-        found, return it.
+        sub-operands are syntactically equivalent. If duplicate operands are
+        found, return them.
 
         :rtype: lal.Expr|None
         """
         ops = {}
-        all_ops = list_left_unequal_operands(expr)
+        all_ops = list_operands(expr)
         if len(all_ops) > 1:
             for op in all_ops:
-                (op_left, op_right) = op
-                tokens = tokens_text(op_left)
+                tokens = tokens_text(op)
                 if tokens in ops:
-                    return (op_left, ops[tokens], op_right)
-                ops[tokens] = op_right
+                    return (ops[tokens], op)
+                ops[tokens] = op
 
     def interesting_oper(op):
         """
@@ -105,7 +91,8 @@ def find_bad_unequals(unit):
 
         :rtype: bool
         """
-        return isinstance(op, (lal.OpOr, lal.OpOrElse))
+        return op.is_a(lal.OpAnd, lal.OpOr, lal.OpAndThen,
+                       lal.OpOrElse, lal.OpXor)
 
     diags = []
     for binop in unit.root.findall(lal.BinOp):
@@ -118,14 +105,14 @@ def find_bad_unequals(unit):
 
 
 @Requirement.as_requirement
-def BadUnequals(provider_config, files):
-    return [BadUnequalFinder(
+def SameLogics(provider_config, files):
+    return [SameLogicFinder(
         provider_config, files
     )]
 
 
 @dataclass
-class BadUnequalFinder(Task):
+class SameLogicFinder(Task):
     def __init__(self, provider_config, files):
         self.provider_config = provider_config
         self.files = files
@@ -138,7 +125,7 @@ class BadUnequalFinder(Task):
 
     def provides(self):
         return {
-            'res': BadUnequals(
+            'res': SameLogics(
                 self.provider_config,
                 self.files
             )
@@ -147,26 +134,26 @@ class BadUnequalFinder(Task):
     def run(self, **kwargs):
         units = kwargs.values()
         return {
-            'res': [find_bad_unequals(unit) for unit in units]
+            'res': [find_same_logic(unit) for unit in units]
         }
 
 
-class BadUnequalChecker(SyntacticChecker):
+class SameLogicChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "bad_unequal_checker"
+        return "same_logic_checker"
 
     @classmethod
     def description(cls):
-        return ("Finds disjunctions containing 'not equal' binary operators "
-                "that have one operand in common.")
+        return ("Finds chains of boolean operators which contain syntactically"
+                " identical expressions.")
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):
-        return cls.requirement_creator(BadUnequals)(*args, **kwargs)
+        return cls.requirement_creator(SameLogics)(*args, **kwargs)
 
 
-checker = BadUnequalChecker
+checker = SameLogicChecker
 
 
 if __name__ == "__main__":

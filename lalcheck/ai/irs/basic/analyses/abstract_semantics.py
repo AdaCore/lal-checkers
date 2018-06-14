@@ -5,20 +5,21 @@ An analyzer that collects semantics at each program point.
 from collections import defaultdict
 from xml.sax.saxutils import escape
 
-from ai import domains
-from ai.interpretations import def_provider_builder
-from ai.irs.basic import visitors
-from ai.irs.basic.purpose import SyntheticVariable
-from ai.irs.basic.tools import (
+from lalcheck.ai import domains
+from lalcheck.ai.interpretations import def_provider_builder
+from lalcheck.ai.irs.basic import visitors
+from lalcheck.ai.irs.basic.purpose import SyntheticVariable
+from lalcheck.ai.irs.basic.tree import Variable
+from lalcheck.ai.utils import KeyCounter, concat_dicts
+from lalcheck.tools import dot_printer
+from lalcheck.tools.digraph import Digraph
+
+from lalcheck.ai.irs.basic.tools import (
     CFGBuilder,
     ExprEvaluator,
     ExprSolver
 )
-from ai.irs.basic.tools import PrettyPrinter
-from ai.irs.basic.tree import Variable
-from ai.utils import KeyCounter, concat_dicts
-from tools import dot_printer
-from tools.digraph import Digraph
+from lalcheck.ai.irs.basic.tools import PrettyPrinter
 
 
 def updated_state(state, var, value):

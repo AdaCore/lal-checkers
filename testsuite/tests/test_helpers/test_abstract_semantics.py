@@ -7,8 +7,8 @@ import os
 
 import abstract_semantics_helpers
 import test_helper
-from ai.irs.basic.analyses import abstract_semantics
-from ai.irs.basic.purpose import SyntheticVariable
+from lalcheck.ai.irs.basic.analyses import abstract_semantics
+from lalcheck.ai.irs.basic.purpose import SyntheticVariable
 
 
 def trace_id(trace):

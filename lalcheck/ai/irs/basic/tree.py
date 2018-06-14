@@ -2,7 +2,7 @@
 Provides the tree constructors of the Basic intermediate representation.
 """
 
-from ai.utils import Bunch
+from lalcheck.ai.utils import Bunch
 
 
 def _visitable(name):

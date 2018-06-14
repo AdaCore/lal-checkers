@@ -7,7 +7,7 @@ import os
 
 import abstract_semantics_helpers
 import test_helper
-from checkers.deadcode import check_dead_code
+from lalcheck.checkers.deadcode import check_dead_code
 
 
 def format_analysis_results(results):

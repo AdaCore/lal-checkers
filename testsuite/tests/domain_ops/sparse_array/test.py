@@ -1,5 +1,5 @@
-from ai import domains
-from ai.domain_ops import sparse_array_ops
+from lalcheck.ai import domains
+from lalcheck.ai.domain_ops import sparse_array_ops
 from itertools import product
 
 

@@ -1,9 +1,11 @@
-import os
-import ai.irs.basic.frontends.lal as lal2basic
-from ai.interpretations import default_type_interpreter
-from ai.irs.basic.tools import Models
-from ai.irs.basic.analyses import abstract_semantics
 import argparse
+import os
+
+import lalcheck.ai.irs.basic.frontends.lal as lal2basic
+from lalcheck.ai.interpretations import default_type_interpreter
+from lalcheck.ai.irs.basic.analyses import abstract_semantics
+
+from lalcheck.ai.irs.basic.tools import Models
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--file', type=str, nargs=1)
@@ -26,7 +28,6 @@ ctx = lal2basic.ExtractionContext.for_project(
 
 
 def do_analysis(checker, merge_predicates, call_strategy_name):
-    return
     args = parser.parse_args()
     if args.file is not None:
         input_files = [os.path.join(gnatcoverage_dir, args.file[0])]

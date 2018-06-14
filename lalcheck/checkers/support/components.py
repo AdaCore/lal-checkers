@@ -1,11 +1,12 @@
 from collections import namedtuple
 
-import ai.interpretations as interps
-import ai.irs.basic.analyses.abstract_semantics as abstract_analysis
-import ai.irs.basic.frontends.lal as lal2basic
-import ai.irs.basic.tools as irtools
-from ai.utils import dataclass
-from tools.scheduler import Task, Requirement
+import lalcheck.ai.interpretations as interps
+import lalcheck.ai.irs.basic.analyses.abstract_semantics as abstract_analysis
+import lalcheck.ai.irs.basic.frontends.lal as lal2basic
+import lalcheck.ai.irs.basic.tools as irtools
+from lalcheck.ai.utils import dataclass
+
+from lalcheck.tools.scheduler import Task, Requirement
 
 ProjectProvider = namedtuple(
     'ProjectProvider', ['project_file', 'scenario_vars']

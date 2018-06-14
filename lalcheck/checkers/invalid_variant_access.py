@@ -1,30 +1,31 @@
 from collections import defaultdict
 from xml.sax.saxutils import escape
 
-import ai.irs.basic.tree as irt
-from checkers.support.checker import AbstractSemanticsChecker
-from checkers.support.components import AbstractSemantics
-from ai.constants import lits
-from ai.irs.basic.analyses import abstract_semantics
-from ai.irs.basic.purpose import DerefCheck
-from ai.irs.basic.tools import PrettyPrinter
-from ai.utils import dataclass
-from tools import dot_printer
-from tools.digraph import Digraph
-from tools.scheduler import Task, Requirement
+import lalcheck.ai.irs.basic.tree as irt
+from lalcheck.ai.constants import lits
+from lalcheck.ai.irs.basic.analyses import abstract_semantics
+from lalcheck.ai.irs.basic.purpose import ExistCheck
+from lalcheck.ai.irs.basic.tools import PrettyPrinter
+from lalcheck.ai.utils import dataclass
+from lalcheck.checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.checkers.support.components import AbstractSemantics
+from lalcheck.tools import dot_printer
+from lalcheck.tools.digraph import Digraph
+
+from lalcheck.tools.scheduler import Task, Requirement
 
 
 def html_render_node(node):
     return escape(PrettyPrinter.pretty_print(node))
 
 
-def build_resulting_graph(file_name, cfg, null_derefs):
+def build_resulting_graph(file_name, cfg, infeasibles):
     def trace_id(trace):
         return str(trace)
 
     paths = defaultdict(list)
 
-    for trace, derefed, precise in null_derefs:
+    for trace, derefed, precise in infeasibles:
         for node in trace:
             paths[node].append((trace, derefed, precise))
 
@@ -55,11 +56,17 @@ def build_resulting_graph(file_name, cfg, null_derefs):
             )
         return ()
 
-    def print_path_to_null_deref(value):
-        derefed, precise = value
+    def print_path_to_infeasible_access(value):
+        purpose, precise = value
+        prefix = html_render_node(purpose.accessed_expr)
         qualifier = "" if precise else "potential "
-        res_str = "path to {}null dereference of {}".format(
-            qualifier, html_render_node(derefed)
+        res_str = ("path to {}infeasible access {}.{} due to invalid "
+                   "condition on discriminant {}.{}").format(
+            qualifier,
+            prefix,
+            escape(purpose.field_name),
+            prefix,
+            escape(purpose.discr_name)
         )
         return (
             '<font color="{}">{}</font>'.format('red', res_str),
@@ -71,9 +78,9 @@ def build_resulting_graph(file_name, cfg, null_derefs):
         ] + [
             dot_printer.DataPrinter(
                 trace_id(trace),
-                print_path_to_null_deref
+                print_path_to_infeasible_access
             )
-            for trace, _, _ in null_derefs
+            for trace, _, _ in infeasibles
         ]))
 
 
@@ -81,14 +88,14 @@ class Results(AbstractSemanticsChecker.Results):
     """
     Contains the results of the null dereference checker.
     """
-    def __init__(self, sem_analysis, null_derefs):
-        super(Results, self).__init__(sem_analysis, null_derefs)
+    def __init__(self, sem_analysis, infeasibles):
+        super(Results, self).__init__(sem_analysis, infeasibles)
 
     def save_results_to_file(self, file_name):
         """
         Prints the resulting graph as a DOT file to the given file name.
         At each program point, displays where the node is part of a path
-        that leads to a (potential) null dereference.
+        that leads to a (potential) infeasible field access.
         """
         build_resulting_graph(
             file_name,
@@ -99,29 +106,37 @@ class Results(AbstractSemanticsChecker.Results):
     @classmethod
     def diag_report(cls, diag):
         trace, purpose, precise = diag
+        prefix = purpose.accessed_expr.data.orig_node.text
         if precise:
-            frmt = "Null dereference of '{}'"
+            frmt = ("Infeasible access {}.{} due to invalid "
+                    "condition on discriminant {}.{}")
         else:
-            frmt = "Potential null dereference of '{}'"
+            frmt = ("Potentially infeasible access {}.{} due to invalid "
+                    "condition on discriminant {}.{}")
 
         return (
-            purpose.data.orig_node,
-            frmt.format(diag[1].data.orig_node.text),
-            DerefChecker.name()
+            purpose.accessed_expr.data.orig_node,
+            frmt.format(
+                prefix,
+                escape(purpose.field_name),
+                prefix,
+                escape(purpose.discr_name)
+            ),
+            VariantChecker.name()
         )
 
 
-def check_derefs(prog, model, merge_pred_builder):
+def check_variants(prog, model, merge_pred_builder):
     analysis = abstract_semantics.compute_semantics(
         prog,
         model,
         merge_pred_builder
     )
 
-    return find_null_derefs(analysis)
+    return find_invalid_accesses(analysis)
 
 
-def find_null_derefs(analysis):
+def find_invalid_accesses(analysis):
     # Retrieve nodes in the CFG that correspond to program statements.
     nodes_with_ast = (
         (node, node.data.node)
@@ -131,44 +146,44 @@ def find_null_derefs(analysis):
 
     # Collect those that are assume statements and that have a 'purpose' tag
     # which indicates that this assume statement was added to check
-    # dereferences.
-    deref_checks = (
-        (node, ast_node.expr, ast_node.data.purpose.expr)
+    # existence of a field.
+    exist_checks = (
+        (node, ast_node.expr, ast_node.data.purpose)
         for node, ast_node in nodes_with_ast
         if isinstance(ast_node, irt.AssumeStmt)
-        if DerefCheck.is_purpose_of(ast_node)
+        if ExistCheck.is_purpose_of(ast_node)
     )
 
     # Use the semantic analysis to evaluate at those program points the
     # corresponding expression being dereferenced.
-    derefed_values = (
-        (frozenset(trace) | {node}, derefed, value)
-        for node, check_expr, derefed in deref_checks
+    exist_check_values = (
+        (frozenset(trace) | {node}, purpose, value)
+        for node, expr, purpose in exist_checks
         for anc in analysis.cfg.ancestors(node)
-        for trace, value in analysis.eval_at(anc, check_expr).iteritems()
+        for trace, value in analysis.eval_at(anc, expr).iteritems()
     )
 
     # Finally, keep those that might be null.
     # Store the program trace, the dereferenced expression, and whether
     # the expression "might be null" or "is always null".
-    null_derefs = [
-        (trace, derefed, len(value) == 1)
-        for trace, derefed, value in derefed_values
+    infeasibles = [
+        (trace, purpose, len(value) == 1)
+        for trace, purpose, value in exist_check_values
         if lits.FALSE in value
     ]
 
-    return Results(analysis, null_derefs)
+    return Results(analysis, infeasibles)
 
 
 @Requirement.as_requirement
-def NullDerefs(provider_config, model_config, files):
-    return [NullDerefFinder(
+def InvalidAccesses(provider_config, model_config, files):
+    return [InvalidAccessFinder(
         provider_config, model_config, files
     )]
 
 
 @dataclass
-class NullDerefFinder(Task):
+class InvalidAccessFinder(Task):
     def __init__(self, provider_config, model_config, files):
         self.provider_config = provider_config
         self.model_config = model_config
@@ -187,7 +202,7 @@ class NullDerefFinder(Task):
 
     def provides(self):
         return {
-            'res': NullDerefs(
+            'res': InvalidAccesses(
                 self.provider_config,
                 self.model_config,
                 self.files
@@ -197,28 +212,28 @@ class NullDerefFinder(Task):
     def run(self, **sems):
         return {
             'res': [
-                find_null_derefs(analysis)
+                find_invalid_accesses(analysis)
                 for sem in sems.values()
                 for analysis in sem
             ]
         }
 
 
-class DerefChecker(AbstractSemanticsChecker):
+class VariantChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "deref_checker"
+        return "variant_checker"
 
     @classmethod
     def description(cls):
-        return "Finds null dereferences"
+        return "Finds invalid field access in variant records"
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):
-        return cls.requirement_creator(NullDerefs)(*args, **kwargs)
+        return cls.requirement_creator(InvalidAccesses)(*args, **kwargs)
 
 
-checker = DerefChecker
+checker = VariantChecker
 
 
 if __name__ == "__main__":

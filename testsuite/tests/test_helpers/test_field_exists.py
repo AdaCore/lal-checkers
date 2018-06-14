@@ -7,7 +7,7 @@ import os
 
 import abstract_semantics_helpers
 import test_helper
-from checkers.invalid_variant_access import check_variants
+from lalcheck.checkers.invalid_variant_access import check_variants
 
 
 def format_analysis_results(results):

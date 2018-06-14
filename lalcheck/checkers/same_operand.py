@@ -8,10 +8,11 @@ which are syntactically identical in the input Ada sources.
 from __future__ import (absolute_import, division, print_function)
 
 import libadalang as lal
-from tools.scheduler import Task, Requirement
-from checkers.support.components import AnalysisUnit
-from ai.utils import dataclass
-from checkers.support.checker import SyntacticChecker
+from lalcheck.ai.utils import dataclass
+from lalcheck.checkers.support.checker import SyntacticChecker
+from lalcheck.checkers.support.components import AnalysisUnit
+
+from lalcheck.tools.scheduler import Task, Requirement
 
 
 class Results(SyntacticChecker.Results):

@@ -1,4 +1,4 @@
-from ai.domain_ops import boolean_ops
+from lalcheck.ai.domain_ops import boolean_ops
 from itertools import product
 
 

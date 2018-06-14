@@ -3,15 +3,12 @@ Provides a libadalang frontend for the Basic IR.
 """
 
 import libadalang as lal
-
-from ai.irs.basic import tree as irt, purpose
-from ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
-from ai.constants import ops, lits, access_paths
-from ai.utils import KeyCounter, Transformer, profile
-from ai import types
-
+from lalcheck.ai import types
+from lalcheck.ai.constants import lits, ops, access_paths
+from lalcheck.ai.irs.basic import tree as irt, purpose
+from lalcheck.ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
+from lalcheck.ai.utils import KeyCounter, Transformer, profile
 from funcy.calc import memoize
-
 
 _lal_op_type_to_symbol = {
     (lal.OpLt, 2): ops.LT,

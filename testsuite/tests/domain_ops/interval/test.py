@@ -1,7 +1,6 @@
-from ai import domains
-from ai.domain_ops import boolean_ops, interval_ops
+from lalcheck.ai import domains
+from lalcheck.ai.domain_ops import boolean_ops, interval_ops
 from itertools import product
-
 
 test_dom = domains.Intervals(-4, 4)
 

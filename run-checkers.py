@@ -1,11 +1,11 @@
 import argparse
 import importlib
-import libadalang as lal
-from tools.scheduler import Scheduler
-from tools.digraph import Digraph
-from tools.dot_printer import gen_dot, DataPrinter
-from checkers.support.checker import Checker
 
+import libadalang as lal
+from lalcheck.checkers.support.checker import Checker
+from lalcheck.tools.digraph import Digraph
+from lalcheck.tools.dot_printer import gen_dot, DataPrinter
+from lalcheck.tools.scheduler import Scheduler
 
 parser = argparse.ArgumentParser(description='lal-checker runner.')
 
