@@ -256,16 +256,20 @@ def _proc_parameters(proc):
 
 
 @memoize
-def _subprogram_param_types(subp):
+def _subprogram_param_types(subp, with_stack):
     """
     Returns a tuple containing the types of each parameter of the given
     subprogram.
 
     :param lal.SubpDecl subp: The subprogram to consider.
+    :param bool with_stack: Whether the subprogram takes the optional stack
+        as an additional argument.
     :rtype: tuple[lal.BaseTypeDecl]
     """
     params = _proc_parameters(subp)
-    return tuple(p.f_type_expr for _, _, p in params)
+    return tuple(p.f_type_expr for _, _, p in params) + (
+        (_StackType(),) if with_stack else ()
+    )
 
 
 def _array_access_param_types(array_type_decl):
@@ -1542,8 +1546,7 @@ def _gen_ir(ctx, subp, typer):
 
                 global_access = _find_global_access(typer, ref)
 
-                if (global_access == _READS_GLOBAL_STATE or
-                        global_access == _WRITES_GLOBAL_STATE):
+                if global_access != _IGNORES_GLOBAL_STATE:
                     offset = var_idx.value
 
                     suffix_exprs.append(irt.FunCall(
@@ -1567,6 +1570,10 @@ def _gen_ir(ctx, subp, typer):
                         ))
 
                 pres, posts = retrieve_function_contracts(ctx, ref)
+                subp_param_types = _subprogram_param_types(
+                    ref,
+                    global_access != _IGNORES_GLOBAL_STATE
+                )
 
                 if len(out_params) == len(pres) == len(posts) == 0:
                     return suffix_pre_stmts, irt.FunCall(
@@ -1574,7 +1581,7 @@ def _gen_ir(ctx, subp, typer):
                         suffix_exprs,
                         orig_node=orig_node,
                         type_hint=type_hint,
-                        param_types=_subprogram_param_types(ref)
+                        param_types=subp_param_types
                     )
                 else:
                     ret_tpe = _ExtendedCallReturnType(
@@ -1603,7 +1610,7 @@ def _gen_ir(ctx, subp, typer):
                             suffix_exprs,
                             orig_node=orig_node,
                             type_hint=ret_tpe,
-                            param_types=_subprogram_param_types(ref)
+                            param_types=subp_param_types
                         )
                     )]
 
@@ -2627,6 +2634,7 @@ class ConvertUniversalTypes(IRImplicitVisitor):
     def visit_funcall(self, funcall, expected_type):
         if any(self.has_universal_type(arg) for arg in funcall.args):
             if 'param_types' in funcall.data:
+                assert(len(funcall.data.param_types) == len(funcall.args))
                 funcall.args = [
                     self.try_convert_expr(arg, param_type)
                     for param_type, arg in zip(
