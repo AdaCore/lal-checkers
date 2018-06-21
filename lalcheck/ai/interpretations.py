@@ -595,22 +595,59 @@ def default_array_interpreter(attribute_interpreter):
 
         array_dom = domains.SparseArray(indices_dom, comp_dom)
 
-        call_sig = _signer((array_dom,) + tuple(indices_dom.domains), comp_dom)
+        call_sig = _signer(
+            (array_dom,) + tuple(indices_dom.domains),
+            comp_dom
+        )(ops.CALL)
+
         updated_sig = _signer(
             (array_dom, comp_dom) + tuple(indices_dom.domains),
             array_dom
-        )
+        )(ops.UPDATED)
+
+        # Get the raw implementations of array operations:
 
         array_get = sparse_array_ops.get(array_dom)
         array_updated = sparse_array_ops.updated(array_dom)
         array_inv_get = sparse_array_ops.inv_get(array_dom)
         array_inv_updated = sparse_array_ops.inv_updated(array_dom)
+        array_string = sparse_array_ops.array_string(array_dom)
+        array_inv_string = sparse_array_ops.inv_array_string(array_dom)
+
+        # Wrap them in actual implementations. Indeed, the format of the
+        # arguments differ between the function call generated during the IR
+        # and the one defined in array_ops. The reason is that the index domain
+        # of our sparse array domain is a Product of all index domains, meaning
+        # that the expected parameter type is a tuple (an element of that
+        # product domain). However, the calls generated during the IR are
+        # flatten the indices. For example, we have:
+        #
+        # Get(my_two_dimensional_array, 3, 4).
+        #
+        # Instead of
+        #
+        # Get(my_two_dimensional_array, (3, 4)).
+        #
+        # This choice was made due to the fact that the expression (3, 4)
+        # does not existing in the original source and therefore would require
+        # more work to type.
+        # So, the purpose of these wrapper is to transform a flattened list of
+        # indices into a list of tuple.
 
         def actual_get(array, *indices):
             return array_get(array, indices)
 
         def actual_updated(array, val, *indices):
             return array_updated(array, val, indices)
+
+        def actual_string(array, *args):
+            # Every index i must become (i,) to be a valid element of the index
+            # domain. Since args is a flattened list of pairs (index, elem),
+            # an index occurs every even argument.
+            return array_string(
+                array,
+                *((arg,) if i % 2 == 0 else arg for i, arg in enumerate(args))
+            )
 
         def actual_inv_get(res, array_constr, *indices_constr):
             arr, indices = array_inv_get(res, array_constr, indices_constr)
@@ -621,14 +658,33 @@ def default_array_interpreter(attribute_interpreter):
                 res, array_constr, val_constr, indices_constr
             )
 
-        defs = {
-            call_sig(ops.CALL): (actual_get, actual_inv_get),
-            updated_sig(ops.UPDATED): (actual_updated, actual_inv_udpated)
-        }
+        def actual_inv_string(res, array_constr, *arg_constrs):
+            # Every index i must become (i,) to be a valid element of the index
+            # domain. Since args is a flattened list of pairs (index, elem),
+            # an index occurs every even argument.
+            return array_inv_string(
+                res,
+                array_constr,
+                *(
+                    (arg,) if i % 2 == 0 else arg
+                    for i, arg in enumerate(arg_constrs)
+                )
+            )
+
+        @def_provider_builder
+        def provider(sig):
+            if sig == call_sig:
+                return actual_get, actual_inv_get
+            elif sig == updated_sig:
+                return actual_updated, actual_inv_udpated
+            elif (sig.name == ops.STRING
+                    and len(sig.input_domains) > 0
+                    and sig.input_domains[0] == array_dom):
+                return actual_string, actual_inv_string
 
         return TypeInterpretation(
             array_dom,
-            dict_to_provider(defs),
+            provider,
             sparse_array_ops.lit
         )
 

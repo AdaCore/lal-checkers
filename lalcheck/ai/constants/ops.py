@@ -27,6 +27,8 @@ COPY_OFFSET = "CopyOffset"
 
 GET_MODEL = 'GetModel'
 
+STRING = 'String'
+
 
 class _IndexedName(object):
     def __init__(self, index, frmt):

@@ -344,6 +344,26 @@ def _deref_assign_param_types(ptr_type, val_type):
     return _StackType(), ptr_type, val_type
 
 
+def _string_literal_param_types(array_type_decl, text):
+    """
+    Returns a tuple containing the types of each parameter of the function
+    that creates the array containing the given string literal.
+
+    :param lal.BaseTypeDecl array_type_decl: The array type to consider.
+    :param str text: The content of the string literal.
+    :rtype: tuple[lal.BaseTypeDecl]
+    """
+
+    assignment_param_types = _array_assign_param_types(array_type_decl)
+
+    assert(len(assignment_param_types) == 3)
+
+    component_type = assignment_param_types[1]
+    index_type = assignment_param_types[2]
+
+    return (array_type_decl,) + (index_type, component_type) * len(text)
+
+
 def _find_cousin_conditions(record_fields, cond_prefix):
     """
     Returns the set of conditions that come after the given prefix list of
@@ -2030,28 +2050,37 @@ def _gen_ir(ctx, subp, typer):
             lit = new_expression_replacing_var("tmp", expr)
             text = expr.text[1:-1]
 
-            def build_lit(i):
-                if i == len(text):
-                    return lit
-                else:
-                    return irt.FunCall(
-                        ops.UPDATED,
-                        [
-                            build_lit(i + 1),
-                            irt.Lit(text[i], type_hint=ctx.evaluator.char),
-                            irt.Lit(
-                                i + 1,
-                                type_hint=ctx.evaluator.universal_int
-                            ),
-                        ],
-                        type_hint=expr.p_expression_type,
-                        orig_node=expr,
-                        param_types=_array_assign_param_types(
-                            expr.p_expression_type
-                        )
-                    )
+            def build_lit():
+                # Transform the string literal into a call to the "String"
+                # method as such:
+                #
+                # Ada:
+                # ---------------------------------
+                # "abc"
+                #
+                # Basic IR:
+                # ---------------------------------
+                # String(tmp, 0, a, 1, b, 2, c)
 
-            return [irt.AssignStmt(lit, build_lit(0))], lit
+                args = [lit]  # type: list[irt.Expr]
+                for i in range(len(text)):
+                    args.append(irt.Lit(
+                        i + 1, type_hint=ctx.evaluator.universal_int
+                    ))
+                    args.append(irt.Lit(
+                        text[i], type_hint=ctx.evaluator.char
+                    ))
+                return irt.FunCall(
+                    ops.STRING,
+                    args,
+                    type_hint=expr.p_expression_type,
+                    orig_node=expr,
+                    param_types=_string_literal_param_types(
+                        expr.p_expression_type, text
+                    )
+                )
+
+            return [irt.AssignStmt(lit, build_lit())], lit
 
         elif expr.is_a(lal.Aggregate):
             type_decl = expr.p_expression_type

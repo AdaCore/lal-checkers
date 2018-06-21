@@ -128,6 +128,96 @@ def updated(domain):
     return do_precise if has_split else do_imprecise
 
 
+def array_string(domain):
+    """
+    :param lalcheck.domains.SparseArray domain: The sparse array domain.
+
+    :return: A function which takes a set of arrays as an element of the sparse
+        array domain and returns all the arrays that can result from
+        updating them with an arbitrary long sequence of (index, element)
+        pairs.
+
+    :rtype: (list, *object) -> list
+    """
+    index_dom = domain.index_dom
+    has_split = Capability.HasSplit(index_dom)
+    do_updated = updated(domain)
+
+    def do_precise(array, *args):
+        """
+        :param list array: A set of arrays to update, represented by an
+            element of the sparse array domain.
+
+        :param *object args: A sequence of objects i_1, e_1, ..., i_n, e_n
+            (a flattened list of pairs) such that each (i_k, e_k) is a set of
+            concrete index-value pairs to update the arrays with, represented
+            by an element of the sparse array domain's product domain
+            (Index * Element).
+
+        :return: A new set of arrays resulting from updating the given arrays
+            at the given indices with the given values, represented by an
+            element of the sparse array domain.
+
+        :rtype: list
+        """
+
+        if len(args) == 0:
+            return array
+
+        # Transform the flattened list of pairs into an actual list of pairs.
+        pairs = [(args[i], args[i+1]) for i in range(0, len(args), 2)]
+
+        all_indices = reduce(
+            index_dom.join,
+            (index for index, _ in pairs)
+        )
+
+        not_relevant, relevant = partition(
+            array,
+            lambda elem: index_dom.is_empty(
+                index_dom.meet(all_indices, elem[0])
+            )
+        )
+
+        updated_relevant = [
+            (split, elem[1])
+            for elem in relevant
+            for split in index_dom.split(elem[0], all_indices)
+            if not index_dom.is_empty(split)
+        ]
+
+        return domain.optimized(
+            not_relevant +
+            updated_relevant +
+            pairs
+        )
+
+    def do_imprecise(array, *args):
+        """
+        :param list array: A set of arrays to update, represented by an
+            element of the sparse array domain.
+
+        :param *object args: A sequence of objects i_1, e_1, ..., i_n, e_n
+            (a flattened list of pairs) such that each (i_k, e_k) is a set of
+            concrete index-value pairs to update the arrays with, represented
+            by an element of the sparse array domain's product domain
+            (Index * Element).
+
+        :return: A new set of arrays resulting from updating the given arrays
+            at the given indices with the given values, represented by an
+            element of the sparse array domain.
+
+        :rtype: list
+        """
+
+        # Transform the flattened list of pairs into an actual list of pairs.
+        pairs = [(args[i], args[i+1]) for i in range(0, len(args), 2)]
+
+        return reduce(lambda acc, e: do_updated(acc, e[1], e[0]), pairs, array)
+
+    return do_precise if has_split else do_imprecise
+
+
 def inv_get(domain):
     """
     :param lalcheck.domains.SparseArray domain: The sparse array domain.
@@ -210,6 +300,13 @@ def inv_get(domain):
 
 def inv_updated(domain):
     def do(res, array_constr, val_constr, indices_constr):
+        raise NotImplementedError
+
+    return do
+
+
+def inv_array_string(domain):
+    def do(*args):
         raise NotImplementedError
 
     return do
