@@ -793,6 +793,11 @@ class SparseArray(AbstractDomain):
         self.bottom = []
         self.top = [self.prod_dom.top]
 
+        if Capability.HasSplit(index_dom):
+            self._join_elem = self._join_elem_precise
+        else:
+            self._join_elem = self._join_elem_imprecise
+
     def build(self, elems):
         assert self.le(elems, self.top)
         return elems
@@ -813,7 +818,17 @@ class SparseArray(AbstractDomain):
 
         return array
 
-    def _join_elem(self, x, elem):
+    def _join_elem_precise(self, x, elem):
+        """
+        Given an array x and an element elem, joins elem into x in a precise
+        way. This means that when an existing element in the array overlaps
+        with elem, the indices will be split apart so that two elements can
+        hold their most precise representation.
+
+        :param list[(object, object)] x: The sparse array.
+        :param (object, object) elem: The element to join.
+        :rtype: list[(object, object)]
+        """
         # Filter out elements that would be absorbed anyway.
         x = [
             e for e in x
@@ -845,6 +860,35 @@ class SparseArray(AbstractDomain):
 
         res.extend([(l, elem[1]) for l in left])
         return res
+
+    def _join_elem_imprecise(self, x, elem):
+        """
+        Given an array x and an element elem, joins elem into x in a imprecise
+        way. This means that when an existing element in the array overlaps
+        with elem, the indices will be joined and a single element will contain
+        the most conservative representation of both elements.
+
+        :param list[(object, object)] x: The sparse array.
+        :param (object, object) elem: The element to join.
+        :rtype: list[(object, object)]
+        """
+        # Filter out elements that would be absorbed anyway.
+        x = [
+            e for e in x
+            if not self.prod_dom.le(e, elem)
+        ]
+
+        res = []
+        join = elem
+        for e in x:
+            meet = self.index_dom.meet(e[0], elem[0])
+
+            if self.index_dom.is_empty(meet):
+                res.append(e)
+            else:
+                join = self.prod_dom.join(e, join)
+
+        return res + [join]
 
     def join(self, a, b):
         return self.optimized(reduce(self._join_elem, b, a))

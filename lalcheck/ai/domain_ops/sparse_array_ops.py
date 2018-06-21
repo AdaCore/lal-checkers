@@ -2,6 +2,7 @@
 Provides a collection of common useful operations on sparse array domains.
 """
 from lalcheck.ai.utils import partition
+from lalcheck.ai.domain_capabilities import Capability
 
 
 def get(domain):
@@ -52,8 +53,9 @@ def updated(domain):
     :rtype: (list, object, object) -> list
     """
     index_dom = domain.index_dom
+    has_split = Capability.HasSplit(index_dom)
 
-    def do(array, val, indices):
+    def do_precise(array, val, indices):
         """
         :param list array: A set of arrays to update, represented by an
             element of the sparse array domain.
@@ -69,6 +71,9 @@ def updated(domain):
         :return: A new set of arrays resulting from updating the given arrays
             at the given indices with the given values, represented by an
             element of the sparse array domain.
+            If the indices represent a single concrete value, the update is
+            done precisely by splitting the existing entry that overlaps with
+            this concrete value (it it exists) and adding a new entry for it.
 
         :rtype: list
         """
@@ -99,7 +104,28 @@ def updated(domain):
                 [(indices, val)]
             )
 
-    return do
+    def do_imprecise(array, val, indices):
+        """
+        :param list array: A set of arrays to update, represented by an
+            element of the sparse array domain.
+
+        :param object val: A set of concrete values to update the arrays with,
+            represented by an element of the sparse array domain's element
+            domain.
+
+        :param object indices: A set of indices to update the array at,
+            represented by an element of the sparse array domain's index
+            domain.
+
+        :return: A new set of arrays resulting from updating the given arrays
+            at the given indices with the given values, represented by an
+            element of the sparse array domain.
+
+        :rtype: list
+        """
+        return domain.join(array, [(indices, val)])
+
+    return do_precise if has_split else do_imprecise
 
 
 def inv_get(domain):
@@ -114,8 +140,9 @@ def inv_get(domain):
     elem_dom = domain.elem_dom
     do_get = get(domain)
     do_updated = updated(domain)
+    has_split = Capability.HasSplit(index_dom)
 
-    def do(res, array_constr, index_constr):
+    def do_precise(res, array_constr, index_constr):
         """
         :param object res: The set of values corresponding to an output of the
             get operation, represented by an element of the sparse array
@@ -160,7 +187,25 @@ def inv_get(domain):
         else:
             return array_constr, indices
 
-    return do
+    def do_imprecise(res, array_constr, index_constr):
+        """
+        :param object res: The set of values corresponding to an output of the
+            get operation, represented by an element of the sparse array
+            domain's element domain.
+
+        :param list array_constr: A constraint on the set of arrays.
+
+        :param object index_constr: A constraint on the set of indices.
+
+        :return: A set of arrays which contain the expected values at the
+            given indices, and these indices.
+        """
+        if domain.is_empty(array_constr) or index_dom.is_empty(index_constr):
+            return None
+        else:
+            return array_constr, index_constr
+
+    return do_precise if has_split else do_imprecise
 
 
 def inv_updated(domain):
