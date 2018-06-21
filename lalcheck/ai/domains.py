@@ -3,6 +3,7 @@ Provides some basic abstract domains.
 """
 
 from utils import powerset, zip_dicts
+from domain_capabilities import Capability
 import itertools
 import collections
 
@@ -33,6 +34,8 @@ class AbstractDomain(object):
     Note how the subset {0, 2} does not have a perfect abstraction.
     Its best abstraction is "[0, 2]".
     """
+
+    HasSplit = Capability.No
 
     def build(self, *args):
         """
@@ -206,6 +209,9 @@ class Intervals(AbstractDomain):
     """
     An abstract domain used to represent sets of integers.
     """
+
+    HasSplit = Capability.Yes
+
     def __init__(self, m_inf, inf):
         """
         Constructs a new abstract domain of intervals in the range of the two
@@ -347,6 +353,9 @@ class Product(AbstractDomain):
     An abstract domain used to represent the cartesian product of
     sets of concrete values.
     """
+
+    HasSplit = Capability.IfAll(lambda self: self.domains, Capability.HasSplit)
+
     def __init__(self, *domains):
         """
         Constructs a new abstract domain from the given instances of abstract
@@ -476,6 +485,9 @@ class Powerset(AbstractDomain):
     Two sets of concrete values are considered equal according to the provided
     merge predicate. When two values are considered equal, they are joined.
     """
+
+    HasSplit = Capability.IfSingle(lambda self: self.dom, Capability.HasSplit)
+
     def __init__(self, dom, merge_predicate, top):
         """
         Constructs a new abstract domain from the given abstract domain and the
@@ -596,6 +608,9 @@ class FiniteLattice(AbstractDomain):
     A general purpose finite lattice, to be constructed from a given
     "less than" relation.
     """
+
+    HasSplit = Capability(lambda self: self.splitter is not None)
+
     @staticmethod
     def _relations_count(lts):
         """
@@ -722,6 +737,9 @@ class FiniteSubsetLattice(AbstractDomain):
     computing the powerset of the given set, unlike FiniteLattice.of_subset.
     However, the different operations (may or) may not perform as fast.
     """
+
+    HasSplit = Capability.Yes
+
     def __init__(self, elems):
         self.bottom = frozenset()
         self.top = frozenset(elems)
@@ -952,6 +970,8 @@ class SparseArray(AbstractDomain):
 
 
 class AccessPathsLattice(AbstractDomain):
+    HasSplit = Capability.Yes
+
     class NullDeref(LookupError):
         pass
 
