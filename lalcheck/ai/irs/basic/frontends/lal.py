@@ -67,7 +67,7 @@ class _RecordField(object):
         :param lal.TypeDecl record_decl: The record declaration in which this
             field is defined.
 
-        :param lal.Identifier name: The identifier of the field.
+        :param lal.DefiningName name: The defining name of the field.
 
         :param int index: The index of the field inside the record.
 
@@ -89,8 +89,7 @@ class _RecordField(object):
         :param lal.Identifier name: The identifier to test.
         :rtype: bool
         """
-        return (name.p_referenced_decl == self.decl and
-                name.text == self.name.text)
+        return name.p_xref == self.name
 
     def field_type_expr(self):
         """
@@ -2003,7 +2002,7 @@ def _gen_ir(ctx, subp, typer):
             if expr.f_prefix.p_expression_type is None:
                 return unimplemented_expr(expr)
             elif _is_record_field(expr.f_suffix):
-                if expr.f_prefix.p_expression_type.p_is_access_type:
+                if expr.f_prefix.p_expression_type.p_is_access_type():
                     accessed_type = (expr.f_prefix.p_expression_type
                                      .f_type_def.f_subtype_indication
                                      .p_designated_type_decl_from(expr))
@@ -2044,11 +2043,14 @@ def _gen_ir(ctx, subp, typer):
             )
 
         elif expr.is_a(lal.CharLiteral):
-            return [], irt.Lit(expr.text[1:-1], type_hint=ctx.evaluator.char)
+            return [], irt.Lit(
+                expr.p_denoted_value,
+                type_hint=ctx.evaluator.char
+            )
 
         elif expr.is_a(lal.StringLiteral):
             lit = new_expression_replacing_var("tmp", expr)
-            text = expr.text[1:-1]
+            text = expr.p_denoted_value
 
             def build_lit():
                 # Transform the string literal into a call to the "String"
@@ -2879,7 +2881,7 @@ def access_typer(hint):
     """
     if hint.is_a(lal.TypeDecl):
         try:
-            if hint.p_is_access_type:
+            if hint.p_is_access_type():
                 return _pointer_type
         except lal.PropertyError:
             pass
