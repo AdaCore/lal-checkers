@@ -786,12 +786,23 @@ class FiniteSubsetLattice(AbstractDomain):
 
 
 class SparseArray(AbstractDomain):
-    def __init__(self, index_dom, elem_dom):
+    def __init__(self, index_dom, elem_dom, max_elems=0):
+        """
+        Creates a sparse array domain in which array elements use the given
+        index domain and element domain. Additionally, a maximal amount of
+        entries to keep track of in an array can specified.
+
+        :param AbstractDomain index_dom: The index domain.
+        :param AbstractDomain elem_dom: The element domain.
+        :param int max_elems: The maximal amount of entries. Any integer <= 0
+            means that there is no maximal amount of entries.
+        """
         self.index_dom = index_dom
         self.elem_dom = elem_dom
         self.prod_dom = Product(index_dom, elem_dom)
         self.bottom = []
         self.top = [self.prod_dom.top]
+        self.max_elems = max_elems
 
         if Capability.HasSplit(index_dom):
             self._join_elem = self._join_elem_precise
@@ -805,16 +816,59 @@ class SparseArray(AbstractDomain):
     def size(self, x):
         return sum(self.prod_dom.size(e) for e in x)
 
-    def optimized(self, array):
+    def _merge_element(self, array, e):
+        """
+        Merges the given element e with the given array, where all elements of
+        the array INCLUDING e are disjoint. Here, "merge" means that we look
+        for another element x in the array such that the join of x and e does
+        not intersect with any other element of the array, so that we can
+        safely replace x by the join of e and x. As a result:
+        - The invariant stating that all elements of the array are disjoint is
+          satisfied.
+        - There is either exactly the same number of elements in the returned
+          array as there are in "array", or exactly 1 (the top element if the
+          routine failed).
+        - We have included the information about "e" in "array" (at the cost
+          of a loss of precision).
+
+        :param list[object] array: The array in which to include e.
+        :param object e: The element to include in the array.
+        :return: A new array.
+        :rtype: list[str]
+        """
+        for i in range(len(array)):
+            i_x, x = array[i]
+            index_join = self.index_dom.join(i_x, e[0])
+            does_not_overlap = all(
+                self.index_dom.is_empty(
+                    self.index_dom.meet(index_join, array[j][0])
+                )
+                for j in range(i + 1, len(array))
+            )
+
+            if does_not_overlap:
+                return (array[:i] +
+                        [self.prod_dom.join(array[i], e)] +
+                        array[i+1:])
+
+        return self.top
+
+    def normalized(self, array):
         for i, x in enumerate(array):
             for j in range(i + 1, len(array)):
                 y = array[j]
                 if self.prod_dom.touches(x, y):
-                    return self.optimized(
+                    return self.normalized(
                         array[:i] + array[i + 1:j] + array[j + 1:] + [
                             self.prod_dom.join(x, y)
                         ]
                     )
+
+        # If the maximal amount of elements to store in the array is
+        # reached, merge arbitrary elements together.
+        while len(array) > self.max_elems > 0:
+            x = array.pop(0)
+            array = self._merge_element(array, x)
 
         return array
 
@@ -891,7 +945,7 @@ class SparseArray(AbstractDomain):
         return res + [join]
 
     def join(self, a, b):
-        return self.optimized(reduce(self._join_elem, b, a))
+        return self.normalized(reduce(self._join_elem, b, a))
 
     def meet(self, a, b):
         res = []

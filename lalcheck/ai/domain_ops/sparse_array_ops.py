@@ -93,7 +93,7 @@ def updated(domain):
                 if not index_dom.is_empty(split)
             ]
 
-            return domain.optimized(
+            return domain.normalized(
                 not_relevant +
                 updated_relevant +
                 [(indices, val)]
@@ -186,7 +186,7 @@ def array_string(domain):
             if not index_dom.is_empty(split)
         ]
 
-        return domain.optimized(
+        return domain.normalized(
             not_relevant +
             updated_relevant +
             pairs

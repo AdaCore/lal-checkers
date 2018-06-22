@@ -593,7 +593,7 @@ def default_array_interpreter(attribute_interpreter):
         ))
         comp_dom = component_interp.domain
 
-        array_dom = domains.SparseArray(indices_dom, comp_dom)
+        array_dom = domains.SparseArray(indices_dom, comp_dom, max_elems=15)
 
         call_sig = _signer(
             (array_dom,) + tuple(indices_dom.domains),
