@@ -191,7 +191,7 @@ def report_diag(report):
         proc_filename = filename
         proc_pos = spec.sloc_range.start
 
-        print("{}:{}:{} warning: {}:{}:{}:{}: {} [{}]".format(
+        print("{}:{}:{}: warning: {}:{}:{}:{}: {} [{}]".format(
             filename, pos.line, pos.column,
             proc_name, proc_filename, proc_pos.line, proc_pos.column,
             msg, flag
