@@ -497,14 +497,15 @@ def _find_vars_to_spill(ctx, node):
             return expr.p_xref
         elif expr.is_a(lal.DottedName):
             return accessed_var(expr.f_prefix)
-        elif expr.is_a(lal.AttributeRef) and expr.f_attribute.text == 'Model':
+        elif (expr.is_a(lal.AttributeRef)
+                and expr.f_attribute.text.lower() == 'model'):
             return accessed_var(expr.f_prefix)
         else:
             return None
 
     def is_accessed(node):
         if node.parent.is_a(lal.AttributeRef):
-            if node.parent.f_attribute.text == 'Access':
+            if node.parent.f_attribute.text.lower() == 'access':
                 if node.parent.f_prefix == node:
                     return True
         elif node.parent.is_a(lal.ParamAssoc):
@@ -553,13 +554,14 @@ def retrieve_function_contracts(ctx, proc):
     def collect_pre_posts(proc):
         if proc.f_aspects is not None:
             for aspect in proc.f_aspects.f_aspect_assocs:
-                if aspect.f_id.text == 'Pre':
+                aspect_name = aspect.f_id.text.lower()
+                if aspect_name == 'pre':
                     pres.append((aspect.f_expr, True))
-                elif aspect.f_id.text == 'Model_Pre':
+                elif aspect_name == 'model_pre':
                     pres.append((aspect.f_expr, True))
-                elif aspect.f_id.text == 'Post':
+                elif aspect_name == 'post':
                     posts.append((aspect.f_expr, True))
-                elif aspect.f_id.text == 'Model_Post':
+                elif aspect_name == 'model_post':
                     posts.append((aspect.f_expr, False))
 
     collect_pre_posts(proc)
@@ -1374,7 +1376,8 @@ def _gen_ir(ctx, subp, typer):
                 orig_node=expr
             )
 
-        elif expr.is_a(lal.AttributeRef) and expr.f_attribute.text == "Model":
+        elif (expr.is_a(lal.AttributeRef)
+                and expr.f_attribute.text.lower() == "model"):
             updated_index = 1
 
             return irt.FunCall(
@@ -3172,7 +3175,8 @@ class ExtractionContext(object):
             return
 
         model_ofs = model_unit.root.findall(
-            lambda x: x.is_a(lal.AspectAssoc) and x.f_id.text == "Model_Of"
+            lambda x: (x.is_a(lal.AspectAssoc)
+                       and x.f_id.text.lower() == "model_of")
         )
 
         type_models = {
