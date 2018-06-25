@@ -654,7 +654,7 @@ def _gen_ir(ctx, subp, typer):
         :return: The corresponding Basic IR operator.
         :rtype: str
         """
-        return _lal_op_type_to_symbol[type(lal_op), arity]
+        return _lal_op_type_to_symbol.get((type(lal_op), arity))
 
     def unimplemented(node):
         """
@@ -1851,28 +1851,31 @@ def _gen_ir(ctx, subp, typer):
             return transform_expr(expr.f_expr)
 
         elif expr.is_a(lal.BinOp):
-
             if expr.f_op.is_a(lal.OpAndThen, lal.OpOrElse):
                 return transform_short_circuit_ops(expr)
             else:
-                lhs_pre_stmts, lhs = transform_expr(expr.f_left)
-                rhs_pre_stmts, rhs = transform_expr(expr.f_right)
+                iop = transform_operator(expr.f_op, 2)
+                if iop is not None:
+                    lhs_pre_stmts, lhs = transform_expr(expr.f_left)
+                    rhs_pre_stmts, rhs = transform_expr(expr.f_right)
 
-                return lhs_pre_stmts + rhs_pre_stmts, irt.FunCall(
-                    transform_operator(expr.f_op, 2),
-                    [lhs, rhs],
+                    return lhs_pre_stmts + rhs_pre_stmts, irt.FunCall(
+                        transform_operator(expr.f_op, 2),
+                        [lhs, rhs],
+                        type_hint=expr.p_expression_type,
+                        orig_node=expr
+                    )
+
+        elif expr.is_a(lal.UnOp):
+            iop = transform_operator(expr.f_op, 1)
+            if iop is not None:
+                inner_pre_stmts, inner_expr = transform_expr(expr.f_expr)
+                return inner_pre_stmts, irt.FunCall(
+                    transform_operator(expr.f_op, 1),
+                    [inner_expr],
                     type_hint=expr.p_expression_type,
                     orig_node=expr
                 )
-
-        elif expr.is_a(lal.UnOp):
-            inner_pre_stmts, inner_expr = transform_expr(expr.f_expr)
-            return inner_pre_stmts, irt.FunCall(
-                transform_operator(expr.f_op, 1),
-                [inner_expr],
-                type_hint=expr.p_expression_type,
-                orig_node=expr
-            )
 
         elif expr.is_a(lal.CallExpr):
             return gen_call_expr(
