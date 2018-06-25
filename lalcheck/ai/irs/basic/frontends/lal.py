@@ -2195,8 +2195,12 @@ def _gen_ir(ctx, subp, typer):
 
         :rtype: list[irt.Stmt]
         """
-        if decl.is_a(lal.TypeDecl, lal.SubtypeDecl,
-                     lal.NumberDecl, lal.PackageDecl, lal.PackageBody):
+        if decl.is_a(lal.TypeDecl, lal.SubtypeDecl, lal.IncompleteTypeDecl,
+                     lal.NumberDecl, lal.PackageDecl, lal.PackageBody,
+                     lal.SubpDecl, lal.SubpBody,
+                     lal.UsePackageClause, lal.UseTypeClause,
+                     lal.GenericSubpInstantiation,
+                     lal.GenericPackageInstantiation):
             return []
 
         elif decl.is_a(lal.ObjectDecl):
@@ -2238,12 +2242,6 @@ def _gen_ir(ctx, subp, typer):
                         irt.AssignStmt(dest, updated, orig_node=decl)
                     ]
                 ]
-
-        elif decl.is_a(lal.SubpBody, lal.SubpDecl):
-            return []
-
-        elif decl.is_a(lal.IncompleteTypeDecl):
-            return []
 
         unimplemented(decl)
 
