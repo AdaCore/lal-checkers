@@ -2511,6 +2511,15 @@ def _gen_ir(ctx, subp, typer):
             # todo ?
             return []
 
+        elif stmt.is_a(lal.PragmaNode):
+            if stmt.f_id.text.lower() == "assert":
+                expr_pre_stmts, expr = transform_expr(stmt.f_args[0].f_expr)
+                return expr_pre_stmts + [irt.AssumeStmt(
+                    expr,
+                    purpose=purpose.ContractCheck('assertion', stmt),
+                    orig_node=stmt
+                )]
+
         unimplemented(stmt)
 
     def print_warning(subject, exception):

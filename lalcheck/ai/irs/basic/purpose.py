@@ -53,12 +53,14 @@ class ExistCheck(Purpose):
 
 class ContractCheck(Purpose):
     """
-    Attached to a node that was created for the purpose of checking that a
-    Pre/Post condition is satisfied.
+    Attached to a node that was created for the purpose of checking that any
+    contract specified by the user is satisfied (precondition,
+    postcondition, assertion, etc.)
     """
     def __init__(self, contract_name, orig_call):
         """
-        :param str contract_name: "Precondition" or "Postcondition"
+        :param str contract_name: The kind of contract (precondition,
+            postcondition, assertion, etc.)
         :param lal.AdaNode orig_call: The original call node associated to the
             contract check.
         """
