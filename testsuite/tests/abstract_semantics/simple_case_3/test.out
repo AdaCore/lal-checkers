@@ -1,0 +1,242 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume0", 
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{True}"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign1", 
+          "assume1", 
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{Lit}", 
+          "is_op": "{False}"
+        }
+      }
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assume0", 
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "assume1": [
+      {
+        "trace:": [
+          "assume1", 
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{Lit}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "read0": [
+      {
+        "trace:": [
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "read1": [
+      {
+        "trace:": [
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assume0", 
+          "assume1", 
+          "read0", 
+          "read1", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ]
+  }, 
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume0", 
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{True}"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign1", 
+          "assume1", 
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{Lit}", 
+          "is_op": "{False}"
+        }
+      }
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assume0", 
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "assume1": [
+      {
+        "trace:": [
+          "assume1", 
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{Lit}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "read0": [
+      {
+        "trace:": [
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "read1": [
+      {
+        "trace:": [
+          "read0", 
+          "read1", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume0", 
+          "read0", 
+          "read1", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{True}"
+        }
+      }, 
+      {
+        "trace:": [
+          "assign1", 
+          "assume1", 
+          "read0", 
+          "read1", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{Lit}", 
+          "is_op": "{False}"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "expr_kind": "{BinExpr, Lit, UnExpr}", 
+          "is_op": "{False, True}"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+Program:
+  read(expr_kind#1)
+  read(is_op#2)
+  split:
+    assume(||(==(expr_kind#1, BinExpr), ==(expr_kind#1, UnExpr)))
+    is_op#2 = True
+  |:
+    assume(==(expr_kind#1, Lit))
+    is_op#2 = False
+  end:

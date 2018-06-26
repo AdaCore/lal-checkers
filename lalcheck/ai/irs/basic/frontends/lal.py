@@ -838,7 +838,7 @@ def _gen_ir(ctx, subp, typer):
             )
         return build
 
-    def gen_case_condition(expr, values):
+    def gen_case_condition(expr, choices):
         """
         Example:
 
@@ -850,60 +850,91 @@ def _gen_ir(ctx, subp, typer):
 
         :param irt.Expr expr: The case's selector expression.
 
-        :param list[int | ConstExprEvaluator.Range] values:
-            The different possible literal values.
+        :param list[lal.AdaNode] choices: The list of alternatives as lal
+            nodes.
 
         :return: An expression corresponding to the condition check for
             entering an alternative of an Ada case statement.
 
         :rtype: irt.Expr
         """
-        def gen_lit(value):
-            if isinstance(value, int):
-                return irt.Lit(
-                    value,
-                    type_hint=ctx.evaluator.universal_int
-                )
-            raise NotImplementedError("Cannot transform literal")
+        try:
+            tpe = typer.get(expr.data.type_hint)
+        except Transformer.TransformationFailure:
+            raise NotImplementedError("Selected expression cannot be typed")
 
-        def gen_single(value):
-            if isinstance(value, int):
+        def gen_lit(lit_value, lit_expr):
+            if tpe.is_a(types.ASCIICharacter):
+                return irt.Lit(
+                    chr(lit_value),
+                    type_hint=expr.data.type_hint,
+                    orig_node=lit_expr
+                )
+            elif tpe.is_a(types.IntRange):
+                return irt.Lit(
+                    lit_value,
+                    type_hint=expr.data.type_hint,
+                    orig_node=lit_expr
+                )
+            elif tpe.is_a(types.Enum):
+                return irt.Lit(
+                    tpe.lits[lit_value],
+                    type_hint=expr.data.type_hint,
+                    orig_node=lit_expr
+                )
+            else:
+                return unimplemented_expr(lit_expr)[1]
+
+        def gen_single(choice):
+            def gen_range(first_val, last_val, first_expr, last_expr):
                 return irt.FunCall(
-                    ops.EQ,
-                    [expr, gen_lit(value)],
+                    ops.AND,
+                    [
+                        irt.FunCall(
+                            ops.GE,
+                            [expr, gen_lit(first_val, first_expr)],
+                            type_hint=ctx.evaluator.bool
+                        ),
+                        irt.FunCall(
+                            ops.LE,
+                            [expr, gen_lit(last_val, last_expr)],
+                            type_hint=ctx.evaluator.bool
+                        )
+                    ],
                     type_hint=ctx.evaluator.bool
                 )
-            elif isinstance(value, ConstExprEvaluator.Range):
-                if (isinstance(value.first, int) and
-                        isinstance(value.last, int)):
-                    return irt.FunCall(
-                        ops.AND,
-                        [
-                            irt.FunCall(
-                                ops.GE,
-                                [expr, gen_lit(value.first)],
-                                type_hint=ctx.evaluator.bool
-                            ),
-                            irt.FunCall(
-                                ops.LE,
-                                [expr, gen_lit(value.last)],
-                                type_hint=ctx.evaluator.bool
-                            )
-                        ],
-                        type_hint=ctx.evaluator.bool
-                    )
 
-            raise NotImplementedError("Cannot transform when condition")
+            if (choice.is_a(lal.Identifier)
+                    and choice.p_referenced_decl.is_a(lal.SubtypeDecl)):
+                try:
+                    subtype = typer.get(choice.p_referenced_decl)
+                    if subtype.is_a(types.IntRange):
+                        return gen_range(
+                            subtype.frm, subtype.to,
+                            None, None
+                        )
+                except Transformer.TransformationFailure:
+                    pass
 
-        conditions = [gen_single(value) for value in values]
+                raise NotImplementedError("Cannot transform subtype condition")
+            elif choice.is_a(lal.BinOp) and choice.f_op.is_a(lal.OpDoubleDot):
+                return gen_range(
+                    choice.f_left.p_eval_as_int, choice.f_right.p_eval_as_int,
+                    choice.f_left, choice.f_right
+                )
+            else:
+                return irt.FunCall(
+                    ops.EQ,
+                    [expr, gen_lit(choice.p_eval_as_int, choice)],
+                    type_hint=ctx.evaluator.bool
+                )
 
-        if len(conditions) > 1:
-            return reduce(
-                binexpr_builder(ops.OR, ctx.evaluator.bool),
-                conditions
-            )
-        else:
-            return conditions[0]
+        conditions = [gen_single(choice) for choice in choices]
+
+        return reduce(
+            binexpr_builder(ops.OR, ctx.evaluator.bool),
+            conditions
+        )
 
     def transform_short_circuit_ops(bin_expr):
         """
@@ -1094,13 +1125,7 @@ def _gen_ir(ctx, subp, typer):
         # should never fail.
         # Also store the transformed statements of each alternative.
         case_alts = [
-            (
-                [
-                    ctx.evaluator.eval(transform_expr(choice)[1])
-                    for choice in alt.f_choices
-                ],
-                transformer(alt)
-            )
+            (alt.f_choices, transformer(alt))
             for alt in alternatives
             if not any(
                 choice.is_a(lal.OthersDesignator)
@@ -1293,12 +1318,7 @@ def _gen_ir(ctx, subp, typer):
             )
 
             if not any(x.is_a(lal.OthersDesignator) for x in alternatives):
-                choices = [
-                    ctx.evaluator.eval(transform_expr(choice)[1])
-                    for choice in alternatives
-                ]
-
-                condition = gen_case_condition(discr_getter, choices)
+                condition = gen_case_condition(discr_getter, alternatives)
             else:
                 # Find all the other conditions
                 cousin_conditions = _find_cousin_conditions(
@@ -1314,10 +1334,7 @@ def _gen_ir(ctx, subp, typer):
                 ]
 
                 alts_conditions = [
-                    gen_case_condition(discr_getter, [
-                        ctx.evaluator.eval(transform_expr(choice)[1])
-                        for choice in alt
-                    ])
+                    gen_case_condition(discr_getter, alt)
                     for alt in other_alts
                 ]
 
