@@ -2841,6 +2841,20 @@ class ConstExprEvaluator(IRImplicitVisitor):
         return lit.val
 
 
+@Transformer.as_transformer
+def _eval_as_int(x):
+    """
+    Given an arbitrary Ada node, tries to evaluate it to an integer.
+
+    :param lal.AdaNode x: The node to evaluate
+    :rtype: int | None
+    """
+    try:
+        return x.p_eval_as_int
+    except (lal.PropertyError, lal.NativeException):
+        return None
+
+
 @types.delegating_typer
 def int_range_typer():
     """
@@ -2855,18 +2869,11 @@ def int_range_typer():
                 rng = hint.f_type_def.f_range.f_range
                 return rng.f_left, rng.f_right
 
-    @Transformer.as_transformer
-    def eval_as_int(x):
-        try:
-            return x.p_eval_as_int
-        except (lal.PropertyError, lal.NativeException):
-            return None
-
     @types.Typer
     def to_int_range(xs):
         return types.IntRange(*xs)
 
-    return get_operands >> (eval_as_int & eval_as_int) >> to_int_range
+    return get_operands >> (_eval_as_int & _eval_as_int) >> to_int_range
 
 
 @types.typer
@@ -2957,21 +2964,84 @@ def name_typer(inner_typer):
 
     :rtype: types.Typer[lal.AdaNode]
     """
+
+    # Create a simple placeholder object for when there are no constraint.
+    # (object() is called because None would mean that we failed to fetch the
+    # constraint).
+    no_constraint = object()
+
     @Transformer.as_transformer
-    def resolved_name(hint):
+    def resolved_name_and_constraint(hint):
         """
         :param lal.AdaNode hint: the lal type expression.
-        :return: The type declaration associated to the name, if relevant.
-        :rtype: lal.BaseTypeDecl
+        :return: The type declaration associated to the name, if relevant,
+            as well as the optional constraint.
+        :rtype: (lal.BaseTypeDecl, lal.AdaNode)
         """
         if hint.is_a(lal.SubtypeIndication):
-            # todo: Take constraint into account
             try:
-                return hint.p_designated_type_decl
+                return (
+                    hint.p_designated_type_decl,
+                    hint.f_constraint if hint.f_constraint is not None
+                    else no_constraint
+                )
             except lal.PropertyError:
                 pass
 
-    return resolved_name >> inner_typer
+    def identity_if_is_a(tpe):
+        """
+        Given a type tpe, returns a transformer which fails if its element
+        to transform is not of type tpe, or else leaves it untouched.
+        """
+        @Transformer.as_transformer
+        def f(x):
+            if x.is_a(tpe):
+                return x
+        return f
+
+    @Transformer.as_transformer
+    def get_range(constraint):
+        """
+        If the given constraint is a range constraint, returns the expressions
+        for its left and right hand side in a pair.
+        """
+        if constraint is not no_constraint:
+            if constraint.is_a(lal.RangeConstraint):
+                rng = constraint.f_range.f_range
+                if rng.is_a(lal.BinOp) and rng.f_op.is_a(lal.OpDoubleDot):
+                    return rng.f_left, rng.f_right
+
+    @Transformer.as_transformer
+    def refined_int_range(args):
+        """
+        From the given pair containing an IntRange type on the left and an
+        evaluated range constraint on the right (a pair of integers), return
+        a new IntRange instance with the constraint applied.
+        """
+        tpe, (c_left, c_right) = args
+        assert (tpe.frm <= c_left and tpe.to >= c_right)
+        return types.IntRange(c_left, c_right)
+
+    # Transforms a lal.RangeConstraint into a pair of int ('First and 'Last)
+    get_range_constraint = get_range >> (_eval_as_int & _eval_as_int)
+
+    # Transforms a pair (types.IntRange, lal.RangeConstraint) into a new,
+    # refined types.IntRange instance.
+    when_constrained_range = (
+        (identity_if_is_a(types.IntRange) & get_range_constraint) >>
+        refined_int_range
+    )
+
+    # 1. Resolve the name reference and the optional constraint into a pair.
+    # 2. Type the left (0th) element of the tuple (which contains the referred
+    #    declaration).
+    # 3. If the computed type is an IntRange and the constraint is a range
+    #    constraint, refine the IntRange. Else ignore the constraint and simply
+    #    return the previously computed type which is in the left (0th) element
+    #    of the tuple.
+    return (resolved_name_and_constraint >>
+            inner_typer.for_index(0) >>
+            (when_constrained_range | Transformer.project(0)))
 
 
 def anonymous_typer(inner_typer):
@@ -3070,11 +3140,11 @@ def subtyper(inner):
     :rtype: types.Typer[lal.AdaNode]
     """
     @types.typer
-    def get_subtype(hint):
+    def get_subtyped(hint):
         if hint.is_a(lal.SubtypeDecl):
             return hint.f_subtype
 
-    return get_subtype >> inner
+    return get_subtyped >> inner
 
 
 @types.typer

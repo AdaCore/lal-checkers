@@ -201,6 +201,23 @@ class Transformer(object):
 
         return f
 
+    def for_index(self, index):
+        """
+        Given a transformer of A to B, returns a transformer from
+        (X_1, ..., A, ... X_n) to (X_1, ..., B, ..., X_n) such that all element
+        except the one at the given index are left untouched.
+
+        :param int index: The index to transform.
+        :rtype: Transformer
+        """
+        @self.as_transformer
+        def f(hint):
+            res = self._transform(hint[index])
+            if res is not None:
+                return hint[:index] + (res,) + hint[index+1:]
+
+        return f
+
     def get(self, x):
         """
         Forces transformation of the given argument.
@@ -221,6 +238,20 @@ class Transformer(object):
         @Transformer.as_transformer
         def f(x):
             return x
+        return f
+
+    @staticmethod
+    def project(index):
+        """
+        Returns a transformer which projects onto the given field index.
+
+        :param object index: The component to project (an int, a hashable
+            object, etc.)
+        :rtype: Transformer
+        """
+        @Transformer.as_transformer
+        def f(x):
+            return x[index]
         return f
 
     @staticmethod

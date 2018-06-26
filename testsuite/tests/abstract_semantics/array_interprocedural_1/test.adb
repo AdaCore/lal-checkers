@@ -2,7 +2,7 @@ procedure A is
    C_A : String := "abc";
    Char : Character;
 
-   function X (A : String ; I : Integer) return Character is
+   function X (A : String ; I : Positive) return Character is
    begin
       return A (I);
    end X;
