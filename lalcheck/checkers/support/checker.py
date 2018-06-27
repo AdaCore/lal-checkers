@@ -4,7 +4,7 @@ from components import (
 )
 
 
-def _create_best_provider(project_file, scenario_vars, filenames):
+def create_best_provider(project_file, scenario_vars, filenames):
     if project_file is None:
         return AutoProvider(tuple(filenames))
     else:
@@ -68,7 +68,7 @@ class AbstractSemanticsChecker(Checker):
             arg_values = parser.parse_args(args)
 
             return requirement_class(
-                _create_best_provider(project_file, scenario_vars, filenames),
+                create_best_provider(project_file, scenario_vars, filenames),
                 ModelConfig(arg_values.typer,
                             arg_values.type_interpreter,
                             arg_values.call_strategy,
@@ -109,7 +109,7 @@ class SyntacticChecker(Checker):
     def requirement_creator(requirement_class):
         def create_requirement(project_file, scenario_vars, filenames, args):
             return requirement_class(
-                _create_best_provider(project_file, scenario_vars, filenames),
+                create_best_provider(project_file, scenario_vars, filenames),
                 tuple(filenames)
             )
 
