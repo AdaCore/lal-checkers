@@ -2524,6 +2524,31 @@ def _gen_ir(ctx, subp, typer):
 
             return stmts
 
+        elif stmt.is_a(lal.ExtendedReturnStmt):
+            stmts = []
+            var_decl = stmt.f_decl.f_ids[0]
+            stmts.extend(transform_decl(stmt.f_decl))
+            stmts.extend(transform_stmts(stmt.f_stmts.f_stmts))
+
+            var = var_decls.get(var_decl)
+            if var is None:
+                unimplemented(stmt)
+
+            stmts.append(irt.AssignStmt(
+                result_var.value,
+                irt.Identifier(
+                    var,
+                    type_hint=var.data.type_hint,
+                    orig_node=var.data.orig_node
+                ),
+                orig_node=stmt
+            ))
+            stmts.append(irt.GotoStmt(
+                func_end_label,
+                orig_node=stmt
+            ))
+            return stmts
+
         elif stmt.is_a(lal.NullStmt):
             return []
 

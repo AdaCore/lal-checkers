@@ -1,0 +1,6 @@
+Program:
+  read(X#1)
+  X#1 = 2
+  result0#2 = X#1
+  goto end
+  end:
