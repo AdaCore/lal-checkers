@@ -8,6 +8,23 @@ from lalcheck.ai import domains
 import boolean_ops
 
 
+def _overflow_handler(domain):
+    """
+    Returns a function which, given two bounds of an interval, checks that
+    it does not represent an overflow.
+    Returns the top element of the domain if there is one.
+
+    :param lalcheck.ai.domains.Intervals domain: The interval domain.
+    :rtype: (int, int)->(int, int)
+    """
+    def do(frm, to):
+        if frm < domain.top[0] or to > domain.top[1]:
+            return domain.top
+        return frm, to
+
+    return do
+
+
 def add_no_wraparound(domain):
     """
     :param lalcheck.domains.Intervals domain: An intervals domain.
@@ -18,6 +35,8 @@ def add_no_wraparound(domain):
 
     Note that overflow is represented by an unknown result (-inf, inf).
     """
+    handle_overflow = _overflow_handler(domain)
+
     def do(x, y):
         """
         :param (int, int) x: A set of concrete integers, represented by
@@ -36,11 +55,7 @@ def add_no_wraparound(domain):
         if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
             return domain.bottom
 
-        frm, to = x[0] + y[0], x[1] + y[1]
-        if frm >= domain.top[0] and to <= domain.top[1]:
-            return frm, to
-        else:
-            return domain.top
+        return handle_overflow(x[0] + y[0], x[1] + y[1])
 
     return do
 
@@ -55,6 +70,8 @@ def sub_no_wraparound(domain):
 
     Note that overflow is represented by an unknown result (-inf, inf).
     """
+    handle_overflow = _overflow_handler(domain)
+
     def do(x, y):
         """
         :param (int, int) x: A set of concrete integers, represented by
@@ -73,11 +90,7 @@ def sub_no_wraparound(domain):
         if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
             return domain.bottom
 
-        frm, to = x[0] - y[1], x[1] - y[0]
-        if frm >= domain.top[0] and to <= domain.top[1]:
-            return frm, to
-        else:
-            return domain.top
+        return handle_overflow(x[0] - y[1], x[1] - y[0])
 
     return do
 
@@ -90,6 +103,8 @@ def negate(domain):
 
     :rtype: ((int, int)) -> (int, int)
     """
+    handle_overflow = _overflow_handler(domain)
+
     def do(x):
         """
         :param (int, int) x: A set of concrete integers, represented by
@@ -104,7 +119,7 @@ def negate(domain):
         if domain.eq(x, domain.bottom):
             return domain.bottom
 
-        return domain.build(-x[1], -x[0])
+        return handle_overflow(-x[1], -x[0])
 
     return do
 

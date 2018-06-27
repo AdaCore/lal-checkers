@@ -240,6 +240,8 @@ class Intervals(AbstractDomain):
         elif (len(args) == 2 and
               self.top[0] <= args[0] <= args[1] <= self.top[1]):
             return args[0], args[1]
+        else:
+            raise NotImplementedError
 
     def left_unbounded(self, x):
         """
