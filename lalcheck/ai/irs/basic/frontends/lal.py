@@ -709,16 +709,17 @@ def _gen_ir(ctx, subp, typer):
 
         :rtype: irt.Identifier
         """
+        tpe = replaced_expr.p_expression_type
         return irt.Identifier(
             irt.Variable(
                 fresh_name(name),
                 purpose=purpose.SyntheticVariable(),
-                type_hint=replaced_expr.p_expression_type,
+                type_hint=tpe,
                 orig_node=replaced_expr,
                 mode=Mode.Local,
                 index=next_var_idx()
             ),
-            type_hint=replaced_expr.p_expression_type,
+            type_hint=tpe,
             orig_node=replaced_expr
         )
 
@@ -2708,10 +2709,14 @@ class ConvertUniversalTypes(IRImplicitVisitor):
             return expr
 
     def visit_assign(self, assign):
+        if self.has_universal_type(assign.id):
+            # When the variable assigned has an universal type, we must find
+            # a compatible "concrete" type to replace it with.
+            compatible_type = self.compatible_type(assign.id.data.type_hint)
+            assign.id.visit(self, compatible_type)
+
         assign.expr = self.try_convert_expr(
-            assign.expr,
-            assign.id.data.type_hint if not self.has_universal_type(assign.id)
-            else self.compatible_type(assign.id.data.type_hint)
+            assign.expr, assign.id.data.type_hint
         )
 
     def visit_assume(self, assume):
@@ -2758,6 +2763,16 @@ class ConvertUniversalTypes(IRImplicitVisitor):
                 self.try_convert_expr(arg, arg.data.type_hint)
                 for arg in funcall.args
             ]
+
+    def visit_ident(self, ident, *expected_type):
+        # An identifier doesn't always act as an expression (see ReadStmt).
+        # However when it does, it must have an "expected_type" argument,
+        # coming from one of the above visits.
+        if len(expected_type) == 1:
+            if self.has_universal_type(ident.var):
+                ident.var.data = ident.var.data.copy(
+                    type_hint=expected_type[0]
+                )
 
 
 class NotConstExprError(ValueError):
