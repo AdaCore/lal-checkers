@@ -756,6 +756,8 @@ def custom_pointer_interpreter(inner_interpreter):
                 )
 
             elif (sig.name == ops.UPDATED and len(sig.input_domains) == 3
+                  and isinstance(sig.input_domains[0],
+                                 domains.RandomAccessMemory)
                   and sig.input_domains[1] == ptr_dom):
                 return (
                     access_paths_ops.updated(ptr_dom),
