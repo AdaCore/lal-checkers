@@ -3230,10 +3230,13 @@ def ram_typer(hint):
         return types.DataStorage()
 
 
+_unknown_type = types.Unknown()
+
+
 @types.memoizing_typer
 @types.typer
 def unknown_typer(_):
-    return types.Unknown()
+    return _unknown_type
 
 
 @types.memoizing_typer
