@@ -2901,7 +2901,7 @@ def _eval_as_int(x):
 def int_range_typer():
     """
     :return: A typer for int ranges.
-    :rtype: types.Typer[lal.AdaNodetypes]
+    :rtype: types.Typer[lal.AdaNode]
     """
 
     @Transformer.as_transformer
@@ -2916,6 +2916,26 @@ def int_range_typer():
         return types.IntRange(*xs)
 
     return get_operands >> (_eval_as_int & _eval_as_int) >> to_int_range
+
+
+@types.delegating_typer
+def int_mod_typer():
+    """
+    :return: A typer for mod int types.
+    :rtype: types.Typer[lal.AdaNode]
+    """
+
+    @Transformer.as_transformer
+    def get_modulus(hint):
+        if hint.is_a(lal.TypeDecl):
+            if hint.f_type_def.is_a(lal.ModIntTypeDef):
+                return hint.f_type_def.f_expr
+
+    @types.Typer
+    def to_int_range(modulus):
+        return types.IntRange(0, modulus - 1)
+
+    return get_modulus >> _eval_as_int >> to_int_range
 
 
 @types.typer
@@ -3410,6 +3430,7 @@ class ExtractionContext(object):
             typr = (none_typer |
                     standard_typer |
                     int_range_typer |
+                    int_mod_typer |
                     enum_typer |
                     access_typer |
                     record_typer(record_component_typer(typer)) |
