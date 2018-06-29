@@ -1,33 +1,29 @@
 import argparse
 import os
-
-import lalcheck.ai.irs.basic.frontends.lal as lal2basic
-from lalcheck.ai.interpretations import default_type_interpreter
-from lalcheck.ai.irs.basic.analyses import abstract_semantics
-
-from lalcheck.ai.irs.basic.tools import Models
+from lalcheck import checker_runner
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--file', type=str, nargs=1)
 
-default_merge_predicates = {
-    'le_t_eq_v': (
-        abstract_semantics.MergePredicateBuilder.Le_Traces |
-        abstract_semantics.MergePredicateBuilder.Eq_Vals
-    ),
-    'always': abstract_semantics.MergePredicateBuilder.Always
-}
-
 gnatcoverage_dir = os.path.join(os.environ['EXT_SRC'], 'gnatcoverage')
+project_file = os.path.join(gnatcoverage_dir, 'gnatcov.gpr')
+scenario_vars = {'BINUTILS_SRC_DIR': '/doesnotexist',
+                 'BINUTILS_BUILD_DIR': '/doesnotexist'}
 
-ctx = lal2basic.ExtractionContext.for_project(
-    os.path.join(gnatcoverage_dir, 'gnatcov.gpr'),
-    {'BINUTILS_SRC_DIR': '/doesnotexist',
-     'BINUTILS_BUILD_DIR': '/doesnotexist'}
-)
+checkers = [
+    'lalcheck.checkers.violated_contract',
+    'lalcheck.checkers.deadcode',
+    'lalcheck.checkers.null_deref',
+    'lalcheck.checkers.invalid_variant_access',
+    'lalcheck.checkers.bad_unequal',
+    'lalcheck.checkers.same_logic',
+    'lalcheck.checkers.same_operand',
+    'lalcheck.checkers.same_test',
+    'lalcheck.checkers.same_then_else'
+]
 
 
-def do_analysis(checker, merge_predicates, call_strategy_name):
+def run():
     args = parser.parse_args()
     if args.file is not None:
         input_files = [os.path.join(gnatcoverage_dir, args.file[0])]
@@ -183,60 +179,25 @@ def do_analysis(checker, merge_predicates, call_strategy_name):
         ]
         input_files = [os.path.join(gnatcoverage_dir, f) for f in input_files]
 
-    progs = []
-    for i, f in enumerate(input_files):
-        print("{:02d}%: {}".format(
-            int(((i + 1.0) / len(input_files)) * 100),
-            f
-        ))
-        progs.extend(ctx.extract_programs_from_file(f))
+    args = (['-P', project_file] +
+            ['-X{}={}'.format(*entry) for entry in scenario_vars.iteritems()] +
+            ['--checkers', '{}'.format(';'.join([c for c in checkers]))] +
+            ['--files', '{}'.format(';'.join(input_files))] +
+            ['--log', 'error'])
 
-    call_strategies = {
-        'unknown': abstract_semantics.UnknownTargetCallStrategy(),
-        'topdown': abstract_semantics.TopDownCallStrategy(
-            progs,
-            lambda: model,
-            lambda: pred
+    diags = checker_runner.run(args, diagnostic_action='return')
+    diags = [
+        "{}:{}: {}".format(
+            node.sloc_range.start.line,
+            node.sloc_range.start.column,
+            msg
         )
-    }
+        for node, msg, _ in diags
+    ]
+    diags.sort()
 
-    model_builder = Models(
-        ctx.default_typer(lal2basic.unknown_typer),
-        default_type_interpreter,
-        call_strategies[call_strategy_name].as_def_provider()
-    )
-
-    model = model_builder.of(*progs)
-
-    for prog in progs:
-        for pred_name, pred in merge_predicates.iteritems():
-            ada_prog = prog.data.fun_id
-            dir_path = "output/{}/{}".format(pred_name, ada_prog.unit.filename)
-            ensure_dir(dir_path)
-            analysis = checker(prog, model, pred)
-            path = "{}/{}.dot".format(
-                dir_path,
-                ada_prog.f_subp_spec.f_subp_name.text
-            )
-            analysis.save_results_to_file(path)
-
-
-def ensure_dir(path):
-    """
-    Ensure that the directory at the given path exists. (Creates it if it
-    doesn't).
-
-    :param str path: The desired path to the directory.
-    """
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-
-def run():
-    do_analysis(
-        abstract_semantics.compute_semantics,
-        default_merge_predicates, 'unknown'
-    )
+    for diag in diags:
+        print(diag)
 
 
 run()
