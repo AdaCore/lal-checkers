@@ -100,6 +100,18 @@ def concat_dicts(a, b):
     return dict(a, **b)
 
 
+def map_nonable(fun, xs):
+    """
+    Maps the given iterable of element through the given function. Discards
+    None elements.
+
+    :param object->object fun: The mapping function.
+    :param iterable[object] xs: The collection to map.
+    :rtype: list[object]
+    """
+    return [fun(x) for x in xs if x is not None]
+
+
 class Transformer(object):
     class TransformationFailure(ValueError):
         def __init__(self, *args):

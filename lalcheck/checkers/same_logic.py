@@ -8,7 +8,7 @@ together in a chain of logical operators in the input Ada sources.
 from __future__ import (absolute_import, division, print_function)
 
 import libadalang as lal
-from lalcheck.ai.utils import dataclass
+from lalcheck.ai.utils import dataclass, map_nonable
 from lalcheck.checkers.support.checker import SyntacticChecker
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.utils import same_as_parent
@@ -134,7 +134,7 @@ class SameLogicFinder(Task):
     def run(self, **kwargs):
         units = kwargs.values()
         return {
-            'res': [find_same_logic(unit) for unit in units]
+            'res': map_nonable(find_same_logic, units)
         }
 
 

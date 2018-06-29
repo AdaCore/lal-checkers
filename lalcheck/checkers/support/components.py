@@ -114,7 +114,17 @@ class LALAnalyser(Task):
         return {'res': AnalysisUnit(self.provider_config, self.filename)}
 
     def run(self, ctx):
-        return {'res': ctx.get_from_file(self.filename)}
+        try:
+            unit = ctx.get_from_file(self.filename)
+            if unit.root is not None:
+                return {'res': unit}
+
+            log('error', '\n'.join(str(diag) for diag in unit.diagnostics))
+        except Exception:
+            log('info', 'error: libadalang failed to analyze {}.'.format(
+                self.filename
+            ))
+        return {'res': None}
 
 
 @dataclass
@@ -133,8 +143,19 @@ class IRGenerator(Task):
         return {'res': IRTrees(self.provider_config, self.filename)}
 
     def run(self, ctx, unit):
-        log('info', 'Transforming {}'.format(self.filename))
-        return {'res': ctx.extract_programs_from_unit(unit)}
+        irtree = None
+        if unit is not None:
+            log('info', 'Transforming {}'.format(self.filename))
+            try:
+                irtree = ctx.extract_programs_from_unit(unit)
+            except Exception:
+                log(
+                    'info',
+                    'error: could not generate IR for file {}.'.format(
+                        self.filename
+                    )
+                )
+        return {'res': irtree}
 
 
 @dataclass
@@ -206,28 +227,35 @@ class ModelGenerator(Task):
 
     def run(self, **kwargs):
         ctx = kwargs['ctx']
-        progs = [
-            prog
-            for key, ir in kwargs.iteritems()
-            if key.startswith('ir')
-            if ir is not None
-            for prog in ir
-        ]
-        modeler = irtools.Models(
-            self.get_typer_for(ctx, self.model_config.typer),
-            self.get_type_interpreter_for(self.model_config.type_interpreter),
-            self.get_call_strategy_for(
-                self.model_config.call_strategy,
-                progs,
-                lambda: models,
-                lambda: merge_pred_builder
-            ).as_def_provider()
-        )
-        models = modeler.of(*progs)
-        merge_pred_builder = self.get_merge_pred_builder_for(
-            self.model_config.merge_predicate_builder
-        )
-        return {'model': (models, merge_pred_builder)}
+        res = None
+        try:
+            progs = [
+                prog
+                for key, ir in kwargs.iteritems()
+                if key.startswith('ir')
+                if ir is not None
+                for prog in ir
+            ]
+            modeler = irtools.Models(
+                self.get_typer_for(ctx, self.model_config.typer),
+                self.get_type_interpreter_for(
+                    self.model_config.type_interpreter
+                ),
+                self.get_call_strategy_for(
+                    self.model_config.call_strategy,
+                    progs,
+                    lambda: models,
+                    lambda: merge_pred_builder
+                ).as_def_provider()
+            )
+            models = modeler.of(*progs)
+            merge_pred_builder = self.get_merge_pred_builder_for(
+                self.model_config.merge_predicate_builder
+            )
+            res = (models, merge_pred_builder)
+        except Exception:
+            log('info', 'error: could not create model.')
+        return {'model': res}
 
 
 @dataclass
@@ -263,17 +291,22 @@ class AbstractAnalyser(Task):
         }
 
     def run(self, ir, model_and_merge_pred):
-        log('info', 'Analyzing file {}'.format(self.analysis_file))
+        res = []
+        if ir is not None and model_and_merge_pred is not None:
+            log('info', 'Analyzing file {}'.format(self.analysis_file))
 
-        model, merge_pred_builder = model_and_merge_pred
-        if ir is None:
-            return {'res': []}
+            model, merge_pred_builder = model_and_merge_pred
+            for prog in ir:
+                try:
+                    res.append(abstract_analysis.compute_semantics(
+                        prog, model, merge_pred_builder
+                    ))
+                except Exception:
+                    log(
+                        'info',
+                        'error: analysis of subprocedure {} failed.'.format(
+                            prog.data.fun_id.f_subp_spec.f_subp_name.text
+                        )
+                    )
 
-        return {
-            'res': [
-                abstract_analysis.compute_semantics(
-                    prog, model, merge_pred_builder
-                )
-                for prog in ir
-            ]
-        }
+        return {'res': res}
