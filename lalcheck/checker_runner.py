@@ -6,6 +6,7 @@ from lalcheck.checkers.support.checker import Checker
 from lalcheck.tools.digraph import Digraph
 from lalcheck.tools.dot_printer import gen_dot, DataPrinter
 from lalcheck.tools.scheduler import Scheduler
+from lalcheck.tools import logger
 
 parser = argparse.ArgumentParser(description='lal-checker runner.')
 
@@ -25,18 +26,21 @@ checkers_group.add_argument('--checkers', metavar='CHECKERS', action='append',
                             type=str, help='Checker commands separated by'
                                            'semicolons.')
 
+parser.add_argument('--log', metavar="CATEGORIES", type=str,
+                    default="diag", help='Categories separated by semicolons.')
+
 parser.add_argument('--codepeer-output', action='store_true')
 parser.add_argument('--export-schedule', type=str)
 
 
-def run(argv, diagnostic_action='print'):
+def run(argv, diagnostic_action='log'):
     """
     Runs the driver with the given arguments. The diagnostic_action parameter
-    allows choosing between printing the diagnostics found by the checkers
-    directly in the standard output or returning them as a list of strings.
+    allows choosing between logging the diagnostics found by the checkers
+    returning them as a list of strings.
 
     :param list[str] argv: Driver arguments.
-    :param str diagnostic_action: Either 'print' or 'return'.
+    :param str diagnostic_action: Either 'log' or 'return'.
     :rtype: list[str] | None
     """
     args = parser.parse_args(argv)
@@ -46,14 +50,18 @@ def run(argv, diagnostic_action='print'):
             with open(filename) as f:
                 return [l.strip() for l in f.readlines()]
         except IOError:
-            print('error: cannot read file {}'.format(filename))
+            logger.log('error', 'error: cannot read file {}'.format(filename))
+
+    def set_logger():
+        logger.set_logger(logger.Logger.with_std_output(args.log.split(';')))
 
     def get_requirements():
         project_file = args.P
         scenario_vars = dict([eq.split('=') for eq in args.X])
 
         if project_file is None and len(scenario_vars) > 0:
-            print ("warning: use of scenario vars without a project file.")
+            logger.log('info', "warning: use of scenario vars without a "
+                               "project file.")
 
         if args.files_from:
             files_to_check = lines_from_file(args.files_from)
@@ -187,7 +195,7 @@ def run(argv, diagnostic_action='print'):
             subp = closest_enclosing(node, lal.SubpBody)
 
             if subp is None:
-                print('No enclosing subprogram')
+                logger.log('info', 'No enclosing subprogram')
                 return
 
             spec = subp.f_subp_spec
@@ -203,6 +211,7 @@ def run(argv, diagnostic_action='print'):
         else:
             return "{}:{}:{} {}".format(filename, pos.line, pos.column, msg)
 
+    set_logger()
     reqs = get_requirements()
     schedule = get_schedules(reqs)[0]
 
@@ -216,8 +225,8 @@ def run(argv, diagnostic_action='print'):
             for diag in program_result.diagnostics:
                 report = program_result.diag_report(diag)
                 if report is not None:
-                    if diagnostic_action == 'print':
-                        print(report_diag(report))
+                    if diagnostic_action == 'log':
+                        logger.log('diag', report_diag(report))
                     elif diagnostic_action == 'return':
                         reports.append(report)
 

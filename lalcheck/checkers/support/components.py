@@ -7,6 +7,7 @@ import lalcheck.ai.irs.basic.tools as irtools
 from lalcheck.ai.utils import dataclass
 
 from lalcheck.tools.scheduler import Task, Requirement
+from lalcheck.tools.logger import log
 
 ProjectProvider = namedtuple(
     'ProjectProvider', ['project_file', 'scenario_vars']
@@ -132,6 +133,7 @@ class IRGenerator(Task):
         return {'res': IRTrees(self.provider_config, self.filename)}
 
     def run(self, ctx, unit):
+        log('info', 'Transforming {}'.format(self.filename))
         return {'res': ctx.extract_programs_from_unit(unit)}
 
 
@@ -261,6 +263,8 @@ class AbstractAnalyser(Task):
         }
 
     def run(self, ir, model_and_merge_pred):
+        log('info', 'Analyzing file {}'.format(self.analysis_file))
+
         model, merge_pred_builder = model_and_merge_pred
         if ir is None:
             return {'res': []}

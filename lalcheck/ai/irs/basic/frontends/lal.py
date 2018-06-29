@@ -8,6 +8,7 @@ from lalcheck.ai.constants import lits, ops, access_paths
 from lalcheck.ai.irs.basic import tree as irt, purpose
 from lalcheck.ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
 from lalcheck.ai.utils import KeyCounter, Transformer, profile
+from lalcheck.tools.logger import log_stdout
 from funcy.calc import memoize
 
 _lal_op_type_to_symbol = {
@@ -2569,10 +2570,11 @@ def _gen_ir(ctx, subp, typer):
         unimplemented(stmt)
 
     def print_warning(subject, exception):
-        print("warning: ignored '{}'".format(subject))
-        message = getattr(exception, 'message', None)
-        if message is not None:
-            print("\treason: {}".format(message))
+        with log_stdout('info'):
+            print("warning: ignored '{}'".format(subject))
+            message = getattr(exception, 'message', None)
+            if message is not None:
+                print("\treason: {}".format(message))
 
     def transform_decls(decls):
         """
@@ -3320,9 +3322,10 @@ class ExtractionContext(object):
     @profile()
     def use_model(self, name):
         model_unit = self.lal_ctx.get_from_provider(name, "specification")
-        for diag in model_unit.diagnostics:
-            print('   {}'.format(diag))
-            return
+        with log_stdout('error'):
+            for diag in model_unit.diagnostics:
+                print('   {}'.format(diag))
+                return
 
         model_ofs = model_unit.root.findall(
             lambda x: (x.is_a(lal.AspectAssoc)
@@ -3342,33 +3345,38 @@ class ExtractionContext(object):
         }
 
         if len(type_models) + len(fun_models) != len(model_ofs):
-            print("warning: detected usage of Model_Of in an unknown context.")
+            with log_stdout('info'):
+                print("warning: detected usage of Model_Of in an unknown "
+                      "context.")
 
         for tdecl, ref in type_models.iteritems():
             if ref is None:
-                print("warning: Model_Of used on '{}' refers to an unknown "
-                      "type.".format(tdecl.f_name.text))
+                with log_stdout('info'):
+                    print("warning: Model_Of used on '{}' refers to an unknown"
+                          " type.".format(tdecl.f_name.text))
             else:
                 self.type_models[ref] = tdecl
 
         for fdecl, ref in fun_models.iteritems():
             if ref is None:
-                print(
-                    "warning: Model_Of used on '{}' refers to an unknown "
-                    "procedure/function.".format(
-                        fdecl.f_subp_spec.f_subp_name.text
+                with log_stdout('info'):
+                    print(
+                        "warning: Model_Of used on '{}' refers to an unknown "
+                        "procedure/function.".format(
+                            fdecl.f_subp_spec.f_subp_name.text
+                        )
                     )
-                )
             else:
                 self.fun_models[ref] = fdecl
 
     @profile()
     def _extract_from_unit(self, unit):
         if unit.root is None:
-            print('Could not parse {}:'.format(unit.filename))
-            for diag in unit.diagnostics:
-                print('   {}'.format(diag))
-                return
+            with log_stdout('error'):
+                print('Could not parse {}:'.format(unit.filename))
+                for diag in unit.diagnostics:
+                    print('   {}'.format(diag))
+                    return
 
         unit.populate_lexical_env()
 
