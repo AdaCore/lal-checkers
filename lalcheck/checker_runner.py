@@ -1,5 +1,6 @@
 import argparse
 import importlib
+from multiprocessing import Pool, cpu_count
 
 import libadalang as lal
 from lalcheck.checkers.support.checker import Checker
@@ -31,6 +32,260 @@ parser.add_argument('--log', metavar="CATEGORIES", type=str,
 
 parser.add_argument('--codepeer-output', action='store_true')
 parser.add_argument('--export-schedule', type=str)
+parser.add_argument('--partition-size', default=0, type=int,
+                    help='The amount of files that will be batched in a'
+                         'partition. A higher number means less computing'
+                         'time, but more memory consumption.')
+parser.add_argument('-j', default=cpu_count(), type=int,
+                    help='The number of process to spawn in parallel, each'
+                         'of which deals with a single partition at a time.')
+
+
+args = None
+
+
+def lines_from_file(filename):
+    try:
+        with open(filename) as f:
+            return [l.strip() for l in f.readlines()]
+    except IOError:
+        logger.log('error', 'error: cannot read file {}'.format(filename))
+
+
+def set_logger():
+    logger.set_logger(logger.Logger.with_std_output(args.log.split(';')))
+
+
+def get_working_files():
+    if args.files_from:
+        return lines_from_file(args.files_from)
+    else:
+        return [
+            f
+            for fs in args.files
+            for f in fs.split(';')
+        ]
+
+
+def get_requirements(files_to_check):
+    project_file = args.P
+    scenario_vars = dict([eq.split('=') for eq in args.X])
+
+    if project_file is None and len(scenario_vars) > 0:
+        logger.log('info', "warning: use of scenario vars without a "
+                           "project file.")
+
+    if args.checkers_from:
+        checker_commands = lines_from_file(args.checkers_from)
+    else:
+        checker_commands = [
+            c
+            for cs in args.checkers
+            for c in cs.split(';')
+        ]
+
+    checker_args = [command.split() for command in checker_commands]
+
+    requirements = []
+    for checker_arg in checker_args:
+        checker_module = importlib.import_module(checker_arg[0])
+        if not hasattr(checker_module, 'checker'):
+            print('error: checker {} does not export a '
+                  '"checker" object.'.format(checker_module))
+        elif not issubclass(checker_module.checker, Checker):
+            print('error: checker {} does not inherit the '
+                  '"checkers.support.checker.Checker" '
+                  'interface.'.format(checker_module))
+
+        requirements.append(checker_module.checker.create_requirement(
+            project_file=project_file,
+            scenario_vars=scenario_vars,
+            filenames=files_to_check,
+            args=checker_arg[1:]
+        ))
+
+    return requirements
+
+
+def get_schedules(requirements):
+    scheduler = Scheduler()
+    return scheduler.schedule({
+        'res_{}'.format(i): req
+        for i, req in enumerate(requirements)
+    })
+
+
+def export_schedule(schedule, export_path):
+    nice_colors = [
+        '#093145', '#107896', '#829356', '#3C6478', '#43ABC9', '#B5C689',
+        '#BCA136', '#C2571A', '#9A2617', '#F26D21', '#C02F1D', '#F58B4C',
+        '#CD594A'
+    ]
+
+    def var_printer(var):
+        name = str(var)
+        color = nice_colors[hash(name) % len(nice_colors)]
+
+        def colored(x):
+            return '<font color="{}">{}</font>'.format(color, x)
+
+        def printer(x):
+            return (
+                '<i>{}</i>'.format(colored(name)),
+                colored(x)
+            )
+
+        return printer
+
+    tasks = frozenset(
+        task
+        for batch in schedule.batches
+        for task in batch
+    )
+
+    varset = frozenset(
+        var
+        for task in tasks
+        for var in vars(task).keys()
+    )
+
+    task_to_node = {
+        task: Digraph.Node(
+            task.__class__.__name__,
+            **vars(task)
+        )
+        for task in tasks
+    }
+
+    edges = [
+        Digraph.Edge(task_to_node[a], task_to_node[b])
+        for a in tasks
+        for b in tasks
+        if len(frozenset(a.provides().values()) &
+               frozenset(b.requires().values())) > 0
+    ]
+
+    digraph = Digraph(task_to_node.values(), edges)
+    dot = gen_dot(digraph, [
+        DataPrinter(
+            var,
+            var_printer(var)
+        )
+        for var in varset
+    ])
+    with open(export_path, 'w') as export_file:
+        export_file.write(dot)
+
+
+def closest_enclosing(node, *tpes):
+    """
+    Given a libadalang node n, returns its closest enclosing libadalang
+    node of one of the given types which directly or indirectly contains n.
+
+    :param lal.AdaNode node: The node from which to start the search.
+    :param *type tpes: The kind of node to look out for.
+    :rtype: lal.AdaNode|None
+    """
+    while node.parent is not None:
+        node = node.parent
+        if node.is_a(*tpes):
+            return node
+    return None
+
+
+def full_position(node):
+    filename = node.unit.filename
+    pos = node.sloc_range.start
+    subp = closest_enclosing(node, lal.SubpBody)
+
+    if subp is None:
+        logger.log('info', 'No enclosing subprogram')
+        return (filename, pos.line, pos.column) + ("unknown",) * 4
+
+    spec = subp.f_subp_spec
+    proc_name = spec.f_subp_name.text
+    proc_filename = filename
+    proc_pos = spec.sloc_range.start
+
+    return (
+        filename, pos.line, pos.column,
+        proc_name, proc_filename, proc_pos.line, proc_pos.column
+    )
+
+
+def report_diag(report):
+    full_pos, msg, flag = report
+    file, line, col, proc_name, proc_file, proc_line, proc_col = full_pos
+
+    if args.codepeer_output:
+        return ("{}:{}:{}: warning: {}:{}:{}:{}: {} [{}]".format(
+            file, line, col,
+            proc_name, proc_file, proc_line, proc_col,
+            msg, flag
+        ))
+    else:
+        return "{}:{}:{} {}".format(file, line, col, msg)
+
+
+def do_partition(partition):
+    reqs = get_requirements(partition)
+    schedule = get_schedules(reqs)[0]
+
+    if args.export_schedule is not None:
+        export_schedule(schedule, args.export_schedule)
+
+    diags = []
+
+    for checker_result in schedule.run().values():
+        for program_result in checker_result:
+            for diag in program_result.diagnostics:
+                report = program_result.diag_report(diag)
+                if report is not None:
+                    pickleable_diag = (
+                        full_position(report[0]),
+                        report[1],
+                        report[2]
+                    )
+                    diags.append(pickleable_diag)
+
+    return diags
+
+
+def do_all(diagnostic_action):
+    working_files = get_working_files()
+    ps = args.partition_size
+    ps = len(working_files) / args.j if ps == 0 else ps
+    ps = max(ps, 1)
+
+    partitions = [
+        working_files[i:min(i + ps, len(working_files))]
+        for i in range(0, len(working_files), ps)
+    ]
+
+    logger.log('info', 'Created {} partitions of {} files.'.format(
+        len(partitions), ps
+    ))
+    logger.log(
+        'info',
+        'Parallel analysis done in batches of {} partitions'.format(
+            args.j
+        )
+    )
+
+    p = Pool(args.j, maxtasksperchild=1)
+    all_diags = p.map(do_partition, partitions)
+    p.close()
+
+    reports = []
+
+    for diags in all_diags:
+        for diag in diags:
+            if diagnostic_action == 'log':
+                logger.log('diag', report_diag(diag))
+            elif diagnostic_action == 'return':
+                reports.append(diag)
+
+    return reports
 
 
 def run(argv, diagnostic_action='log'):
@@ -43,194 +298,12 @@ def run(argv, diagnostic_action='log'):
     :param str diagnostic_action: Either 'log' or 'return'.
     :rtype: list[str] | None
     """
+    global args
     args = parser.parse_args(argv)
 
-    def lines_from_file(filename):
-        try:
-            with open(filename) as f:
-                return [l.strip() for l in f.readlines()]
-        except IOError:
-            logger.log('error', 'error: cannot read file {}'.format(filename))
-
-    def set_logger():
-        logger.set_logger(logger.Logger.with_std_output(args.log.split(';')))
-
-    def get_requirements():
-        project_file = args.P
-        scenario_vars = dict([eq.split('=') for eq in args.X])
-
-        if project_file is None and len(scenario_vars) > 0:
-            logger.log('info', "warning: use of scenario vars without a "
-                               "project file.")
-
-        if args.files_from:
-            files_to_check = lines_from_file(args.files_from)
-        else:
-            files_to_check = [
-                f
-                for fs in args.files
-                for f in fs.split(';')
-            ]
-
-        if args.checkers_from:
-            checker_commands = lines_from_file(args.checkers_from)
-        else:
-            checker_commands = [
-                c
-                for cs in args.checkers
-                for c in cs.split(';')
-            ]
-
-        checker_args = [command.split() for command in checker_commands]
-
-        requirements = []
-        for checker_arg in checker_args:
-            checker_module = importlib.import_module(checker_arg[0])
-            if not hasattr(checker_module, 'checker'):
-                print('error: checker {} does not export a '
-                      '"checker" object.'.format(checker_module))
-            elif not issubclass(checker_module.checker, Checker):
-                print('error: checker {} does not inherit the '
-                      '"checkers.support.checker.Checker" '
-                      'interface.'.format(checker_module))
-
-            requirements.append(checker_module.checker.create_requirement(
-                project_file=project_file,
-                scenario_vars=scenario_vars,
-                filenames=files_to_check,
-                args=checker_arg[1:]
-            ))
-
-        return requirements
-
-    def get_schedules(requirements):
-        scheduler = Scheduler()
-        return scheduler.schedule({
-            'res_{}'.format(i): req
-            for i, req in enumerate(requirements)
-        })
-
-    def export_schedule(schedule, export_path):
-        nice_colors = [
-            '#093145', '#107896', '#829356', '#3C6478', '#43ABC9', '#B5C689',
-            '#BCA136', '#C2571A', '#9A2617', '#F26D21', '#C02F1D', '#F58B4C',
-            '#CD594A'
-        ]
-
-        def var_printer(var):
-            name = str(var)
-            color = nice_colors[hash(name) % len(nice_colors)]
-
-            def colored(x):
-                return '<font color="{}">{}</font>'.format(color, x)
-
-            def printer(x):
-                return (
-                    '<i>{}</i>'.format(colored(name)),
-                    colored(x)
-                )
-
-            return printer
-
-        tasks = frozenset(
-            task
-            for batch in schedule.batches
-            for task in batch
-        )
-
-        varset = frozenset(
-            var
-            for task in tasks
-            for var in vars(task).keys()
-        )
-
-        task_to_node = {
-            task: Digraph.Node(
-                task.__class__.__name__,
-                **vars(task)
-            )
-            for task in tasks
-        }
-
-        edges = [
-            Digraph.Edge(task_to_node[a], task_to_node[b])
-            for a in tasks
-            for b in tasks
-            if len(frozenset(a.provides().values()) &
-                   frozenset(b.requires().values())) > 0
-        ]
-
-        digraph = Digraph(task_to_node.values(), edges)
-        dot = gen_dot(digraph, [
-            DataPrinter(
-                var,
-                var_printer(var)
-            )
-            for var in varset
-        ])
-        with open(export_path, 'w') as export_file:
-            export_file.write(dot)
-
-    def closest_enclosing(node, *tpes):
-        """
-        Given a libadalang node n, returns its closest enclosing libadalang
-        node of one of the given types which directly or indirectly contains n.
-
-        :param lal.AdaNode node: The node from which to start the search.
-        :param *type tpes: The kind of node to look out for.
-        :rtype: lal.AdaNode|None
-        """
-        while node.parent is not None:
-            node = node.parent
-            if node.is_a(*tpes):
-                return node
-        return None
-
-    def report_diag(report):
-        node, msg, flag = report
-        filename = node.unit.filename
-        pos = node.sloc_range.start
-
-        if args.codepeer_output:
-            subp = closest_enclosing(node, lal.SubpBody)
-
-            if subp is None:
-                logger.log('info', 'No enclosing subprogram')
-                return
-
-            spec = subp.f_subp_spec
-            proc_name = spec.f_subp_name.text
-            proc_filename = filename
-            proc_pos = spec.sloc_range.start
-
-            return ("{}:{}:{}: warning: {}:{}:{}:{}: {} [{}]".format(
-                filename, pos.line, pos.column,
-                proc_name, proc_filename, proc_pos.line, proc_pos.column,
-                msg, flag
-            ))
-        else:
-            return "{}:{}:{} {}".format(filename, pos.line, pos.column, msg)
-
     set_logger()
-    reqs = get_requirements()
-    schedule = get_schedules(reqs)[0]
 
-    if args.export_schedule is not None:
-        export_schedule(schedule, args.export_schedule)
-
-    reports = []
-
-    for checker_result in schedule.run().values():
-        for program_result in checker_result:
-            for diag in program_result.diagnostics:
-                report = program_result.diag_report(diag)
-                if report is not None:
-                    if diagnostic_action == 'log':
-                        logger.log('diag', report_diag(report))
-                    elif diagnostic_action == 'return':
-                        reports.append(report)
-
-    return reports
+    return do_all(diagnostic_action)
 
 
 if __name__ == "__main__":

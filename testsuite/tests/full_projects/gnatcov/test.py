@@ -188,11 +188,11 @@ def run():
     diags = checker_runner.run(args, diagnostic_action='return')
     diags = [
         "{}:{}: {}".format(
-            node.sloc_range.start.line,
-            node.sloc_range.start.column,
+            pos[1],
+            pos[2],
             msg
         )
-        for node, msg, _ in diags
+        for pos, msg, _ in diags
     ]
     diags.sort()
 
