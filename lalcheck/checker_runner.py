@@ -1,6 +1,7 @@
 import argparse
 import importlib
 from multiprocessing import Pool, cpu_count
+import signal
 
 import libadalang as lal
 from lalcheck.checkers.support.checker import Checker
@@ -272,13 +273,29 @@ def do_all(diagnostic_action):
         )
     )
 
+    # To handle Keyboard interrupt, the child processes must inherit the
+    # SIG_IGN (ignore signal) handler from the parent process. (see
+    # https://stackoverflow.com/a/35134329)
+    orig_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     p = Pool(args.j, maxtasksperchild=1)
-    all_diags = p.map(do_partition, partitions)
+
+    # Restore the original handler of the parent process.
+    signal.signal(signal.SIGINT, orig_handler)
+
+    all_diags = p.map_async(do_partition, partitions)
+
+    # Keyboard interrupts are ignored if we use wait() or get() without any
+    # timeout argument. By using this loop, we mimic the behavior of an
+    # infinite timeout but allow keyboard interrupts to go through.
+    while not all_diags.ready():
+        all_diags.wait(1)
+
     p.close()
+    p.join()
 
     reports = []
 
-    for diags in all_diags:
+    for diags in all_diags.get():
         for diag in diags:
             if diagnostic_action == 'log':
                 logger.log('diag', report_diag(diag))
