@@ -141,7 +141,7 @@ class SameLogicFinder(Task):
 class SameLogicChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "same_logic_checker"
+        return "same logic"
 
     @classmethod
     def description(cls):

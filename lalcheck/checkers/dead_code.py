@@ -82,9 +82,7 @@ class Results(AbstractSemanticsChecker.Results):
                     and diag.data.node.data.orig_node is not None):
                 return (
                     diag.data.node.data.orig_node,
-                    "Unreachable code '{}'".format(
-                        diag.data.node.data.orig_node.text
-                    ),
+                    "unreachable code",
                     DeadCodeChecker.name()
                 )
 
@@ -156,7 +154,7 @@ class DeadCodeFinder(Task):
 class DeadCodeChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "deadcode_checker"
+        return "dead code"
 
     @classmethod
     def description(cls):

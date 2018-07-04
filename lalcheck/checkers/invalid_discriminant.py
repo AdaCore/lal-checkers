@@ -4,7 +4,7 @@ from xml.sax.saxutils import escape
 import lalcheck.ai.irs.basic.tree as irt
 from lalcheck.ai.constants import lits
 from lalcheck.ai.irs.basic.analyses import abstract_semantics
-from lalcheck.ai.irs.basic.purpose import ContractCheck
+from lalcheck.ai.irs.basic.purpose import ExistCheck
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import AbstractSemanticsChecker
@@ -19,13 +19,13 @@ def html_render_node(node):
     return escape(PrettyPrinter.pretty_print(node))
 
 
-def build_resulting_graph(file_name, cfg, invalids):
+def build_resulting_graph(file_name, cfg, infeasibles):
     def trace_id(trace):
         return str(trace)
 
     paths = defaultdict(list)
 
-    for trace, derefed, precise in invalids:
+    for trace, derefed, precise in infeasibles:
         for node in trace:
             paths[node].append((trace, derefed, precise))
 
@@ -56,12 +56,17 @@ def build_resulting_graph(file_name, cfg, invalids):
             )
         return ()
 
-    def print_path_to_violated_contract(value):
+    def print_path_to_infeasible_access(value):
         purpose, precise = value
+        prefix = html_render_node(purpose.accessed_expr)
         qualifier = "" if precise else "potential "
-        res_str = "path to {}violated {}".format(
+        res_str = ("path to {}infeasible access {}.{} due to invalid "
+                   "condition on discriminant {}.{}").format(
             qualifier,
-            purpose.contract_name
+            prefix,
+            escape(purpose.field_name),
+            prefix,
+            escape(purpose.discr_name)
         )
         return (
             '<font color="{}">{}</font>'.format('red', res_str),
@@ -73,9 +78,9 @@ def build_resulting_graph(file_name, cfg, invalids):
         ] + [
             dot_printer.DataPrinter(
                 trace_id(trace),
-                print_path_to_violated_contract
+                print_path_to_infeasible_access
             )
-            for trace, _, _ in invalids
+            for trace, _, _ in infeasibles
         ]))
 
 
@@ -83,8 +88,8 @@ class Results(AbstractSemanticsChecker.Results):
     """
     Contains the results of the null dereference checker.
     """
-    def __init__(self, sem_analysis, invalids):
-        super(Results, self).__init__(sem_analysis, invalids)
+    def __init__(self, sem_analysis, infeasibles):
+        super(Results, self).__init__(sem_analysis, infeasibles)
 
     def save_results_to_file(self, file_name):
         """
@@ -101,29 +106,35 @@ class Results(AbstractSemanticsChecker.Results):
     @classmethod
     def diag_report(cls, diag):
         trace, purpose, precise = diag
-        if precise:
-            frmt = "Violated {}"
-        else:
-            frmt = "Potentially violated {}"
+        if ('orig_node' in purpose.accessed_expr.data
+                and purpose.accessed_expr.data.orig_node is not None):
 
-        return (
-            purpose.orig_call,
-            frmt.format(purpose.contract_name),
-            ContractChecker.name()
-        )
+            if precise:
+                frmt = "invalid field {}"
+            else:
+                frmt = "(potential) invalid field {}"
+
+            return (
+                purpose.accessed_expr.data.orig_node,
+                frmt.format(
+                    purpose.field_name,
+                    purpose.discr_name
+                ),
+                VariantChecker.name()
+            )
 
 
-def check_contracts(prog, model, merge_pred_builder):
+def check_variants(prog, model, merge_pred_builder):
     analysis = abstract_semantics.compute_semantics(
         prog,
         model,
         merge_pred_builder
     )
 
-    return find_violated_contracts(analysis)
+    return find_invalid_accesses(analysis)
 
 
-def find_violated_contracts(analysis):
+def find_invalid_accesses(analysis):
     # Retrieve nodes in the CFG that correspond to program statements.
     nodes_with_ast = (
         (node, node.data.node)
@@ -134,18 +145,18 @@ def find_violated_contracts(analysis):
     # Collect those that are assume statements and that have a 'purpose' tag
     # which indicates that this assume statement was added to check
     # existence of a field.
-    contract_checks = (
+    exist_checks = (
         (node, ast_node.expr, ast_node.data.purpose)
         for node, ast_node in nodes_with_ast
         if isinstance(ast_node, irt.AssumeStmt)
-        if ContractCheck.is_purpose_of(ast_node)
+        if ExistCheck.is_purpose_of(ast_node)
     )
 
     # Use the semantic analysis to evaluate at those program points the
     # corresponding expression being dereferenced.
-    contract_check_values = (
+    exist_check_values = (
         (frozenset(trace) | {node}, purpose, value)
-        for node, expr, purpose in contract_checks
+        for node, expr, purpose in exist_checks
         for anc in analysis.cfg.ancestors(node)
         for trace, value in analysis.eval_at(anc, expr).iteritems()
     )
@@ -153,24 +164,24 @@ def find_violated_contracts(analysis):
     # Finally, keep those that might be null.
     # Store the program trace, the dereferenced expression, and whether
     # the expression "might be null" or "is always null".
-    invalids = [
+    infeasibles = [
         (trace, purpose, len(value) == 1)
-        for trace, purpose, value in contract_check_values
+        for trace, purpose, value in exist_check_values
         if lits.FALSE in value
     ]
 
-    return Results(analysis, invalids)
+    return Results(analysis, infeasibles)
 
 
 @Requirement.as_requirement
-def ViolatedContracts(provider_config, model_config, files):
-    return [ContractViolationFinder(
+def InvalidAccesses(provider_config, model_config, files):
+    return [InvalidAccessFinder(
         provider_config, model_config, files
     )]
 
 
 @dataclass
-class ContractViolationFinder(Task):
+class InvalidAccessFinder(Task):
     def __init__(self, provider_config, model_config, files):
         self.provider_config = provider_config
         self.model_config = model_config
@@ -189,7 +200,7 @@ class ContractViolationFinder(Task):
 
     def provides(self):
         return {
-            'res': ViolatedContracts(
+            'res': InvalidAccesses(
                 self.provider_config,
                 self.model_config,
                 self.files
@@ -199,28 +210,28 @@ class ContractViolationFinder(Task):
     def run(self, **sems):
         return {
             'res': [
-                find_violated_contracts(analysis)
+                find_invalid_accesses(analysis)
                 for sem in sems.values()
                 for analysis in sem
             ]
         }
 
 
-class ContractChecker(AbstractSemanticsChecker):
+class VariantChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "contract_checker"
+        return "invalid discriminant"
 
     @classmethod
     def description(cls):
-        return "Finds violated pre/post-conditions"
+        return "Finds invalid field accesses of variant records"
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):
-        return cls.requirement_creator(ViolatedContracts)(*args, **kwargs)
+        return cls.requirement_creator(InvalidAccesses)(*args, **kwargs)
 
 
-checker = ContractChecker
+checker = VariantChecker
 
 
 if __name__ == "__main__":

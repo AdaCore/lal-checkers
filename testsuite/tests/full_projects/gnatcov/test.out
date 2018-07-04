@@ -1,633 +1,627 @@
-1005:13: Potential infeasible access SCOD.BDD_Node due to invalid condition on discriminant SCOD.Kind
-100:7: Potentially violated assertion
+1005:13: (potential) invalid field BDD_Node
+100:7: (potential) assertion failure
 101:30: left and right operands of "-" are identical
-1026:13: Potentially violated assertion
-1033:16: Potential infeasible access File.Unique_Name due to invalid condition on discriminant File.Kind
-1033:16: Potential null dereference of 'File'
+1026:13: (potential) assertion failure
+1033:16: (potential) invalid field Unique_Name
+1033:16: (potential) null dereference of 'File'
 103:30: left and right operands of "-" are identical
-1049:16: Potential infeasible access File.Unique_Name due to invalid condition on discriminant File.Kind
-1060:13: Potential infeasible access File.Unique_Name due to invalid condition on discriminant File.Kind
-1067:10: Unreachable code 'Matcher := GNAT.Regexp.Compile (Pattern => To_String (Pattern),
-                                         Glob    => True);'
-106:7: Potentially violated assertion
-1074:13: Potential infeasible access SCOD.Operands due to invalid condition on discriminant SCOD.Kind
-1074:13: Potential infeasible access SCOD.Operands due to invalid condition on discriminant SCOD.Kind
-108:10: Potentially violated assertion
-1109:10: Potential infeasible access SCOD.PC_Set due to invalid condition on discriminant SCOD.Kind
-111:10: Potentially violated assertion
-112:19: Potential null dereference of 'Entry_Output'
-1144:14: Potential infeasible access File.Unique_Name due to invalid condition on discriminant File.Kind
-1144:14: Potential null dereference of 'File.Unique_Name'
-1151:7: Potentially violated assertion
-1162:10: Potential null dereference of 'Result'
-1163:10: Potential infeasible access Result.Lines due to invalid condition on discriminant Result.Kind
-1164:7: Potentially violated assertion
-117:29: Potential null dereference of 'Context.Trace_File'
-1185:13: Potential null dereference of 'FI'
-1185:24: Potential null dereference of 'Left'
-1189:10: Potentially violated assertion
-1189:24: Potential null dereference of 'Right'
-118:30: Potential null dereference of 'Exec'
-119:28: Potential null dereference of 'File.Ehdr'
-1206:20: Potential null dereference of 'O'
-1213:20: Potential null dereference of 'Parser'
-1219:16: Potential null dereference of 'O'
-1226:22: Potential null dereference of 'D_Occ'
-122:13: Potentially violated precondition
-122:7: Potentially violated assertion
-124:10: Potentially violated assertion
-124:34: Potential null dereference of 'Buffer'
-1257:7: Unreachable code 'Off := 0;'
-125:7: Potentially violated assertion
-1261:10: Unreachable code 'R := Get_Rela (Exec.Elf_File, Address_Of (Relocs, Elf_Addr (Off)));'
-1262:10: Unreachable code 'Off := Off + Storage_Offset (Elf_Rela_Size);'
-1268:10: Unreachable code 'Sym_Num := Elf_R_Sym (R.R_Info);'
-126:51: Potential null dereference of 'Context.Exe_File'
-126:7: Potentially violated assertion
-1271:13: Potential null dereference of 'Context'
-1271:13: Potential null dereference of 'Context.Exec'
-1272:10: Unreachable code 'Sym := Get_Sym
-           (Exec.Elf_File,
-            Address_Of
-              (Exec.Symtab, Elf_Addr (Sym_Num) * Elf_Addr (Elf_Sym_Size)));'
-1276:16: Potential infeasible access Subp.Lines due to invalid condition on discriminant Subp.Kind
-1278:13: Unreachable code 'Offset := Get_Shdr (Exec.Elf_File,
-                                Sym.St_Shndx).Sh_Addr;'
-127:10: Potentially violated assertion
-1282:13: Unreachable code 'Offset := 0;'
-1287:10: Potentially violated assertion
-129:44: Potentially violated precondition
-129:54: Potential null dereference of 'FI'
-1302:41: Potential infeasible access Ctx.Subprg.Lines due to invalid condition on discriminant Ctx.Subprg.Kind
-1302:41: Potential null dereference of 'Ctx.Subprg'
-1304:13: Potential null dereference of 'Context'
-1304:13: Potential null dereference of 'Context.Exec'
-1304:7: Potentially violated assertion
-130:13: Potential null dereference of 'File.Ehdr'
-130:29: Potential null dereference of 'Trace_Output'
-1315:50: Potential null dereference of 'Exec'
-131:19: Potential null dereference of 'Get_File (Index)'
-131:19: Potential null dereference of 'Get_File (Index)'
-131:20: Potential null dereference of 'File.Ehdr'
-131:39: Potential null dereference of 'Buffer'
-132:20: Potential null dereference of 'File.Ehdr'
-1332:19: Potentially violated assertion
-1339:28: Potential null dereference of 'D_Occ'
-133:20: Potential null dereference of 'File.Ehdr'
-1345:14: Potential null dereference of 'FI'
-134:10: Potentially violated assertion
-1350:13: Potential null dereference of 'SCI'
-1355:21: duplicate code already found at line 1350
-1358:23: Potential null dereference of 'Name'
-135:60: Potential null dereference of 'Exec'
-1365:49: Potential null dereference of 'Exec'
-1369:18: Potential null dereference of 'FI.Simple_Name'
-1369:41: Potential null dereference of 'Exec'
-1373:41: Potential null dereference of 'Exec'
-1375:41: Potential null dereference of 'FI.Simple_Name'
-1376:16: Potential null dereference of 'FI'
-1377:32: Potential null dereference of 'FI.Full_Name'
-1382:32: Potential null dereference of 'Exec'
-1386:19: Unreachable code 'Column := Column + 1;'
-1390:41: Potential null dereference of 'Exec.File'
-1391:10: Potentially violated assertion
-1391:10: Potentially violated assertion
-1394:30: Potential null dereference of 'Exec.File'
-1395:21: Potentially violated precondition
-1396:30: Potential null dereference of 'E.Old_Prefix'
-139:16: Potential null dereference of 'Report'
-139:16: Potentially violated assertion
-1401:14: Potential null dereference of 'Context'
-1401:28: Potential null dereference of 'From_Insn'
-1404:43: Potential null dereference of 'Exec'
-1405:40: Potential null dereference of 'Exec'
-140:51: Potential null dereference of 'Exe_Name'
-1414:39: Potential infeasible access BDDN.C_SCO due to invalid condition on discriminant BDDN.Kind
-141:18: Potential null dereference of 'Symbols.To_String (User_Loc.Name)'
-1423:10: Potentially violated assertion
-1426:38: Potential null dereference of 'Exec'
-142:49: Potential null dereference of 'Tag'
-1432:46: Potential infeasible access CP_SCI.Basic_Block_Has_Code due to invalid condition on discriminant CP_SCI.Kind
-1433:53: Potential infeasible access CP_SCI.Executed due to invalid condition on discriminant CP_SCI.Kind
-1434:58: Potential infeasible access CP_SCI.Line_Executed due to invalid condition on discriminant CP_SCI.Kind
-1436:31: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-1436:31: Potential null dereference of 'Sym.Symbol_Name'
-1438:45: Potential infeasible access CP_SCI.Known_Outcome_Taken due to invalid condition on discriminant CP_SCI.Kind
-143:30: Potential null dereference of 'Exec'
-143:49: Potential null dereference of 'Tag'
-1445:10: Potential infeasible access FI.Sloc_To_SCO_Maps due to invalid condition on discriminant FI.Kind
-1445:10: Potential null dereference of 'FI'
-1446:10: Potential infeasible access FI.Sloc_To_SCO_Maps due to invalid condition on discriminant FI.Kind
-1446:19: Potential infeasible access CP_SCI.Outcome_Taken due to invalid condition on discriminant CP_SCI.Kind
-1446:50: Potential infeasible access CP_SCI.Outcome_Taken due to invalid condition on discriminant CP_SCI.Kind
-1448:16: Potentially violated assertion
-1449:34: Potential null dereference of 'Exec'
-1449:42: Potential infeasible access CP_SCI.Outcome_Taken due to invalid condition on discriminant CP_SCI.Kind
-1452:39: Potential infeasible access CP_SCI.Evaluations due to invalid condition on discriminant CP_SCI.Kind
-1459:10: Potential null dereference of 'Get_File (Index)'
-145:56: Potential null dereference of 'Kernel'
-1467:16: Null dereference of 'Executable_Path'
-146:10: Potentially violated precondition
-146:16: Potential null dereference of 'Report'
-1473:16: Null dereference of 'Executable_Path'
-1473:17: Potential infeasible access File.Has_Object_Coverage_Info due to invalid condition on discriminant File.Kind
-1473:17: Potential null dereference of 'File'
-1475:17: Potential infeasible access File.Has_Source_Coverage_Info due to invalid condition on discriminant File.Kind
-1475:17: Potential null dereference of 'File'
-1476:19: Potential null dereference of 'Default_SCIs (CP_SCI.Kind)'
-147:36: Potential null dereference of 'FI'
-147:7: Potentially violated precondition
-148:10: Potentially violated precondition
-148:16: Potentially violated assertion
-148:18: Potential null dereference of 'Report'
-148:56: Potential null dereference of 'Info'
-149:16: Potentially violated assertion
-1516:10: Potential infeasible access SCI.Basic_Block_Has_Code due to invalid condition on discriminant SCI.Kind
-151:15: Potential null dereference of 'Stream.S'
-153:7: Potentially violated assertion
-1544:30: Potential infeasible access Get_SCI (S_SCO, Tag).Basic_Block_Has_Code due to invalid condition on discriminant Get_SCI (S_SCO, Tag).Kind
-1544:30: Potential null dereference of 'Get_SCI (S_SCO, Tag)'
-1561:21: Potential null dereference of 'Line'
-156:17: Potential null dereference of 'Report'
-1587:13: Potential null dereference of 'SCIA'
-1590:23: Potential null dereference of 'Map'
-1593:22: Potential null dereference of 'BB.Last_Element'
-159:21: Potential infeasible access FI.Stats due to invalid condition on discriminant FI.Kind
-160:13: Potential null dereference of 'File.Ehdr'
-1617:19: Potentially violated assertion
-1637:19: Potentially violated assertion
-1644:10: Potential null dereference of 'Context'
-1652:29: Potential null dereference of 'Exe'
-1663:19: Potential null dereference of 'Exe'
-166:17: Potential null dereference of 'Position.Buffer'
-1674:19: Potentially violated assertion
-169:14: Potential null dereference of 'Info'
-1707:42: Potential null dereference of 'Trace_File.Filename'
-171:7: Potential infeasible access FI.Has_Object_Coverage_Info due to invalid condition on discriminant FI.Kind
-1720:43: Potential null dereference of 'Exe_File'
-173:13: Potential infeasible access FI.Lines due to invalid condition on discriminant FI.Kind
-173:13: Potential null dereference of 'FI'
-175:14: Potential null dereference of 'F.Filename'
-175:45: Potential null dereference of 'File.Ehdr'
-1785:28: Potential null dereference of 'Ctx'
-178:17: Potential null dereference of 'Context.Trace_File'
-1796:22: Potential null dereference of 'Trace_File'
-1796:22: Potential null dereference of 'Trace_File.Filename'
-179:27: Potential null dereference of 'Exe'
-1804:26: Potential null dereference of 'Context.Exec'
-1824:16: Potential infeasible access Section.Section_Name due to invalid condition on discriminant Section.Kind
-1824:16: Potential null dereference of 'Section.Section_Name'
-183:14: Potential null dereference of 'Prg'
-183:18: Unreachable code 'LS /= No_Loaded_Section'
-183:23: Potential null dereference of 'Opts'
-183:25: Potential infeasible access Subprg.Lines due to invalid condition on discriminant Subprg.Kind
-185:48: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-1907:18: Potential null dereference of 'Output.File'
-1921:18: Potential null dereference of 'Output.File'
-1929:16: Unreachable code 'pragma Assert (Save_Checkpoint /= null);'
-1929:16: Violated assertion
-1935:23: Potential null dereference of 'Output.File'
-1943:10: Potential null dereference of 'Symtab_Shdr'
-1950:23: Potential null dereference of 'Output.File'
-195:10: Potentially violated assertion
-1961:10: Potential infeasible access BDDN.Parent due to invalid condition on discriminant BDDN.Kind
-1961:64: Potential null dereference of 'Histmap'
-1964:24: Potential infeasible access BDD_Vector.Element (BDDN.Parent).C_SCO due to invalid condition on discriminant BDD_Vector.Element (BDDN.Parent).Kind
-197:17: Potential null dereference of 'Output'
-198:7: Potential infeasible access FI.Has_Source_Coverage_Info due to invalid condition on discriminant FI.Kind
-1993:7: Potentially violated assertion
-201:27: Potential null dereference of 'Context.Exe_File'
-203:14: Potential infeasible access Get_SCI (SCO, Tag).Basic_Block_Has_Code due to invalid condition on discriminant Get_SCI (SCO, Tag).Kind
-203:14: Potential null dereference of 'Get_SCI (SCO, Tag)'
-2048:16: Potential infeasible access SCOD.Handler_Range due to invalid condition on discriminant SCOD.Kind
-204:19: Potential infeasible access Section.Section_Content due to invalid condition on discriminant Section.Kind
-207:10: Potential null dereference of 'Result'
-207:49: Potential infeasible access Section.Section_Sec_Idx due to invalid condition on discriminant Section.Kind
-2090:36: Potential infeasible access Ctx.Subprg.Lines due to invalid condition on discriminant Ctx.Subprg.Kind
-2090:36: Potential null dereference of 'Ctx.Subprg'
-211:13: Potential null dereference of 'I_Ranges'
-214:51: Potential null dereference of 'Prj_Tree'
-216:7: Potentially violated assertion
-2186:66: Potential null dereference of 'D_Occ'
-218:7: Potentially violated precondition
-2201:27: Potential null dereference of 'Cache'
-2202:7: Potentially violated assertion
-220:10: Potentially violated assertion
-2231:59: Potential null dereference of 'BB.Called_Sym'
-2232:59: Potential null dereference of 'Exe'
-225:10: Potential null dereference of 'L'
-225:15: Potential null dereference of 'Prg'
-225:20: Potential null dereference of 'R'
-2295:19: Potentially violated assertion
-2311:7: Potentially violated assertion
-2318:20: Potential infeasible access SCO_Vector (Enclosing_Statement (SCO)).Pragma_Name due to invalid condition on discriminant SCO_Vector (Enclosing_Statement (SCO)).Kind
-233:16: Potential infeasible access Section.Section_LS due to invalid condition on discriminant Section.Kind
-233:16: Potential infeasible access Section.Section_LS due to invalid condition on discriminant Section.Kind
-233:26: Potential null dereference of 'Prg'
-234:10: Potential infeasible access Section.Section_Content due to invalid condition on discriminant Section.Kind
-234:7: Potentially violated assertion
-2375:7: Potentially violated assertion
-238:31: Potential infeasible access Section.Section_Name due to invalid condition on discriminant Section.Kind
-238:31: Potential null dereference of 'Section'
-238:31: Potential null dereference of 'Section.Section_Name'
-238:33: Potential null dereference of 'Context.Exe_File'
-239:11: Potential null dereference of 'Shdr'
-2424:22: Potential null dereference of 'FI'
-2426:26: Potential infeasible access FI.Has_Source_Coverage_Info due to invalid condition on discriminant FI.Kind
-2448:27: Potential null dereference of 'Exec'
-2450:40: Potential infeasible access Context.Subprg.Parent.Section_Sec_Idx due to invalid condition on discriminant Context.Subprg.Parent.Kind
-2450:40: Potential null dereference of 'Context.Subprg'
-2450:40: Potential null dereference of 'Context.Subprg.Parent'
-2461:10: Potential null dereference of 'I_Ranges'
-2476:7: Potentially violated assertion
-2477:14: Potential infeasible access SCO_Vector (SCO).Last_Cond_Index due to invalid condition on discriminant SCO_Vector (SCO).Kind
-2477:14: Potential infeasible access SCO_Vector (SCO).Last_Cond_Index due to invalid condition on discriminant SCO_Vector (SCO).Kind
-250:20: Potential infeasible access L.DIE_CU due to invalid condition on discriminant L.Kind
-250:31: Potential infeasible access R.DIE_CU due to invalid condition on discriminant R.Kind
-252:30: Potential infeasible access L.Section_Name due to invalid condition on discriminant L.Kind
-252:46: Potential infeasible access R.Section_Name due to invalid condition on discriminant R.Kind
-254:25: Potential null dereference of 'Exec'
-254:35: Potential null dereference of 'Sym'
-255:27: Potential null dereference of 'Context.Exe_File'
-255:30: Potential infeasible access L.Subprogram_Name due to invalid condition on discriminant L.Kind
-255:49: Potential infeasible access R.Subprogram_Name due to invalid condition on discriminant R.Kind
-256:37: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-256:37: Potential null dereference of 'Sym.Symbol_Name'
-258:20: Potential infeasible access L.Call_Sloc due to invalid condition on discriminant L.Kind
-258:26: Potential infeasible access Sym.Symbol_Origin due to invalid condition on discriminant Sym.Kind
-258:34: Potential infeasible access R.Call_Sloc due to invalid condition on discriminant R.Kind
-259:10: Potentially violated assertion
-260:16: Potentially violated precondition
-2615:10: Potential infeasible access Get_File (Main_Source).LI due to invalid condition on discriminant Get_File (Main_Source).Kind
-2615:10: Potential null dereference of 'Get_File (Main_Source)'
-261:30: Potential infeasible access L.Symbol_Name due to invalid condition on discriminant L.Kind
-261:45: Potential infeasible access R.Symbol_Name due to invalid condition on discriminant R.Kind
-263:10: Potentially violated assertion
+1049:16: (potential) invalid field Unique_Name
+1060:13: (potential) invalid field Unique_Name
+1067:10: unreachable code
+106:7: (potential) assertion failure
+1074:13: (potential) invalid field Operands
+1074:13: (potential) invalid field Operands
+108:10: (potential) assertion failure
+1109:10: (potential) invalid field PC_Set
+111:10: (potential) assertion failure
+112:19: (potential) null dereference of 'Entry_Output'
+1144:14: (potential) invalid field Unique_Name
+1144:14: (potential) null dereference of 'File.Unique_Name'
+1151:7: (potential) assertion failure
+1162:10: (potential) null dereference of 'Result'
+1163:10: (potential) invalid field Lines
+1164:7: (potential) assertion failure
+117:29: (potential) null dereference of 'Context.Trace_File'
+1185:13: (potential) null dereference of 'FI'
+1185:24: (potential) null dereference of 'Left'
+1189:10: (potential) assertion failure
+1189:24: (potential) null dereference of 'Right'
+118:30: (potential) null dereference of 'Exec'
+119:28: (potential) null dereference of 'File.Ehdr'
+1206:20: (potential) null dereference of 'O'
+1213:20: (potential) null dereference of 'Parser'
+1219:16: (potential) null dereference of 'O'
+1226:22: (potential) null dereference of 'D_Occ'
+122:13: (potential) precondition failure
+122:7: (potential) assertion failure
+124:10: (potential) assertion failure
+124:34: (potential) null dereference of 'Buffer'
+1257:7: unreachable code
+125:7: (potential) assertion failure
+1261:10: unreachable code
+1262:10: unreachable code
+1268:10: unreachable code
+126:51: (potential) null dereference of 'Context.Exe_File'
+126:7: (potential) assertion failure
+1271:13: (potential) null dereference of 'Context'
+1271:13: (potential) null dereference of 'Context.Exec'
+1272:10: unreachable code
+1276:16: (potential) invalid field Lines
+1278:13: unreachable code
+127:10: (potential) assertion failure
+1282:13: unreachable code
+1287:10: (potential) assertion failure
+129:44: (potential) precondition failure
+129:54: (potential) null dereference of 'FI'
+1302:41: (potential) invalid field Lines
+1302:41: (potential) null dereference of 'Ctx.Subprg'
+1304:13: (potential) null dereference of 'Context'
+1304:13: (potential) null dereference of 'Context.Exec'
+1304:7: (potential) assertion failure
+130:13: (potential) null dereference of 'File.Ehdr'
+130:29: (potential) null dereference of 'Trace_Output'
+1315:50: (potential) null dereference of 'Exec'
+131:19: (potential) null dereference of 'Get_File (Index)'
+131:19: (potential) null dereference of 'Get_File (Index)'
+131:20: (potential) null dereference of 'File.Ehdr'
+131:39: (potential) null dereference of 'Buffer'
+132:20: (potential) null dereference of 'File.Ehdr'
+1332:19: (potential) assertion failure
+1339:28: (potential) null dereference of 'D_Occ'
+133:20: (potential) null dereference of 'File.Ehdr'
+1345:14: (potential) null dereference of 'FI'
+134:10: (potential) assertion failure
+1350:13: (potential) null dereference of 'SCI'
+1355:21: duplicate code with line 1350
+1358:23: (potential) null dereference of 'Name'
+135:60: (potential) null dereference of 'Exec'
+1365:49: (potential) null dereference of 'Exec'
+1369:18: (potential) null dereference of 'FI.Simple_Name'
+1369:41: (potential) null dereference of 'Exec'
+1373:41: (potential) null dereference of 'Exec'
+1375:41: (potential) null dereference of 'FI.Simple_Name'
+1376:16: (potential) null dereference of 'FI'
+1377:32: (potential) null dereference of 'FI.Full_Name'
+1382:32: (potential) null dereference of 'Exec'
+1386:19: unreachable code
+1390:41: (potential) null dereference of 'Exec.File'
+1391:10: (potential) assertion failure
+1391:10: (potential) assertion failure
+1394:30: (potential) null dereference of 'Exec.File'
+1395:21: (potential) precondition failure
+1396:30: (potential) null dereference of 'E.Old_Prefix'
+139:16: (potential) assertion failure
+139:16: (potential) null dereference of 'Report'
+1401:14: (potential) null dereference of 'Context'
+1401:28: (potential) null dereference of 'From_Insn'
+1404:43: (potential) null dereference of 'Exec'
+1405:40: (potential) null dereference of 'Exec'
+140:51: (potential) null dereference of 'Exe_Name'
+1414:39: (potential) invalid field C_SCO
+141:18: (potential) null dereference of 'Symbols.To_String (User_Loc.Name)'
+1423:10: (potential) assertion failure
+1426:38: (potential) null dereference of 'Exec'
+142:49: (potential) null dereference of 'Tag'
+1432:46: (potential) invalid field Basic_Block_Has_Code
+1433:53: (potential) invalid field Executed
+1434:58: (potential) invalid field Line_Executed
+1436:31: (potential) invalid field Symbol_Name
+1436:31: (potential) null dereference of 'Sym.Symbol_Name'
+1438:45: (potential) invalid field Known_Outcome_Taken
+143:30: (potential) null dereference of 'Exec'
+143:49: (potential) null dereference of 'Tag'
+1445:10: (potential) invalid field Sloc_To_SCO_Maps
+1445:10: (potential) null dereference of 'FI'
+1446:10: (potential) invalid field Sloc_To_SCO_Maps
+1446:19: (potential) invalid field Outcome_Taken
+1446:50: (potential) invalid field Outcome_Taken
+1448:16: (potential) assertion failure
+1449:34: (potential) null dereference of 'Exec'
+1449:42: (potential) invalid field Outcome_Taken
+1452:39: (potential) invalid field Evaluations
+1459:10: (potential) null dereference of 'Get_File (Index)'
+145:56: (potential) null dereference of 'Kernel'
+1467:16: null dereference of 'Executable_Path'
+146:10: (potential) precondition failure
+146:16: (potential) null dereference of 'Report'
+1473:16: null dereference of 'Executable_Path'
+1473:17: (potential) invalid field Has_Object_Coverage_Info
+1473:17: (potential) null dereference of 'File'
+1475:17: (potential) invalid field Has_Source_Coverage_Info
+1475:17: (potential) null dereference of 'File'
+1476:19: (potential) null dereference of 'Default_SCIs (CP_SCI.Kind)'
+147:36: (potential) null dereference of 'FI'
+147:7: (potential) precondition failure
+148:10: (potential) precondition failure
+148:16: (potential) assertion failure
+148:18: (potential) null dereference of 'Report'
+148:56: (potential) null dereference of 'Info'
+149:16: (potential) assertion failure
+1516:10: (potential) invalid field Basic_Block_Has_Code
+151:15: (potential) null dereference of 'Stream.S'
+153:7: (potential) assertion failure
+1544:30: (potential) invalid field Basic_Block_Has_Code
+1544:30: (potential) null dereference of 'Get_SCI (S_SCO, Tag)'
+1561:21: (potential) null dereference of 'Line'
+156:17: (potential) null dereference of 'Report'
+1587:13: (potential) null dereference of 'SCIA'
+1590:23: (potential) null dereference of 'Map'
+1593:22: (potential) null dereference of 'BB.Last_Element'
+159:21: (potential) invalid field Stats
+160:13: (potential) null dereference of 'File.Ehdr'
+1617:19: (potential) assertion failure
+1637:19: (potential) assertion failure
+1644:10: (potential) null dereference of 'Context'
+1652:29: (potential) null dereference of 'Exe'
+1663:19: (potential) null dereference of 'Exe'
+166:17: (potential) null dereference of 'Position.Buffer'
+1674:19: (potential) assertion failure
+169:14: (potential) null dereference of 'Info'
+1707:42: (potential) null dereference of 'Trace_File.Filename'
+171:7: (potential) invalid field Has_Object_Coverage_Info
+1720:43: (potential) null dereference of 'Exe_File'
+173:13: (potential) invalid field Lines
+173:13: (potential) null dereference of 'FI'
+175:14: (potential) null dereference of 'F.Filename'
+175:45: (potential) null dereference of 'File.Ehdr'
+1785:28: (potential) null dereference of 'Ctx'
+178:17: (potential) null dereference of 'Context.Trace_File'
+1796:22: (potential) null dereference of 'Trace_File'
+1796:22: (potential) null dereference of 'Trace_File.Filename'
+179:27: (potential) null dereference of 'Exe'
+1804:26: (potential) null dereference of 'Context.Exec'
+1824:16: (potential) invalid field Section_Name
+1824:16: (potential) null dereference of 'Section.Section_Name'
+183:14: (potential) null dereference of 'Prg'
+183:18: unreachable code
+183:23: (potential) null dereference of 'Opts'
+183:25: (potential) invalid field Lines
+185:48: (potential) invalid field Stats
+1907:18: (potential) null dereference of 'Output.File'
+1921:18: (potential) null dereference of 'Output.File'
+1929:16: assertion failure
+1929:16: unreachable code
+1935:23: (potential) null dereference of 'Output.File'
+1943:10: (potential) null dereference of 'Symtab_Shdr'
+1950:23: (potential) null dereference of 'Output.File'
+195:10: (potential) assertion failure
+1961:10: (potential) invalid field Parent
+1961:64: (potential) null dereference of 'Histmap'
+1964:24: (potential) invalid field C_SCO
+197:17: (potential) null dereference of 'Output'
+198:7: (potential) invalid field Has_Source_Coverage_Info
+1993:7: (potential) assertion failure
+201:27: (potential) null dereference of 'Context.Exe_File'
+203:14: (potential) invalid field Basic_Block_Has_Code
+203:14: (potential) null dereference of 'Get_SCI (SCO, Tag)'
+2048:16: (potential) invalid field Handler_Range
+204:19: (potential) invalid field Section_Content
+207:10: (potential) null dereference of 'Result'
+207:49: (potential) invalid field Section_Sec_Idx
+2090:36: (potential) invalid field Lines
+2090:36: (potential) null dereference of 'Ctx.Subprg'
+211:13: (potential) null dereference of 'I_Ranges'
+214:51: (potential) null dereference of 'Prj_Tree'
+216:7: (potential) assertion failure
+2186:66: (potential) null dereference of 'D_Occ'
+218:7: (potential) precondition failure
+2201:27: (potential) null dereference of 'Cache'
+2202:7: (potential) assertion failure
+220:10: (potential) assertion failure
+2231:59: (potential) null dereference of 'BB.Called_Sym'
+2232:59: (potential) null dereference of 'Exe'
+225:10: (potential) null dereference of 'L'
+225:15: (potential) null dereference of 'Prg'
+225:20: (potential) null dereference of 'R'
+2295:19: (potential) assertion failure
+2311:7: (potential) assertion failure
+2318:20: (potential) invalid field Pragma_Name
+233:16: (potential) invalid field Section_LS
+233:16: (potential) invalid field Section_LS
+233:26: (potential) null dereference of 'Prg'
+234:10: (potential) invalid field Section_Content
+234:7: (potential) assertion failure
+2375:7: (potential) assertion failure
+238:31: (potential) invalid field Section_Name
+238:31: (potential) null dereference of 'Section'
+238:31: (potential) null dereference of 'Section.Section_Name'
+238:33: (potential) null dereference of 'Context.Exe_File'
+239:11: (potential) null dereference of 'Shdr'
+2424:22: (potential) null dereference of 'FI'
+2426:26: (potential) invalid field Has_Source_Coverage_Info
+2448:27: (potential) null dereference of 'Exec'
+2450:40: (potential) invalid field Section_Sec_Idx
+2450:40: (potential) null dereference of 'Context.Subprg'
+2450:40: (potential) null dereference of 'Context.Subprg.Parent'
+2461:10: (potential) null dereference of 'I_Ranges'
+2476:7: (potential) assertion failure
+2477:14: (potential) invalid field Last_Cond_Index
+2477:14: (potential) invalid field Last_Cond_Index
+250:20: (potential) invalid field DIE_CU
+250:31: (potential) invalid field DIE_CU
+252:30: (potential) invalid field Section_Name
+252:46: (potential) invalid field Section_Name
+254:25: (potential) null dereference of 'Exec'
+254:35: (potential) null dereference of 'Sym'
+255:27: (potential) null dereference of 'Context.Exe_File'
+255:30: (potential) invalid field Subprogram_Name
+255:49: (potential) invalid field Subprogram_Name
+256:37: (potential) invalid field Symbol_Name
+256:37: (potential) null dereference of 'Sym.Symbol_Name'
+258:20: (potential) invalid field Call_Sloc
+258:26: (potential) invalid field Symbol_Origin
+258:34: (potential) invalid field Call_Sloc
+259:10: (potential) assertion failure
+260:16: (potential) precondition failure
+2615:10: (potential) invalid field LI
+2615:10: (potential) null dereference of 'Get_File (Main_Source)'
+261:30: (potential) invalid field Symbol_Name
+261:45: (potential) invalid field Symbol_Name
+263:10: (potential) assertion failure
 263:25: left and right operands of "=" are identical
-2644:7: Potentially violated assertion
-264:20: Potential infeasible access L.Sloc due to invalid condition on discriminant L.Kind
-264:29: Potential infeasible access R.Sloc due to invalid condition on discriminant R.Kind
-2749:10: Potentially violated assertion
-2783:16: Potentially violated assertion
-279:10: Potentially violated assertion
-27:7: Potentially violated assertion
-2800:16: Potential infeasible access SCOD.Decision_BDD due to invalid condition on discriminant SCOD.Kind
-2800:16: Potential infeasible access SCOD.Decision_BDD due to invalid condition on discriminant SCOD.Kind
-281:38: Potential null dereference of 'M1'
-2828:21: Potential infeasible access Subp_Info.Subprogram_DIE_CU due to invalid condition on discriminant Subp_Info.Kind
-282:38: Potential null dereference of 'M2'
-2832:19: Potential infeasible access CU_Info.DIE_CU due to invalid condition on discriminant CU_Info.Kind
-283:19: Potential null dereference of 'Diff_Exec'
-283:20: Potential null dereference of 'M1'
-283:29: Potential null dereference of 'M2'
-284:19: Potential null dereference of 'Argument_String_To_List
-                    ("-u " & Name1.all & " " & Name2.all)'
-2860:25: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-2860:25: Potential null dereference of 'Sec'
-2862:19: Potential infeasible access Sec.Section_Sec_Idx due to invalid condition on discriminant Sec.Kind
-2863:18: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-2863:18: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-2863:39: Potential infeasible access Sec.Section_LS due to invalid condition on discriminant Sec.Kind
-2863:39: Potential infeasible access Sec.Section_LS due to invalid condition on discriminant Sec.Kind
-2864:20: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-2864:20: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-2864:20: Potential null dereference of 'Sec'
-287:13: Potential infeasible access L.Disc due to invalid condition on discriminant L.Kind
-287:13: Potential null dereference of 'L'
-2884:20: Potential null dereference of 'Exec'
-2892:62: Potential null dereference of 'D_Occ'
-2896:50: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-2896:50: Potential null dereference of 'Sym'
-2896:50: Potential null dereference of 'Sym.Symbol_Name'
-289:27: Potential null dereference of 'Context.Exe_File'
-2908:32: Potential infeasible access Sec.Section_Sec_Idx due to invalid condition on discriminant Sec.Kind
-2908:32: Potential null dereference of 'Sec'
-290:26: Potential null dereference of 'Exe_File'
-2914:19: Potential infeasible access Sec.Section_Sec_Idx due to invalid condition on discriminant Sec.Kind
-2915:26: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-292:7: Potentially violated assertion
-2940:10: Potential null dereference of 'Exec'
-295:14: Potential null dereference of 'File.Ehdr'
-2965:14: Potential null dereference of 'D_Occ'
-2981:21: Potential null dereference of 'Element (Subprg_Cur)'
-2989:13: Potentially violated assertion
-2989:28: Potential null dereference of 'Subprg'
-29:32: Potential null dereference of 'El'
-300:12: Potential null dereference of 'El'
-3022:34: Potential null dereference of 'Base'
-3022:44: Potential null dereference of 'Line_Info'
-3025:13: Potential infeasible access Line_Info.Sloc due to invalid condition on discriminant Line_Info.Kind
-3025:13: Potential null dereference of 'Line_Info'
-3027:13: Potential infeasible access Line_Info.Sloc due to invalid condition on discriminant Line_Info.Kind
-303:10: Potential null dereference of 'Line_Info'
-3040:36: Potential infeasible access R.S_Kind due to invalid condition on discriminant R.Kind
-3042:35: Potential infeasible access R.Value due to invalid condition on discriminant R.Kind
-3044:37: Potential infeasible access R.D_Kind due to invalid condition on discriminant R.Kind
-3044:37: Potential infeasible access R.D_Kind due to invalid condition on discriminant R.Kind
-3047:37: Potential infeasible access R.Op_Kind due to invalid condition on discriminant R.Kind
-3047:37: Potential infeasible access R.Op_Kind due to invalid condition on discriminant R.Kind
-305:34: Potential null dereference of 'Line'
-305:37: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-305:37: Potential null dereference of 'Sym.Symbol_Name'
-3084:22: Potentially violated assertion
-30:10: Potential null dereference of 'Line'
-310:13: Potential infeasible access Symbol.Symbol_Name due to invalid condition on discriminant Symbol.Kind
-311:21: Potential infeasible access Symbol.Symbol_Name due to invalid condition on discriminant Symbol.Kind
-311:21: Potential null dereference of 'Symbol.Symbol_Name'
-311:44: Potential null dereference of 'TF'
-314:16: Potential infeasible access Sec.Section_Sec_Idx due to invalid condition on discriminant Sec.Kind
-314:16: Potential null dereference of 'Sec'
-315:23: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-316:14: Potential null dereference of 'File.Ehdr'
-316:42: Potential null dereference of 'TF.Filename'
-3185:19: Potentially violated assertion
-3185:34: Potential infeasible access SCOD.Dominant due to invalid condition on discriminant SCOD.Kind
-31:61: Potential null dereference of 'Context'
-3210:22: Potentially violated assertion
-3221:22: Potentially violated assertion
-323:22: Potential null dereference of 'Parser'
-3243:52: Potential infeasible access Section.Section_Sec_Idx due to invalid condition on discriminant Section.Kind
-3243:52: Potential null dereference of 'Section'
-326:14: Potential null dereference of 'Get_Shdr (File, Elf_Half (Index))'
-326:20: Potential null dereference of 'Addr'
-327:19: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-327:19: Potential null dereference of 'Sec'
-327:36: Potential null dereference of 'Root_Project'
-329:26: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-331:44: Potential infeasible access Section.Section_Content due to invalid condition on discriminant Section.Kind
-331:44: Potential null dereference of 'Section'
-3321:14: Potential infeasible access SCO_Vector (SCO).Op_Kind due to invalid condition on discriminant SCO_Vector (SCO).Kind
-3321:14: Potential infeasible access SCO_Vector (SCO).Op_Kind due to invalid condition on discriminant SCO_Vector (SCO).Kind
-332:56: Potential infeasible access Section.Section_Sec_Idx due to invalid condition on discriminant Section.Kind
-345:27: Potential null dereference of 'Context.Exe_File'
-349:10: Potential infeasible access Sym.E.E due to invalid condition on discriminant Sym.E.Inline
-350:35: Potential infeasible access Sym.E.E due to invalid condition on discriminant Sym.E.Inline
-352:41: Potential infeasible access Sym.E.E_Name due to invalid condition on discriminant Sym.E.Inline
-3573:19: Potential null dereference of 'Prev'
-3573:32: Potential null dereference of 'Sym'
-357:21: Potential null dereference of 'Exe'
-3592:25: Potential null dereference of 'Sym'
-3592:25: Potential null dereference of 'Sym.Parent'
-359:28: Potential null dereference of 'Context'
-359:28: Potential null dereference of 'Context.Exec'
-361:27: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-3626:10: Potential infeasible access SCOD.Degraded_Origins due to invalid condition on discriminant SCOD.Kind
-3626:10: Potential infeasible access SCOD.Degraded_Origins due to invalid condition on discriminant SCOD.Kind
-3655:24: Potential null dereference of 'Cache.Last_Info'
-3674:27: Potential null dereference of 'Candidate_Info'
-3680:34: Potential null dereference of 'Candidate_Info'
-3692:10: Potentially violated assertion
-3692:10: Potentially violated assertion
-3692:10: Potentially violated assertion
-3721:28: Potential null dereference of 'Prev_Info'
-3787:19: Potential infeasible access Symbol.Symbol_Name due to invalid condition on discriminant Symbol.Kind
-3787:19: Potential null dereference of 'Symbol.Symbol_Name'
-3818:13: Potentially violated assertion
-381:20: Potential null dereference of 'Cu.Compile_Unit_Filename'
-3827:7: Potentially violated assertion
-3855:32: Potential null dereference of 'Info.Exec'
-388:24: Potential null dereference of 'Subp_Info.Traces'
-38:7: Potentially violated assertion
-3912:42: Potential null dereference of 'Info.Exec'
-3932:13: Potential null dereference of 'Info.Traces'
-3934:13: Potential null dereference of 'Get_Insn_Set_Ranges (Info.Exec.all, Info.Section)'
-3934:34: Potential null dereference of 'Info.Exec'
-395:16: Potential null dereference of 'Base'
-3972:19: Potential infeasible access Sec.Section_Content due to invalid condition on discriminant Sec.Kind
-3972:19: Potential null dereference of 'Sec'
-39:14: Potential null dereference of 'L'
-39:22: Potential null dereference of 'R'
-402:54: Potentially violated precondition
-402:64: Potential null dereference of 'FI'
-404:47: Potential null dereference of 'Info'
-404:7: Potentially violated assertion
-4050:49: Potential infeasible access Sec.Section_Sec_Idx due to invalid condition on discriminant Sec.Kind
-4050:49: Potential null dereference of 'Sec'
-4055:15: Potential infeasible access Sec.Section_Name due to invalid condition on discriminant Sec.Kind
-4055:15: Potential null dereference of 'Sec.Section_Name'
-406:14: Potential null dereference of 'To_Elf_Rela_Acc (Addr)'
-406:35: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-407:35: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-408:15: Potential null dereference of 'Output'
-408:45: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-409:39: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-4104:24: Potential infeasible access Subprg.Subprogram_Name due to invalid condition on discriminant Subprg.Kind
-4104:24: Potential null dereference of 'Subprg.Subprogram_Name'
-410:18: Potential null dereference of 'Output'
-410:41: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-4118:43: Potential infeasible access Subprg.Subprogram_Name due to invalid condition on discriminant Subprg.Kind
-4118:43: Potential null dereference of 'Subprg.Subprogram_Name'
-4119:48: Potential infeasible access Symbol.Symbol_Name due to invalid condition on discriminant Symbol.Kind
-4119:48: Potential null dereference of 'Symbol.Symbol_Name'
-4122:24: Potential infeasible access Symbol.Symbol_Name due to invalid condition on discriminant Symbol.Kind
-4122:24: Potential null dereference of 'Symbol.Symbol_Name'
-412:35: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-413:15: Potential null dereference of 'Output'
-4140:32: Potential null dereference of 'Symbol'
-414:37: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-415:18: Potential null dereference of 'Output'
-417:36: Potential null dereference of 'LI'
-418:20: Potential null dereference of 'Output'
-418:37: Potentially violated precondition
-419:20: Potential null dereference of 'Output'
-419:32: Potential null dereference of 'E.Message'
-420:14: Potential null dereference of 'To_Elf_Sym_Acc (Addr)'
-424:50: Potential null dereference of 'BB.Called_Sym'
-424:53: Potential null dereference of 'Info.Full_Name'
-424:69: Potential null dereference of 'Exec'
-428:26: Potential null dereference of 'Root_Project'
-428:7: Potentially violated precondition
-431:16: Potential null dereference of 'LI'
-448:13: Potentially violated precondition
-4506:54: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-4506:54: Potential null dereference of 'Sym'
-4506:54: Potential null dereference of 'Sym.Symbol_Name'
-450:16: Potential null dereference of 'LI'
-4517:17: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-4517:17: Potential null dereference of 'Sym'
-4517:17: Potential null dereference of 'Sym.Symbol_Name'
-4519:54: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-4519:54: Potential null dereference of 'Sym.Symbol_Name'
-4525:13: Potential infeasible access Sym.Symbol_Name due to invalid condition on discriminant Sym.Kind
-452:19: Potential null dereference of 'Output'
-453:21: Potential null dereference of 'Output'
-454:51: Potential null dereference of 'Info'
-454:51: Potential null dereference of 'Info.Simple_Name'
-4580:33: Potential null dereference of 'Exec'
-458:22: Potential null dereference of 'Output'
-458:38: Potential null dereference of 'Info'
-4597:16: Potential null dereference of 'Line'
-4597:29: Potential null dereference of 'Sym'
-459:10: Potentially violated precondition
-45:7: Potentially violated assertion
-460:21: Potential null dereference of 'Address_Info_Sets.Element (Sym_Cur)'
-463:21: Potential null dereference of 'Output'
-463:47: Potentially violated precondition
-463:57: Potential null dereference of 'FI'
-464:21: Potential null dereference of 'Output'
-464:63: Potential null dereference of 'LI'
-467:18: Potential null dereference of 'Output'
-469:19: Potential null dereference of 'Line'
-469:21: Potential null dereference of 'Output'
-479:19: Potential null dereference of 'Insn'
-4809:40: Potential null dereference of 'Exec'
-480:13: Potential null dereference of 'FI'
-4812:10: Potential null dereference of 'I_Ranges'
-484:10: Potential infeasible access FI.Stats due to invalid condition on discriminant FI.Kind
-485:18: Potential infeasible access FI.Lines due to invalid condition on discriminant FI.Kind
-485:18: Potential null dereference of 'FI'
-4874:10: Potentially violated assertion
-487:16: Potential null dereference of 'Traces'
-48:26: Potentially violated precondition
-48:34: Potential infeasible access TP.Current_Subp.Lines due to invalid condition on discriminant TP.Current_Subp.Kind
-48:34: Potential null dereference of 'TP'
-48:34: Potential null dereference of 'TP.Current_Subp'
-493:20: Potential null dereference of 'Output'
-498:38: Potential null dereference of 'Info'
-500:13: Potential null dereference of 'FI'
-500:29: Potential null dereference of 'Name'
-500:44: Potentially violated precondition
-501:7: Potential infeasible access FI.Lines due to invalid condition on discriminant FI.Kind
-501:7: Potential infeasible access FI.Lines due to invalid condition on discriminant FI.Kind
-505:16: Potential null dereference of 'DS_Top'
-50:19: Potential null dereference of 'Res'
-514:57: Potential null dereference of 'DS_Top'
-515:19: Potential null dereference of 'Context'
-517:26: Potential null dereference of 'Output'
-525:20: Potential null dereference of 'Key_To_Name (Key (Cur))'
-532:36: Potential null dereference of 'DS_Top'
-534:26: Potential null dereference of 'Insn'
-540:20: Potential null dereference of 'Get (Element (Cur))'
-550:19: Potential null dereference of 'Insn'
-555:22: Potential null dereference of 'Context'
-557:10: Potentially violated assertion
-563:13: Potentially violated assertion
-564:13: Potentially violated precondition
-564:36: Potential null dereference of 'Current_File_Line_Cache'
-565:10: Potential null dereference of 'Info'
-569:19: Potential infeasible access FI.Lines due to invalid condition on discriminant FI.Kind
-569:19: Potential null dereference of 'FI'
-571:16: Potential null dereference of 'LI'
-574:13: Potential null dereference of 'Output'
-580:44: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-584:26: Potential null dereference of 'Context'
-588:13: Potential null dereference of 'Output'
-589:15: Potential null dereference of 'Exec'
-590:7: Potentially violated assertion
-591:28: Potential null dereference of 'Context.Exec'
-593:17: Potential null dereference of 'Output'
-594:10: Potential infeasible access TP.Current_Subp.Lines due to invalid condition on discriminant TP.Current_Subp.Kind
-594:10: Potential null dereference of 'TP'
-594:10: Potential null dereference of 'TP.Current_Subp'
-595:23: Potential null dereference of 'DS_Top'
-595:31: Potential null dereference of 'Annotation.Message'
-598:28: Potential null dereference of 'Context.Exec'
-602:33: Potential infeasible access Symbol.Symbol_Name due to invalid condition on discriminant Symbol.Kind
-605:17: Potential null dereference of 'File.Simple_Name'
-606:14: Potential null dereference of 'TP'
-606:14: Potential null dereference of 'TP.Routine_Tags.Element (Tag)'
-608:52: Potential null dereference of 'Context.Exec'
-617:23: Potential null dereference of 'Info'
-61:15: Potential null dereference of 'Key_To_Name (Key)'
-622:13: Potential infeasible access SCI.Evaluations due to invalid condition on discriminant SCI.Kind
-630:43: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-649:56: Potential null dereference of 'Insn'
-64:7: Potentially violated assertion
-651:60: Potential null dereference of 'Info'
-655:13: Potentially violated assertion
-65:14: Potential null dereference of 'L'
-65:22: Potential null dereference of 'R'
-662:23: Potential null dereference of 'Exec'
-662:7: Potentially violated assertion
-664:7: Potentially violated assertion
-667:16: Potential null dereference of 'Info_Simple'
-668:25: Potential null dereference of 'Context'
-669:41: Potential null dereference of 'E'
-673:20: Potential null dereference of 'Output'
-673:28: Potential null dereference of 'Insn'
-673:32: Potential null dereference of 'E.Filename'
-674:20: Potential null dereference of 'Output'
-675:13: Potential null dereference of 'Parser'
-676:20: Potential null dereference of 'Output'
-677:30: Potential null dereference of 'DS_Top'
-677:7: Potentially violated assertion
-678:20: Potential null dereference of 'Output'
-685:23: Potential null dereference of 'Output'
-68:17: Potential null dereference of 'Element (Cur).Factory'
-690:10: Potentially violated assertion
-692:17: Potential null dereference of 'Output'
-694:13: Potential null dereference of 'Parser'
-698:13: Potential null dereference of 'Parser'
-700:59: Potential null dereference of 'Prj_Tree'
-701:16: Potentially violated assertion
-704:40: Potential null dereference of 'Pp.Context'
-710:16: Potentially violated assertion
-714:24: Potential null dereference of 'Exec.File'
-720:10: Potentially violated assertion
-720:25: Potential null dereference of 'DS_Top'
-726:10: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-726:10: Potential null dereference of 'Info'
-726:45: Potential infeasible access Info.Stats due to invalid condition on discriminant Info.Kind
-727:10: Potentially violated assertion
-72:37: Potential null dereference of 'CP_File'
-730:10: Potentially violated assertion
-731:10: Potentially violated assertion
-732:24: Potential null dereference of 'Exec.File'
-741:30: Potential null dereference of 'Exec.File'
-750:25: Potential null dereference of 'Exec.File'
-751:16: Potential infeasible access SCI.Line_Executed due to invalid condition on discriminant SCI.Kind
-753:16: Potential infeasible access SCI.Executed due to invalid condition on discriminant SCI.Kind
-753:17: Potential null dereference of 'Output'
-755:10: Potentially violated assertion
-755:27: Potential infeasible access SO_Inputs.Set due to invalid condition on discriminant SO_Inputs.Kind
-756:19: Potentially violated precondition
-765:12: Potentially violated assertion
-765:13: Potential infeasible access SCI.Known_Outcome_Taken due to invalid condition on discriminant SCI.Kind
-766:7: Potentially violated assertion
-767:10: Potentially violated assertion
-772:13: Potentially violated assertion
-775:28: Potential null dereference of 'Parser'
-783:10: Potential null dereference of 'Symtab_Shdr'
-783:7: Potential null dereference of 'Context'
-788:10: Potentially violated assertion
-78:28: Potential null dereference of 'Exec'
-796:26: Potential infeasible access Cur_SCI.Executed due to invalid condition on discriminant Cur_SCI.Kind
-796:26: Potential null dereference of 'Cur_SCI'
-797:45: Potential infeasible access Cur_SCI.Line_Executed due to invalid condition on discriminant Cur_SCI.Kind
-79:23: Potential null dereference of 'HW_Trigger_Arg'
-802:13: Potentially violated assertion
-812:14: Potentially violated precondition
-812:24: Potential null dereference of 'Get_File (Sloc.Source_File)'
-813:18: Potential infeasible access SCO_Vector (Node.C_SCO).Value due to invalid condition on discriminant SCO_Vector (Node.C_SCO).Kind
-821:17: Potential infeasible access File.Lines due to invalid condition on discriminant File.Kind
-821:17: Potential null dereference of 'File'
-824:31: Potential infeasible access Opt.String_List_Option due to invalid condition on discriminant Opt.Kind
-835:28: Potential infeasible access Get_SCI (Dom_SCO, Tag).Known_Outcome_Taken due to invalid condition on discriminant Get_SCI (Dom_SCO, Tag).Kind
-835:28: Potential null dereference of 'Get_SCI (Dom_SCO, Tag)'
-835:31: Potential null dereference of 'Context'
-835:31: Potential null dereference of 'Context.Exec'
-838:14: Potentially violated precondition
-838:24: Potential null dereference of 'Get_File (Sloc.Source_File)'
-846:10: Potential null dereference of 'D_Occ'
-847:14: Potential null dereference of 'File'
-854:18: Potential infeasible access File.Lines due to invalid condition on discriminant File.Kind
-854:18: Potential null dereference of 'File.Lines.Element (Index)'
-862:16: Potential null dereference of 'Context'
-86:14: Potential null dereference of 'Report_Output_Dir'
-872:19: Potential null dereference of 'Context'
-873:14: Potential null dereference of 'Files_Table.Element (Index)'
-873:14: Potential null dereference of 'Files_Table.Element (Index).Simple_Name'
-882:35: Potential null dereference of 'D_Occ'
-887:34: Potential infeasible access Opt.String_List_Option due to invalid condition on discriminant Opt.Kind
-910:19: Potential null dereference of 'Parser'
-918:27: Potential null dereference of 'Last_Insn'
-927:19: Potential null dereference of 'Last_Insn'
-931:19: Potential infeasible access SCI.Outcome_Taken due to invalid condition on discriminant SCI.Kind
-93:23: Potential null dereference of 'HW_Trigger_Arg'
-948:15: Potential null dereference of 'Insn'
-95:36: Potential infeasible access Section.Section_Name due to invalid condition on discriminant Section.Kind
-95:36: Potential null dereference of 'Section'
-95:36: Potential null dereference of 'Section.Section_Name'
-990:19: Potentially violated assertion
-994:25: Potential null dereference of 'Context'
-996:13: Potential infeasible access Origin_Node.Dest due to invalid condition on discriminant Origin_Node.Kind
+2644:7: (potential) assertion failure
+264:20: (potential) invalid field Sloc
+264:29: (potential) invalid field Sloc
+2749:10: (potential) assertion failure
+2783:16: (potential) assertion failure
+279:10: (potential) assertion failure
+27:7: (potential) assertion failure
+2800:16: (potential) invalid field Decision_BDD
+2800:16: (potential) invalid field Decision_BDD
+281:38: (potential) null dereference of 'M1'
+2828:21: (potential) invalid field Subprogram_DIE_CU
+282:38: (potential) null dereference of 'M2'
+2832:19: (potential) invalid field DIE_CU
+283:19: (potential) null dereference of 'Diff_Exec'
+283:20: (potential) null dereference of 'M1'
+283:29: (potential) null dereference of 'M2'
+284:19: (potential) null dereference of 'Argument_String_To_List("-u " & Name1...'
+2860:25: (potential) invalid field Section_Content
+2860:25: (potential) null dereference of 'Sec'
+2862:19: (potential) invalid field Section_Sec_Idx
+2863:18: (potential) invalid field Section_Content
+2863:18: (potential) invalid field Section_Content
+2863:39: (potential) invalid field Section_LS
+2863:39: (potential) invalid field Section_LS
+2864:20: (potential) invalid field Section_Content
+2864:20: (potential) invalid field Section_Content
+2864:20: (potential) null dereference of 'Sec'
+287:13: (potential) invalid field Disc
+287:13: (potential) null dereference of 'L'
+2884:20: (potential) null dereference of 'Exec'
+2892:62: (potential) null dereference of 'D_Occ'
+2896:50: (potential) invalid field Symbol_Name
+2896:50: (potential) null dereference of 'Sym'
+2896:50: (potential) null dereference of 'Sym.Symbol_Name'
+289:27: (potential) null dereference of 'Context.Exe_File'
+2908:32: (potential) invalid field Section_Sec_Idx
+2908:32: (potential) null dereference of 'Sec'
+290:26: (potential) null dereference of 'Exe_File'
+2914:19: (potential) invalid field Section_Sec_Idx
+2915:26: (potential) invalid field Section_Content
+292:7: (potential) assertion failure
+2940:10: (potential) null dereference of 'Exec'
+295:14: (potential) null dereference of 'File.Ehdr'
+2965:14: (potential) null dereference of 'D_Occ'
+2981:21: (potential) null dereference of 'Element (Subprg_Cur)'
+2989:13: (potential) assertion failure
+2989:28: (potential) null dereference of 'Subprg'
+29:32: (potential) null dereference of 'El'
+300:12: (potential) null dereference of 'El'
+3022:34: (potential) null dereference of 'Base'
+3022:44: (potential) null dereference of 'Line_Info'
+3025:13: (potential) invalid field Sloc
+3025:13: (potential) null dereference of 'Line_Info'
+3027:13: (potential) invalid field Sloc
+303:10: (potential) null dereference of 'Line_Info'
+3040:36: (potential) invalid field S_Kind
+3042:35: (potential) invalid field Value
+3044:37: (potential) invalid field D_Kind
+3044:37: (potential) invalid field D_Kind
+3047:37: (potential) invalid field Op_Kind
+3047:37: (potential) invalid field Op_Kind
+305:34: (potential) null dereference of 'Line'
+305:37: (potential) invalid field Symbol_Name
+305:37: (potential) null dereference of 'Sym.Symbol_Name'
+3084:22: (potential) assertion failure
+30:10: (potential) null dereference of 'Line'
+310:13: (potential) invalid field Symbol_Name
+311:21: (potential) invalid field Symbol_Name
+311:21: (potential) null dereference of 'Symbol.Symbol_Name'
+311:44: (potential) null dereference of 'TF'
+314:16: (potential) invalid field Section_Sec_Idx
+314:16: (potential) null dereference of 'Sec'
+315:23: (potential) invalid field Section_Content
+316:14: (potential) null dereference of 'File.Ehdr'
+316:42: (potential) null dereference of 'TF.Filename'
+3185:19: (potential) assertion failure
+3185:34: (potential) invalid field Dominant
+31:61: (potential) null dereference of 'Context'
+3210:22: (potential) assertion failure
+3221:22: (potential) assertion failure
+323:22: (potential) null dereference of 'Parser'
+3243:52: (potential) invalid field Section_Sec_Idx
+3243:52: (potential) null dereference of 'Section'
+326:14: (potential) null dereference of 'Get_Shdr (File, Elf_Half (Index))'
+326:20: (potential) null dereference of 'Addr'
+327:19: (potential) invalid field Symbol_Name
+327:19: (potential) null dereference of 'Sec'
+327:36: (potential) null dereference of 'Root_Project'
+329:26: (potential) invalid field Section_Content
+331:44: (potential) invalid field Section_Content
+331:44: (potential) null dereference of 'Section'
+3321:14: (potential) invalid field Op_Kind
+3321:14: (potential) invalid field Op_Kind
+332:56: (potential) invalid field Section_Sec_Idx
+345:27: (potential) null dereference of 'Context.Exe_File'
+349:10: (potential) invalid field E
+350:35: (potential) invalid field E
+352:41: (potential) invalid field E_Name
+3573:19: (potential) null dereference of 'Prev'
+3573:32: (potential) null dereference of 'Sym'
+357:21: (potential) null dereference of 'Exe'
+3592:25: (potential) null dereference of 'Sym'
+3592:25: (potential) null dereference of 'Sym.Parent'
+359:28: (potential) null dereference of 'Context'
+359:28: (potential) null dereference of 'Context.Exec'
+361:27: (potential) invalid field Symbol_Name
+3626:10: (potential) invalid field Degraded_Origins
+3626:10: (potential) invalid field Degraded_Origins
+3655:24: (potential) null dereference of 'Cache.Last_Info'
+3674:27: (potential) null dereference of 'Candidate_Info'
+3680:34: (potential) null dereference of 'Candidate_Info'
+3692:10: (potential) assertion failure
+3692:10: (potential) assertion failure
+3692:10: (potential) assertion failure
+3721:28: (potential) null dereference of 'Prev_Info'
+3787:19: (potential) invalid field Symbol_Name
+3787:19: (potential) null dereference of 'Symbol.Symbol_Name'
+3818:13: (potential) assertion failure
+381:20: (potential) null dereference of 'Cu.Compile_Unit_Filename'
+3827:7: (potential) assertion failure
+3855:32: (potential) null dereference of 'Info.Exec'
+388:24: (potential) null dereference of 'Subp_Info.Traces'
+38:7: (potential) assertion failure
+3912:42: (potential) null dereference of 'Info.Exec'
+3932:13: (potential) null dereference of 'Info.Traces'
+3934:13: (potential) null dereference of 'Get_Insn_Set_Ranges (Info.Exec.all, I...'
+3934:34: (potential) null dereference of 'Info.Exec'
+395:16: (potential) null dereference of 'Base'
+3972:19: (potential) invalid field Section_Content
+3972:19: (potential) null dereference of 'Sec'
+39:14: (potential) null dereference of 'L'
+39:22: (potential) null dereference of 'R'
+402:54: (potential) precondition failure
+402:64: (potential) null dereference of 'FI'
+404:47: (potential) null dereference of 'Info'
+404:7: (potential) assertion failure
+4050:49: (potential) invalid field Section_Sec_Idx
+4050:49: (potential) null dereference of 'Sec'
+4055:15: (potential) invalid field Section_Name
+4055:15: (potential) null dereference of 'Sec.Section_Name'
+406:14: (potential) null dereference of 'To_Elf_Rela_Acc (Addr)'
+406:35: (potential) invalid field Stats
+407:35: (potential) invalid field Stats
+408:15: (potential) null dereference of 'Output'
+408:45: (potential) invalid field Stats
+409:39: (potential) invalid field Stats
+4104:24: (potential) invalid field Subprogram_Name
+4104:24: (potential) null dereference of 'Subprg.Subprogram_Name'
+410:18: (potential) null dereference of 'Output'
+410:41: (potential) invalid field Stats
+4118:43: (potential) invalid field Subprogram_Name
+4118:43: (potential) null dereference of 'Subprg.Subprogram_Name'
+4119:48: (potential) invalid field Symbol_Name
+4119:48: (potential) null dereference of 'Symbol.Symbol_Name'
+4122:24: (potential) invalid field Symbol_Name
+4122:24: (potential) null dereference of 'Symbol.Symbol_Name'
+412:35: (potential) invalid field Stats
+413:15: (potential) null dereference of 'Output'
+4140:32: (potential) null dereference of 'Symbol'
+414:37: (potential) invalid field Stats
+415:18: (potential) null dereference of 'Output'
+417:36: (potential) null dereference of 'LI'
+418:20: (potential) null dereference of 'Output'
+418:37: (potential) precondition failure
+419:20: (potential) null dereference of 'Output'
+419:32: (potential) null dereference of 'E.Message'
+420:14: (potential) null dereference of 'To_Elf_Sym_Acc (Addr)'
+424:50: (potential) null dereference of 'BB.Called_Sym'
+424:53: (potential) null dereference of 'Info.Full_Name'
+424:69: (potential) null dereference of 'Exec'
+428:26: (potential) null dereference of 'Root_Project'
+428:7: (potential) precondition failure
+431:16: (potential) null dereference of 'LI'
+448:13: (potential) precondition failure
+4506:54: (potential) invalid field Symbol_Name
+4506:54: (potential) null dereference of 'Sym'
+4506:54: (potential) null dereference of 'Sym.Symbol_Name'
+450:16: (potential) null dereference of 'LI'
+4517:17: (potential) invalid field Symbol_Name
+4517:17: (potential) null dereference of 'Sym'
+4517:17: (potential) null dereference of 'Sym.Symbol_Name'
+4519:54: (potential) invalid field Symbol_Name
+4519:54: (potential) null dereference of 'Sym.Symbol_Name'
+4525:13: (potential) invalid field Symbol_Name
+452:19: (potential) null dereference of 'Output'
+453:21: (potential) null dereference of 'Output'
+454:51: (potential) null dereference of 'Info'
+454:51: (potential) null dereference of 'Info.Simple_Name'
+4580:33: (potential) null dereference of 'Exec'
+458:22: (potential) null dereference of 'Output'
+458:38: (potential) null dereference of 'Info'
+4597:16: (potential) null dereference of 'Line'
+4597:29: (potential) null dereference of 'Sym'
+459:10: (potential) precondition failure
+45:7: (potential) assertion failure
+460:21: (potential) null dereference of 'Address_Info_Sets.Element (Sym_Cur)'
+463:21: (potential) null dereference of 'Output'
+463:47: (potential) precondition failure
+463:57: (potential) null dereference of 'FI'
+464:21: (potential) null dereference of 'Output'
+464:63: (potential) null dereference of 'LI'
+467:18: (potential) null dereference of 'Output'
+469:19: (potential) null dereference of 'Line'
+469:21: (potential) null dereference of 'Output'
+479:19: (potential) null dereference of 'Insn'
+4809:40: (potential) null dereference of 'Exec'
+480:13: (potential) null dereference of 'FI'
+4812:10: (potential) null dereference of 'I_Ranges'
+484:10: (potential) invalid field Stats
+485:18: (potential) invalid field Lines
+485:18: (potential) null dereference of 'FI'
+4874:10: (potential) assertion failure
+487:16: (potential) null dereference of 'Traces'
+48:26: (potential) precondition failure
+48:34: (potential) invalid field Lines
+48:34: (potential) null dereference of 'TP'
+48:34: (potential) null dereference of 'TP.Current_Subp'
+493:20: (potential) null dereference of 'Output'
+498:38: (potential) null dereference of 'Info'
+500:13: (potential) null dereference of 'FI'
+500:29: (potential) null dereference of 'Name'
+500:44: (potential) precondition failure
+501:7: (potential) invalid field Lines
+501:7: (potential) invalid field Lines
+505:16: (potential) null dereference of 'DS_Top'
+50:19: (potential) null dereference of 'Res'
+514:57: (potential) null dereference of 'DS_Top'
+515:19: (potential) null dereference of 'Context'
+517:26: (potential) null dereference of 'Output'
+525:20: (potential) null dereference of 'Key_To_Name (Key (Cur))'
+532:36: (potential) null dereference of 'DS_Top'
+534:26: (potential) null dereference of 'Insn'
+540:20: (potential) null dereference of 'Get (Element (Cur))'
+550:19: (potential) null dereference of 'Insn'
+555:22: (potential) null dereference of 'Context'
+557:10: (potential) assertion failure
+563:13: (potential) assertion failure
+564:13: (potential) precondition failure
+564:36: (potential) null dereference of 'Current_File_Line_Cache'
+565:10: (potential) null dereference of 'Info'
+569:19: (potential) invalid field Lines
+569:19: (potential) null dereference of 'FI'
+571:16: (potential) null dereference of 'LI'
+574:13: (potential) null dereference of 'Output'
+580:44: (potential) invalid field Stats
+584:26: (potential) null dereference of 'Context'
+588:13: (potential) null dereference of 'Output'
+589:15: (potential) null dereference of 'Exec'
+590:7: (potential) assertion failure
+591:28: (potential) null dereference of 'Context.Exec'
+593:17: (potential) null dereference of 'Output'
+594:10: (potential) invalid field Lines
+594:10: (potential) null dereference of 'TP'
+594:10: (potential) null dereference of 'TP.Current_Subp'
+595:23: (potential) null dereference of 'DS_Top'
+595:31: (potential) null dereference of 'Annotation.Message'
+598:28: (potential) null dereference of 'Context.Exec'
+602:33: (potential) invalid field Symbol_Name
+605:17: (potential) null dereference of 'File.Simple_Name'
+606:14: (potential) null dereference of 'TP'
+606:14: (potential) null dereference of 'TP.Routine_Tags.Element (Tag)'
+608:52: (potential) null dereference of 'Context.Exec'
+617:23: (potential) null dereference of 'Info'
+61:15: (potential) null dereference of 'Key_To_Name (Key)'
+622:13: (potential) invalid field Evaluations
+630:43: (potential) invalid field Stats
+649:56: (potential) null dereference of 'Insn'
+64:7: (potential) assertion failure
+651:60: (potential) null dereference of 'Info'
+655:13: (potential) assertion failure
+65:14: (potential) null dereference of 'L'
+65:22: (potential) null dereference of 'R'
+662:23: (potential) null dereference of 'Exec'
+662:7: (potential) assertion failure
+664:7: (potential) assertion failure
+667:16: (potential) null dereference of 'Info_Simple'
+668:25: (potential) null dereference of 'Context'
+669:41: (potential) null dereference of 'E'
+673:20: (potential) null dereference of 'Output'
+673:28: (potential) null dereference of 'Insn'
+673:32: (potential) null dereference of 'E.Filename'
+674:20: (potential) null dereference of 'Output'
+675:13: (potential) null dereference of 'Parser'
+676:20: (potential) null dereference of 'Output'
+677:30: (potential) null dereference of 'DS_Top'
+677:7: (potential) assertion failure
+678:20: (potential) null dereference of 'Output'
+685:23: (potential) null dereference of 'Output'
+68:17: (potential) null dereference of 'Element (Cur).Factory'
+690:10: (potential) assertion failure
+692:17: (potential) null dereference of 'Output'
+694:13: (potential) null dereference of 'Parser'
+698:13: (potential) null dereference of 'Parser'
+700:59: (potential) null dereference of 'Prj_Tree'
+701:16: (potential) assertion failure
+704:40: (potential) null dereference of 'Pp.Context'
+710:16: (potential) assertion failure
+714:24: (potential) null dereference of 'Exec.File'
+720:10: (potential) assertion failure
+720:25: (potential) null dereference of 'DS_Top'
+726:10: (potential) invalid field Stats
+726:10: (potential) null dereference of 'Info'
+726:45: (potential) invalid field Stats
+727:10: (potential) assertion failure
+72:37: (potential) null dereference of 'CP_File'
+730:10: (potential) assertion failure
+731:10: (potential) assertion failure
+732:24: (potential) null dereference of 'Exec.File'
+741:30: (potential) null dereference of 'Exec.File'
+750:25: (potential) null dereference of 'Exec.File'
+751:16: (potential) invalid field Line_Executed
+753:16: (potential) invalid field Executed
+753:17: (potential) null dereference of 'Output'
+755:10: (potential) assertion failure
+755:27: (potential) invalid field Set
+756:19: (potential) precondition failure
+765:12: (potential) assertion failure
+765:13: (potential) invalid field Known_Outcome_Taken
+766:7: (potential) assertion failure
+767:10: (potential) assertion failure
+772:13: (potential) assertion failure
+775:28: (potential) null dereference of 'Parser'
+783:10: (potential) null dereference of 'Symtab_Shdr'
+783:7: (potential) null dereference of 'Context'
+788:10: (potential) assertion failure
+78:28: (potential) null dereference of 'Exec'
+796:26: (potential) invalid field Executed
+796:26: (potential) null dereference of 'Cur_SCI'
+797:45: (potential) invalid field Line_Executed
+79:23: (potential) null dereference of 'HW_Trigger_Arg'
+802:13: (potential) assertion failure
+812:14: (potential) precondition failure
+812:24: (potential) null dereference of 'Get_File (Sloc.Source_File)'
+813:18: (potential) invalid field Value
+821:17: (potential) invalid field Lines
+821:17: (potential) null dereference of 'File'
+824:31: (potential) invalid field String_List_Option
+835:28: (potential) invalid field Known_Outcome_Taken
+835:28: (potential) null dereference of 'Get_SCI (Dom_SCO, Tag)'
+835:31: (potential) null dereference of 'Context'
+835:31: (potential) null dereference of 'Context.Exec'
+838:14: (potential) precondition failure
+838:24: (potential) null dereference of 'Get_File (Sloc.Source_File)'
+846:10: (potential) null dereference of 'D_Occ'
+847:14: (potential) null dereference of 'File'
+854:18: (potential) invalid field Lines
+854:18: (potential) null dereference of 'File.Lines.Element (Index)'
+862:16: (potential) null dereference of 'Context'
+86:14: (potential) null dereference of 'Report_Output_Dir'
+872:19: (potential) null dereference of 'Context'
+873:14: (potential) null dereference of 'Files_Table.Element (Index)'
+873:14: (potential) null dereference of 'Files_Table.Element (Index).Simple_Name'
+882:35: (potential) null dereference of 'D_Occ'
+887:34: (potential) invalid field String_List_Option
+910:19: (potential) null dereference of 'Parser'
+918:27: (potential) null dereference of 'Last_Insn'
+927:19: (potential) null dereference of 'Last_Insn'
+931:19: (potential) invalid field Outcome_Taken
+93:23: (potential) null dereference of 'HW_Trigger_Arg'
+948:15: (potential) null dereference of 'Insn'
+95:36: (potential) invalid field Section_Name
+95:36: (potential) null dereference of 'Section'
+95:36: (potential) null dereference of 'Section.Section_Name'
+990:19: (potential) assertion failure
+994:25: (potential) null dereference of 'Context'
+996:13: (potential) invalid field Dest

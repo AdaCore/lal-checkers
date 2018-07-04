@@ -108,7 +108,7 @@ class SameOperandsFinder(Task):
 class SameOperandsChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "same_operands_checker"
+        return "same operands"
 
     @classmethod
     def description(cls):

@@ -106,7 +106,7 @@ class SameTestFinder(Task):
 class SameTestChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "same_test_checker"
+        return "same test"
 
     @classmethod
     def description(cls):

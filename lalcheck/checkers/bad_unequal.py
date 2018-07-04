@@ -25,8 +25,8 @@ class Results(SyntacticChecker.Results):
         op, fst_val, snd_val = diag
         return (
             op,
-            'expression is always true, "{}" is always different '
-            'from {} or {}'.format(op.text, fst_val.text, snd_val.text),
+            'expression always true: "{}" /= '
+            '{} or {}'.format(op.text, fst_val.text, snd_val.text),
             BadUnequalChecker.name()
         )
 
@@ -154,7 +154,7 @@ class BadUnequalFinder(Task):
 class BadUnequalChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "bad_unequal_checker"
+        return "bad unequal"
 
     @classmethod
     def description(cls):

@@ -11,13 +11,13 @@ scenario_vars = {'BINUTILS_SRC_DIR': '/doesnotexist',
                  'BINUTILS_BUILD_DIR': '/doesnotexist'}
 
 checkers = [
-    'lalcheck.checkers.violated_contract',
-    'lalcheck.checkers.deadcode',
-    'lalcheck.checkers.null_deref',
-    'lalcheck.checkers.invalid_variant_access',
+    'lalcheck.checkers.invalid_contract',
+    'lalcheck.checkers.dead_code',
+    'lalcheck.checkers.null_dereference',
+    'lalcheck.checkers.invalid_discriminant',
     'lalcheck.checkers.bad_unequal',
     'lalcheck.checkers.same_logic',
-    'lalcheck.checkers.same_operand',
+    'lalcheck.checkers.same_operands',
     'lalcheck.checkers.same_test',
     'lalcheck.checkers.same_then_else'
 ]

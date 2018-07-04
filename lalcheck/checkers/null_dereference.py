@@ -9,6 +9,7 @@ from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import AbstractSemanticsChecker
 from lalcheck.checkers.support.components import AbstractSemantics
+from lalcheck.checkers.support.utils import format_text_for_output
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
 
@@ -104,13 +105,15 @@ class Results(AbstractSemanticsChecker.Results):
         if ('orig_node' in derefed.data
                 and derefed.data.orig_node is not None):
             if precise:
-                frmt = "Null dereference of '{}'"
+                frmt = "null dereference of '{}'"
             else:
-                frmt = "Potential null dereference of '{}'"
+                frmt = "(potential) null dereference of '{}'"
 
             return (
                 derefed.data.orig_node,
-                frmt.format(derefed.data.orig_node.text),
+                frmt.format(
+                    format_text_for_output(derefed.data.orig_node.text)
+                ),
                 DerefChecker.name()
             )
 
@@ -211,7 +214,7 @@ class NullDerefFinder(Task):
 class DerefChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "deref_checker"
+        return "null dereference"
 
     @classmethod
     def description(cls):

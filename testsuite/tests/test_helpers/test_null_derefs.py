@@ -7,7 +7,7 @@ import os
 
 import abstract_semantics_helpers
 import test_helper
-from lalcheck.checkers.null_deref import check_derefs
+from lalcheck.checkers.null_dereference import check_derefs
 
 
 def format_analysis_results(results):

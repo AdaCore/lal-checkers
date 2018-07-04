@@ -32,7 +32,7 @@ class Results(SyntacticChecker.Results):
         fst_line = diag[0].sloc_range.start.line
         return (
             diag[1],
-            'duplicate code already found at line {}'.format(fst_line),
+            'duplicate code with line {}'.format(fst_line),
             SameThenElseChecker.name()
         )
 
@@ -206,7 +206,7 @@ class SameThenElseFinder(Task):
 class SameThenElseChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "same_then_else_checker"
+        return "same then else"
 
     @classmethod
     def description(cls):
