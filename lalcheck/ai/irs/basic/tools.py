@@ -123,9 +123,6 @@ class PrettyPrinter(visitors.Visitor):
     def visit_read(self, read, opts):
         return "read({})".format(read.id.visit(self, opts))
 
-    def visit_use(self, use, opts):
-        return "use({})".format(use.id.visit(self, opts))
-
     def visit_assume(self, assume, opts):
         return "assume({})".format(assume.expr.visit(self, opts))
 
@@ -260,11 +257,6 @@ class CFGBuilder(visitors.ImplicitVisitor):
 
     def visit_read(self, read, start):
         n = self.build_node("read", orig_node=read)
-        self.register_and_link([start], n)
-        return n
-
-    def visit_use(self, use, start):
-        n = self.build_node("use", orig_node=use)
         self.register_and_link([start], n)
         return n
 

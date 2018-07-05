@@ -244,23 +244,6 @@ class ReadStmt(Stmt):
         yield self.id
 
 
-@_visitable("visit_use")
-class UseStmt(Stmt):
-    """
-    Represents the fact that a variable was used at this point.
-    """
-    def __init__(self, id, **data):
-        """
-        :param Identifier id: The identifier being used.
-        :param **object data: User-defined data.
-        """
-        Node.__init__(self, **data)
-        self.id = id
-
-    def children(self):
-        yield self.id
-
-
 @_visitable("visit_assume")
 class AssumeStmt(Stmt):
     """

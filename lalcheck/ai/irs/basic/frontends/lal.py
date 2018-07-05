@@ -748,42 +748,6 @@ def _gen_ir(ctx, subp, typer):
                 orig_node=expr
             )
 
-    def update_var(expr, ref):
-        var = var_decls[ref]
-        if ref in to_spill:
-            return irt.FunCall(
-                ops.GetName(var.data.index),
-                [stack],
-                type_hint=var.data.type_hint,
-                orig_node=expr
-            )
-        else:
-            return irt.Identifier(
-                var,
-                type_hint=var.data.type_hint,
-                orig_node=expr
-            )
-
-    def read_var(expr, ref):
-        """
-        :param lal.Expr expr:
-        :param lal.ObjectDecl ref:
-        :return:
-        """
-        var = var_decls[ref]
-        if ref in to_spill:
-            return irt.FunCall(
-                ops.GetName(var.data.index),
-                [stack],
-                type_hint=var.data.type_hint,
-                orig_node=expr
-            )
-        else:
-            return [irt.ReadStmt(
-                get_var(expr, ref),
-                orig_node=expr
-            )]
-
     def gen_split_stmt(cond, then_stmts, else_stmts, **data):
         """
         :param lal.Expr cond: The condition of the if statement.

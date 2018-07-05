@@ -54,9 +54,6 @@ class _VarTracker(visitors.CFGNodeVisitor):
             self.evaluator.model[read.id.var].domain.top
         )
 
-    def visit_use(self, use, state):
-        return state
-
 
 class _SimpleTraceLattice(domains.FiniteSubsetLattice):
     def __init__(self, *args):

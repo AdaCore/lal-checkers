@@ -38,9 +38,6 @@ class Visitor(object):
     def visit_read(self, read, *args):
         return
 
-    def visit_use(self, use, *args):
-        return
-
     def visit_funcall(self, funcall, *args):
         return
 
@@ -87,9 +84,6 @@ class ImplicitVisitor(Visitor):
     def visit_read(self, read, *args):
         self.visit_children(read, *args)
 
-    def visit_use(self, use, *args):
-        self.visit_children(use, *args)
-
     def visit_funcall(self, funcall, *args):
         self.visit_children(funcall, *args)
 
@@ -133,9 +127,6 @@ class CFGNodeVisitor(Visitor):
         return
 
     def visit_read(self, read, *args):
-        return
-
-    def visit_use(self, use, *args):
         return
 
     def visit_funcall(self, funcall, *args):
