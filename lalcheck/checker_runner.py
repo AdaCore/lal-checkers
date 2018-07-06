@@ -1,6 +1,7 @@
 import argparse
 import importlib
 from multiprocessing import Pool, cpu_count
+from itertools import izip_longest
 import signal
 
 import libadalang as lal
@@ -49,8 +50,29 @@ def lines_from_file(filename):
     try:
         with open(filename) as f:
             return [l.strip() for l in f.readlines()]
-    except IOError:
+    except EnvironmentError:
         logger.log('error', 'error: cannot read file {}'.format(filename))
+
+
+def get_line_count(filename):
+    """
+    Returns the number of lines ('\n') in the given file.
+    """
+    try:
+        with open(filename, 'r') as f:
+            return sum(1 for _ in f)
+    except EnvironmentError:
+        return 0
+
+
+def sort_files_by_line_count(filenames):
+    """
+    Sorts the given list of files in descending order according to the number
+    of lines in each file (returns a new list).
+    """
+    file_lines = [(f, get_line_count(f)) for f in filenames]
+    file_lines.sort(key=lambda x: x[1], reverse=True)
+    return [f for f, l in file_lines]
 
 
 def set_logger():
@@ -253,15 +275,56 @@ def do_partition(partition):
 
 
 def do_all(diagnostic_action):
-    working_files = get_working_files()
+    working_files = sort_files_by_line_count(get_working_files())
     ps = args.partition_size
     ps = len(working_files) / args.j if ps == 0 else ps
     ps = max(ps, 1)
 
-    partitions = [
-        working_files[i:min(i + ps, len(working_files))]
-        for i in range(0, len(working_files), ps)
-    ]
+    def compute_partitions():
+        # Input: list of files sorted by line count: [file_1, ..., file_n]
+
+        # Step 1: Distribute them among the j cores: [
+        #     [file_1, file_{1+j}, file_{1+2j}, ...],
+        #     [file_2, file_{2+j}, file_{2+2j}, ...],
+        #     ...,
+        #     [file_j, file_{2j}, file_{3j}, ...]
+        # ]
+        process_parts = [working_files[i::args.j] for i in range(args.j)]
+
+        # Step 2: Split each in lists of maximum length ps: [
+        #     [[file_1, ..., file_{1+(ps-1)*j}], [file_{1+ps*j}, ...], ...}]],
+        #     [[file_2, ..., file_{2+(ps-1)*j}], [file_{2+ps*j}, ...], ...],
+        #     ...,
+        #     [[file_j, ..., file_{ps*j}], [file_{(ps+1)*j}, ...], ...]
+        # ]
+        split_parts = [
+            [part[i:i+ps] for i in range(0, len(part), ps)]
+            for part in process_parts
+        ]
+
+        # Final step: Transpose and flatten the above matrix to make sure each
+        # core gets a partition of size ps: [
+        #     [file_1, ..., file_{1+(ps-1)*j}],
+        #     [file_2, ..., file_{2+(ps-1)*j}],
+        #     ...,
+        #     [file_j, ..., file_{ps*j}],
+        #
+        #     ...,
+        #
+        #     [file_{1+ps*j}, ...],
+        #     [file_{2+ps*j}, ...],
+        #     ...,
+        #     [file_{(ps+1)*j}, ...],
+        #
+        #     ...
+        # ]
+        return [
+            x
+            for p in izip_longest(*split_parts, fillvalue=[])
+            for x in p
+        ]
+
+    partitions = compute_partitions()
 
     logger.log('info', 'Created {} partitions of {} files.'.format(
         len(partitions), ps
@@ -282,7 +345,7 @@ def do_all(diagnostic_action):
     # Restore the original handler of the parent process.
     signal.signal(signal.SIGINT, orig_handler)
 
-    all_diags = p.map_async(do_partition, partitions)
+    all_diags = p.map_async(do_partition, partitions, chunksize=1)
 
     # Keyboard interrupts are ignored if we use wait() or get() without any
     # timeout argument. By using this loop, we mimic the behavior of an
