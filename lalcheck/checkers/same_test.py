@@ -25,7 +25,8 @@ class Results(SyntacticChecker.Results):
         return (
             diag[1],
             'duplicate test with line {}'.format(fst_line),
-            SameTestChecker.name()
+            SameTestChecker.name(),
+            cls.HIGH
         )
 
 

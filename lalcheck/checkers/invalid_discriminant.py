@@ -120,7 +120,8 @@ class Results(AbstractSemanticsChecker.Results):
                     purpose.field_name,
                     purpose.discr_name
                 ),
-                VariantChecker.name()
+                VariantChecker.name(),
+                cls.gravity(precise)
             )
 
 

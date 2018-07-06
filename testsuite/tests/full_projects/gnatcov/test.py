@@ -192,7 +192,7 @@ def run():
             pos[2],
             msg
         )
-        for pos, msg, _ in diags
+        for pos, msg, _, _ in diags
     ]
     diags.sort()
 

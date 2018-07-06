@@ -27,7 +27,8 @@ class Results(SyntacticChecker.Results):
             op,
             'expression always true: "{}" /= '
             '{} or {}'.format(op.text, fst_val.text, snd_val.text),
-            BadUnequalChecker.name()
+            BadUnequalChecker.name(),
+            cls.HIGH
         )
 
 

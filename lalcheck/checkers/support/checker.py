@@ -15,6 +15,9 @@ def create_best_provider(project_file, scenario_vars, filenames):
 
 
 class CheckerResults(object):
+    HIGH = 'high'
+    LOW = 'low'
+
     @classmethod
     def diag_report(cls, diag):
         """
@@ -25,6 +28,10 @@ class CheckerResults(object):
         :rtype: (lal.AdaNode, str, str)
         """
         raise NotImplementedError
+
+    @staticmethod
+    def gravity(is_precise):
+        return CheckerResults.HIGH if is_precise else CheckerResults.LOW
 
 
 class Checker(object):

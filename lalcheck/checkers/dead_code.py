@@ -83,7 +83,8 @@ class Results(AbstractSemanticsChecker.Results):
                 return (
                     diag.data.node.data.orig_node,
                     "unreachable code",
-                    DeadCodeChecker.name()
+                    DeadCodeChecker.name(),
+                    cls.HIGH
                 )
 
 

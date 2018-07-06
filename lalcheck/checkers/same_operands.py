@@ -26,7 +26,8 @@ class Results(SyntacticChecker.Results):
             'left and right operands of "{}" are identical'.format(
                 diag.f_op.text
             ),
-            SameOperandsChecker.name()
+            SameOperandsChecker.name(),
+            cls.HIGH
         )
 
 

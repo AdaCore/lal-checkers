@@ -26,7 +26,8 @@ class Results(SyntacticChecker.Results):
         return (
             diag[1],
             'duplicate operand with line {}'.format(fst_line),
-            SameLogicChecker.name()
+            SameLogicChecker.name(),
+            cls.HIGH
         )
 
 

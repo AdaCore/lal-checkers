@@ -109,7 +109,8 @@ class Results(AbstractSemanticsChecker.Results):
         return (
             purpose.orig_call,
             frmt.format(purpose.contract_name),
-            ContractChecker.name()
+            ContractChecker.name(),
+            cls.gravity(precise)
         )
 
 

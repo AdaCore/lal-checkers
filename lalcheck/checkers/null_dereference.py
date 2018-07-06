@@ -114,7 +114,8 @@ class Results(AbstractSemanticsChecker.Results):
                 frmt.format(
                     format_text_for_output(derefed.data.orig_node.text)
                 ),
-                DerefChecker.name()
+                DerefChecker.name(),
+                cls.gravity(precise)
             )
 
 

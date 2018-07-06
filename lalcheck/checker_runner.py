@@ -5,7 +5,7 @@ from itertools import izip_longest
 import signal
 
 import libadalang as lal
-from lalcheck.checkers.support.checker import Checker
+from lalcheck.checkers.support.checker import Checker, CheckerResults
 from lalcheck.tools.digraph import Digraph
 from lalcheck.tools.dot_printer import gen_dot, DataPrinter
 from lalcheck.tools.scheduler import Scheduler
@@ -30,7 +30,8 @@ checkers_group.add_argument('--checkers', metavar='CHECKERS', action='append',
                                            'semicolons.')
 
 parser.add_argument('--log', metavar="CATEGORIES", type=str,
-                    default="diag", help='Categories separated by semicolons.')
+                    default="diag-{}".format(CheckerResults.HIGH),
+                    help='Categories separated by semicolons.')
 
 parser.add_argument('--codepeer-output', action='store_true')
 parser.add_argument('--export-schedule', type=str)
@@ -237,7 +238,7 @@ def full_position(node):
 
 
 def report_diag(report):
-    full_pos, msg, flag = report
+    full_pos, msg, flag, _ = report
     file, line, col, proc_name, proc_file, proc_line, proc_col = full_pos
 
     if args.codepeer_output:
@@ -267,7 +268,8 @@ def do_partition(partition):
                     pickleable_diag = (
                         full_position(report[0]),
                         report[1],
-                        report[2]
+                        report[2],
+                        report[3]
                     )
                     diags.append(pickleable_diag)
 
@@ -361,7 +363,7 @@ def do_all(diagnostic_action):
     for diags in all_diags.get():
         for diag in diags:
             if diagnostic_action == 'log':
-                logger.log('diag', report_diag(diag))
+                logger.log('diag-{}'.format(diag[3]), report_diag(diag))
             elif diagnostic_action == 'return':
                 reports.append(diag)
 

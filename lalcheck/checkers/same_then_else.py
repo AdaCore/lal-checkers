@@ -33,7 +33,8 @@ class Results(SyntacticChecker.Results):
         return (
             diag[1],
             'duplicate code with line {}'.format(fst_line),
-            SameThenElseChecker.name()
+            SameThenElseChecker.name(),
+            cls.HIGH
         )
 
 
