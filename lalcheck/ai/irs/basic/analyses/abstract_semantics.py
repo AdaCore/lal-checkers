@@ -308,12 +308,13 @@ class AnalysisResults(object):
     Contains the results of the abstract semantics analysis.
     """
     def __init__(self, cfg, semantics, trace_domain, vars_domain,
-                 evaluator):
+                 evaluator, orig_subp):
         self.cfg = cfg
         self.semantics = semantics
         self.trace_domain = trace_domain
         self.vars_domain = vars_domain
         self.evaluator = evaluator
+        self.orig_subp = orig_subp
 
     def save_cfg_to_file(self, file_name):
         """
@@ -486,5 +487,6 @@ def compute_semantics(prog, model, merge_pred_builder, arg_values=None):
         formatted_results,
         trace_domain,
         vars_domain,
-        evaluator
+        evaluator,
+        prog.data.fun_id
     )
