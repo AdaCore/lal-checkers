@@ -37,24 +37,39 @@ class CheckerResults(object):
 class Checker(object):
     @classmethod
     def name(cls):
+        """
+        Returns the name of the checker
+        :rtype: str
+        """
         raise NotImplementedError
 
     @classmethod
     def description(cls):
+        """
+        Returns a short description of the checker.
+        :rtype: str
+        """
         raise NotImplementedError
 
     @classmethod
     def create_requirement(cls, *args):
+        """
+        Returns the requirement of this checker.
+        :param *object args: The arguments received from the command line.
+        :rtype: lalcheck.tools.scheduler.Requirement
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def get_arg_parser(cls):
+        """
+        Returns the argument parser used by this checker.
+        :rtype: argparse.ArgumentParser
+        """
         raise NotImplementedError
 
 
 class AbstractSemanticsChecker(Checker):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--typer', default="default_robust")
-    parser.add_argument('--type-interpreter', default="default")
-    parser.add_argument('--call-strategy', default="unknown")
-    parser.add_argument('--merge-predicate', default='always')
-
     class Results(CheckerResults):
         def __init__(self, analysis_results, diagnostics):
             self.analysis_results = analysis_results
@@ -64,12 +79,9 @@ class AbstractSemanticsChecker(Checker):
         def diag_report(cls, diag):
             raise NotImplementedError
 
-    def __init__(self, args):
-        pass
-
     @staticmethod
     def requirement_creator(requirement_class):
-        parser = AbstractSemanticsChecker.parser
+        parser = AbstractSemanticsChecker.get_arg_parser()
 
         def create_requirement(project_file, scenario_vars, filenames, args):
             arg_values = parser.parse_args(args)
@@ -97,10 +109,17 @@ class AbstractSemanticsChecker(Checker):
     def create_requirement(cls, *args):
         raise NotImplementedError
 
+    @classmethod
+    def get_arg_parser(cls):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--typer', default="default_robust")
+        parser.add_argument('--type-interpreter', default="default")
+        parser.add_argument('--call-strategy', default="unknown")
+        parser.add_argument('--merge-predicate', default='always')
+        return parser
+
 
 class SyntacticChecker(Checker):
-    parser = argparse.ArgumentParser()
-
     class Results(CheckerResults):
         def __init__(self, diagnostics):
             self.diagnostics = diagnostics
@@ -108,9 +127,6 @@ class SyntacticChecker(Checker):
         @classmethod
         def diag_report(cls, diag):
             raise NotImplementedError
-
-    def __init__(self):
-        pass
 
     @staticmethod
     def requirement_creator(requirement_class):
@@ -133,3 +149,7 @@ class SyntacticChecker(Checker):
     @classmethod
     def create_requirement(cls, *args):
         raise NotImplementedError
+
+    @classmethod
+    def get_arg_parser(cls):
+        return argparse.ArgumentParser()
