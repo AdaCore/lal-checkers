@@ -30,7 +30,7 @@ checkers_group.add_argument('--checkers', metavar='CHECKERS', action='append',
                                            'semicolons.')
 
 parser.add_argument('--log', metavar="CATEGORIES", type=str,
-                    default="diag-{}".format(CheckerResults.HIGH),
+                    default="error;diag-{}".format(CheckerResults.HIGH),
                     help='Categories separated by semicolons.')
 
 parser.add_argument('--codepeer-output', action='store_true')
@@ -53,6 +53,7 @@ def lines_from_file(filename):
             return [l.strip() for l in f.readlines()]
     except EnvironmentError:
         logger.log('error', 'error: cannot read file {}'.format(filename))
+        return []
 
 
 def get_line_count(filename):
@@ -112,21 +113,27 @@ def get_requirements(files_to_check):
 
     requirements = []
     for checker_arg in checker_args:
-        checker_module = importlib.import_module(checker_arg[0])
-        if not hasattr(checker_module, 'checker'):
-            print('error: checker {} does not export a '
-                  '"checker" object.'.format(checker_module))
-        elif not issubclass(checker_module.checker, Checker):
-            print('error: checker {} does not inherit the '
-                  '"checkers.support.checker.Checker" '
-                  'interface.'.format(checker_module))
+        try:
+            checker_module = importlib.import_module(checker_arg[0])
+        except ImportError:
+            logger.log('error', 'Failed to import checker module {}.'.format(
+                checker_arg[0]
+            ))
+        else:
+            if not hasattr(checker_module, 'checker'):
+                logger.log('error', 'Checker {} does not export a "checker" '
+                                    'object.'.format(checker_module))
+            elif not issubclass(checker_module.checker, Checker):
+                logger.log('error', 'checker {} does not inherit the '
+                                    '"checkers.support.checker.Checker" '
+                                    'interface.'.format(checker_module))
 
-        requirements.append(checker_module.checker.create_requirement(
-            project_file=project_file,
-            scenario_vars=scenario_vars,
-            filenames=files_to_check,
-            args=checker_arg[1:]
-        ))
+            requirements.append(checker_module.checker.create_requirement(
+                project_file=project_file,
+                scenario_vars=scenario_vars,
+                filenames=files_to_check,
+                args=checker_arg[1:]
+            ))
 
     return requirements
 
