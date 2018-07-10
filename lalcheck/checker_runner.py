@@ -39,7 +39,7 @@ parser.add_argument('--partition-size', default=0, type=int,
                     help='The amount of files that will be batched in a'
                          'partition. A higher number means less computing'
                          'time, but more memory consumption.')
-parser.add_argument('-j', default=cpu_count(), type=int,
+parser.add_argument('-j', default=0, type=int,
                     help='The number of process to spawn in parallel, each'
                          'of which deals with a single partition at a time.')
 
@@ -284,6 +284,7 @@ def do_partition(partition):
 
 
 def do_all(diagnostic_action):
+    args.j = cpu_count() if args.j <= 0 else args.j
     working_files = sort_files_by_line_count(get_working_files())
     ps = args.partition_size
     ps = len(working_files) / args.j if ps == 0 else ps
