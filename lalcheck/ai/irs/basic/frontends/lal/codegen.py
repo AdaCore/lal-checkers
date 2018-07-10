@@ -1,7 +1,3 @@
-"""
-Provides a libadalang frontend for the Basic IR.
-"""
-
 import libadalang as lal
 from lalcheck.ai import types
 from lalcheck.ai.constants import lits, ops, access_paths
@@ -10,6 +6,14 @@ from lalcheck.ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
 from lalcheck.ai.utils import KeyCounter, Transformer, profile
 from lalcheck.tools.logger import log_stdout
 from funcy.calc import memoize
+
+from utils import (
+    Mode,
+    NotConstExprError,
+    StackType, PointerType, ExtendedCallReturnType, ValueHolder,
+    record_fields, proc_parameters, get_field_info, is_array_type_decl,
+    is_record_field, closest
+)
 
 _lal_op_type_to_symbol = {
     (lal.OpLt, 2): ops.LT,
@@ -35,226 +39,6 @@ _attr_to_unop = {
 }
 
 
-class Mode(object):
-    """
-    Represent the mode of an Ada variable.
-    """
-    Local = 0
-    Global = 1
-    Out = 2
-
-    @staticmethod
-    def from_lal_mode(mode):
-        """
-        Returns the equivalent mode.
-        :param lal.Mode mode: The lal mode.
-        :rtype: int
-        """
-        if mode.is_a(lal.ModeIn, lal.ModeDefault):
-            return Mode.Local
-        elif mode.is_a(lal.ModeOut, lal.ModeInOut):
-            return Mode.Out
-
-
-class _RecordField(object):
-    """
-    Data structure that holds information about the field of a record.
-    """
-    def __init__(self, decl, record_decl, name, index, conditions=[]):
-        """
-        :param lal.ComponentDecl | lal.DiscriminantSpec decl: The node where
-            the field is declared.
-
-        :param lal.TypeDecl record_decl: The record declaration in which this
-            field is defined.
-
-        :param lal.DefiningName name: The defining name of the field.
-
-        :param int index: The index of the field inside the record.
-
-        :param list[(lal.Identifier, lal.AlternativesList)] conditions:
-            The conditions that must hold in order for this field to exist,
-            where a condition is a tuple with (the selector discriminant,
-            the value(s) that it must have for the condition to hold).
-        """
-        self.decl = decl
-        self.record_decl = record_decl
-        self.name = name
-        self.index = index
-        self.conds = conditions
-
-    def is_referred_by(self, name):
-        """
-        Returns True if the given identifier refers to this record field.
-
-        :param lal.Identifier name: The identifier to test.
-        :rtype: bool
-        """
-        return name.p_xref == self.name
-
-    def field_type_expr(self):
-        """
-        Returns the type of this field, be it a component decl or a
-        discriminant spec.
-
-        :rtype: lal.BaseTypeDecl
-        """
-        if self.decl.is_a(lal.ComponentDecl):
-            return self.decl.f_component_def.f_type_expr
-        else:
-            return self.decl.f_type_expr
-
-
-class _ValueHolder(object):
-    """
-    Holds a value.
-    """
-    def __init__(self, init=None):
-        """
-        :param T init: The value to initialize the held value with.
-        """
-        self.value = init
-
-
-class _ExtendedCallReturnType(object):
-    def __init__(self, out_indices, out_types, ret_type=None):
-        self.out_indices = out_indices
-        self.out_types = out_types
-        self.ret_type = ret_type
-
-    def __eq__(self, other):
-        return (isinstance(other, _ExtendedCallReturnType) and
-                self.out_indices == other.out_indices and
-                self.out_types == other.out_types and
-                self.ret_type == other.ret_type)
-
-    def __hash__(self):
-        return hash((self.out_indices, self.out_types, self.ret_type))
-
-    def is_a(self, tpe):
-        return isinstance(self, tpe)
-
-
-class _PointerType(object):
-    def __init__(self, elem_type):
-        self.elem_type = elem_type
-
-    def __eq__(self, other):
-        return (isinstance(other, _PointerType) and
-                self.elem_type == other.elem_type)
-
-    def __hash__(self):
-        return hash(self.elem_type)
-
-    def is_a(self, tpe):
-        return isinstance(self, tpe)
-
-
-class _StackType(object):
-    def __init__(self):
-        pass
-
-    def __eq__(self, other):
-        return isinstance(other, _StackType)
-
-    def __hash__(self):
-        return hash(self.__class__)
-
-    def is_a(self, tpe):
-        return isinstance(self, tpe)
-
-
-def _closest(node, *tpe):
-    """
-    Returns the closest parent of this node which is of the given type.
-    :param lal.AdaNode node: The node from which to start
-    :param type* tpe: The types to look for.
-    :rtype: lal.AnaNode | None
-    """
-
-    if node.is_a(*tpe):
-        return node
-    elif node.parent is not None:
-        return _closest(node.parent, *tpe)
-    else:
-        return None
-
-
-@memoize
-def _record_fields(record_decl):
-    """
-    Returns an iterable of the fields of the given record, where a field is
-    identified by the pair (its declaration, its name).
-
-    :param lal.TypeDecl record_decl: The record whose fields to list.
-    :rtype: list[_RecordField]
-    """
-    res = []
-    i = _ValueHolder(0)
-
-    def add_component_fields(component_list, conds=[]):
-        """
-        :param lal.ComponentList component_list:
-        :param list[(lal.Identifier, lal.AlternativesList)] conds:
-        :return:
-        """
-        for component in component_list.f_components:
-            if not component.is_a(lal.NullComponentDecl):
-                for name in component.f_ids:
-                    res.append(_RecordField(
-                        component, record_decl, name, i.value, conds)
-                    )
-                    i.value += 1
-
-        variant_part = component_list.f_variant_part
-        if variant_part is not None:
-            for variant in variant_part.f_variant:
-                add_component_fields(variant.f_components, conds + [(
-                    variant_part.f_discr_name,
-                    variant.f_choices
-                )])
-
-    if record_decl.f_discriminants is not None:
-        for discr in record_decl.f_discriminants.f_discr_specs:
-            for name in discr.f_ids:
-                res.append(_RecordField(discr, record_decl, name, i.value))
-                i.value += 1
-
-    tp_def = record_decl.f_type_def
-
-    if tp_def.is_a(lal.DerivedTypeDef):
-        record_def = tp_def.f_record_extension
-    else:
-        record_def = tp_def.f_record_def
-
-    add_component_fields(record_def.f_components)
-    return res
-
-
-@memoize
-def _proc_parameters(proc):
-    """
-    Returns the parameters from the given subprogram that have the "Out" mode.
-
-    :param lal.SubpBody | lal.SubpDecl proc: The procedure for which to
-        retrieve the parameters.
-
-    :rtype: iterable[(int, lal.Identifier, lal.ParamSpec)]
-    """
-    spec = proc.f_subp_spec
-
-    def gen():
-        i = 0
-
-        if spec.f_subp_params is not None:
-            for param in spec.f_subp_params.f_params:
-                for name in param.f_ids:
-                    yield (i, name, param)
-                    i += 1
-
-    return list(gen())
-
-
 @memoize
 def _subprogram_param_types(subp, with_stack):
     """
@@ -266,9 +50,9 @@ def _subprogram_param_types(subp, with_stack):
         as an additional argument.
     :rtype: tuple[lal.BaseTypeDecl]
     """
-    params = _proc_parameters(subp)
+    params = proc_parameters(subp)
     return tuple(p.f_type_expr for _, _, p in params) + (
-        (_StackType(),) if with_stack else ()
+        (StackType(),) if with_stack else ()
     )
 
 
@@ -329,7 +113,7 @@ def _stack_assign_param_types(var):
     :param irt.Variable var: The spilled variable to consider.
     :rtype: tuple[lal.BaseTypeDecl]
     """
-    return _StackType(), var.data.type_hint
+    return StackType(), var.data.type_hint
 
 
 def _deref_assign_param_types(ptr_type, val_type):
@@ -341,7 +125,7 @@ def _deref_assign_param_types(ptr_type, val_type):
     :param lal.BaseTypeDecl val_type: The type of the value.
     :rtype: tuple[lal.BaseTypeDecl]
     """
-    return _StackType(), ptr_type, val_type
+    return StackType(), ptr_type, val_type
 
 
 def _string_literal_param_types(array_type_decl, text):
@@ -384,51 +168,6 @@ def _find_cousin_conditions(record_fields, cond_prefix):
     )
 
 
-def _field_info(field_id):
-    """
-    Computes the index of the given record's field. Example:
-    type Foo is record
-      x, y : Integer;
-      z : Integer;
-    end record;
-
-    => "x" has index 0, "y" has index 1, "z" has index 2
-
-    :param lal.Identifier field_id: An identifier referring to a record's
-        field.
-    :rtype: _RecordField
-    """
-    ref = field_id.p_referenced_decl
-    record_decl = _closest(ref, lal.TypeDecl)
-
-    return next(
-        field
-        for field in _record_fields(record_decl)
-        if field.is_referred_by(field_id)
-    )
-
-
-def _is_record_field(ident):
-    """
-    Returns true if the given name refers to the field of a record.
-    :param lal.Identifier ident: The identifier to check.
-    """
-    ref = ident.p_referenced_decl
-    return (ref is not None and
-            ref.is_a(lal.ComponentDecl, lal.DiscriminantSpec))
-
-
-def _is_array_type_decl(tpe):
-    """
-    Returns True iff the given type is an array type decl.
-    :param lal.AdaNode tpe: The type to check.
-    """
-    if tpe is not None and tpe.is_a(lal.TypeDecl):
-        return tpe.f_type_def.is_a(lal.ArrayTypeDef)
-
-    return False
-
-
 _IGNORES_GLOBAL_STATE = 0
 _READS_GLOBAL_STATE = 1
 _WRITES_GLOBAL_STATE = 2
@@ -467,7 +206,7 @@ def _find_global_access(typer, proc):
     :param lal.SubpBody | lal.SubpDecl proc:
     :return:
     """
-    for i, id, param in _proc_parameters(proc):
+    for i, id, param in proc_parameters(proc):
         if _contains_access_type(typer, param.f_type_expr):
             return _WRITES_GLOBAL_STATE
 
@@ -575,7 +314,7 @@ def retrieve_function_contracts(ctx, proc):
 
 
 @profile()
-def _gen_ir(ctx, subp, typer):
+def gen_ir(ctx, subp, typer):
     """
     Generates Basic intermediate representation from a lal subprogram body.
 
@@ -595,7 +334,7 @@ def _gen_ir(ctx, subp, typer):
     tmp_vars = KeyCounter()
 
     # Used to assign a unique index to each variable.
-    var_idx = _ValueHolder(0)
+    var_idx = ValueHolder(0)
 
     def next_var_idx():
         var_idx.value += 1
@@ -604,7 +343,7 @@ def _gen_ir(ctx, subp, typer):
     # A synthetic variable used to store the result of a function (what is
     # returned). Use a ValueHolder so it can be rebound by closures (e.g.
     # transform_spec).
-    result_var = _ValueHolder()
+    result_var = ValueHolder()
 
     # Pre-transform every label, as a label might not have been seen yet when
     # transforming a goto statement.
@@ -635,11 +374,11 @@ def _gen_ir(ctx, subp, typer):
     stack = irt.Identifier(
         irt.Variable(
             "$stack",
-            type_hint=_StackType(),
+            type_hint=StackType(),
             mode=Mode.Local,
             index=next_var_idx()
         ),
-        type_hint=_StackType()
+        type_hint=StackType()
     )
 
     def fresh_name(name):
@@ -1186,8 +925,8 @@ def _gen_ir(ctx, subp, typer):
                     orig_node=dest
                 ), expr)
 
-        elif dest.is_a(lal.DottedName) and _is_record_field(dest.f_suffix):
-            field_info = _field_info(dest.f_suffix)
+        elif dest.is_a(lal.DottedName) and is_record_field(dest.f_suffix):
+            field_info = get_field_info(dest.f_suffix)
             updated_index = field_info.index
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
 
@@ -1271,15 +1010,15 @@ def _gen_ir(ctx, subp, typer):
         :param lal.Identifier field: The field being accessed
         :rtype: list[irt.AssumeStmt]
         """
-        info = _field_info(field)
-        all_fields = _record_fields(
-            _closest(field.p_referenced_decl, lal.TypeDecl)
+        info = get_field_info(field)
+        all_fields = record_fields(
+            closest(field.p_referenced_decl, lal.TypeDecl)
         )
 
         res = []
         for i, (discr, alternatives) in enumerate(info.conds):
             discr_getter = irt.FunCall(
-                ops.GetName(_field_info(discr).index), [prefix],
+                ops.GetName(get_field_info(discr).index), [prefix],
                 type_hint=discr.p_expression_type
             )
 
@@ -1339,13 +1078,13 @@ def _gen_ir(ctx, subp, typer):
             return irt.FunCall(
                 access_paths.Var(var.data.index),
                 [stack],
-                type_hint=_PointerType(expr.p_expression_type),
+                type_hint=PointerType(expr.p_expression_type),
                 additional_arg=expr.p_expression_type,
                 orig_node=expr
             )
 
-        elif expr.is_a(lal.DottedName) and _is_record_field(expr.f_suffix):
-            info = _field_info(expr.f_suffix)
+        elif expr.is_a(lal.DottedName) and is_record_field(expr.f_suffix):
+            info = get_field_info(expr.f_suffix)
             if info is None:
                 unimplemented(expr)
 
@@ -1354,7 +1093,7 @@ def _gen_ir(ctx, subp, typer):
             return irt.FunCall(
                 access_paths.Field(updated_index),
                 [gen_access_path(expr.f_prefix)],
-                type_hint=_PointerType(expr.p_expression_type),
+                type_hint=PointerType(expr.p_expression_type),
                 additional_arg=expr.p_expression_type,
                 orig_node=expr
             )
@@ -1366,7 +1105,7 @@ def _gen_ir(ctx, subp, typer):
             return irt.FunCall(
                 access_paths.Field(updated_index),
                 [gen_access_path(expr.f_prefix)],
-                type_hint=_PointerType(expr.p_expression_type),
+                type_hint=PointerType(expr.p_expression_type),
                 additional_arg=expr.p_expression_type,
                 orig_node=expr
             )
@@ -1430,7 +1169,7 @@ def _gen_ir(ctx, subp, typer):
             procs.append(model)
 
         for proc in procs:
-            for i, name, param in _proc_parameters(proc):
+            for i, name, param in proc_parameters(proc):
                 substitutions[name] = ([], args_in[i])
 
         pre_stmts = [
@@ -1448,7 +1187,7 @@ def _gen_ir(ctx, subp, typer):
             substitutions[proc, 'result'] = ([], ret)
 
         for proc in procs:
-            for i, name, param in _proc_parameters(proc):
+            for i, name, param in proc_parameters(proc):
                 if i in args_out:
                     substitutions[name, 'old'] = ([], args_in[i])
                     substitutions[name] = ([], args_out[i])
@@ -1529,7 +1268,7 @@ def _gen_ir(ctx, subp, typer):
                 # The call target is statically known.
 
                 if any(p.f_default_expr is not None
-                       for _, _, p in _proc_parameters(ref)):
+                       for _, _, p in proc_parameters(ref)):
                     return unimplemented_expr(orig_node)
 
                 if ref.metadata.f_dottable_subp:
@@ -1543,7 +1282,7 @@ def _gen_ir(ctx, subp, typer):
 
                 out_params = [
                     (i, param.f_type_expr, gen_out_arg_assignment(i))
-                    for i, _, param in _proc_parameters(ref)
+                    for i, _, param in proc_parameters(ref)
                     if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut)
                 ]
 
@@ -1562,7 +1301,7 @@ def _gen_ir(ctx, subp, typer):
 
                     if global_access == _WRITES_GLOBAL_STATE:
                         out_params.append((
-                            len(_proc_parameters(ref)),
+                            len(proc_parameters(ref)),
                             stack.data.type_hint,
                             lambda expr: [irt.AssignStmt(
                                 stack,
@@ -1589,7 +1328,7 @@ def _gen_ir(ctx, subp, typer):
                         param_types=subp_param_types
                     )
                 else:
-                    ret_tpe = _ExtendedCallReturnType(
+                    ret_tpe = ExtendedCallReturnType(
                         tuple(index for index, _, _ in out_params),
                         tuple(param_type for _, param_type, _ in out_params),
                         type_hint
@@ -1664,7 +1403,7 @@ def _gen_ir(ctx, subp, typer):
                         res
                     )
 
-        if _is_array_type_decl(prefix.p_expression_type):
+        if is_array_type_decl(prefix.p_expression_type):
             prefix_pre_stmts, prefix_expr_tr = transform_expr(prefix)
 
             return prefix_pre_stmts + suffix_pre_stmts, irt.FunCall(
@@ -1729,7 +1468,7 @@ def _gen_ir(ctx, subp, typer):
         :rtype: (list[irt.Stmt], irt.Expr)
         """
         record_decl = expr.p_expression_type
-        all_fields = list(_record_fields(record_decl))
+        all_fields = list(record_fields(record_decl))
         field_init = [None] * len(all_fields)
         others_expr_idx = None
 
@@ -1749,7 +1488,7 @@ def _gen_ir(ctx, subp, typer):
                 continue
             else:
                 indexes = [
-                    _field_info(designator).index
+                    get_field_info(designator).index
                     for designator in assoc.f_designators
                 ]
 
@@ -1990,7 +1729,7 @@ def _gen_ir(ctx, subp, typer):
 
             if expr.f_prefix.p_expression_type is None:
                 return unimplemented_expr(expr)
-            elif _is_record_field(expr.f_suffix):
+            elif is_record_field(expr.f_suffix):
                 if expr.f_prefix.p_expression_type.p_is_access_type():
                     accessed_type = (expr.f_prefix.p_expression_type
                                      .f_type_def.f_subtype_indication
@@ -2006,7 +1745,7 @@ def _gen_ir(ctx, subp, typer):
                     expr.f_suffix
                 )
 
-                field_info = _field_info(expr.f_suffix)
+                field_info = get_field_info(expr.f_suffix)
                 return prefix_pre_stmts + exists_stmts, irt.FunCall(
                     ops.GetName(field_info.index),
                     [prefix],
@@ -2739,699 +2478,3 @@ class ConvertUniversalTypes(IRImplicitVisitor):
                 ident.var.data = ident.var.data.copy(
                     type_hint=expected_type[0]
                 )
-
-
-class NotConstExprError(ValueError):
-    def __init__(self):
-        super(NotConstExprError, self).__init__()
-
-
-ADA_TRUE = 'True'
-ADA_FALSE = 'False'
-
-
-class ConstExprEvaluator(IRImplicitVisitor):
-    """
-    Used to evaluate expressions statically.
-    See eval.
-    """
-
-    class Range(object):
-        def __init__(self, first, last):
-            self.first = first
-            self.last = last
-
-    Ops = {
-        (ops.AND, 2): lambda x, y: ConstExprEvaluator.from_bool(
-            ConstExprEvaluator.to_bool(x) and ConstExprEvaluator.to_bool(y)
-        ),
-        (ops.OR, 2): lambda x, y: ConstExprEvaluator.from_bool(
-            ConstExprEvaluator.to_bool(x) or ConstExprEvaluator.to_bool(y)
-        ),
-
-        (ops.NEQ, 2): lambda x, y: ConstExprEvaluator.from_bool(x != y),
-        (ops.EQ, 2): lambda x, y: ConstExprEvaluator.from_bool(x == y),
-        (ops.LT, 2): lambda x, y: ConstExprEvaluator.from_bool(x < y),
-        (ops.LE, 2): lambda x, y: ConstExprEvaluator.from_bool(x <= y),
-        (ops.GE, 2): lambda x, y: ConstExprEvaluator.from_bool(x >= y),
-        (ops.GT, 2): lambda x, y: ConstExprEvaluator.from_bool(x > y),
-        (ops.DOT_DOT, 2): lambda x, y: ConstExprEvaluator.Range(x, y),
-
-        (ops.PLUS, 2): lambda x, y: x + y,
-        (ops.MINUS, 2): lambda x, y: x - y,
-
-        (ops.NOT, 1): lambda x: ConstExprEvaluator.from_bool(
-            not ConstExprEvaluator.to_bool(x)
-        ),
-        (ops.NEG, 1): lambda x: -x,
-        (ops.GET_FIRST, 1): lambda x: x.first,
-        (ops.GET_LAST, 1): lambda x: x.last
-    }
-
-    def __init__(self, bool_type, int_type, char_type, u_int_type,
-                 u_real_type):
-        """
-        :param lal.AdaNode bool_type: The standard boolean type.
-        :param lal.AdaNode int_type: The standard int type.
-        :param lal.AdaNode char_type: The standard char type.
-        :param lal.AdaNode u_int_type: The standard universal int type.
-        :param lal.AdaNode u_real_type: The standard universal real type.
-        """
-        super(ConstExprEvaluator, self).__init__()
-        self.bool = bool_type
-        self.int = int_type
-        self.char = char_type
-        self.universal_int = u_int_type
-        self.universal_real = u_real_type
-
-    @staticmethod
-    def to_bool(x):
-        """
-        :param str x: The boolean to convert.
-        :return: The representation of the corresponding boolean literal.
-        :rtype: bool
-        """
-        return x == ADA_TRUE
-
-    @staticmethod
-    def from_bool(x):
-        """
-        :param bool x: The representation of a boolean literal to convert.
-        :return: The corresponding boolean.
-        :rtype: str
-        """
-        return ADA_TRUE if x else ADA_FALSE
-
-    def eval(self, expr):
-        """
-        Evaluates an expression, returning the value it evaluates to.
-
-        :param irt.Expr expr: A Basic IR expression to evaluate.
-        :rtype: int | str | ConstExprEvaluator.Range
-        :raise NotConstExprError: if the expression is not a constant.
-        :raise NotImplementedError: if implementation is incomplete.
-        """
-        return self.visit(expr)
-
-    @memoize
-    def visit(self, expr):
-        """
-        To use instead of node.visit(self). Performs memoization, so as to
-        avoid evaluating expression referred to by constant symbols multiple
-        times.
-
-        :param irt.Expr expr: The IR Basic expression to evaluate
-
-        :return: The value of this expression.
-
-        :rtype: int | str | ConstExprEvaluator.Range
-        """
-        return expr.visit(self)
-
-    def visit_ident(self, ident):
-        raise NotConstExprError
-
-    def visit_funcall(self, funcall):
-        try:
-            op = ConstExprEvaluator.Ops[funcall.fun_id, len(funcall.args)]
-            return op(*(
-                self.visit(arg) for arg in funcall.args
-            ))
-        except KeyError:
-            raise NotConstExprError
-
-    def visit_lit(self, lit):
-        return lit.val
-
-
-@Transformer.as_transformer
-def _eval_as_int(x):
-    """
-    Given an arbitrary Ada node, tries to evaluate it to an integer.
-
-    :param lal.AdaNode x: The node to evaluate
-    :rtype: int | None
-    """
-    try:
-        return x.p_eval_as_int
-    except (lal.PropertyError, lal.NativeException):
-        return None
-
-
-@types.delegating_typer
-def int_range_typer():
-    """
-    :return: A typer for int ranges.
-    :rtype: types.Typer[lal.AdaNode]
-    """
-
-    @Transformer.as_transformer
-    def get_operands(hint):
-        if hint.is_a(lal.TypeDecl):
-            if hint.f_type_def.is_a(lal.SignedIntTypeDef):
-                rng = hint.f_type_def.f_range.f_range
-                return rng.f_left, rng.f_right
-
-    @types.Typer
-    def to_int_range(xs):
-        return types.IntRange(*xs)
-
-    return get_operands >> (_eval_as_int & _eval_as_int) >> to_int_range
-
-
-@types.delegating_typer
-def int_mod_typer():
-    """
-    :return: A typer for mod int types.
-    :rtype: types.Typer[lal.AdaNode]
-    """
-
-    @Transformer.as_transformer
-    def get_modulus(hint):
-        if hint.is_a(lal.TypeDecl):
-            if hint.f_type_def.is_a(lal.ModIntTypeDef):
-                return hint.f_type_def.f_expr
-
-    @types.Typer
-    def to_int_range(modulus):
-        return types.IntRange(0, modulus - 1)
-
-    return get_modulus >> _eval_as_int >> to_int_range
-
-
-@types.typer
-def enum_typer(hint):
-    """
-    :param lal.AdaNode hint: the lal type.
-    :return: The corresponding lalcheck type.
-    :rtype: types.Enum
-    """
-    if hint.is_a(lal.TypeDecl):
-        if hint.f_type_def.is_a(lal.EnumTypeDef):
-            literals = hint.f_type_def.findall(lal.EnumLiteralDecl)
-            return types.Enum([lit.f_name.text for lit in literals])
-
-
-_pointer_type = types.Pointer()
-
-
-@types.Typer
-def access_typer(hint):
-    """
-    :param lal.AdaNode hint: the lal type.
-    :return: The lal type being accessed.
-    :rtype: lal.AdaNode
-    """
-    if hint.is_a(lal.TypeDecl):
-        try:
-            if hint.p_is_access_type():
-                return _pointer_type
-        except lal.PropertyError:
-            pass
-    elif hint.is_a(_PointerType):
-        return _pointer_type
-
-
-def record_component_typer(inner_typer):
-    """
-    :param types.Typer[lal.AdaNode] inner_typer: A typer for the types of the
-        components.
-
-    :return: A typer for record components.
-
-    :rtype: types.Typer[lal.ComponentDecl | lal.DiscriminantSpec]
-    """
-    @Transformer.as_transformer
-    def get_component_type(component):
-        if component.is_a(lal.ComponentDecl):
-            return component.f_component_def.f_type_expr
-        elif component.is_a(lal.DiscriminantSpec):
-            component.f_type_expr.f_name.p_resolve_names
-            return component.f_type_expr
-
-    return get_component_type >> inner_typer
-
-
-def record_typer(comp_typer):
-    """
-    :param types.Typer[lal.ComponentDecl | lal.DiscriminantSpec] comp_typer:
-        A typer for components of products.
-
-    :return: A typer for record types.
-
-    :rtype: types.Typer[lal.AdaNode]
-    """
-    @Transformer.as_transformer
-    def get_elements(hint):
-        """
-        :param lal.AdaNode hint: the lal type.
-        :return: The components of the record type, if relevant.
-        :rtype: list[lal.AdaNode]
-        """
-        if hint.is_a(lal.TypeDecl):
-            if hint.f_type_def.is_a(lal.RecordTypeDef):
-                return [field.decl for field in _record_fields(hint)]
-
-    to_product = Transformer.as_transformer(types.Product)
-
-    # Get the elements -> type them all -> generate the product type.
-    return get_elements >> comp_typer.lifted() >> to_product
-
-
-def name_typer(inner_typer):
-    """
-    :param types.Typer[lal.AdaNode] inner_typer: A typer for elements
-        being referred by identifiers.
-
-    :return: A typer for names.
-
-    :rtype: types.Typer[lal.AdaNode]
-    """
-
-    # Create a simple placeholder object for when there are no constraint.
-    # (object() is called because None would mean that we failed to fetch the
-    # constraint).
-    no_constraint = object()
-
-    @Transformer.as_transformer
-    def resolved_name_and_constraint(hint):
-        """
-        :param lal.AdaNode hint: the lal type expression.
-        :return: The type declaration associated to the name, if relevant,
-            as well as the optional constraint.
-        :rtype: (lal.BaseTypeDecl, lal.AdaNode)
-        """
-        if hint.is_a(lal.SubtypeIndication):
-            try:
-                return (
-                    hint.p_designated_type_decl,
-                    hint.f_constraint if hint.f_constraint is not None
-                    else no_constraint
-                )
-            except lal.PropertyError:
-                pass
-
-    def identity_if_is_a(tpe):
-        """
-        Given a type tpe, returns a transformer which fails if its element
-        to transform is not of type tpe, or else leaves it untouched.
-        """
-        @Transformer.as_transformer
-        def f(x):
-            if x.is_a(tpe):
-                return x
-        return f
-
-    @Transformer.as_transformer
-    def get_range(constraint):
-        """
-        If the given constraint is a range constraint, returns the expressions
-        for its left and right hand side in a pair.
-        """
-        if constraint is not no_constraint:
-            if constraint.is_a(lal.RangeConstraint):
-                rng = constraint.f_range.f_range
-                if rng.is_a(lal.BinOp) and rng.f_op.is_a(lal.OpDoubleDot):
-                    return rng.f_left, rng.f_right
-
-    @Transformer.as_transformer
-    def refined_int_range(args):
-        """
-        From the given pair containing an IntRange type on the left and an
-        evaluated range constraint on the right (a pair of integers), return
-        a new IntRange instance with the constraint applied.
-        """
-        tpe, (c_left, c_right) = args
-        assert (tpe.frm <= c_left and tpe.to >= c_right)
-        return types.IntRange(c_left, c_right)
-
-    # Transforms a lal.RangeConstraint into a pair of int ('First and 'Last)
-    get_range_constraint = get_range >> (_eval_as_int & _eval_as_int)
-
-    # Transforms a pair (types.IntRange, lal.RangeConstraint) into a new,
-    # refined types.IntRange instance.
-    when_constrained_range = (
-        (identity_if_is_a(types.IntRange) & get_range_constraint) >>
-        refined_int_range
-    )
-
-    # 1. Resolve the name reference and the optional constraint into a pair.
-    # 2. Type the left (0th) element of the tuple (which contains the referred
-    #    declaration).
-    # 3. If the computed type is an IntRange and the constraint is a range
-    #    constraint, refine the IntRange. Else ignore the constraint and simply
-    #    return the previously computed type which is in the left (0th) element
-    #    of the tuple.
-    return (resolved_name_and_constraint >>
-            inner_typer.for_index(0) >>
-            (when_constrained_range | Transformer.project(0)))
-
-
-def anonymous_typer(inner_typer):
-    """
-    :param types.Typer[lal.AdaNode] inner_typer: A typer for the types declared
-        by the anonymous typer.
-
-    :return: A typer for anonymous types.
-
-    :rtype: types.Typer[lal.AdaNode]
-    """
-    @Transformer.as_transformer
-    def get_type_decl(hint):
-        """
-        :param lal.AdaNode hint: the lal type expression.
-        :return: The type declaration associated to the anonymous type, if
-            relevant.
-        :rtype: lal.BaseTypeDecl
-        """
-        if hint.is_a(lal.AnonymousType):
-            return hint.f_type_decl
-
-    return get_type_decl >> inner_typer
-
-
-def derived_typer(inner_typer):
-    @Transformer.as_transformer
-    def get_derived_type(hint):
-        if hint.is_a(lal.TypeDecl):
-            if hint.f_type_def.is_a(lal.DerivedTypeDef):
-                return hint.f_type_def.f_subtype_indication
-
-    return get_derived_type >> inner_typer
-
-
-def array_typer(indices_typer, component_typer):
-    """
-    :param types.Typer[lal.AdaNode] indices_typer: Typer for array indices.
-
-    :param types.Typer[lal.AdaNode] component_typer: Typer for array
-        components.
-
-    :return: A Typer for array types.
-
-    :rtype: types.Typer[lal.AdaNode]
-    """
-    @Transformer.as_transformer
-    def get_array_attributes(hint):
-        if _is_array_type_decl(hint):
-            return (
-                hint.f_type_def.f_indices.f_list,
-                hint.f_type_def.f_component_type.f_type_expr
-            )
-
-    @Transformer.as_transformer
-    def to_array(attribute_types):
-        index_types, component_type = attribute_types
-        return types.Array(index_types, component_type)
-
-    return (
-        get_array_attributes >>
-        (indices_typer.lifted() & component_typer) >>
-        to_array
-    )
-
-
-def subp_ret_typer(inner):
-    """
-    :param types.Typer[lal.AdaNode] inner: Typer for return type components.
-    :rtype: types.Typer[lal.AdaNode]
-    """
-    @Transformer.as_transformer
-    def get_components(hint):
-        if hint.is_a(_ExtendedCallReturnType):
-            return (
-                hint.out_indices,
-                hint.out_types if hint.ret_type is None
-                else hint.out_types + (hint.ret_type,)
-            )
-
-    @Transformer.as_transformer
-    def to_output(x):
-        out_indices, out_types = x
-        return types.FunOutput(tuple(out_indices), out_types)
-
-    return (
-        get_components >>
-        (Transformer.identity() & inner.lifted()) >>
-        to_output
-    )
-
-
-def subtyper(inner):
-    """
-    :param types.Typer[lal.AdaNode] inner: Typer for base types.
-    :rtype: types.Typer[lal.AdaNode]
-    """
-    @types.typer
-    def get_subtyped(hint):
-        if hint.is_a(lal.SubtypeDecl):
-            return hint.f_subtype
-
-    return get_subtyped >> inner
-
-
-@types.typer
-def ram_typer(hint):
-    if hint.is_a(_StackType):
-        return types.DataStorage()
-
-
-_unknown_type = types.Unknown()
-
-
-@types.memoizing_typer
-@types.typer
-def unknown_typer(_):
-    return _unknown_type
-
-
-@types.memoizing_typer
-@types.typer
-def none_typer(hint):
-    if hint is None:
-        return types.Product([])
-
-
-class ExtractionContext(object):
-    """
-    The libadalang-based frontend interface. Provides method for extracting
-    IR programs from Ada source files (see extract_programs), as well as
-    a default typer for those programs (see default_typer).
-
-    Note: programs extracted using different ExtractionContext are not
-    compatible. Also, this extraction context must be kept alive as long
-    as the programs parsed with it are intended to be used.
-    """
-    def __init__(self, lal_ctx=None):
-        self.lal_ctx = lal.AnalysisContext() if lal_ctx is None else lal_ctx
-
-        # Get a dummy node, needed to call static properties of libadalang.
-        dummy = self.lal_ctx.get_from_buffer(
-            "<dummy>", 'package Dummy is end;'
-        ).root
-
-        # Find the Character TypeDecl.
-        char_type = dummy.p_standard_unit.root.find(
-            lambda x: x.is_a(lal.TypeDecl) and x.f_name.text == "Character"
-        )
-
-        self.evaluator = ConstExprEvaluator(
-            dummy.p_bool_type,
-            dummy.p_int_type,
-            char_type,
-            dummy.p_universal_int_type,
-            dummy.p_universal_real_type
-        )
-
-        self.type_models = {}
-        self.fun_models = {}
-        self._internal_typer = self.default_typer()
-
-    @staticmethod
-    def for_project(project_file, scenario_vars={}):
-        return ExtractionContext(lal.AnalysisContext(
-            unit_provider=lal.UnitProvider.for_project(
-                project_file,
-                scenario_vars
-            )
-        ))
-
-    @staticmethod
-    def empty():
-        return ExtractionContext()
-
-    def extract_programs_from_file(self, ada_file):
-        """
-        :param str ada_file: A path to the Ada source file from which to
-            extract programs.
-
-        :return: a Basic IR Program for each subprogram body that exists in the
-            given source code.
-
-        :rtype: iterable[irt.Program]
-        """
-        return self._extract_from_unit(self.lal_ctx.get_from_file(ada_file))
-
-    def extract_programs_from_provider(self, name, kind):
-        return self._extract_from_unit(self.lal_ctx.get_from_provider(
-            name, kind
-        ))
-
-    def extract_programs_from_unit(self, unit):
-        """
-        :param lal.AnalysisUnit unit: The already parsed compilation unit.
-        """
-        return self._extract_from_unit(unit)
-
-    @profile()
-    def use_model(self, name):
-        model_unit = self.lal_ctx.get_from_provider(name, "specification")
-        with log_stdout('error'):
-            for diag in model_unit.diagnostics:
-                print('   {}'.format(diag))
-                return
-
-        model_ofs = model_unit.root.findall(
-            lambda x: (x.is_a(lal.AspectAssoc)
-                       and x.f_id.text.lower() == "model_of")
-        )
-
-        type_models = {
-            aspect.parent.parent.parent: aspect.f_expr.p_referenced_decl
-            for aspect in model_ofs
-            if aspect.parent.parent.parent.is_a(lal.TypeDecl, lal.SubtypeDecl)
-        }
-
-        fun_models = {
-            aspect.parent.parent.parent: aspect.f_expr.p_referenced_decl
-            for aspect in model_ofs
-            if aspect.parent.parent.parent.is_a(lal.SubpDecl)
-        }
-
-        if len(type_models) + len(fun_models) != len(model_ofs):
-            with log_stdout('info'):
-                print("warning: detected usage of Model_Of in an unknown "
-                      "context.")
-
-        for tdecl, ref in type_models.iteritems():
-            if ref is None:
-                with log_stdout('info'):
-                    print("warning: Model_Of used on '{}' refers to an unknown"
-                          " type.".format(tdecl.f_name.text))
-            else:
-                self.type_models[ref] = tdecl
-
-        for fdecl, ref in fun_models.iteritems():
-            if ref is None:
-                with log_stdout('info'):
-                    print(
-                        "warning: Model_Of used on '{}' refers to an unknown "
-                        "procedure/function.".format(
-                            fdecl.f_subp_spec.f_subp_name.text
-                        )
-                    )
-            else:
-                self.fun_models[ref] = fdecl
-
-    @profile()
-    def _extract_from_unit(self, unit):
-        if unit.root is None:
-            with log_stdout('error'):
-                print('Could not parse {}:'.format(unit.filename))
-                for diag in unit.diagnostics:
-                    print('   {}'.format(diag))
-                    return
-
-        unit.populate_lexical_env()
-
-        progs = [
-            _gen_ir(self, subp, self._internal_typer)
-            for subp in unit.root.findall(lal.SubpBody)
-        ]
-
-        converter = ConvertUniversalTypes(self.evaluator, self._internal_typer)
-
-        for prog in progs:
-            prog.visit(converter)
-
-        return progs
-
-    def standard_typer(self):
-        """
-        :return: A Typer for Ada standard types of programs parsed using
-            this extraction context.
-
-        :rtype: types.Typer[lal.AdaNode]
-        """
-        bool_type = self.evaluator.bool
-        int_type = self.evaluator.int
-        char_type = self.evaluator.char
-
-        @types.typer
-        def typer(hint):
-            """
-            :param lal.AdaNode hint: the lal type.
-            :return: The corresponding lalcheck type.
-            :rtype: types.Boolean | types.IntRange
-            """
-            if hint == bool_type:
-                return types.Boolean()
-            elif hint == int_type:
-                return types.IntRange(-2 ** 31, 2 ** 31 - 1)
-            elif hint == char_type:
-                return types.ASCIICharacter()
-
-        return typer
-
-    def model_typer(self, inner_typer):
-        @Transformer.as_transformer
-        def find_modeled_type(hint):
-            model = self.type_models.get(hint, None)
-            if model is not None:
-                return hint, model
-
-        @Transformer.as_transformer
-        def to_model_type(tpes):
-            return types.ModeledType(*tpes)
-
-        return find_modeled_type >> inner_typer.lifted() >> to_model_type
-
-    def default_typer(self, fallback_typer=None):
-        """
-        :return: The default Typer for Ada programs parsed using this
-            extraction context.
-
-        :rtype: types.Typer[lal.AdaNode]
-        """
-
-        standard_typer = self.standard_typer()
-
-        @types.memoizing_typer
-        @types.delegating_typer
-        def typer():
-            return self.model_typer(typer_without_model) | typer_without_model
-
-        @types.memoizing_typer
-        @types.delegating_typer
-        def typer_without_model():
-            """
-            :rtype: types.Typer[lal.AdaNode]
-            """
-            typr = (none_typer |
-                    standard_typer |
-                    int_range_typer |
-                    int_mod_typer |
-                    enum_typer |
-                    access_typer |
-                    record_typer(record_component_typer(typer)) |
-                    name_typer(typer) |
-                    anonymous_typer(typer) |
-                    derived_typer(typer) |
-                    array_typer(typer, typer) |
-                    subp_ret_typer(typer) |
-                    subtyper(typer) |
-                    ram_typer)
-
-            return typr if fallback_typer is None else typr | fallback_typer
-
-        return typer
