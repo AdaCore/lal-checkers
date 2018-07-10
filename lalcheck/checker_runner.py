@@ -3,6 +3,7 @@ import importlib
 from multiprocessing import Pool, cpu_count
 from itertools import izip_longest
 import signal
+import traceback
 
 from lalcheck.checkers.support.checker import Checker, CheckerResults
 from lalcheck.tools.digraph import Digraph
@@ -29,7 +30,9 @@ checkers_group.add_argument('--checkers', metavar='CHECKERS', action='append',
                                            'semicolons.')
 
 parser.add_argument('--log', metavar="CATEGORIES", type=str,
-                    default="error;diag-{}".format(CheckerResults.HIGH),
+                    default="error;internal-error;diag-{}".format(
+                        CheckerResults.HIGH
+                    ),
                     help='Categories separated by semicolons.')
 
 parser.add_argument('--codepeer-output', action='store_true')
@@ -229,22 +232,26 @@ def report_diag(report):
 
 
 def do_partition(partition):
-    reqs = get_requirements(partition)
-    schedule = get_schedules(reqs)[0]
-
-    if args.export_schedule is not None:
-        export_schedule(schedule, args.export_schedule)
-
     diags = []
 
-    for checker_result in schedule.run().values():
-        for program_result in checker_result:
-            for diag in program_result.diagnostics:
-                report = program_result.memoized_diag_report(diag)
-                if report is not None:
-                    diags.append(report)
+    try:
+        reqs = get_requirements(partition)
+        schedule = get_schedules(reqs)[0]
 
-    return diags
+        if args.export_schedule is not None:
+            export_schedule(schedule, args.export_schedule)
+
+        for checker_result in schedule.run().values():
+            for program_result in checker_result:
+                for diag in program_result.diagnostics:
+                    report = program_result.memoized_diag_report(diag)
+                    if report is not None:
+                        diags.append(report)
+    except Exception:
+        with logger.log_stdout('internal-error'):
+            traceback.print_exc(file=sys.stdout)
+    finally:
+        return diags
 
 
 def do_all(diagnostic_action):
