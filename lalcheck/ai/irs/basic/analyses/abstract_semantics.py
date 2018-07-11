@@ -337,18 +337,47 @@ class AnalysisResults(object):
 
     @staticmethod
     def _to_state(env):
-        last_index = max([v.data.index for v in env.keys()]) + 1
-        state_list = [None] * last_index
+        """
+        Given an environment as a map from variable to value (domain element),
+        generate a state vector as used by the expression evaluator. A state
+        vector maps the INDEX of a variable to its value instead of the mapping
+        the variable itself. For efficiency, we use a tuple instead of a dict
+        to contain the mapping, although not all indices necessarily have an
+        image. Those that don't have their component equal to None.
+
+        :param dict[Variable, object] env: The environment, a map from
+            variables to the domain element that they hold.
+
+        :rtype: tuple[object]
+        """
+
+        # Because the set of indices may have holes, the maximal index is not
+        # necessarily equal to the number of variables minus one. Therefore,
+        # we first compute the appropriate length of the list that we will
+        # use to store the state.
+
+        max_index = (
+            max(v.data.index for v in env.keys()) if len(env) > 0 else 0
+        )
+        state_vector = [None] * (max_index + 1)
 
         for var, value in env.iteritems():
-            state_list[var.data.index] = value
+            state_vector[var.data.index] = value
 
-        return tuple(state_list)
+        return tuple(state_vector)
 
     def eval_at(self, node, expr):
         """
         Given a program point, evaluates for each program trace available at
         this program point the given expression.
+
+        :param Digraph.Node node: The program point at which to evaluate the
+            expression.
+
+        :param irt.Expr expr: The expression to evaluate using the knowledge
+            at that specific program point.
+
+        :rtype: dict[frozenset[Digraph.Node], object]
         """
         return {
             trace: self.evaluator.eval(
