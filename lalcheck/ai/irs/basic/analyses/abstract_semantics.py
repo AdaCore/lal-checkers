@@ -114,8 +114,15 @@ MergePredicateBuilder.Eq_Vals = MergePredicateBuilder(_mp_eq_vals)
 class ExternalCallStrategy(object):
     def __call__(self, sig):
         """
-        :param lalcheck.interpretations.Signature sig:
-        :return:
+        Given a signature, returns an interpretation of this function as a
+        pair which contains:
+        - The forward implementation of that function.
+        - The backward implementation of that function.
+
+        :param lalcheck.ai.interpretations.Signature sig: The signature for
+            which to provide an interpretation.
+
+        :rtype: (*object->object, *object->object)
         """
         raise NotImplementedError
 
@@ -128,6 +135,20 @@ class KnownTargetCallStrategy(ExternalCallStrategy):
         self.progs = progs
 
     def _get_provider(self, sig, prog):
+        """
+        Given a signature and the program that it designates, returns an
+        interpretation of this function as a pair which contains:
+        - The forward implementation of that function.
+        - The backward implementation of that function.
+
+        :param lalcheck.ai.interpretations.Signature sig: The signature for
+            which to provide an interpretation.
+
+        :param lalcheck.ai.irs.basic.tree.Program prog: The IR of the program
+            that is designated by the signature.
+
+        :rtype: (*object->object, *object->object)
+        """
         raise NotImplementedError
 
     def __call__(self, sig):
@@ -182,37 +203,45 @@ class TopDownCallStrategy(KnownTargetCallStrategy):
                 arg_values
             )
 
+            # Get all environments that can result from the analysis of the
+            # function called.
             envs = [
                 values
                 for leaf in analysis.cfg.leafs()
                 for _, values in analysis.semantics[leaf].iteritems()
             ]
-            param_values = [
+
+            # Fetch the indices of variables that are marked out.
+            out_vars = [
+                prog.data.param_vars[i]
+                for i in sig.out_param_indices
+            ]
+
+            # Compute their value after the call using the environments.
+            param_values = tuple(
                 reduce(
                     model[var].domain.join,
                     (env[var] for env in envs),
                     model[var].domain.bottom
                 )
-                if var in model
-                else arg_values[var]
-                for var in prog.data.param_vars
-            ]
+                for var in out_vars
+            )
 
+            # Compute the value of the return variable (if any) after the call
+            # using the environments.
             result_var = prog.data.result_var
-            result_value = reduce(
+            result_value = (reduce(
                 model[result_var].domain.join,
                 (env[result_var] for env in envs),
                 model[result_var].domain.bottom
-            ) if result_var is not None else None
+            ),) if result_var is not None else ()
 
-            if len(sig.out_param_indices) == 0:
-                return (result_value
-                        if sig.output_domain else ())
-
-            return tuple(
-                param_values[i]
-                for i in sig.out_param_indices
-            ) + ((result_value,) if sig.output_domain else ())
+            if len(out_vars) == 0 and result_var is not None:
+                # We must return the value directly when there is a single
+                # element to return instead of a 1-tuple.
+                return result_value[0]
+            else:
+                return param_values + result_value
 
         def inv(*_):
             raise NotImplementedError
