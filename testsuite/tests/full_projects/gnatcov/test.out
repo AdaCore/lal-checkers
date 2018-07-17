@@ -394,7 +394,8 @@
 402:54: (potential) precondition failure
 402:64: (potential) null dereference of 'FI'
 404:47: (potential) null dereference of 'Info'
-404:7: (potential) assertion failure
+404:7: assertion failure
+404:7: unreachable code
 4050:49: (potential) invalid field Section_Sec_Idx
 4050:49: (potential) null dereference of 'Sec'
 4055:15: (potential) invalid field Section_Name
@@ -405,6 +406,7 @@
 408:15: (potential) null dereference of 'Output'
 408:45: (potential) invalid field Stats
 409:39: (potential) invalid field Stats
+409:7: unreachable code
 4104:24: (potential) invalid field Subprogram_Name
 4104:24: (potential) null dereference of 'Subprg.Subprogram_Name'
 410:18: (potential) null dereference of 'Output'
@@ -418,9 +420,11 @@
 412:35: (potential) invalid field Stats
 413:15: (potential) null dereference of 'Output'
 4140:32: (potential) null dereference of 'Symbol'
+414:10: unreachable code
 414:37: (potential) invalid field Stats
 415:18: (potential) null dereference of 'Output'
 417:36: (potential) null dereference of 'LI'
+417:7: unreachable code
 418:20: (potential) null dereference of 'Output'
 418:37: (potential) precondition failure
 419:20: (potential) null dereference of 'Output'
@@ -429,9 +433,12 @@
 424:50: (potential) null dereference of 'BB.Called_Sym'
 424:53: (potential) null dereference of 'Info.Full_Name'
 424:69: (potential) null dereference of 'Exec'
+427:10: unreachable code
 428:26: (potential) null dereference of 'Root_Project'
 428:7: (potential) precondition failure
+429:10: unreachable code
 431:16: (potential) null dereference of 'LI'
+433:13: unreachable code
 448:13: (potential) precondition failure
 4506:54: (potential) invalid field Symbol_Name
 4506:54: (potential) null dereference of 'Sym'
@@ -447,58 +454,78 @@
 453:21: (potential) null dereference of 'Output'
 454:51: (potential) null dereference of 'Info'
 454:51: (potential) null dereference of 'Info.Simple_Name'
+457:7: unreachable code
 4580:33: (potential) null dereference of 'Exec'
 458:22: (potential) null dereference of 'Output'
 458:38: (potential) null dereference of 'Info'
+458:7: unreachable code
 4597:16: (potential) null dereference of 'Line'
 4597:29: (potential) null dereference of 'Sym'
 459:10: (potential) precondition failure
 45:7: (potential) assertion failure
 460:21: (potential) null dereference of 'Address_Info_Sets.Element (Sym_Cur)'
+463:13: unreachable code
 463:21: (potential) null dereference of 'Output'
 463:47: (potential) precondition failure
 463:57: (potential) null dereference of 'FI'
 464:21: (potential) null dereference of 'Output'
 464:63: (potential) null dereference of 'LI'
 467:18: (potential) null dereference of 'Output'
-469:19: (potential) null dereference of 'Line'
 469:21: (potential) null dereference of 'Output'
+470:19: unreachable code
+476:19: unreachable code
 479:19: (potential) null dereference of 'Insn'
+479:19: unreachable code
 4809:40: (potential) null dereference of 'Exec'
 480:13: (potential) null dereference of 'FI'
 4812:10: (potential) null dereference of 'I_Ranges'
 484:10: (potential) invalid field Stats
+484:19: unreachable code
 485:18: (potential) invalid field Lines
 485:18: (potential) null dereference of 'FI'
+486:19: unreachable code
 4874:10: (potential) assertion failure
 487:16: (potential) null dereference of 'Traces'
 48:26: (potential) precondition failure
 48:34: (potential) invalid field Lines
 48:34: (potential) null dereference of 'TP'
 48:34: (potential) null dereference of 'TP.Current_Subp'
+491:25: unreachable code
 493:20: (potential) null dereference of 'Output'
+496:25: unreachable code
 498:38: (potential) null dereference of 'Info'
 500:13: (potential) null dereference of 'FI'
+500:28: unreachable code
 500:29: (potential) null dereference of 'Name'
 500:44: (potential) precondition failure
 501:7: (potential) invalid field Lines
 501:7: (potential) invalid field Lines
+504:22: unreachable code
 505:16: (potential) null dereference of 'DS_Top'
 50:19: (potential) null dereference of 'Res'
 514:57: (potential) null dereference of 'DS_Top'
 515:19: (potential) null dereference of 'Context'
 517:26: (potential) null dereference of 'Output'
 525:20: (potential) null dereference of 'Key_To_Name (Key (Cur))'
+531:19: unreachable code
+532:19: unreachable code
 532:36: (potential) null dereference of 'DS_Top'
+533:19: unreachable code
 534:26: (potential) null dereference of 'Insn'
+538:25: unreachable code
+539:25: unreachable code
 540:20: (potential) null dereference of 'Get (Element (Cur))'
+548:28: unreachable code
 550:19: (potential) null dereference of 'Insn'
+554:25: unreachable code
 555:22: (potential) null dereference of 'Context'
 557:10: (potential) assertion failure
+562:22: unreachable code
 563:13: (potential) assertion failure
 564:13: (potential) precondition failure
 564:36: (potential) null dereference of 'Current_File_Line_Cache'
 565:10: (potential) null dereference of 'Info'
+565:25: unreachable code
 569:19: (potential) invalid field Lines
 569:19: (potential) null dereference of 'FI'
 571:16: (potential) null dereference of 'LI'
@@ -514,9 +541,12 @@
 594:10: (potential) null dereference of 'TP'
 594:10: (potential) null dereference of 'TP.Current_Subp'
 595:23: (potential) null dereference of 'DS_Top'
-595:31: (potential) null dereference of 'Annotation.Message'
 598:28: (potential) null dereference of 'Context.Exec'
+599:28: unreachable code
+600:28: unreachable code
 602:33: (potential) invalid field Symbol_Name
+603:28: unreachable code
+604:28: unreachable code
 605:17: (potential) null dereference of 'File.Simple_Name'
 606:14: (potential) null dereference of 'TP'
 606:14: (potential) null dereference of 'TP.Routine_Tags.Element (Tag)'
@@ -524,6 +554,9 @@
 617:23: (potential) null dereference of 'Info'
 61:15: (potential) null dereference of 'Key_To_Name (Key)'
 622:13: (potential) invalid field Evaluations
+624:13: unreachable code
+625:13: unreachable code
+627:13: unreachable code
 630:43: (potential) invalid field Stats
 649:56: (potential) null dereference of 'Insn'
 64:7: (potential) assertion failure
@@ -533,10 +566,12 @@
 65:22: (potential) null dereference of 'R'
 662:23: (potential) null dereference of 'Exec'
 662:7: (potential) assertion failure
+663:13: unreachable code
 664:7: (potential) assertion failure
 667:16: (potential) null dereference of 'Info_Simple'
 668:25: (potential) null dereference of 'Context'
 669:41: (potential) null dereference of 'E'
+673:10: unreachable code
 673:20: (potential) null dereference of 'Output'
 673:28: (potential) null dereference of 'Insn'
 673:32: (potential) null dereference of 'E.Filename'
@@ -545,6 +580,7 @@
 676:20: (potential) null dereference of 'Output'
 677:30: (potential) null dereference of 'DS_Top'
 677:7: (potential) assertion failure
+677:7: unreachable code
 678:20: (potential) null dereference of 'Output'
 685:23: (potential) null dereference of 'Output'
 68:17: (potential) null dereference of 'Element (Cur).Factory'
