@@ -7,7 +7,10 @@ import lalcheck.ai.irs.basic.tools as irtools
 from lalcheck.ai.utils import dataclass
 
 from lalcheck.tools.scheduler import Task, Requirement
-from lalcheck.tools.logger import log
+from lalcheck.tools.logger import log, log_stdout
+
+import sys
+import traceback
 
 ProjectProvider = namedtuple(
     'ProjectProvider', ['project_file', 'scenario_vars']
@@ -120,10 +123,13 @@ class LALAnalyser(Task):
                 return {'res': unit}
 
             log('error', '\n'.join(str(diag) for diag in unit.diagnostics))
-        except Exception:
-            log('info', 'error: libadalang failed to analyze {}.'.format(
-                self.filename
-            ))
+        except Exception as e:
+            with log_stdout('info'):
+                print('error: libadalang failed to analyze {}: {}.'.format(
+                    self.filename,
+                    e
+                ))
+                traceback.print_exc(file=sys.stdout)
         return {'res': None}
 
 
@@ -148,13 +154,11 @@ class IRGenerator(Task):
             log('info', 'Transforming {}'.format(self.filename))
             try:
                 irtree = ctx.extract_programs_from_unit(unit)
-            except Exception:
-                log(
-                    'info',
-                    'error: could not generate IR for file {}.'.format(
-                        self.filename
-                    )
-                )
+            except Exception as e:
+                with log_stdout('info'):
+                    print('error: could not generate IR for file {}: {}.'
+                          .format(self.filename, e))
+                    traceback.print_exc(file=sys.stdout)
         return {'res': irtree}
 
 
@@ -253,8 +257,10 @@ class ModelGenerator(Task):
                 self.model_config.merge_predicate_builder
             )
             res = (models, merge_pred_builder)
-        except Exception:
-            log('info', 'error: could not create model.')
+        except Exception as e:
+            with log_stdout('info'):
+                print('error: could not create model: {}.'.format(e))
+                traceback.print_exc(file=sys.stdout)
         return {'model': res}
 
 
@@ -301,12 +307,12 @@ class AbstractAnalyser(Task):
                     res.append(abstract_analysis.compute_semantics(
                         prog, model, merge_pred_builder
                     ))
-                except Exception:
-                    log(
-                        'info',
-                        'error: analysis of subprocedure {} failed.'.format(
-                            prog.data.fun_id.f_subp_spec.f_subp_name.text
-                        )
-                    )
+                except Exception as e:
+                    fun = prog.data.fun_id
+                    with log_stdout('info'):
+                        print('error: analysis of subprocedure {}({}) failed: '
+                              '{}.'.format(fun.f_subp_spec.f_subp_name.text,
+                                           fun.sloc_range, e))
+                        traceback.print_exc(file=sys.stdout)
 
         return {'res': res}
