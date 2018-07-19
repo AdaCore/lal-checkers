@@ -1100,6 +1100,9 @@ def gen_ir(ctx, subp, typer, subpdata):
         :param lal.AdaNode orig_call: The original call node.
         """
 
+        if len(pres) == len(posts) == 0:
+            return [], []
+
         procs = [proc]
         model = ctx.fun_models.get(proc, None)
         if model is not None:
@@ -1116,7 +1119,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             for stmt in stmts + [irt.AssumeStmt(
                 expr,
                 purpose=purpose.ContractCheck("precondition", orig_call),
-                orig_node=pre
+                orig_node=orig_call
             )]
         ]
 
@@ -1139,7 +1142,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                     purpose.ContractCheck("postcondition", orig_call)
                     if must_check else None
                 ),
-                orig_node=post
+                orig_node=orig_call
             )]
         ]
 
