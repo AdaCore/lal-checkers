@@ -154,7 +154,7 @@ class ExtractionContext(object):
         progs = [
             gen_ir(self, subp, self._internal_typer, subpuserdata)
             for subp, subpuserdata in subpdata.iteritems()
-            if subp.is_a(lal.SubpBody)
+            if subp.is_a(lal.BaseSubpBody)
         ]
 
         converter = ConvertUniversalTypes(self.evaluator, self._internal_typer)

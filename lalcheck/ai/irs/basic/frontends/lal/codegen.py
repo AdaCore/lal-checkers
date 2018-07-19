@@ -2290,11 +2290,47 @@ def gen_ir(ctx, subp, typer, subpdata):
                 print_warning(stmt.text, e)
         return res
 
+    def transform_expr_function_body(expr):
+        """
+        Generate the body of this subprogram when it is an expression
+        function.
+
+        :param lal.Expr expr: The expression body of the expression function.
+        :rtype: list[irt.Stmt]
+        """
+        res = []
+        try:
+            ret_expr_stmts, ret_expr = transform_expr(expr)
+            res.extend(ret_expr_stmts)
+            res.append(irt.AssignStmt(result_var.value, ret_expr))
+        except (lal.PropertyError, NotImplementedError,
+                KeyError, NotConstExprError) as e:
+            print_warning(expr.text, e)
+        return res
+
+    def transform_subp_body(subp):
+        """
+        Generate the body of this subprogram when it is an actual subprogram
+        body.
+
+        :param lal.SubpBody subp: The subprogram which body to transform.
+        :rtype: list[irt.Stmt]
+        """
+        return (transform_decls(subp.f_decls.f_decls) +
+                transform_stmts(subp.f_stmts.f_stmts))
+
+    # Generate function body statements. Subp may be an expression function or
+    # a normal subprogram.
+
+    fun_body_stmts = transform_spec(subp.f_subp_spec)
+    if subp.is_a(lal.ExprFunction):
+        fun_body_stmts.extend(transform_expr_function_body(subp.f_expr))
+    else:
+        fun_body_stmts.extend(transform_subp_body(subp))
+    fun_body_stmts.append(func_end_label)
+
     return irt.Program(
-        transform_spec(subp.f_subp_spec) +
-        transform_decls(subp.f_decls.f_decls) +
-        transform_stmts(subp.f_stmts.f_stmts) +
-        [func_end_label],
+        fun_body_stmts,
         fun_id=subp,
         orig_node=subp,
         result_var=result_var.value.var if result_var.value else None,
