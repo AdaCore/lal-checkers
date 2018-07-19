@@ -1,5 +1,5 @@
 Program:
   read(P#1)
-  ret0#2 = <SubpDecl ["Set_E"] 7:7-7:34>(P#1)
+  ret0#2 = <SubpBody ["Set_E"] 11:7-14:17>(P#1)
   P#1 = Get_0(ret0#2)
   end:

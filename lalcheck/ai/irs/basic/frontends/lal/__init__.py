@@ -6,6 +6,7 @@ import libadalang as lal
 from lalcheck.ai.utils import profile
 from lalcheck.tools.logger import log_stdout
 
+import analysis
 import typers
 import utils
 from codegen import ConvertUniversalTypes, gen_ir
@@ -47,6 +48,7 @@ class ExtractionContext(object):
 
         self.type_models = {}
         self.fun_models = {}
+        self.subpdata = {}
         self._internal_typer = self.default_typer()
 
     @staticmethod
@@ -146,9 +148,13 @@ class ExtractionContext(object):
 
         unit.populate_lexical_env()
 
+        subpdata = analysis.traverse_unit(unit.root)
+        self.subpdata.update(subpdata)
+
         progs = [
-            gen_ir(self, subp, self._internal_typer)
-            for subp in unit.root.findall(lal.SubpBody)
+            gen_ir(self, subp, self._internal_typer, subpuserdata)
+            for subp, subpuserdata in subpdata.iteritems()
+            if subp.is_a(lal.SubpBody)
         ]
 
         converter = ConvertUniversalTypes(self.evaluator, self._internal_typer)

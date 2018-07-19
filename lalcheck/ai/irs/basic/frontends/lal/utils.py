@@ -200,6 +200,19 @@ def record_fields(record_decl):
     return res
 
 
+def get_subp_identity(subp):
+    """
+    :param lal.BaseSubpBody | lal.BasicSubpDecl subp: The subprogram for which
+        to retrieve a unique identity object.
+    """
+    if subp.is_a(lal.BasicSubpDecl):
+        body = subp.p_body_part
+        if body is not None:
+            return body
+
+    return subp
+
+
 @memoize
 def proc_parameters(proc):
     """

@@ -12,7 +12,7 @@ from utils import (
     NotConstExprError,
     StackType, PointerType, ExtendedCallReturnType, ValueHolder,
     record_fields, proc_parameters, get_field_info, is_array_type_decl,
-    is_record_field, closest
+    is_record_field, closest, get_subp_identity
 )
 
 _lal_op_type_to_symbol = {
@@ -39,19 +39,23 @@ _attr_to_unop = {
 }
 
 
-@memoize
-def _subprogram_param_types(subp, with_stack):
+def _subprogram_param_types(subp, globs, with_stack):
     """
     Returns a tuple containing the types of each parameter of the given
     subprogram.
 
     :param lal.SubpDecl subp: The subprogram to consider.
+    :param list[lal.DefiningName] globs: The global variables it accesses.
     :param bool with_stack: Whether the subprogram takes the optional stack
         as an additional argument.
     :rtype: tuple[lal.BaseTypeDecl]
     """
     params = proc_parameters(subp)
-    return tuple(p.f_type_expr for _, _, p in params) + (
+    return tuple(
+        p.f_type_expr for _, _, p in params
+    ) + tuple(
+        g.p_basic_decl.f_type_expr for g in globs
+    ) + (
         (StackType(),) if with_stack else ()
     )
 
@@ -314,7 +318,7 @@ def retrieve_function_contracts(ctx, proc):
 
 
 @profile()
-def gen_ir(ctx, subp, typer):
+def gen_ir(ctx, subp, typer, subpdata):
     """
     Generates Basic intermediate representation from a lal subprogram body.
 
@@ -323,6 +327,9 @@ def gen_ir(ctx, subp, typer):
     :param lal.SubpBody subp: The subprogram body from which to generate IR.
 
     :param types.Typer[lal.AdaNode] typer: A typer for any lal AdaNode.
+
+    :param analysis.SubpAnalysisData subpdata: The information computed by
+        the analysis about the given subprogram.
 
     :return: a Basic Program.
 
@@ -1262,6 +1269,11 @@ def gen_ir(ctx, subp, typer):
                 return gen_assignment(arg_exprs[i], [], out_expr)
             return do
 
+        def gen_global_out_assignment(local_id):
+            def do(out_expr):
+                return [irt.AssignStmt(local_id, out_expr)]
+            return do
+
         if prefix.is_a(lal.Identifier, lal.DottedName):
             ref = prefix.p_referenced_decl
             if ref is not None and ref.is_a(lal.SubpBody, lal.SubpDecl):
@@ -1286,6 +1298,23 @@ def gen_ir(ctx, subp, typer):
                     if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut)
                 ]
 
+                # Pass global variables
+
+                called_subpdata = ctx.subpdata.get(get_subp_identity(ref))
+                if called_subpdata is not None:
+                    for global_var_id in called_subpdata.all_global_vars:
+                        local_instance = var_decls[global_var_id]
+                        local_id = irt.Identifier(
+                            local_instance,
+                            type_hint=local_instance.data.type_hint
+                        )
+                        suffix_exprs.append(local_id)
+                        out_params.append((
+                            len(suffix_exprs) - 1,
+                            local_instance.data.type_hint,
+                            gen_global_out_assignment(local_id)
+                        ))
+
                 # Pass stack too
 
                 global_access = _find_global_access(typer, ref)
@@ -1301,7 +1330,7 @@ def gen_ir(ctx, subp, typer):
 
                     if global_access == _WRITES_GLOBAL_STATE:
                         out_params.append((
-                            len(proc_parameters(ref)),
+                            len(suffix_exprs) - 1,
                             stack.data.type_hint,
                             lambda expr: [irt.AssignStmt(
                                 stack,
@@ -1316,6 +1345,8 @@ def gen_ir(ctx, subp, typer):
                 pres, posts = retrieve_function_contracts(ctx, ref)
                 subp_param_types = _subprogram_param_types(
                     ref,
+                    (called_subpdata.all_global_vars
+                     if called_subpdata is not None else []),
                     global_access != _IGNORES_GLOBAL_STATE
                 )
 
@@ -1347,10 +1378,19 @@ def gen_ir(ctx, subp, typer):
                         orig_node=orig_node
                     )
 
+                    called_name = ref
+                    if ref.is_a(lal.BasicSubpDecl):
+                        try:
+                            body = ref.p_body_part
+                            if body is not None:
+                                called_name = body
+                        except lal.PropertyError:
+                            pass
+
                     call = [irt.AssignStmt(
                         ret_var,
                         irt.FunCall(
-                            ref,
+                            called_name,
                             suffix_exprs,
                             orig_node=orig_node,
                             type_hint=ret_tpe,
@@ -1904,6 +1944,17 @@ def gen_ir(ctx, subp, typer):
                 ),
                 type_hint=spec.f_subp_returns
             )
+
+        for glob_id in subpdata.all_global_vars:
+            param_var = irt.Variable(
+                glob_id.text,
+                type_hint=glob_id.p_basic_decl.f_type_expr,
+                orig_node=glob_id,
+                mode=Mode.Out,
+                index=next_var_idx()
+            )
+            var_decls[glob_id] = param_var
+            param_vars.append(param_var)
 
         if (_find_global_access(typer, subp) ==
                 _WRITES_GLOBAL_STATE):

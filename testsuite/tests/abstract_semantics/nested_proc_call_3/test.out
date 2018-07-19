@@ -1,0 +1,316 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "start0"
+        ],
+        "values": {
+          "x": "[0, 0]",
+          "y": "[-2147483648, 2147483647]"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "start0"
+        ],
+        "values": {
+          "x": "[0, 0]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "x": "[0, 0]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "start0"
+        ],
+        "values": {
+          "x": "[1, 1]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign4": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "start0"
+        ],
+        "values": {
+          "x": "[1, 1]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign5": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assign5",
+          "start0"
+        ],
+        "values": {
+          "x": "[2, 2]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign6": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assign5",
+          "assign6",
+          "start0"
+        ],
+        "values": {
+          "x": "[2, 2]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign7": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assign5",
+          "assign6",
+          "assign7",
+          "start0"
+        ],
+        "values": {
+          "x": "[2, 2]",
+          "y": "[12, 12]"
+        }
+      }
+    ],
+    "assign8": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assign5",
+          "assign6",
+          "assign7",
+          "assign8",
+          "start0"
+        ],
+        "values": {
+          "x": "[4, 4]",
+          "y": "[12, 12]"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "x": "[-2147483648, 2147483647]",
+          "y": "[-2147483648, 2147483647]"
+        }
+      }
+    ]
+  },
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "x": "[0, 0]",
+          "y": "[-2147483648, 2147483647]"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "start0"
+        ],
+        "values": {
+          "x": "[0, 0]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "x": "[0, 0]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "start0"
+        ],
+        "values": {
+          "x": "[1, 1]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign4": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "start0"
+        ],
+        "values": {
+          "x": "[1, 1]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign5": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assign5",
+          "start0"
+        ],
+        "values": {
+          "x": "[2, 2]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign6": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assign5",
+          "assign6",
+          "start0"
+        ],
+        "values": {
+          "x": "[2, 2]",
+          "y": "[42, 42]"
+        }
+      }
+    ],
+    "assign7": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assign5",
+          "assign6",
+          "assign7",
+          "start0"
+        ],
+        "values": {
+          "x": "[2, 2]",
+          "y": "[12, 12]"
+        }
+      }
+    ],
+    "assign8": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assign5",
+          "assign6",
+          "assign7",
+          "assign8",
+          "start0"
+        ],
+        "values": {
+          "x": "[4, 4]",
+          "y": "[12, 12]"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "x": "[-2147483648, 2147483647]",
+          "y": "[-2147483648, 2147483647]"
+        }
+      }
+    ]
+  }
+}
