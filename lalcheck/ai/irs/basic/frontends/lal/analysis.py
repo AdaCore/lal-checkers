@@ -13,16 +13,36 @@ class AnalysisConfiguration(object):
     """
     Contains the configuration of the analysis to be done.
     """
-    def __init__(self, discover_spills):
+
+    NO_GLOBAL = 'NO_GLOBAL'
+    UP_LEVEL = 'UP_LEVEL'
+    UP_LEVEL_LOCAL_DECL = 'UP_LEVEL_LOCAL_DECL'
+
+    def __init__(self, discover_spills, global_var_predicate):
         """
         :param bool discover_spills: True if the analysis should discover
             local variables that are accessed at some point inside the
             subprogram they are declared in using the 'Access attribute.
+
+        :param str global_var_predicate: The predicate to use to determine if
+            a variable declaration should be considered global to a given
+            subprogram. Can be one of:
+            - NO_GLOBAL: Never consider any given variable as a global variable
+                of the given procedure.
+            - UP_LEVEL: Consider as global any variables declared outside the
+                given procedure.
+            - UP_LEVEL_LOCAL_DECL: Consider as global any variables declared
+                outside the given procedure but that are local to another
+                procedure.
         """
         self.discover_spills = discover_spills
+        self.global_var_predicate = global_var_predicate
 
 
-_default_configuration = AnalysisConfiguration(True)
+_default_configuration = AnalysisConfiguration(
+    True,
+    AnalysisConfiguration.UP_LEVEL_LOCAL_DECL
+)
 
 
 class SubpAnalysisData(object):
@@ -169,6 +189,40 @@ def _get_ref_decl(node):
         return None
 
 
+def _is_up_level(decl, subp):
+    """
+    Given a declaration decl for which a reference was found in the given
+    subprogram subp (meaning it is visible from somewhere inside subp),
+    returns true if decl lies in an outer scope of subp.
+    :rtype: bool
+    """
+    parents = decl.parent_chain
+    return subp not in parents
+
+
+def _is_up_level_local_decl(decl, subp):
+    """
+    Given a declaration decl for which a reference was found in the given
+    subprogram subp (meaning it is visible from somewhere inside subp),
+    returns true if decl:
+     - lies in an outer scope of subp.
+     - does not belong to a package, but a subprogram body.
+    :rtype: bool
+    """
+    parents = decl.parent_chain
+    if subp in parents:
+        return False
+
+    try:
+        actual_parent = next(
+            p for p in parents
+            if p.is_a(lal.BasePackageDecl, lal.BaseSubpBody)
+        )
+        return actual_parent.is_a(lal.BaseSubpBody)
+    except StopIteration:
+        return False
+
+
 def traverse_unit(unit, config=_default_configuration):
     """
     Analyzes the given compilation unit using the given analysis configuration.
@@ -182,28 +236,13 @@ def traverse_unit(unit, config=_default_configuration):
     :rtype: dict[lal.SubpBody, SubpAnalysisData]
     """
 
-    @memoize
-    def is_up_level_local_decl(decl, subp):
-        """
-        Given a declaration decl for which a reference was found in the given
-        subprogram subp (meaning it is visible from somewhere inside subp),
-        returns true if decl:
-         - lies in an outer scope of subp.
-         - does not belong to a package, but a subprogram body.
-        :rtype: bool
-        """
-        parents = decl.parent_chain
-        if subp in parents:
-            return False
-
-        try:
-            actual_parent = next(
-                p for p in parents
-                if p.is_a(lal.BasePackageDecl, lal.BaseSubpBody)
-            )
-            return actual_parent.is_a(lal.BaseSubpBody)
-        except StopIteration:
-            return False
+    if config.global_var_predicate == AnalysisConfiguration.NO_GLOBAL:
+        def global_var_predicate(*_): return False
+    elif config.global_var_predicate == AnalysisConfiguration.UP_LEVEL:
+        global_var_predicate = memoize(_is_up_level)
+    elif (config.global_var_predicate
+            == AnalysisConfiguration.UP_LEVEL_LOCAL_DECL):
+        global_var_predicate = memoize(_is_up_level_local_decl)
 
     subpdata = {}
 
@@ -225,7 +264,7 @@ def traverse_unit(unit, config=_default_configuration):
                 ref = _get_ref_decl(node)
 
                 if ref is not None and ref.is_a(lal.ObjectDecl):
-                    if is_up_level_local_decl(ref, subp):
+                    if global_var_predicate(ref, subp):
                         # For now, "globals" are only the variables that
                         # are defined in an up-level procedure.
                         subpdata[subp].explicit_global_vars.add(node.p_xref)
@@ -235,13 +274,16 @@ def traverse_unit(unit, config=_default_configuration):
                     if accessed is not None:
                         subpdata[subp].vars_to_spill.add(accessed)
 
-            if node.is_a(lal.Name):
-                ref = _get_ref_decl(node)
+            if config.global_var_predicate != AnalysisConfiguration.NO_GLOBAL:
+                if node.is_a(lal.Name):
+                    ref = _get_ref_decl(node)
 
-                if ref is not None and ref.metadata.f_is_call:
-                    actual = _solve_renamings(ref)
-                    if actual is not None:
-                        subpdata[subp].out_calls.add(get_subp_identity(actual))
+                    if ref is not None and ref.metadata.f_is_call:
+                        actual = _solve_renamings(ref)
+                        if actual is not None:
+                            subpdata[subp].out_calls.add(
+                                get_subp_identity(actual)
+                            )
 
         traverse_childs(node, subp)
 
