@@ -39,6 +39,14 @@ _attr_to_unop = {
 }
 
 
+class AccessingUnspilledVar(ValueError):
+    """
+    Is raised when accessing a variable that was not spilled
+    """
+    def __init__(self, *args):
+        super(AccessingUnspilledVar, self).__init__(*args)
+
+
 def _subprogram_param_types(subp, globs, with_stack):
     """
     Returns a tuple containing the types of each parameter of the given
@@ -1010,6 +1018,9 @@ def gen_ir(ctx, subp, typer, subpdata):
                 expr = substitutions[ref][1].data.orig_node
                 ref = expr.p_xref
 
+            if ref not in to_spill:
+                raise AccessingUnspilledVar
+
             var = var_decls[ref]
 
             return irt.FunCall(
@@ -1815,7 +1826,20 @@ def gen_ir(ctx, subp, typer, subpdata):
                     orig_node=expr
                 )
             elif attribute_text == 'access':
-                return [], gen_access_path(expr.f_prefix)
+                try:
+                    return [], gen_access_path(expr.f_prefix)
+                except AccessingUnspilledVar:
+                    # The best thing we can do in this case is to assume that
+                    # the pointer is not null (we know that because it should
+                    # have been an access on a local variable).
+                    ret = new_expression_replacing_var("ptr", expr)
+                    tpe = expr.p_expression_type
+                    return [irt.AssumeStmt(irt.FunCall(
+                        ops.NEQ,
+                        [ret, irt.Lit(lits.NULL, type_hint=tpe)],
+                        param_types=[tpe, tpe],
+                        type_hint=ctx.evaluator.bool
+                    ))], ret
             elif attribute_text == 'result':
                 return substitutions[expr.f_prefix.p_referenced_decl, 'result']
             elif attribute_text == 'old':

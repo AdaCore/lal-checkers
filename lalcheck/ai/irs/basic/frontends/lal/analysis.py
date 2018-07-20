@@ -9,6 +9,22 @@ from funcy.calc import memoize
 from utils import get_subp_identity
 
 
+class AnalysisConfiguration(object):
+    """
+    Contains the configuration of the analysis to be done.
+    """
+    def __init__(self, discover_spills):
+        """
+        :param bool discover_spills: True if the analysis should discover
+            local variables that are accessed at some point inside the
+            subprogram they are declared in using the 'Access attribute.
+        """
+        self.discover_spills = discover_spills
+
+
+_default_configuration = AnalysisConfiguration(True)
+
+
 class SubpAnalysisData(object):
     """
     Contains information about a subprogram:
@@ -153,15 +169,16 @@ def _get_ref_decl(node):
         return None
 
 
-def traverse_unit(unit):
+def traverse_unit(unit, config=_default_configuration):
     """
-    Analyzes the given compilation unit.
+    Analyzes the given compilation unit using the given analysis configuration.
 
     Computes useful information about each subprogram body defined in the unit,
     which are returned as a mapping from SubpBody to SubpAnalysisData. See
     SubpAnalysisData class to know what information is computed on subprograms.
 
     :param lal.CompilationUnit unit: The compilation unit to analyze.
+    :param AnalysisConfiguration config: The configuration of the analysis.
     :rtype: dict[lal.SubpBody, SubpAnalysisData]
     """
 
@@ -212,7 +229,7 @@ def traverse_unit(unit):
                         # For now, "globals" are only the variables that
                         # are defined in an up-level procedure.
                         subpdata[subp].explicit_global_vars.add(node.p_xref)
-            elif node.is_a(lal.AttributeRef):
+            elif node.is_a(lal.AttributeRef) and config.discover_spills:
                 if node.f_attribute.text.lower() == 'access':
                     accessed = _base_accessed_var(node.f_prefix)
                     if accessed is not None:
