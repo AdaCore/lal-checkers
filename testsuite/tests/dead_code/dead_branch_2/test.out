@@ -1,10 +1,8 @@
 {
   "always": [
-    "assign2",
-    "assume1"
+    "assign2"
   ],
   "le_t_eq_v": [
-    "assign2",
-    "assume1"
+    "assign2"
   ]
 }

@@ -12,7 +12,11 @@ from lalcheck.checkers.dead_code import check_dead_code
 
 def format_analysis_results(results):
     return json.dumps({
-        pred_name: sorted([n.name for n in analysis.diagnostics])
+        pred_name: sorted([
+            n.name
+            for block in analysis.diagnostics
+            for n in block.nodes
+        ])
         for pred_name, analysis in results.iteritems()
     }, sort_keys=True, indent=2)
 

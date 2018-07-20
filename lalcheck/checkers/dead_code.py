@@ -17,7 +17,13 @@ def html_render_node(node):
     return escape(PrettyPrinter.pretty_print(node))
 
 
-def build_resulting_graph(file_name, cfg, dead_nodes):
+def build_resulting_graph(file_name, cfg, dead_blocks):
+    dead_nodes = frozenset(
+        node
+        for block in dead_blocks
+        for node in block.nodes
+    )
+
     def dead_label(orig):
         return {'dead': True} if orig in dead_nodes else {}
 
@@ -63,8 +69,8 @@ class Results(AbstractSemanticsChecker.Results):
     """
     Contains the results of the dead code checker.
     """
-    def __init__(self, sem_analysis, dead_nodes):
-        super(Results, self).__init__(sem_analysis, dead_nodes)
+    def __init__(self, sem_analysis, dead_blocks):
+        super(Results, self).__init__(sem_analysis, dead_blocks)
 
     def save_results_to_file(self, file_name):
         """
@@ -78,18 +84,20 @@ class Results(AbstractSemanticsChecker.Results):
         )
 
     @classmethod
-    def diag_report(cls, diag):
-        if diag.data.node is not None:
-            if ('orig_node' in diag.data.node.data
-                    and diag.data.node.data.orig_node is not None):
-                return (
-                    DiagnosticPosition.from_node(
-                        diag.data.node.data.orig_node
-                    ),
-                    "unreachable code",
-                    DeadCodeChecker.name(),
-                    cls.HIGH
-                )
+    def diag_report(cls, block):
+        if len(block.nodes) > 0:
+            start_line = block.start_node().sloc_range.start.line
+            end_line = block.end_node().sloc_range.end.line
+            if start_line == end_line:
+                message = "unreachable code"
+            else:
+                message = "unreachable code (until line {})".format(end_line)
+            return (
+                DiagnosticPosition.from_node(block.start_node()),
+                message,
+                DeadCodeChecker.name(),
+                cls.HIGH
+            )
 
 
 def check_dead_code(prog, model, merge_pred_builder):
@@ -102,14 +110,55 @@ def check_dead_code(prog, model, merge_pred_builder):
     return find_dead_code(analysis)
 
 
+class Block(object):
+    def __init__(self, nodes):
+        """
+        :param list[Digraph.Node] nodes: The nodes of the block.
+        """
+        self.nodes = nodes
+
+    def start_node(self):
+        return self.nodes[0].data.node.data.orig_node
+
+    def end_node(self):
+        return self.nodes[-1].data.node.data.orig_node
+
+
+def _node_start_pos(x):
+    node = x[0]
+    orig = node.data.node.data.orig_node
+    return orig.sloc_range.start.line, orig.sloc_range.start.column
+
+
 def find_dead_code(analysis):
-    dead_nodes = [
-        node
-        for node in analysis.cfg.nodes
-        if len(analysis.semantics[node]) == 0
+    nodes_with_origin = [
+        (
+            n,
+            len(analysis.semantics[n]) == 0  # is node dead
+        )
+        for n in analysis.cfg.nodes
+        if n.data.node is not None
+        if 'orig_node' in n.data.node.data
+        if n.data.node.data.orig_node is not None
     ]
 
-    return Results(analysis, dead_nodes)
+    sorted_results = sorted(nodes_with_origin, key=_node_start_pos)
+
+    dead_blocks = []
+    current_block = Block([])
+
+    for result in sorted_results:
+        graph_node, is_dead = result
+        if is_dead:
+            current_block.nodes.append(graph_node)
+        elif len(current_block.nodes) > 0:
+            dead_blocks.append(current_block)
+            current_block = Block([])
+
+    if len(current_block.nodes) > 0:
+        dead_blocks.append(current_block)
+
+    return Results(analysis, dead_blocks)
 
 
 @Requirement.as_requirement
