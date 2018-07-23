@@ -13,7 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
-from lalcheck.checkers.support.utils import same_as_parent
+from lalcheck.checkers.support.utils import same_as_parent, tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
 
@@ -80,9 +80,6 @@ def find_bad_unequals(unit):
         return (list_sub_operands(binop.f_left, op)
                 + list_sub_operands(binop.f_right, op))
 
-    def tokens_text(node):
-        return tuple((t.kind, t.text) for t in node.tokens)
-
     def has_same_operands(expr):
         """
         For a logic relation, checks whether any combination of its
@@ -96,7 +93,7 @@ def find_bad_unequals(unit):
         if len(all_ops) > 1:
             for op in all_ops:
                 (op_left, op_right) = op
-                tokens = tokens_text(op_left)
+                tokens = tokens_info(op_left)
                 if tokens in ops:
                     return (op_left, ops[tokens], op_right)
                 ops[tokens] = op_right

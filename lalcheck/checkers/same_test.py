@@ -13,6 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
+from lalcheck.checkers.support.utils import tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
 
@@ -43,9 +44,6 @@ def find_same_tests(unit):
             f.f_cond_expr for f in ifnode.f_alternatives
         ]
 
-    def tokens_text(node):
-        return tuple((t.kind, t.text) for t in node.tokens)
-
     def has_same_tests(expr):
         """
         For an if-statement or an if-expression, checks whether any
@@ -58,7 +56,7 @@ def find_same_tests(unit):
         all_tests = list_tests(expr)
         if len(all_tests) > 1:
             for test in all_tests:
-                tokens = tokens_text(test)
+                tokens = tokens_info(test)
                 if tokens in tests:
                     return (tests[tokens], test)
                 tests[tokens] = test

@@ -30,6 +30,29 @@ def closest_enclosing(node, *tpes):
     return None
 
 
+def relevant_tokens(node):
+    """
+    Returns the list of tokens of the given node without taking into account
+    trivia tokens (whitespaces, newlines, etc.)
+
+    :param lal.AdaNode node: The node for which to retrieve the tokens.
+    :rtype: list[lal.Token]
+    """
+    return [t for t in node.tokens if not t.is_trivia]
+
+
+def tokens_info(node):
+    """
+    Returns a list describing the tokens that make up the node. Each token
+    is represented by a pair containing its kind and its text.
+
+    :param lal.AdaNode node: The node for which to retrieve information about
+        its tokens.
+    :rtype: list[(str, str)]
+    """
+    return tuple((t.kind, t.text) for t in relevant_tokens(node))
+
+
 def format_text_for_output(text, max_char_count=40, ellipsis='...'):
     """
     Formats the given text so that it can be included in an output message.

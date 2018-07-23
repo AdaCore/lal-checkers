@@ -13,6 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
+from lalcheck.checkers.support.utils import relevant_tokens
 
 from lalcheck.tools.scheduler import Task, Requirement
 
@@ -53,8 +54,8 @@ def find_same_operands(unit):
         :type binop: lal.BinOp
         :rtype: bool
         """
-        return same_tokens(list(binop.f_left.tokens),
-                           list(binop.f_right.tokens))
+        return same_tokens(relevant_tokens(binop.f_left),
+                           relevant_tokens(binop.f_right))
 
     def interesting_oper(op):
         """

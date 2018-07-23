@@ -13,7 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
-from lalcheck.checkers.support.utils import same_as_parent
+from lalcheck.checkers.support.utils import same_as_parent, tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
 
@@ -67,9 +67,6 @@ def find_same_logic(unit):
         return (expr.is_a(lal.Identifier)
                 and expr.text.lower() in ['true', 'false'])
 
-    def tokens_text(node):
-        return tuple((t.kind, t.text) for t in node.tokens)
-
     def has_same_operands(expr):
         """
         For a logic relation, checks whether any combination of its
@@ -82,7 +79,7 @@ def find_same_logic(unit):
         all_ops = list_operands(expr)
         if len(all_ops) > 1:
             for op in all_ops:
-                tokens = tokens_text(op)
+                tokens = tokens_info(op)
                 if tokens in ops:
                     return (ops[tokens], op)
                 ops[tokens] = op

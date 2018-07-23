@@ -71,7 +71,6 @@
 1345:14: (potential) null dereference of 'FI'
 134:10: (potential) assertion failure
 1350:13: (potential) null dereference of 'SCI'
-1355:21: duplicate code with line 1350
 1358:23: (potential) null dereference of 'Name'
 135:60: (potential) null dereference of 'Exec'
 1365:49: (potential) null dereference of 'Exec'

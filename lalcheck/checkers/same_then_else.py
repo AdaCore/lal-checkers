@@ -21,6 +21,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
+from lalcheck.checkers.support.utils import relevant_tokens, tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
 
@@ -60,7 +61,7 @@ def find_same_then_elses(unit):
 
         :rtype: bool
         """
-        return same_tokens(list(left.tokens), list(right.tokens))
+        return same_tokens(relevant_tokens(left), relevant_tokens(right))
 
     def list_blocks(node):
         """
@@ -71,10 +72,10 @@ def find_same_then_elses(unit):
         """
 
         def num_tokens(node):
-            return len(list(node.tokens))
+            return len(relevant_tokens(node))
 
         def select_if_block(block, test):
-            # Only report blocks of length greater than 10 tokens, and it the
+            # Only report blocks of length greater than 10 tokens, and if the
             # length of the test leading to the block is no greater than the
             # length of the block. Otherwise, not sharing the blocks might be
             # better coding style.
@@ -155,7 +156,7 @@ def find_same_then_elses(unit):
         blocks = {}
         duplicates = []
         for block in list_blocks(node):
-            tokens = tuple((t.kind, t.text) for t in block.tokens)
+            tokens = tokens_info(block)
             if tokens in blocks:
                 duplicates.append((blocks[tokens], block))
             else:
