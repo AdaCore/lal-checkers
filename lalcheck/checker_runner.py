@@ -37,11 +37,11 @@ parser.add_argument('--log', metavar="CATEGORIES", type=str,
 
 parser.add_argument('--codepeer-output', action='store_true')
 parser.add_argument('--export-schedule', type=str)
-parser.add_argument('--partition-size', default=0, type=int,
+parser.add_argument('--partition-size', default=10, type=int,
                     help='The amount of files that will be batched in a'
                          'partition. A higher number means less computing'
                          'time, but more memory consumption.')
-parser.add_argument('-j', default=0, type=int,
+parser.add_argument('-j', default=1, type=int,
                     help='The number of process to spawn in parallel, each'
                          'of which deals with a single partition at a time.')
 
@@ -222,7 +222,8 @@ def report_diag(report):
         return "{}:{}:{}: warning: {}:{}:{}:{}: {} [{}]".format(
             pos.filename, pos.start[0], pos.start[1],
             pos.proc_name or "unknown", pos.proc_filename or "unknown",
-            pos.proc_start[0] or "unknown", pos.proc_start[1] or "unknown",
+            pos.proc_start[0] if pos.proc_start is not None else "unknown",
+            pos.proc_start[1] if pos.proc_start is not None else "unknown",
             msg, flag
         )
     else:

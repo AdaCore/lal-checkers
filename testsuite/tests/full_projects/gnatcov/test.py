@@ -183,7 +183,9 @@ def run():
             ['-X{}={}'.format(*entry) for entry in scenario_vars.iteritems()] +
             ['--checkers', '{}'.format(';'.join([c for c in checkers]))] +
             ['--files', '{}'.format(';'.join(input_files))] +
-            ['--log', 'error'])
+            ['--log', 'error'] +
+            ['-j', '0'] +
+            ['--partition-size', '15'])
 
     diags = checker_runner.run(args, diagnostic_action='return')
     diags = [
