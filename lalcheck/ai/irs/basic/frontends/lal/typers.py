@@ -353,7 +353,7 @@ def unknown_typer(_):
 @types.typer
 def none_typer(hint):
     if hint is None:
-        return types.Product([])
+        return _unknown_type
 
 
 def standard_typer(ctx):
