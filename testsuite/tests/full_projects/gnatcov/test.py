@@ -188,8 +188,8 @@ def run():
     diags = checker_runner.run(args, diagnostic_action='return')
     diags = [
         "{}:{}: {}".format(
-            pos[1],
-            pos[2],
+            pos.start[0],
+            pos.start[1],
             msg
         )
         for pos, msg, _, _ in diags

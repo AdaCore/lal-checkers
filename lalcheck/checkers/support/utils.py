@@ -14,6 +14,22 @@ def same_as_parent(binop):
             and binop.f_op.is_a(type(par.f_op)))
 
 
+def closest_enclosing(node, *tpes):
+    """
+    Given a libadalang node n, returns its closest enclosing libadalang
+    node of one of the given types which directly or indirectly contains n.
+
+    :param lal.AdaNode node: The node from which to start the search.
+    :param *type tpes: The kind of node to look out for.
+    :rtype: lal.AdaNode|None
+    """
+    while node.parent is not None:
+        node = node.parent
+        if node.is_a(*tpes):
+            return node
+    return None
+
+
 def format_text_for_output(text, max_char_count=40, ellipsis='...'):
     """
     Formats the given text so that it can be included in an output message.

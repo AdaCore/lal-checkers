@@ -7,7 +7,9 @@ from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import ContractCheck
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
-from lalcheck.checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.checkers.support.checker import (
+    AbstractSemanticsChecker, DiagnosticPosition
+)
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
@@ -107,7 +109,7 @@ class Results(AbstractSemanticsChecker.Results):
             frmt = "(potential) {} failure"
 
         return (
-            purpose.orig_call,
+            DiagnosticPosition.from_node(purpose.orig_call),
             frmt.format(purpose.contract_name),
             ContractChecker.name(),
             cls.gravity(precise)

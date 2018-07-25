@@ -9,7 +9,9 @@ from __future__ import (absolute_import, division, print_function)
 
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
-from lalcheck.checkers.support.checker import SyntacticChecker
+from lalcheck.checkers.support.checker import (
+    SyntacticChecker, DiagnosticPosition
+)
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.utils import same_as_parent
 
@@ -24,7 +26,7 @@ class Results(SyntacticChecker.Results):
     def diag_report(cls, diag):
         op, fst_val, snd_val = diag
         return (
-            op,
+            DiagnosticPosition.from_node(op),
             'expression always true: "{}" /= '
             '{} or {}'.format(op.text, fst_val.text, snd_val.text),
             BadUnequalChecker.name(),

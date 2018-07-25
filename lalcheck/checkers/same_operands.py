@@ -9,7 +9,9 @@ from __future__ import (absolute_import, division, print_function)
 
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
-from lalcheck.checkers.support.checker import SyntacticChecker
+from lalcheck.checkers.support.checker import (
+    SyntacticChecker, DiagnosticPosition
+)
 from lalcheck.checkers.support.components import AnalysisUnit
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -22,7 +24,7 @@ class Results(SyntacticChecker.Results):
     @classmethod
     def diag_report(cls, diag):
         return (
-            diag,
+            DiagnosticPosition.from_node(diag),
             'left and right operands of "{}" are identical'.format(
                 diag.f_op.text
             ),

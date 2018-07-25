@@ -3,7 +3,9 @@ from xml.sax.saxutils import escape
 from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
-from lalcheck.checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.checkers.support.checker import (
+    AbstractSemanticsChecker, DiagnosticPosition
+)
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
@@ -81,7 +83,9 @@ class Results(AbstractSemanticsChecker.Results):
             if ('orig_node' in diag.data.node.data
                     and diag.data.node.data.orig_node is not None):
                 return (
-                    diag.data.node.data.orig_node,
+                    DiagnosticPosition.from_node(
+                        diag.data.node.data.orig_node
+                    ),
                     "unreachable code",
                     DeadCodeChecker.name(),
                     cls.HIGH

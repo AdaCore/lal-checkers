@@ -4,7 +4,6 @@ from multiprocessing import Pool, cpu_count
 from itertools import izip_longest
 import signal
 
-import libadalang as lal
 from lalcheck.checkers.support.checker import Checker, CheckerResults
 from lalcheck.tools.digraph import Digraph
 from lalcheck.tools.dot_printer import gen_dot, DataPrinter
@@ -208,54 +207,25 @@ def export_schedule(schedule, export_path):
         export_file.write(dot)
 
 
-def closest_enclosing(node, *tpes):
-    """
-    Given a libadalang node n, returns its closest enclosing libadalang
-    node of one of the given types which directly or indirectly contains n.
-
-    :param lal.AdaNode node: The node from which to start the search.
-    :param *type tpes: The kind of node to look out for.
-    :rtype: lal.AdaNode|None
-    """
-    while node.parent is not None:
-        node = node.parent
-        if node.is_a(*tpes):
-            return node
-    return None
-
-
-def full_position(node):
-    filename = node.unit.filename
-    pos = node.sloc_range.start
-    subp = closest_enclosing(node, lal.SubpBody)
-
-    if subp is None:
-        logger.log('info', 'No enclosing subprogram')
-        return (filename, pos.line, pos.column) + ("unknown",) * 4
-
-    spec = subp.f_subp_spec
-    proc_name = spec.f_subp_name.text
-    proc_filename = filename
-    proc_pos = spec.sloc_range.start
-
-    return (
-        filename, pos.line, pos.column,
-        proc_name, proc_filename, proc_pos.line, proc_pos.column
-    )
-
-
 def report_diag(report):
-    full_pos, msg, flag, _ = report
-    file, line, col, proc_name, proc_file, proc_line, proc_col = full_pos
+    """
+    Given a diagnostic report, creates the final string to output to the user.
+    :param (DiagnosticPosition, str, str, str) report: The report to output.
+    :rtype: str
+    """
+    pos, msg, flag, _ = report
 
     if args.codepeer_output:
-        return ("{}:{}:{}: warning: {}:{}:{}:{}: {} [{}]".format(
-            file, line, col,
-            proc_name, proc_file, proc_line, proc_col,
+        return "{}:{}:{}: warning: {}:{}:{}:{}: {} [{}]".format(
+            pos.filename, pos.start[0], pos.start[1],
+            pos.proc_name or "unknown", pos.proc_filename or "unknown",
+            pos.proc_start[0] or "unknown", pos.proc_start[1] or "unknown",
             msg, flag
-        ))
+        )
     else:
-        return "{}:{}:{} {}".format(file, line, col, msg)
+        return "{}:{}:{} {}".format(
+            pos.filename, pos.start[0], pos.start[1], msg
+        )
 
 
 def do_partition(partition):
@@ -270,15 +240,9 @@ def do_partition(partition):
     for checker_result in schedule.run().values():
         for program_result in checker_result:
             for diag in program_result.diagnostics:
-                report = program_result.diag_report(diag)
+                report = program_result.memoized_diag_report(diag)
                 if report is not None:
-                    pickleable_diag = (
-                        full_position(report[0]),
-                        report[1],
-                        report[2],
-                        report[3]
-                    )
-                    diags.append(pickleable_diag)
+                    diags.append(report)
 
     return diags
 

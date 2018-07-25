@@ -7,7 +7,9 @@ from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import ExistCheck
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
-from lalcheck.checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.checkers.support.checker import (
+    AbstractSemanticsChecker, DiagnosticPosition
+)
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
@@ -115,7 +117,9 @@ class Results(AbstractSemanticsChecker.Results):
                 frmt = "(potential) invalid field {}"
 
             return (
-                purpose.accessed_expr.data.orig_node,
+                DiagnosticPosition.from_node(
+                    purpose.accessed_expr.data.orig_node
+                ),
                 frmt.format(
                     purpose.field_name,
                     purpose.discr_name

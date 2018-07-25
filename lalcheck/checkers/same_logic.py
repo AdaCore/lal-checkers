@@ -9,7 +9,9 @@ from __future__ import (absolute_import, division, print_function)
 
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
-from lalcheck.checkers.support.checker import SyntacticChecker
+from lalcheck.checkers.support.checker import (
+    SyntacticChecker, DiagnosticPosition
+)
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.utils import same_as_parent
 
@@ -24,7 +26,7 @@ class Results(SyntacticChecker.Results):
     def diag_report(cls, diag):
         fst_line = diag[0].sloc_range.start.line
         return (
-            diag[1],
+            DiagnosticPosition.from_node(diag[1]),
             'duplicate operand with line {}'.format(fst_line),
             SameLogicChecker.name(),
             cls.HIGH

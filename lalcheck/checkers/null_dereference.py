@@ -7,7 +7,9 @@ from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import DerefCheck
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
-from lalcheck.checkers.support.checker import AbstractSemanticsChecker
+from lalcheck.checkers.support.checker import (
+    AbstractSemanticsChecker, DiagnosticPosition
+)
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.checkers.support.utils import format_text_for_output
 from lalcheck.tools import dot_printer
@@ -110,7 +112,7 @@ class Results(AbstractSemanticsChecker.Results):
                 frmt = "(potential) null dereference of '{}'"
 
             return (
-                derefed.data.orig_node,
+                DiagnosticPosition.from_node(derefed.data.orig_node),
                 frmt.format(
                     format_text_for_output(derefed.data.orig_node.text)
                 ),
