@@ -367,12 +367,16 @@ def compute_semantics(prog, model, merge_pred_builder, arg_values=None):
     solver = ExprSolver(model)
 
     # setup widening configuration
-    widening_counter = KeyCounter()
-    widening_delay = 10
+    visit_counter = KeyCounter()
+    widening_delay = 5
+    narrowing_delay = 3
 
     def do_widen(counter):
-        # will widen when counter == widen_delay, then narrow
-        return counter == widening_delay
+        # will widen when counter == widen_delay, then narrow. If it has not
+        # converged after narrow_delay is reached, widening is triggered again
+        # but without a follow-up narrowing.
+        return (counter == widening_delay
+                or counter >= narrowing_delay + widening_delay)
 
     cfg = prog.visit(CFGBuilder())
     roots = cfg.roots()
@@ -430,7 +434,7 @@ def compute_semantics(prog, model, merge_pred_builder, arg_values=None):
         ])
 
         if node.data.is_widening_point:
-            if do_widen(widening_counter.get_incr(node)):
+            if do_widen(visit_counter.get_incr(node)):
                 output = lat.update(new_states[node], output, True)
 
         return output
