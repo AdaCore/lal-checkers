@@ -1314,12 +1314,10 @@ def gen_ir(ctx, subp, typer, subpdata):
                             fresh_name("ret"),
                             purpose=purpose.SyntheticVariable(),
                             type_hint=ret_tpe,
-                            orig_node=orig_node,
                             mode=Mode.Local,
                             index=next_var_idx()
                         ),
-                        type_hint=ret_tpe,
-                        orig_node=orig_node
+                        type_hint=ret_tpe
                     )
 
                     called_name = ref
@@ -1339,7 +1337,8 @@ def gen_ir(ctx, subp, typer, subpdata):
                             orig_node=orig_node,
                             type_hint=ret_tpe,
                             param_types=subp_param_types
-                        )
+                        ),
+                        orig_node=orig_node
                     )]
 
                     out_arg_exprs = {
