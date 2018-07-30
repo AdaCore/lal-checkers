@@ -488,6 +488,104 @@ def gen_ir(ctx, subp, typer, subpdata):
             )
         return build
 
+    def build_relational(op, lhs, rhs):
+        """
+        Generate a function call to the given binary relational operator
+        between the two given expressions.
+
+        :param str op: The operator to call.
+        :param irt.Expr lhs: The left-hand side.
+        :param irt.Expr rhs: The right-hand side.
+        :rtype: irt.Expr
+        """
+        return irt.FunCall(op, [lhs, rhs], type_hint=ctx.evaluator.bool)
+
+    def gen_for_condition(iter_var, iter_expr):
+        """
+        Generate the condition (I in E) where I is the iteration variable and
+        E the expression on which to iterate over. E.g:
+
+        - I in 0 .. 10: I >= 0 && I <= 10
+        - I in Positive: I >= 1 && I <= 2**32 - 1
+
+        :param irt.Expr iter_var: The iteration variable.
+        :param lal.Expr iter_expr: The LAL node representing the expression to
+            iterate over.
+        :rtype: irt.Expr
+        """
+        def build_range_condition(low, high):
+            """
+            Build the IR expression for the call "I >= <low> && I <= <high>".
+
+            :param irt.Expr low: The expression for the lower bound.
+            :param irt.Expr high: The expression for the higher bound.
+            :rtype: irt.Expr
+            """
+            return build_relational(
+                ops.AND,
+                build_relational(ops.GE, iter_var, low),
+                build_relational(ops.LE, iter_var, high)
+            )
+
+        def gen_when_range_lit(lhs_val, rhs_val):
+            """
+            Generate the expression for when the two range bounds are int
+            literals.
+
+            :param int lhs_val: The integer for the lower bound.
+            :param int rhs_val: The integer for the higher bound.
+            :rtype: (list[irt.Stmt], irt.Expr)
+            """
+            return [], build_range_condition(
+                irt.Lit(lhs_val, type_hint=iter_var.data.type_hint),
+                irt.Lit(rhs_val, type_hint=iter_var.data.type_hint)
+            )
+
+        def gen_when_range_exprs(lhs_expr, rhs_expr):
+            """
+            Generate the expression for when the two range bounds are
+            arbitrarily complex expressions.
+
+            :param lal.Expr lhs_expr: The expression for the lower bound.
+            :param lal.Expr rhs_expr: The expression for the higher bound.
+            :rtype: (list[irt.Stmt], irt.Expr)
+            """
+            lhs_pre_stmts, lhs_ir_expr = transform_expr(lhs_expr)
+            rhs_pre_stmts, rhs_ir_expr = transform_expr(rhs_expr)
+            return lhs_pre_stmts + rhs_pre_stmts, build_range_condition(
+                lhs_ir_expr, rhs_ir_expr
+            )
+
+        def gen_when_type_reference(ref):
+            """
+            Generate the expression for when the expression to iterate over
+            is a reference to a type, in which case it means we are going to
+            iterate over its discrete range.
+
+            :param lal.TypeDecl ref: The type declaration to iterate over.
+            :rtype: (list[irt.Stmt], irt.Expr)
+            """
+            try:
+                actual_type = typer.get(ref)
+                if actual_type.is_a(types.IntRange):
+                    return gen_when_range_lit(
+                        actual_type.frm, actual_type.to
+                    )
+            except Transformer.TransformationFailure:
+                pass
+            raise NotImplementedError("Cannot transform type reference")
+
+        if (iter_expr.is_a(lal.Identifier)
+                and iter_expr.p_referenced_decl.is_a(lal.BaseTypeDecl)):
+            return gen_when_type_reference(iter_expr.p_referenced_decl)
+        elif iter_expr.is_a(lal.DiscreteSubtypeIndication):
+            return gen_when_type_reference(iter_expr)
+        elif (iter_expr.is_a(lal.BinOp)
+                and iter_expr.f_op.is_a(lal.OpDoubleDot)):
+            return gen_when_range_exprs(iter_expr.f_left, iter_expr.f_right)
+
+        unimplemented(iter_expr)
+
     def gen_case_condition(expr, choices):
         """
         Example:
@@ -537,36 +635,26 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         def gen_single(choice):
             def gen_range(first_val, last_val, first_expr, last_expr):
-                return irt.FunCall(
+                first_lit = gen_lit(first_val, first_expr)
+                last_lit = gen_lit(last_val, last_expr)
+                return build_relational(
                     ops.AND,
-                    [
-                        irt.FunCall(
-                            ops.GE,
-                            [expr, gen_lit(first_val, first_expr)],
-                            type_hint=ctx.evaluator.bool
-                        ),
-                        irt.FunCall(
-                            ops.LE,
-                            [expr, gen_lit(last_val, last_expr)],
-                            type_hint=ctx.evaluator.bool
-                        )
-                    ],
-                    type_hint=ctx.evaluator.bool
+                    build_relational(ops.GE, expr, first_lit),
+                    build_relational(ops.LE, expr, last_lit)
                 )
 
             if (choice.is_a(lal.Identifier)
                     and choice.p_referenced_decl.is_a(lal.SubtypeDecl)):
                 try:
-                    subtype = typer.get(choice.p_referenced_decl)
-                    if subtype.is_a(types.IntRange):
+                    actual_type = typer.get(choice.p_referenced_decl)
+                    if actual_type.is_a(types.IntRange):
                         return gen_range(
-                            subtype.frm, subtype.to,
+                            actual_type.frm, actual_type.to,
                             None, None
                         )
                 except Transformer.TransformationFailure:
                     pass
-
-                raise NotImplementedError("Cannot transform subtype condition")
+                raise NotImplementedError("Cannot transform subtype reference")
             elif choice.is_a(lal.BinOp) and choice.f_op.is_a(lal.OpDoubleDot):
                 return gen_range(
                     choice.f_left.p_eval_as_int, choice.f_right.p_eval_as_int,
@@ -1687,7 +1775,8 @@ def gen_ir(ctx, subp, typer, subpdata):
                 return unimplemented_expr(expr)
             elif ref in substitutions:
                 return substitutions[ref]
-            elif ref.p_basic_decl.is_a(lal.ObjectDecl, lal.ParamSpec):
+            elif ref.p_basic_decl.is_a(lal.ObjectDecl, lal.ParamSpec,
+                                       lal.ForLoopVarDecl):
                 return [], get_var(expr, ref)
             else:
                 return transform_decl_ref(expr)
@@ -2154,7 +2243,54 @@ def gen_ir(ctx, subp, typer, subpdata):
             ), irt.AssumeStmt(not_cond), exit_label]
 
         elif stmt.is_a(lal.ForLoopStmt):
-            # todo
+            # For loops are transformed as such:
+            #
+            # Ada:
+            # ----------------
+            # for I in E loop
+            #   S;
+            # end loop;
+            #
+            # Basic:
+            # ----------------
+            # assume(I in E)
+            # loop:
+            #   S;
+            #
+            # Where "I in E" is transformed into the adequate expression. For
+            # example, when E is a range indication, "I in L .. R" would be
+            # "I >= L && I <= R".
+            #
+            # For now, only a few subsets of for loops are handled.
+            # todo: handle "for x in X'Range" where X is an array.
+            # todo: handle "for x of ..." pattern.
+
+            spec = stmt.f_spec
+            if spec.f_loop_type.is_a(lal.IterTypeIn):
+                loop_var = spec.f_var_decl.f_id
+                var_expr = irt.Identifier(
+                    irt.Variable(
+                        loop_var.f_name.text,
+                        index=next_var_idx(),
+                        orig_node=loop_var,
+                        mode=Mode.Local,
+                        type_hint=loop_var.p_expression_type
+                    ),
+                    type_hint=loop_var.p_expression_type
+                )
+                var_decls[loop_var] = var_expr.var
+                pre_stmts, cond = gen_for_condition(var_expr, spec.f_iter_expr)
+
+                exit_label = irt.LabelStmt(fresh_name('exit_for_loop'))
+
+                loop_stack.append((stmt, exit_label))
+                loop_stmts = transform_stmts(stmt.f_stmts)
+                loop_stack.pop()
+
+                return pre_stmts + [irt.AssumeStmt(cond), irt.LoopStmt(
+                    loop_stmts
+                ), exit_label]
+
             return []
 
         elif stmt.is_a(lal.Label):

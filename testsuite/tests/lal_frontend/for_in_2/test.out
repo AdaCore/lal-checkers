@@ -1,0 +1,7 @@
+Program:
+  S#1 = 0
+  assume(&&(>=(I#2, 0), <=(I#2, 10)))
+  loop:
+    S#1 = +(S#1, I#2)
+  exit_for_loop0:
+  end:

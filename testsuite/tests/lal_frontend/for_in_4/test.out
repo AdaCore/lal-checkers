@@ -1,0 +1,11 @@
+Program:
+  A#1 = 2
+  B#2 = 3
+  C#3 = 4
+  D#4 = 5
+  S#5 = 0
+  assume(&&(>=(I#6, +(A#1, B#2)), <=(I#6, +(C#3, D#4))))
+  loop:
+    S#5 = +(S#5, I#6)
+  exit_for_loop0:
+  end:
