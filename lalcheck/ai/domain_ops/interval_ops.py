@@ -233,9 +233,6 @@ def le(domain):
 
     :rtype: ((int, int), (int, int)) -> frozenset[str]
     """
-    do_lt = lt(domain)
-    do_eq = eq(domain)
-
     def do(x, y):
         """
         :param (int, int) x: A set of concrete integers, represented by
@@ -251,7 +248,14 @@ def le(domain):
 
         :rtype: frozenset[str]
         """
-        return boolean_ops.or_(do_lt(x, y), do_eq(x, y))
+        if domain.eq(x, domain.bottom) or domain.eq(y, domain.bottom):
+            return boolean_ops.none
+        elif x[1] <= y[0]:
+            return boolean_ops.true
+        elif x[0] > y[1]:
+            return boolean_ops.false
+        else:
+            return boolean_ops.both
 
     return do
 
