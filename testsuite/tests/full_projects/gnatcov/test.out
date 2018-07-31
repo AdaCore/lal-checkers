@@ -13,6 +13,7 @@
 1074:13: (potential) invalid field Operands
 1074:13: (potential) invalid field Operands
 108:10: (potential) assertion failure
+108:10: test always true
 1109:10: (potential) invalid field PC_Set
 1109:14: (potential) null dereference of 'Context'
 1109:28: (potential) null dereference of 'From_BB.Last_Element'
@@ -38,6 +39,7 @@
 1219:16: (potential) null dereference of 'O'
 1226:13: (potential) null dereference of 'Shdr'
 1226:22: (potential) null dereference of 'D_Occ'
+1227:30: test always true
 122:13: (potential) precondition failure
 122:7: (potential) assertion failure
 1237:10: (potential) null dereference of 'Shdr'
@@ -137,6 +139,7 @@
 1476:19: (potential) null dereference of 'Default_SCIs (CP_SCI.Kind)'
 147:36: (potential) null dereference of 'FI'
 147:7: (potential) precondition failure
+1485:13: test always true
 148:10: (potential) precondition failure
 148:16: (potential) assertion failure
 148:18: (potential) null dereference of 'Report'
@@ -407,8 +410,10 @@
 3379:49: (potential) null dereference of 'Sym'
 3381:28: (potential) null dereference of 'Sym'
 3391:20: (potential) invalid field Value
+345:10: test always true
 345:27: (potential) null dereference of 'Context.Exe_File'
 349:10: (potential) invalid field E
+349:18: test always true
 350:35: (potential) invalid field E
 352:41: (potential) invalid field E_Name
 3573:19: (potential) null dereference of 'Prev'
@@ -665,6 +670,7 @@
 887:34: (potential) invalid field String_List_Option
 910:19: (potential) null dereference of 'Parser'
 918:27: (potential) null dereference of 'Last_Insn'
+927:13: test always true
 927:19: (potential) null dereference of 'Last_Insn'
 931:19: (potential) invalid field Outcome_Taken
 93:23: (potential) null dereference of 'HW_Trigger_Arg'

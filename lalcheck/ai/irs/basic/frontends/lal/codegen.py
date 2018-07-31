@@ -432,9 +432,9 @@ def gen_ir(ctx, subp, typer, subpdata):
                 orig_node=expr
             )
 
-    def gen_split_stmt(cond, then_stmts, else_stmts, **data):
+    def gen_split_stmt(orig_cond, then_stmts, else_stmts, **data):
         """
-        :param lal.Expr cond: The condition of the if statement.
+        :param lal.Expr orig_cond: The condition of the if statement.
 
         :param iterable[irt.Stmt] then_stmts: The already transformed then
             statements.
@@ -448,7 +448,7 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         :rtype: list[irt.Stmt]
         """
-        cond_pre_stmts, cond = transform_expr(cond)
+        cond_pre_stmts, cond = transform_expr(orig_cond)
         not_cond = irt.FunCall(
             ops.NOT,
             [cond],
@@ -456,7 +456,9 @@ def gen_ir(ctx, subp, typer, subpdata):
         )
 
         assume_cond, assume_not_cond = (
-            irt.AssumeStmt(x) for x in [cond, not_cond]
+            irt.AssumeStmt(cond,
+                           purpose=purpose.PredeterminedCheck(orig_cond)),
+            irt.AssumeStmt(not_cond)
         )
 
         return cond_pre_stmts + [
@@ -2237,7 +2239,10 @@ def gen_ir(ctx, subp, typer, subpdata):
 
             return [irt.LoopStmt(
                 cond_pre_stmts +
-                [irt.AssumeStmt(cond)] +
+                [irt.AssumeStmt(
+                    cond,
+                    purpose=purpose.PredeterminedCheck(stmt.f_spec.f_expr)
+                )] +
                 loop_stmts,
                 orig_node=stmt
             ), irt.AssumeStmt(not_cond), exit_label]

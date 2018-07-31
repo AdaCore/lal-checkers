@@ -1,0 +1,38 @@
+{
+  "always": [
+    {
+      "traces": [
+        [
+          "assign0",
+          "assume0",
+          "assume1",
+          "assume2",
+          "read0",
+          "split_join0",
+          "start0"
+        ]
+      ]
+    }
+  ],
+  "le_t_eq_v": [
+    {
+      "traces": [
+        [
+          "assign0",
+          "assume0",
+          "assume2",
+          "read0",
+          "split_join0",
+          "start0"
+        ],
+        [
+          "assume1",
+          "assume2",
+          "read0",
+          "split_join0",
+          "start0"
+        ]
+      ]
+    }
+  ]
+}

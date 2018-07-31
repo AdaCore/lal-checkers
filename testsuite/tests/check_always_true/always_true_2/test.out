@@ -1,0 +1,30 @@
+{
+  "always": [
+    {
+      "traces": [
+        [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "read0",
+          "start0"
+        ]
+      ]
+    }
+  ],
+  "le_t_eq_v": [
+    {
+      "traces": [
+        [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "read0",
+          "start0"
+        ]
+      ]
+    }
+  ]
+}

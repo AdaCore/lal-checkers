@@ -68,6 +68,20 @@ class ContractCheck(Purpose):
         self.orig_call = orig_call
 
 
+class PredeterminedCheck(Purpose):
+    """
+    Attached to a node which that has a direct mapping to user code (see its
+    "condition" field), to indicate that this test is eligible for a
+    predetermination test. (e.g. condition of an if statement is always true).
+    """
+    def __init__(self, condition):
+        """
+        :param lal.AdaNode condition: The original condition that appears in
+            the source code.
+        """
+        self.condition = condition
+
+
 class SyntheticVariable(Purpose):
     """
     Attached to an identifier that was created synthetically. (For example,
