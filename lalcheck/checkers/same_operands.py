@@ -68,10 +68,41 @@ def find_same_operands(unit):
                            lal.OpPow, lal.OpConcat, lal.OpAndThen,
                            lal.OpOrElse, lal.OpAnd, lal.OpOr, lal.OpXor)
 
+    def is_float_type(decl):
+        """
+        Returns true if the given type declaration is the declaration of the
+        float type.
+
+        :param lal.TypeDecl decl: The type decl to check.
+        :rtype: bool
+        """
+        return decl.p_is_float_type
+
+    def is_simple_nan_check(binop):
+        """
+        Predicate that returns whether the binary operation is thought of
+        being a check that a float variable is NaN.
+
+        :param lal.BinOp binop: The binary operation to check.
+        :rtype: bool
+        """
+        if binop.f_op.is_a(lal.OpEq, lal.OpNeq):
+            lhs = binop.f_left
+            if lhs.is_a(lal.Name):  # right operand is the same.
+                try:
+                    lhs_type = lhs.p_expression_type
+                    if lhs_type is not None:
+                        return is_float_type(lhs_type)
+                except lal.PropertyError:
+                    pass
+
+        return False
+
     diags = []
     for binop in unit.root.findall(lal.BinOp):
         if interesting_oper(binop.f_op) and has_same_operands(binop):
-            diags.append(binop)
+            if not is_simple_nan_check(binop):
+                diags.append(binop)
 
     return Results(diags)
 
