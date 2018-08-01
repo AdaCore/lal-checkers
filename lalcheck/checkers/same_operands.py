@@ -65,7 +65,8 @@ def find_same_operands(unit):
         :rtype: bool
         """
         return not op.is_a(lal.OpMult, lal.OpPlus, lal.OpDoubleDot,
-                           lal.OpPow, lal.OpConcat)
+                           lal.OpPow, lal.OpConcat, lal.OpAndThen,
+                           lal.OpOrElse, lal.OpAnd, lal.OpOr, lal.OpXor)
 
     diags = []
     for binop in unit.root.findall(lal.BinOp):
