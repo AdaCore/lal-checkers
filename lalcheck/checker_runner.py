@@ -2,6 +2,7 @@ import argparse
 import importlib
 from multiprocessing import Pool, cpu_count
 from itertools import izip_longest
+from functools import partial
 import signal
 import traceback
 
@@ -50,6 +51,14 @@ args = None
 
 
 def lines_from_file(filename):
+    """
+    Returns the list of lines of the file.
+    If the file cannot be opened, an error is logged and an empty list is
+    returned.
+
+    :param str filename: The path to the file to read.
+    :rtype: list[str]
+    """
     try:
         with open(filename) as f:
             return [l.strip() for l in f.readlines()]
@@ -83,7 +92,64 @@ def set_logger():
     logger.set_logger(logger.Logger.with_std_output(args.log.split(';')))
 
 
+def get_working_checkers():
+    """
+    Retrieves the list of checkers to run from the information passed as
+    command-line arguments using the --checkers or --checkers-from options.
+
+    The return value is a pair of (Checker, list[str]) corresponding to the
+    actual checker objects to run together with a list of arguments specific
+    to each checker run.
+
+    Errors may be reported if the specified checkers are not found or do
+    not export the checker interface.
+
+    :rtype: list[(Checker, list[str])]
+    """
+    if args.checkers_from:
+        checker_commands = lines_from_file(args.checkers_from)
+    else:
+        checker_commands = [
+            c
+            for cs in args.checkers
+            for c in cs.split(';')
+        ]
+
+    split_commands = [command.split() for command in checker_commands]
+
+    checkers = []
+
+    for checker_args in split_commands:
+        # checker_args[0] is the python module to the checker. The rest are
+        # additional arguments that must be passed to that checker.
+        try:
+            checker_module = importlib.import_module(checker_args[0])
+        except ImportError:
+            logger.log('error', 'Failed to import checker module {}.'.format(
+                checker_args[0]
+            ))
+        else:
+            if not hasattr(checker_module, 'checker'):
+                logger.log('error', 'Checker {} does not export a "checker" '
+                                    'object.'.format(checker_module))
+            elif not issubclass(checker_module.checker, Checker):
+                logger.log('error',
+                           'Checker {} does not inherit the '
+                           '"lalcheck.checkers.support.checker.Checker" '
+                           'interface.'.format(checker_module))
+            else:
+                checkers.append((checker_module.checker, checker_args[1:]))
+
+    return checkers
+
+
 def get_working_files():
+    """
+    Retrieves the list of files to analyze from the information passed as
+    command-line arguments using the --files or --files-from options.
+
+    :rtype: list[str]
+    """
     if args.files_from:
         return lines_from_file(args.files_from)
     else:
@@ -94,7 +160,15 @@ def get_working_files():
         ]
 
 
-def get_requirements(files_to_check):
+def get_requirements(checkers, files_to_check):
+    """
+    Returns a list of requirements corresponding to the execution of the
+    specified checkers on the specified list of files.
+
+    :param list[(Checker, list[str])] checkers: The checkers to run.
+    :param list[str] files_to_check: The files to analyze.
+    :rtype: list[lalcheck.tools.scheduler.Requirement]
+    """
     project_file = args.P
     scenario_vars = dict([eq.split('=') for eq in args.X])
 
@@ -102,45 +176,27 @@ def get_requirements(files_to_check):
         logger.log('info', "warning: use of scenario vars without a "
                            "project file.")
 
-    if args.checkers_from:
-        checker_commands = lines_from_file(args.checkers_from)
-    else:
-        checker_commands = [
-            c
-            for cs in args.checkers
-            for c in cs.split(';')
-        ]
-
-    checker_args = [command.split() for command in checker_commands]
-
     requirements = []
-    for checker_arg in checker_args:
-        try:
-            checker_module = importlib.import_module(checker_arg[0])
-        except ImportError:
-            logger.log('error', 'Failed to import checker module {}.'.format(
-                checker_arg[0]
-            ))
-        else:
-            if not hasattr(checker_module, 'checker'):
-                logger.log('error', 'Checker {} does not export a "checker" '
-                                    'object.'.format(checker_module))
-            elif not issubclass(checker_module.checker, Checker):
-                logger.log('error', 'checker {} does not inherit the '
-                                    '"checkers.support.checker.Checker" '
-                                    'interface.'.format(checker_module))
-
-            requirements.append(checker_module.checker.create_requirement(
-                project_file=project_file,
-                scenario_vars=scenario_vars,
-                filenames=files_to_check,
-                args=checker_arg[1:]
-            ))
+    for checker, checker_args in checkers:
+        requirements.append(checker.create_requirement(
+            project_file=project_file,
+            scenario_vars=scenario_vars,
+            filenames=files_to_check,
+            args=checker_args
+        ))
 
     return requirements
 
 
 def get_schedules(requirements):
+    """
+    Given a list of requirements, creates a list of schedule such that every
+    requirement is fulfilled by each schedule.
+
+    :param list[lalcheck.tools.scheduler.Requirement] requirements: The
+        requirements to fulfill.
+    :rtype: list[lalcheck.tools.scheduler.Schedule]
+    """
     scheduler = Scheduler()
     return scheduler.schedule({
         'res_{}'.format(i): req
@@ -149,6 +205,14 @@ def get_schedules(requirements):
 
 
 def export_schedule(schedule, export_path):
+    """
+    Exports the given schedule as a dot graph. Each horizontally aligned
+    elements can be ran in parallel.
+
+    :param lalcheck.tools.scheduler.Schedule schedule: The schedule to export.
+    :param str export_path: The path to the dot file to write. The .dot
+        extension is appended here.
+    """
     nice_colors = [
         '#093145', '#107896', '#829356', '#3C6478', '#43ABC9', '#B5C689',
         '#BCA136', '#C2571A', '#9A2617', '#F26D21', '#C02F1D', '#F58B4C',
@@ -206,7 +270,7 @@ def export_schedule(schedule, export_path):
         )
         for var in varset
     ])
-    with open(export_path, 'w') as export_file:
+    with open("{}.dot".format(export_path), 'w') as export_file:
         export_file.write(dot)
 
 
@@ -232,15 +296,28 @@ def report_diag(report):
         )
 
 
-def do_partition(partition):
+def do_partition(checkers, partition):
+    """
+    Runs the checkers on a single partition of the whole set of files.
+    Returns a list of diagnostics.
+
+    :param list[(Checker, list[str])] checkers: The list of checkers to run
+        together with their specific arguments.
+    :param (int, list[str]) partition: The index of that partition and the list
+        of files that make up that partition.
+    :rtype: list[(DiagnosticPosition, str, str, str)]
+    """
     diags = []
+    index, files = partition
 
     try:
-        reqs = get_requirements(partition)
+        reqs = get_requirements(checkers, files)
         schedule = get_schedules(reqs)[0]
 
         if args.export_schedule is not None:
-            export_schedule(schedule, args.export_schedule)
+            export_schedule(
+                schedule, "{}{}".format(args.export_schedule, index)
+            )
 
         for checker_result in schedule.run().values():
             for program_result in checker_result:
@@ -256,6 +333,16 @@ def do_partition(partition):
 
 
 def do_all(diagnostic_action):
+    """
+    Main routine of the driver. Uses the user-provided arguments to run
+    checkers on a list of files. Takes care of parallelizing the process,
+    distributing the tasks, etc.
+
+    :param str diagnostic_action: Action to perform with the diagnostics that
+        are produced by the checkers. Can be one of:
+         - 'return': Return them as a list.
+         - 'log': Output them in the logger.
+    """
     args.j = cpu_count() if args.j <= 0 else args.j
     working_files = sort_files_by_line_count(get_working_files())
     ps = args.partition_size
@@ -307,6 +394,7 @@ def do_all(diagnostic_action):
         ]
 
     partitions = compute_partitions()
+    checkers = get_working_checkers()
 
     logger.log('info', 'Created {} partitions of {} files.'.format(
         len(partitions), ps
@@ -327,7 +415,11 @@ def do_all(diagnostic_action):
     # Restore the original handler of the parent process.
     signal.signal(signal.SIGINT, orig_handler)
 
-    all_diags = p.map_async(do_partition, partitions, chunksize=1)
+    all_diags = p.map_async(
+        partial(do_partition, checkers),
+        enumerate(partitions),
+        chunksize=1
+    )
 
     # Keyboard interrupts are ignored if we use wait() or get() without any
     # timeout argument. By using this loop, we mimic the behavior of an

@@ -140,10 +140,9 @@ class Checker(object):
         raise NotImplementedError
 
     @classmethod
-    def create_requirement(cls, *args):
+    def create_requirement(cls, *args, **kwargs):
         """
         Returns the requirement of this checker.
-        :param *object args: The arguments received from the command line.
         :rtype: lalcheck.tools.scheduler.Requirement
         """
         raise NotImplementedError
@@ -194,7 +193,7 @@ class AbstractSemanticsChecker(Checker):
         raise NotImplementedError
 
     @classmethod
-    def create_requirement(cls, *args):
+    def create_requirement(cls, *args, **kwargs):
         raise NotImplementedError
 
     @classmethod
@@ -235,7 +234,7 @@ class SyntacticChecker(Checker):
         raise NotImplementedError
 
     @classmethod
-    def create_requirement(cls, *args):
+    def create_requirement(cls, *args, **kwargs):
         raise NotImplementedError
 
     @classmethod
