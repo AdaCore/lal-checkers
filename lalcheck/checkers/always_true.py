@@ -7,6 +7,7 @@ from lalcheck.checkers.support.checker import (
     AbstractSemanticsChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AbstractSemantics
+from lalcheck.checkers.support.kinds import AlwaysTrue as KindAlwaysTrue
 
 from lalcheck.tools.scheduler import Task, Requirement
 
@@ -25,7 +26,7 @@ class Results(AbstractSemanticsChecker.Results):
         return (
             DiagnosticPosition.from_node(cond),
             "test always true",
-            TestsAlwaysTrueChecker.name(),
+            KindAlwaysTrue,
             cls.HIGH
         )
 
@@ -140,6 +141,10 @@ class TestsAlwaysTrueChecker(AbstractSemanticsChecker):
     @classmethod
     def description(cls):
         return "Finds conditions that are always satisfied"
+
+    @classmethod
+    def kinds(cls):
+        return [KindAlwaysTrue]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

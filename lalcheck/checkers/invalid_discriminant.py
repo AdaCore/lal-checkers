@@ -11,6 +11,7 @@ from lalcheck.checkers.support.checker import (
     AbstractSemanticsChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AbstractSemantics
+from lalcheck.checkers.support.kinds import InvalidDiscriminant
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
 
@@ -124,7 +125,7 @@ class Results(AbstractSemanticsChecker.Results):
                     purpose.field_name,
                     purpose.discr_name
                 ),
-                VariantChecker.name(),
+                InvalidDiscriminant,
                 cls.gravity(precise)
             )
 
@@ -230,6 +231,10 @@ class VariantChecker(AbstractSemanticsChecker):
     @classmethod
     def description(cls):
         return "Finds invalid field accesses of variant records"
+
+    @classmethod
+    def kinds(cls):
+        return [InvalidDiscriminant]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

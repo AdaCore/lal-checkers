@@ -54,6 +54,10 @@ class IRPrinterChecker(Checker):
         return "Prints the intermediate representation of subprograms."
 
     @classmethod
+    def kinds(cls):
+        return []
+
+    @classmethod
     def create_requirement(cls, project_file, scenario_vars, filenames, args):
         return PrintIR(
             create_best_provider(project_file, scenario_vars, filenames),

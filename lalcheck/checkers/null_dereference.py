@@ -11,6 +11,7 @@ from lalcheck.checkers.support.checker import (
     AbstractSemanticsChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AbstractSemantics
+from lalcheck.checkers.support.kinds import NullDereference
 from lalcheck.checkers.support.utils import format_text_for_output
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
@@ -116,7 +117,7 @@ class Results(AbstractSemanticsChecker.Results):
                 frmt.format(
                     format_text_for_output(derefed.data.orig_node.text)
                 ),
-                DerefChecker.name(),
+                NullDereference,
                 cls.gravity(precise)
             )
 
@@ -222,6 +223,10 @@ class DerefChecker(AbstractSemanticsChecker):
     @classmethod
     def description(cls):
         return "Finds null dereferences"
+
+    @classmethod
+    def kinds(cls):
+        return [NullDereference]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

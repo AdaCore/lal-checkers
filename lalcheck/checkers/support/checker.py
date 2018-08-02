@@ -102,7 +102,7 @@ class CheckerResults(object):
         mechanism.
 
         :param object diag: The diagnostic to report
-        :rtype: (DiagnosticPosition, str, str, str)
+        :rtype: (DiagnosticPosition, str, kinds.MessageKind, str)
         """
         return cls.diag_report(diag)
 
@@ -113,7 +113,7 @@ class CheckerResults(object):
         error flag and a gravity indication.
 
         :param object diag: The diagnostic.
-        :rtype: (DiagnosticPosition, str, str, str)
+        :rtype: (DiagnosticPosition, str, kinds.MessageKind, str)
         """
         raise NotImplementedError
 
@@ -136,6 +136,14 @@ class Checker(object):
         """
         Returns a short description of the checker.
         :rtype: str
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def kinds(cls):
+        """
+        Returns the list of message kinds that can be output by this checker.
+        :rtype: list[kinds.MessageKind]
         """
         raise NotImplementedError
 
@@ -193,6 +201,10 @@ class AbstractSemanticsChecker(Checker):
         raise NotImplementedError
 
     @classmethod
+    def kinds(cls):
+        raise NotImplementedError
+
+    @classmethod
     def create_requirement(cls, *args, **kwargs):
         raise NotImplementedError
 
@@ -231,6 +243,10 @@ class SyntacticChecker(Checker):
 
     @classmethod
     def description(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def kinds(cls):
         raise NotImplementedError
 
     @classmethod

@@ -13,6 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
+from lalcheck.checkers.support.kinds import DeadCode
 from lalcheck.checkers.support.utils import tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -28,7 +29,7 @@ class Results(SyntacticChecker.Results):
         return (
             DiagnosticPosition.from_node(diag[1]),
             'duplicate test with line {}'.format(fst_line),
-            SameTestChecker.name(),
+            DeadCode,
             cls.HIGH
         )
 
@@ -113,6 +114,10 @@ class SameTestChecker(SyntacticChecker):
     def description(cls):
         return ("Finds alternatives in if statements/expressions that contain "
                 "multiple times syntactically identical conditions.")
+
+    @classmethod
+    def kinds(cls):
+        return [DeadCode]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

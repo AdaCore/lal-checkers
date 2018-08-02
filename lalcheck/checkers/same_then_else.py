@@ -21,6 +21,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
+from lalcheck.checkers.support.kinds import DuplicateCode
 from lalcheck.checkers.support.utils import relevant_tokens, tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -36,7 +37,7 @@ class Results(SyntacticChecker.Results):
         return (
             DiagnosticPosition.from_node(diag[1]),
             'duplicate code with line {}'.format(fst_line),
-            SameThenElseChecker.name(),
+            DuplicateCode,
             cls.HIGH
         )
 
@@ -214,8 +215,12 @@ class SameThenElseChecker(SyntacticChecker):
 
     @classmethod
     def description(cls):
-        return ("Finds if statements/expressions in which multiple "
+        return ("Finds if/case statements/expressions in which multiple "
                 "alternatives contain a syntactically equivalent body.")
+
+    @classmethod
+    def kinds(cls):
+        return [DuplicateCode]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

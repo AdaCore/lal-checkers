@@ -11,6 +11,7 @@ from lalcheck.checkers.support.checker import (
     AbstractSemanticsChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AbstractSemantics
+from lalcheck.checkers.support.kinds import InvalidContract
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
 
@@ -111,7 +112,7 @@ class Results(AbstractSemanticsChecker.Results):
         return (
             DiagnosticPosition.from_node(purpose.orig_call),
             frmt.format(purpose.contract_name),
-            ContractChecker.name(),
+            InvalidContract,
             cls.gravity(precise)
         )
 
@@ -217,6 +218,10 @@ class ContractChecker(AbstractSemanticsChecker):
     @classmethod
     def description(cls):
         return "Finds violated pre/post-conditions and assertions"
+
+    @classmethod
+    def kinds(cls):
+        return [InvalidContract]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

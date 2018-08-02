@@ -3,6 +3,7 @@ import importlib
 from multiprocessing import Pool, cpu_count
 from itertools import izip_longest
 from functools import partial
+from collections import defaultdict
 import signal
 import traceback
 
@@ -45,6 +46,11 @@ parser.add_argument('--partition-size', default=10, type=int,
 parser.add_argument('-j', default=1, type=int,
                     help='The number of process to spawn in parallel, each'
                          'of which deals with a single partition at a time.')
+
+parser.add_argument('--list-categories', action='store_true',
+                    help='Prints a list of message kinds together with: the '
+                         'subset of checkers that can actually output this '
+                         'message kind; a description of this message kind')
 
 
 args = None
@@ -277,10 +283,11 @@ def export_schedule(schedule, export_path):
 def report_diag(report):
     """
     Given a diagnostic report, creates the final string to output to the user.
-    :param (DiagnosticPosition, str, str, str) report: The report to output.
+    :param (DiagnosticPosition, str, MessageKind, str) report: The report to
+        output.
     :rtype: str
     """
-    pos, msg, flag, _ = report
+    pos, msg, kind, _ = report
 
     if args.codepeer_output:
         return "{}:{}:{}: warning: {}:{}:{}:{}: {} [{}]".format(
@@ -288,12 +295,32 @@ def report_diag(report):
             pos.proc_name or "unknown", pos.proc_filename or "unknown",
             pos.proc_start[0] if pos.proc_start is not None else "unknown",
             pos.proc_start[1] if pos.proc_start is not None else "unknown",
-            msg, flag
+            msg, kind.name()
         )
     else:
         return "{}:{}:{} {}".format(
             pos.filename, pos.start[0], pos.start[1], msg
         )
+
+
+def list_categories(checkers):
+    """
+    :param list[(Checker, list[str])] checkers: The checkers for which
+        to output information about the kind of messages they can output.
+    """
+    kinds_map = defaultdict(list)
+
+    for checker, _ in checkers:
+        for kind in checker.kinds():
+            kinds_map[kind].append(checker)
+
+    print("[ lal-checkers message categories ]")
+    for kind, checkers in kinds_map.iteritems():
+        print("{} ({}) - {}".format(
+            kind.name(),
+            ", ".join(c.name() for c in checkers),
+            kind.description()
+        ))
 
 
 def do_partition(checkers, partition):
@@ -305,7 +332,7 @@ def do_partition(checkers, partition):
         together with their specific arguments.
     :param (int, list[str]) partition: The index of that partition and the list
         of files that make up that partition.
-    :rtype: list[(DiagnosticPosition, str, str, str)]
+    :rtype: list[(DiagnosticPosition, str, MessageKind, str)]
     """
     diags = []
     index, files = partition
@@ -395,6 +422,9 @@ def do_all(diagnostic_action):
 
     partitions = compute_partitions()
     checkers = get_working_checkers()
+
+    if args.list_categories:
+        list_categories(checkers)
 
     logger.log('info', 'Created {} partitions of {} files.'.format(
         len(partitions), ps

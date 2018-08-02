@@ -7,6 +7,7 @@ from lalcheck.checkers.support.checker import (
     AbstractSemanticsChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AbstractSemantics
+from lalcheck.checkers.support.kinds import DeadCode as KindDeadCode
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
 
@@ -95,7 +96,7 @@ class Results(AbstractSemanticsChecker.Results):
             return (
                 DiagnosticPosition.from_node(block.start_node()),
                 message,
-                DeadCodeChecker.name(),
+                KindDeadCode,
                 cls.HIGH
             )
 
@@ -213,6 +214,10 @@ class DeadCodeChecker(AbstractSemanticsChecker):
     @classmethod
     def description(cls):
         return "Finds dead code"
+
+    @classmethod
+    def kinds(cls):
+        return [KindDeadCode]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

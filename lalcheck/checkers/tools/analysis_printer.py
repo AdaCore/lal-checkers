@@ -142,6 +142,10 @@ class AnalysisPrinterChecker(AbstractSemanticsChecker):
                 "the values that all variables in the subprogram can take.")
 
     @classmethod
+    def kinds(cls):
+        return []
+
+    @classmethod
     def create_requirement(cls, project_file, scenario_vars, filenames, args):
         arg_values = cls.arg_parser().parse_args(args)
 

@@ -13,6 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
+from lalcheck.checkers.support.kinds import SameOperands as KindSameOperands
 from lalcheck.checkers.support.utils import relevant_tokens
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -29,7 +30,7 @@ class Results(SyntacticChecker.Results):
             'left and right operands of "{}" are identical'.format(
                 diag.f_op.text
             ),
-            SameOperandsChecker.name(),
+            KindSameOperands,
             cls.HIGH
         )
 
@@ -150,6 +151,10 @@ class SameOperandsChecker(SyntacticChecker):
     def description(cls):
         return ("Finds logical or arithmetic expressions in which the two "
                 "operands are syntactically identical.")
+
+    @classmethod
+    def kinds(cls):
+        return [KindSameOperands]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

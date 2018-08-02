@@ -13,6 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
+from lalcheck.checkers.support.kinds import SameOperands
 from lalcheck.checkers.support.utils import same_as_parent, tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -28,7 +29,7 @@ class Results(SyntacticChecker.Results):
         return (
             DiagnosticPosition.from_node(diag[1]),
             'duplicate operand with line {}'.format(fst_line),
-            SameLogicChecker.name(),
+            SameOperands,
             cls.HIGH
         )
 
@@ -87,7 +88,7 @@ def find_same_logic(unit):
     def interesting_oper(op):
         """
         Check that op is a relational operator, which are the operators that
-        interrest us in the context of this script.
+        interest us in the context of this script.
 
         :rtype: bool
         """
@@ -147,6 +148,10 @@ class SameLogicChecker(SyntacticChecker):
     def description(cls):
         return ("Finds chains of boolean operators which contain syntactically"
                 " identical expressions.")
+
+    @classmethod
+    def kinds(cls):
+        return [SameOperands]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):
