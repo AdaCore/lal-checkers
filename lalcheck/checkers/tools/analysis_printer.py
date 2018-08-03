@@ -147,7 +147,7 @@ class AnalysisPrinterChecker(AbstractSemanticsChecker):
 
     @classmethod
     def create_requirement(cls, project_file, scenario_vars, filenames, args):
-        arg_values = cls.arg_parser().parse_args(args)
+        arg_values = cls.get_arg_parser().parse_args(args)
 
         return PrintAnalysis(
             create_best_provider(project_file, scenario_vars, filenames),
@@ -162,7 +162,7 @@ class AnalysisPrinterChecker(AbstractSemanticsChecker):
         )
 
     @classmethod
-    def arg_parser(cls):
+    def get_arg_parser(cls):
         parser = AbstractSemanticsChecker.get_arg_parser()
         parser.add_argument('--file-matcher', type=str, default='.*',
                             help="Regex used to filter files for which to "
