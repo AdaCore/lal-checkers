@@ -18,13 +18,17 @@ from __future__ import (absolute_import, division, print_function)
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
 from lalcheck.checkers.support.checker import (
-    SyntacticChecker, DiagnosticPosition
+    SyntacticChecker, DiagnosticPosition, create_best_provider
 )
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.kinds import DuplicateCode
 from lalcheck.checkers.support.utils import relevant_tokens, tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
+
+import argparse
+from functools import partial
+from collections import namedtuple
 
 
 class Results(SyntacticChecker.Results):
@@ -42,7 +46,24 @@ class Results(SyntacticChecker.Results):
         )
 
 
-def find_duplicate_branches(unit):
+CheckerConfig = namedtuple('CheckerConfig', (
+    'size_threshold',
+    'newline_factor',
+    'min_duplicates',
+    'do_ifs',
+    'do_cases'
+))
+
+
+def find_duplicate_branches(config, unit):
+    """
+    Find duplicate branches in if/case statements/expressions.
+
+    :param CheckerConfig config: The configuration of the checker.
+    :param lal.AnalysisUnit unit: The analysis unit on which to perform the
+        check.
+    :rtype: Results
+    """
     def same_tokens(left, right):
         """
         Returns whether left and right contain tokens that are structurally
@@ -75,17 +96,21 @@ def find_duplicate_branches(unit):
         def num_tokens(node):
             return len(relevant_tokens(node))
 
+        def block_size(node):
+            newlines = node.text.count('\n')
+            return num_tokens(node) * (1 + config.newline_factor * newlines)
+
         def select_if_block(block, test):
             # Only report blocks of length greater than 10 tokens, and if the
             # length of the test leading to the block is no greater than the
             # length of the block. Otherwise, not sharing the blocks might be
             # better coding style.
             len_test = num_tokens(test)
-            return num_tokens(block) > max(10, len_test)
+            return block_size(block) > max(config.size_threshold, len_test)
 
         def select_case_block(block):
             # Only report blocks of length greater than 10 tokens
-            return num_tokens(block) > 10
+            return block_size(block) > config.size_threshold
 
         def last_block_before_else(node):
             """
@@ -103,7 +128,7 @@ def find_duplicate_branches(unit):
                 else:
                     return node.f_alternatives[-1].f_then_expr
 
-        if isinstance(node, lal.IfStmt):
+        if isinstance(node, lal.IfStmt) and config.do_ifs:
             blocks = []
             if select_if_block(node.f_then_stmts, node.f_cond_expr):
                 blocks += [node.f_then_stmts]
@@ -118,7 +143,7 @@ def find_duplicate_branches(unit):
                                      last_block_before_else(node))):
                 blocks += [node.f_else_stmts]
 
-        elif isinstance(node, lal.IfExpr):
+        elif isinstance(node, lal.IfExpr) and config.do_ifs:
             blocks = []
             if select_if_block(node.f_then_expr, node.f_cond_expr):
                 blocks += [node.f_then_expr]
@@ -133,16 +158,16 @@ def find_duplicate_branches(unit):
                                      last_block_before_else(node))):
                 blocks += [node.f_else_expr]
 
-        elif isinstance(node, lal.CaseStmt):
+        elif isinstance(node, lal.CaseStmt) and config.do_cases:
             blocks = [sub.f_stmts for sub in node.f_alternatives
                       if select_case_block(sub.f_stmts)]
 
-        elif isinstance(node, lal.CaseExpr):
+        elif isinstance(node, lal.CaseExpr) and config.do_cases:
             blocks = [sub.f_expr for sub in node.f_cases
                       if select_case_block(sub.f_expr)]
 
         else:
-            assert False
+            blocks = []
 
         return blocks
 
@@ -154,15 +179,19 @@ def find_duplicate_branches(unit):
 
         :rtype: lal.Expr|None
         """
-        blocks = {}
+        all_blocks = list_blocks(node)
+        tokens_to_block = {}
         duplicates = []
-        for block in list_blocks(node):
+        for block in all_blocks:
             tokens = tokens_info(block)
-            if tokens in blocks:
-                duplicates.append((blocks[tokens], block))
+            if tokens in tokens_to_block:
+                duplicates.append((tokens_to_block[tokens], block))
             else:
-                blocks[tokens] = block
-        return duplicates
+                tokens_to_block[tokens] = block
+
+        min_duplicates = (len(all_blocks) if config.min_duplicates == -1
+                          else config.min_duplicates)
+        return duplicates if len(duplicates) >= min_duplicates else []
 
     diags = []
     for b in unit.root.findall((lal.IfStmt, lal.IfExpr, lal.CaseStmt,
@@ -175,17 +204,18 @@ def find_duplicate_branches(unit):
 
 
 @Requirement.as_requirement
-def DuplicateBranches(provider_config, files):
+def DuplicateBranches(provider_config, files, checker_config):
     return [DuplicateBranchesFinder(
-        provider_config, files
+        provider_config, files, checker_config
     )]
 
 
 @dataclass
 class DuplicateBranchesFinder(Task):
-    def __init__(self, provider_config, files):
+    def __init__(self, provider_config, files, checker_config):
         self.provider_config = provider_config
         self.files = files
+        self.checker_config = checker_config
 
     def requires(self):
         return {
@@ -197,14 +227,16 @@ class DuplicateBranchesFinder(Task):
         return {
             'res': DuplicateBranches(
                 self.provider_config,
-                self.files
+                self.files,
+                self.checker_config
             )
         }
 
     def run(self, **kwargs):
         units = kwargs.values()
+        checker_func = partial(find_duplicate_branches, self.checker_config)
         return {
-            'res': map_nonable(find_duplicate_branches, units)
+            'res': map_nonable(checker_func, units)
         }
 
 
@@ -223,8 +255,49 @@ class DuplicateBranchesChecker(SyntacticChecker):
         return [DuplicateCode]
 
     @classmethod
-    def create_requirement(cls, *args, **kwargs):
-        return cls.requirement_creator(DuplicateBranches)(*args, **kwargs)
+    def create_requirement(cls, project_file, scenario_vars, filenames, args):
+        arg_values = cls.get_arg_parser().parse_args(args)
+
+        return DuplicateBranches(
+            create_best_provider(project_file, scenario_vars, filenames),
+            tuple(filenames),
+            CheckerConfig(
+                size_threshold=arg_values.size_threshold,
+                newline_factor=arg_values.newline_factor,
+                min_duplicates=arg_values.min_duplicates,
+                do_ifs=not arg_values.only_cases,
+                do_cases=not arg_values.only_ifs
+            )
+        )
+
+    @classmethod
+    def get_arg_parser(cls):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--size-threshold', type=int, default=0,
+                            help="The minimal amount of code that must be in "
+                                 "common between two branches. By default, "
+                                 "it is only based on the number of tokens, "
+                                 "but newlines can be taken into account "
+                                 "using --newline-factor.")
+        parser.add_argument('--newline-factor', type=float, default=0,
+                            help="To be used with --tokens-threshold. Adjusts "
+                                 "the weight of duplicate code that spans "
+                                 "multiple lines. The token threshold is "
+                                 "compared against \"Tokens * "
+                                 "(1 + Newline-Factor * Newlines)\"")
+
+        parser.add_argument('--min-duplicates', type=int, default=-1,
+                            help="Only report when at least 'min-duplicates' "
+                                 "branches in the if/case statement are "
+                                 "considered duplicates. Use -1 to report "
+                                 "only when ALL branches are duplicates.")
+
+        group = parser.add_mutually_exclusive_group(required=False)
+        group.add_argument('--only-ifs', action='store_true',
+                           help="Only consider if statements/expressions.")
+        group.add_argument('--only-cases', action='store_true',
+                           help="Only consider case statements/expressions.")
+        return parser
 
 
 checker = DuplicateBranchesChecker
