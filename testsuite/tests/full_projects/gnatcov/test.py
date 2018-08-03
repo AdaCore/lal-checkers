@@ -20,7 +20,7 @@ checkers = [
     'lalcheck.checkers.same_logic',
     'lalcheck.checkers.same_operands',
     'lalcheck.checkers.same_test',
-    'lalcheck.checkers.same_then_else'
+    'lalcheck.checkers.duplicate_branches'
 ]
 
 

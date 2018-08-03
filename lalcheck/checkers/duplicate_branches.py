@@ -42,7 +42,7 @@ class Results(SyntacticChecker.Results):
         )
 
 
-def find_same_then_elses(unit):
+def find_duplicate_branches(unit):
     def same_tokens(left, right):
         """
         Returns whether left and right contain tokens that are structurally
@@ -175,14 +175,14 @@ def find_same_then_elses(unit):
 
 
 @Requirement.as_requirement
-def SameThenElses(provider_config, files):
-    return [SameThenElseFinder(
+def DuplicateBranches(provider_config, files):
+    return [DuplicateBranchesFinder(
         provider_config, files
     )]
 
 
 @dataclass
-class SameThenElseFinder(Task):
+class DuplicateBranchesFinder(Task):
     def __init__(self, provider_config, files):
         self.provider_config = provider_config
         self.files = files
@@ -195,7 +195,7 @@ class SameThenElseFinder(Task):
 
     def provides(self):
         return {
-            'res': SameThenElses(
+            'res': DuplicateBranches(
                 self.provider_config,
                 self.files
             )
@@ -204,14 +204,14 @@ class SameThenElseFinder(Task):
     def run(self, **kwargs):
         units = kwargs.values()
         return {
-            'res': map_nonable(find_same_then_elses, units)
+            'res': map_nonable(find_duplicate_branches, units)
         }
 
 
-class SameThenElseChecker(SyntacticChecker):
+class DuplicateBranchesChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "same then else"
+        return "duplicate branches"
 
     @classmethod
     def description(cls):
@@ -224,10 +224,10 @@ class SameThenElseChecker(SyntacticChecker):
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):
-        return cls.requirement_creator(SameThenElses)(*args, **kwargs)
+        return cls.requirement_creator(DuplicateBranches)(*args, **kwargs)
 
 
-checker = SameThenElseChecker
+checker = DuplicateBranchesChecker
 
 
 if __name__ == "__main__":
