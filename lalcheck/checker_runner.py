@@ -53,9 +53,6 @@ parser.add_argument('--list-categories', action='store_true',
                          'message kind; a description of this message kind')
 
 
-args = None
-
-
 def lines_from_file(filename):
     """
     Returns the list of lines of the file.
@@ -94,11 +91,11 @@ def sort_files_by_line_count(filenames):
     return [f for f, l in file_lines]
 
 
-def set_logger():
+def set_logger(args):
     logger.set_logger(logger.Logger.with_std_output(args.log.split(';')))
 
 
-def get_working_checkers():
+def get_working_checkers(args):
     """
     Retrieves the list of checkers to run from the information passed as
     command-line arguments using the --checkers or --checkers-from options.
@@ -110,8 +107,10 @@ def get_working_checkers():
     Errors may be reported if the specified checkers are not found or do
     not export the checker interface.
 
+    :param argparse.Namespace args: The command-line arguments.
     :rtype: list[(Checker, list[str])]
     """
+
     if args.checkers_from:
         checker_commands = lines_from_file(args.checkers_from)
     else:
@@ -149,11 +148,12 @@ def get_working_checkers():
     return checkers
 
 
-def get_working_files():
+def get_working_files(args):
     """
     Retrieves the list of files to analyze from the information passed as
     command-line arguments using the --files or --files-from options.
 
+    :param argparse.Namespace args: The command-line arguments.
     :rtype: list[str]
     """
     if args.files_from:
@@ -166,11 +166,12 @@ def get_working_files():
         ]
 
 
-def get_requirements(checkers, files_to_check):
+def get_requirements(args, checkers, files_to_check):
     """
     Returns a list of requirements corresponding to the execution of the
     specified checkers on the specified list of files.
 
+    :param argparse.Namespace args: The command-line arguments.
     :param list[(Checker, list[str])] checkers: The checkers to run.
     :param list[str] files_to_check: The files to analyze.
     :rtype: list[lalcheck.tools.scheduler.Requirement]
@@ -280,9 +281,11 @@ def export_schedule(schedule, export_path):
         export_file.write(dot)
 
 
-def report_diag(report):
+def report_diag(args, report):
     """
     Given a diagnostic report, creates the final string to output to the user.
+
+    :param argparse.Namespace args: The command-line arguments.
     :param (DiagnosticPosition, str, MessageKind, str) report: The report to
         output.
     :rtype: str
@@ -323,11 +326,12 @@ def list_categories(checkers):
         ))
 
 
-def do_partition(checkers, partition):
+def do_partition(args, checkers, partition):
     """
     Runs the checkers on a single partition of the whole set of files.
     Returns a list of diagnostics.
 
+    :param argparse.Namespace args: The command-line arguments.
     :param list[(Checker, list[str])] checkers: The list of checkers to run
         together with their specific arguments.
     :param (int, list[str]) partition: The index of that partition and the list
@@ -338,7 +342,7 @@ def do_partition(checkers, partition):
     index, files = partition
 
     try:
-        reqs = get_requirements(checkers, files)
+        reqs = get_requirements(args, checkers, files)
         schedule = get_schedules(reqs)[0]
 
         if args.export_schedule is not None:
@@ -359,19 +363,20 @@ def do_partition(checkers, partition):
         return diags
 
 
-def do_all(diagnostic_action):
+def do_all(args, diagnostic_action):
     """
     Main routine of the driver. Uses the user-provided arguments to run
     checkers on a list of files. Takes care of parallelizing the process,
     distributing the tasks, etc.
 
+    :param argparse.Namespace args: The command-line arguments.
     :param str diagnostic_action: Action to perform with the diagnostics that
         are produced by the checkers. Can be one of:
          - 'return': Return them as a list.
          - 'log': Output them in the logger.
     """
     args.j = cpu_count() if args.j <= 0 else args.j
-    working_files = sort_files_by_line_count(get_working_files())
+    working_files = sort_files_by_line_count(get_working_files(args))
     ps = args.partition_size
     ps = len(working_files) / args.j if ps == 0 else ps
     ps = max(ps, 1)
@@ -421,7 +426,7 @@ def do_all(diagnostic_action):
         ]
 
     partitions = compute_partitions()
-    checkers = get_working_checkers()
+    checkers = get_working_checkers(args)
 
     if args.list_categories:
         list_categories(checkers)
@@ -446,7 +451,7 @@ def do_all(diagnostic_action):
     signal.signal(signal.SIGINT, orig_handler)
 
     all_diags = p.map_async(
-        partial(do_partition, checkers),
+        partial(do_partition, args, checkers),
         enumerate(partitions),
         chunksize=1
     )
@@ -465,7 +470,7 @@ def do_all(diagnostic_action):
     for diags in all_diags.get():
         for diag in diags:
             if diagnostic_action == 'log':
-                logger.log('diag-{}'.format(diag[3]), report_diag(diag))
+                logger.log('diag-{}'.format(diag[3]), report_diag(args, diag))
             elif diagnostic_action == 'return':
                 reports.append(diag)
 
@@ -482,12 +487,9 @@ def run(argv, diagnostic_action='log'):
     :param str diagnostic_action: Either 'log' or 'return'.
     :rtype: list[str] | None
     """
-    global args
     args = parser.parse_args(argv)
-
-    set_logger()
-
-    return do_all(diagnostic_action)
+    set_logger(args)
+    return do_all(args, diagnostic_action)
 
 
 if __name__ == "__main__":
