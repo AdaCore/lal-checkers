@@ -338,6 +338,8 @@ def do_partition(args, checkers, partition):
         of files that make up that partition.
     :rtype: list[(DiagnosticPosition, str, MessageKind, str)]
     """
+    set_logger(args)
+
     diags = []
     index, files = partition
 
