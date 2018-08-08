@@ -1,7 +1,6 @@
 from collections import defaultdict
 from xml.sax.saxutils import escape
 
-import lalcheck.ai.irs.basic.tree as irt
 from lalcheck.ai.constants import lits
 from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import ExistCheck
@@ -12,6 +11,9 @@ from lalcheck.checkers.support.checker import (
 )
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.checkers.support.kinds import InvalidDiscriminant
+from lalcheck.checkers.support.utils import (
+    collect_assumes_with_purpose, eval_expr_at
+)
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
 
@@ -141,35 +143,20 @@ def check_variants(prog, model, merge_pred_builder):
 
 
 def find_invalid_accesses(analysis):
-    # Retrieve nodes in the CFG that correspond to program statements.
-    nodes_with_ast = (
-        (node, node.data.node)
-        for node in analysis.cfg.nodes
-        if 'node' in node.data
-    )
-
-    # Collect those that are assume statements and that have a 'purpose' tag
-    # which indicates that this assume statement was added to check
-    # existence of a field.
-    exist_checks = (
-        (node, ast_node.expr, ast_node.data.purpose)
-        for node, ast_node in nodes_with_ast
-        if isinstance(ast_node, irt.AssumeStmt)
-        if ExistCheck.is_purpose_of(ast_node)
-    )
+    # Collect assume statements that have an ExistCheck purpose.
+    exist_checks = collect_assumes_with_purpose(analysis.cfg, ExistCheck)
 
     # Use the semantic analysis to evaluate at those program points the
-    # corresponding expression being dereferenced.
-    exist_check_values = (
-        (frozenset(trace) | {node}, purpose, value)
-        for node, expr, purpose in exist_checks
-        for anc in analysis.cfg.ancestors(node)
-        for trace, value in analysis.eval_at(anc, expr).iteritems()
-    )
+    # conditions for the accessed field to exist.
+    exist_check_values = [
+        (trace, purpose, value)
+        for node, check_expr, purpose in exist_checks
+        for trace, value in eval_expr_at(analysis, node, check_expr)
+    ]
 
     # Finally, keep those that might be null.
-    # Store the program trace, the dereferenced expression, and whether
-    # the expression "might be null" or "is always null".
+    # Store the program trace, the purpose, and whether
+    # the field "might not exist" or "never exists".
     infeasibles = [
         (trace, purpose, len(value) == 1)
         for trace, purpose, value in exist_check_values

@@ -1,4 +1,56 @@
 import libadalang as lal
+from lalcheck.ai.irs.basic.tree import AssumeStmt
+
+
+def collect_assumes_with_purpose(cfg, purpose_type):
+    """
+    Given the control-flow graph of the program, finds the program points
+    which have an assume statement whose purpose is the given type.
+
+    :param Digraph cfg: The control-flow graph of the program.
+    :param type purpose_type: The purpose to collect.
+    :rtype: (lalcheck.tools.digraph.Digraph.Node,
+             lalcheck.ai.irs.basic.tree.Expr,
+             purpose_type)
+    """
+    # Retrieve nodes in the CFG that correspond to program statements.
+    nodes_with_ast = (
+        (node, node.data.node)
+        for node in cfg.nodes
+        if 'node' in node.data
+    )
+
+    # Collect those that are assume statements and that have a purpose tag
+    # of the desired kind.
+    return [
+        (node, assume.expr, assume.data.purpose)
+        for node, assume in nodes_with_ast
+        if isinstance(assume, AssumeStmt)
+        if purpose_type.is_purpose_of(assume)
+    ]
+
+
+def eval_expr_at(analysis, node, expr):
+    """
+    Evaluates the given expression "expr" at the given program point "node".
+    Returns a list of results, where a result is a pair holding:
+     1. The program trace leading to that node from which evaluating the
+        expression will return the result in the second element.
+     2. The result of the evaluation (element of a domain).
+
+    :param abstract_semantics.AnalysisResults analysis: The results of the
+        abstract semantics analysis.
+    :param lalcheck.tools.digraph.Digraph.Node node: The program point at which
+        to evaluate the given expression.
+    :param lalcheck.ai.irs.basic.tree.Expr expr: The expression to evaluate.
+    :rtype: list[(frozenset[Digraph.Node], object)]
+    """
+    return [
+        (frozenset(trace) | {node}, value)
+        for anc in analysis.cfg.ancestors(node)
+        for trace, value in analysis.eval_at(anc, expr).iteritems()
+        if value is not None
+    ]
 
 
 def same_as_parent(binop):

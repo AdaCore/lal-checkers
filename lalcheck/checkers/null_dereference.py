@@ -1,7 +1,6 @@
 from collections import defaultdict
 from xml.sax.saxutils import escape
 
-import lalcheck.ai.irs.basic.tree as irt
 from lalcheck.ai.constants import lits
 from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import DerefCheck
@@ -12,7 +11,9 @@ from lalcheck.checkers.support.checker import (
 )
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.checkers.support.kinds import NullDereference
-from lalcheck.checkers.support.utils import format_text_for_output
+from lalcheck.checkers.support.utils import (
+    format_text_for_output, collect_assumes_with_purpose, eval_expr_at
+)
 from lalcheck.tools import dot_printer
 from lalcheck.tools.digraph import Digraph
 
@@ -133,38 +134,23 @@ def check_derefs(prog, model, merge_pred_builder):
 
 
 def find_null_derefs(analysis):
-    # Retrieve nodes in the CFG that correspond to program statements.
-    nodes_with_ast = (
-        (node, node.data.node)
-        for node in analysis.cfg.nodes
-        if 'node' in node.data
-    )
-
-    # Collect those that are assume statements and that have a 'purpose' tag
-    # which indicates that this assume statement was added to check
-    # dereferences.
-    deref_checks = (
-        (node, ast_node.expr, ast_node.data.purpose.expr)
-        for node, ast_node in nodes_with_ast
-        if isinstance(ast_node, irt.AssumeStmt)
-        if DerefCheck.is_purpose_of(ast_node)
-    )
+    # Collect assume statements that have a DerefCheck purpose.
+    deref_checks = collect_assumes_with_purpose(analysis.cfg, DerefCheck)
 
     # Use the semantic analysis to evaluate at those program points the
     # corresponding expression being dereferenced.
-    derefed_values = (
-        (frozenset(trace) | {node}, derefed, value)
-        for node, check_expr, derefed in deref_checks
-        for anc in analysis.cfg.ancestors(node)
-        for trace, value in analysis.eval_at(anc, check_expr).iteritems()
-    )
+    derefed_values = [
+        (trace, purpose, value)
+        for node, check_expr, purpose in deref_checks
+        for trace, value in eval_expr_at(analysis, node, check_expr)
+    ]
 
     # Finally, keep those that might be null.
     # Store the program trace, the dereferenced expression, and whether
     # the expression "might be null" or "is always null".
     null_derefs = [
-        (trace, derefed, len(value) == 1)
-        for trace, derefed, value in derefed_values
+        (trace, purpose.expr, len(value) == 1)
+        for trace, purpose, value in derefed_values
         if lits.FALSE in value
     ]
 

@@ -1,4 +1,3 @@
-import lalcheck.ai.irs.basic.tree as irt
 from lalcheck.ai.constants import lits
 from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import PredeterminedCheck
@@ -8,6 +7,9 @@ from lalcheck.checkers.support.checker import (
 )
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.checkers.support.kinds import AlwaysTrue as KindAlwaysTrue
+from lalcheck.checkers.support.utils import (
+    collect_assumes_with_purpose, eval_expr_at
+)
 
 from lalcheck.tools.scheduler import Task, Requirement
 
@@ -42,33 +44,17 @@ def check_tests_always_true(prog, model, merge_pred_builder):
 
 
 def find_tests_always_true(analysis):
-    # Retrieve nodes in the CFG that correspond to program statements.
-    nodes_with_ast = (
-        (node, node.data.node)
-        for node in analysis.cfg.nodes
-        if 'node' in node.data
-    )
-
-    # Collect those that are assume statements and that have a 'purpose' tag
-    # which indicates that this assume statement was added to check
-    # predetermined conditions.
-    predetermined_checks = (
-        (node, ast_node.expr, ast_node.data.purpose.condition)
-        for node, ast_node in nodes_with_ast
-        if isinstance(ast_node, irt.AssumeStmt)
-        if PredeterminedCheck.is_purpose_of(ast_node)
+    # Collect assume statements that have a PredeterminedCheck purpose.
+    predetermined_checks = collect_assumes_with_purpose(
+        analysis.cfg,
+        PredeterminedCheck
     )
 
     # Use the semantic analysis to evaluate at those program points the
     # corresponding conditions being tested.
     if_conds_values = [
-        (condition, [
-            (frozenset(trace) | {node}, value)
-            for anc in analysis.cfg.ancestors(node)
-            for trace, value in analysis.eval_at(anc, check_expr).iteritems()
-            if value is not None
-        ])
-        for node, check_expr, condition in predetermined_checks
+        (purpose.condition, eval_expr_at(analysis, node, check_expr))
+        for node, check_expr, purpose in predetermined_checks
     ]
 
     # Finally, keep those that are TRUE and only TRUE.
