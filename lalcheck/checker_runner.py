@@ -6,6 +6,7 @@ from functools import partial
 from collections import defaultdict
 import signal
 import traceback
+import sys
 
 from lalcheck.checkers.support.checker import Checker, CheckerResults
 from lalcheck.tools.digraph import Digraph
@@ -24,6 +25,11 @@ files_group = parser.add_mutually_exclusive_group(required=True)
 files_group.add_argument('--files-from', metavar='FILE_PATH', type=str)
 files_group.add_argument('--files', metavar='FILE_PATHS', action='append',
                          type=str, help='File paths separated by semicolons.')
+files_group.add_argument('--list-categories', action='store_true',
+                         help='Prints a list of message kinds together with: '
+                              'the subset of checkers that can actually '
+                              'output this message kind; a description of '
+                              'this message kind')
 
 checkers_group = parser.add_mutually_exclusive_group(required=True)
 checkers_group.add_argument('--checkers-from', metavar='FILE_PATH', type=str)
@@ -46,11 +52,6 @@ parser.add_argument('--partition-size', default=10, type=int,
 parser.add_argument('-j', default=1, type=int,
                     help='The number of process to spawn in parallel, each'
                          'of which deals with a single partition at a time.')
-
-parser.add_argument('--list-categories', action='store_true',
-                    help='Prints a list of message kinds together with: the '
-                         'subset of checkers that can actually output this '
-                         'message kind; a description of this message kind')
 
 
 def lines_from_file(filename):
@@ -158,12 +159,14 @@ def get_working_files(args):
     """
     if args.files_from:
         return lines_from_file(args.files_from)
-    else:
+    elif args.files:
         return [
             f
             for fs in args.files
             for f in fs.split(';')
         ]
+    else:
+        return []
 
 
 def get_requirements(args, checkers, files_to_check):
@@ -495,5 +498,4 @@ def run(argv, diagnostic_action='log'):
 
 
 if __name__ == "__main__":
-    import sys
     run(sys.argv[1:])
