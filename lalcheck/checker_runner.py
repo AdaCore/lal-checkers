@@ -54,6 +54,9 @@ parser.add_argument('-j', default=1, type=int,
                          'of which deals with a single partition at a time.')
 
 
+BUILT_IN_CHECKERS_FORMAT = 'lalcheck.checkers.{}'
+
+
 def lines_from_file(filename):
     """
     Returns the list of lines of the file.
@@ -96,6 +99,24 @@ def set_logger(args):
     logger.set_logger(logger.Logger.with_std_output(args.log.split(';')))
 
 
+def import_checker(module_path):
+    """
+    Tries to import the checker defined in the given module path. If the
+    exact path does not resolve to a python module, a second attempt is done
+    assuming that the given module path is actually the name of one of the
+    built-in checkers.
+
+    :param str module_path: path to the python module containing the checker.
+    :raise ImportError: when the module could not be imported.
+    """
+    try:
+        return importlib.import_module(module_path)
+    except ImportError:
+        return importlib.import_module(
+            BUILT_IN_CHECKERS_FORMAT.format(module_path)
+        )
+
+
 def get_working_checkers(args):
     """
     Retrieves the list of checkers to run from the information passed as
@@ -129,7 +150,7 @@ def get_working_checkers(args):
         # checker_args[0] is the python module to the checker. The rest are
         # additional arguments that must be passed to that checker.
         try:
-            checker_module = importlib.import_module(checker_args[0])
+            checker_module = import_checker(checker_args[0])
         except ImportError:
             logger.log('error', 'Failed to import checker module {}.'.format(
                 checker_args[0]
