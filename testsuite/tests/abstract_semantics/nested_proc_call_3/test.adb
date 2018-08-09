@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    procedure F;
 
    x : Integer := 0;

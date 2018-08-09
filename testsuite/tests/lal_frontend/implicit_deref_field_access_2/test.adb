@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type Type_D is record
       e: Integer;
    end record;

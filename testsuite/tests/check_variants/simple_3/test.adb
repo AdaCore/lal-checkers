@@ -19,7 +19,7 @@ package body Example3 is
       end case;
    end record;
 
-   procedure Print_Error_Message(Err : Server_Error) is
+   procedure Test(Err : Server_Error) is
    begin
       case Err.Error_Code is
          when 500 =>

@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    z : constant := 10 + 20;
    x : Integer;
 begin

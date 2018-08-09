@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type My_Variant(b : Boolean) is record
       case b is
          when True =>

@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type My_State is (Init, Do_Stuff_1, Do_Stuff_2, Finalize);
    state : My_State := Init;
    new_state : My_State;

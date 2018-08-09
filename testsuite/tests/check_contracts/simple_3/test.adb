@@ -1,4 +1,4 @@
-procedure Example1 is
+procedure Test is
    function Divide(X, Y : Integer) return Integer
      with Pre  => Y /= 0,
           Post => (X > 0 and Divide'Result <= X)

@@ -1,4 +1,4 @@
-function Sign(X : Integer) 
+function Sign(X : Integer)
    return Integer is
 begin
    if X >= 1 then

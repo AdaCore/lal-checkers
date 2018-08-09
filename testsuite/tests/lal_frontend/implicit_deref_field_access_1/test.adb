@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type Point is record
       x : Integer;
       y : Integer;

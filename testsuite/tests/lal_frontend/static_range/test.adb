@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    z : constant := 10 + 20;
    type My_Range is range 10 .. z;
    x : My_Range;

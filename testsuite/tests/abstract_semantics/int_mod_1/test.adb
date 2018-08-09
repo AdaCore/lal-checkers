@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type My_Int is mod 256;
 
    X : My_Int := 12;

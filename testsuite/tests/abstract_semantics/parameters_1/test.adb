@@ -1,4 +1,4 @@
-procedure Swap(a: in out Integer; b: in out Integer) is
+procedure Test(a: in out Integer; b: in out Integer) is
    tmp : Integer;
 begin
    tmp := a;

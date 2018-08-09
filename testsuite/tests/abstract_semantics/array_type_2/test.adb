@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type My_Range is range 0 .. 20;
    type My_Array is array (My_Range) of Integer;
    x : My_Array;

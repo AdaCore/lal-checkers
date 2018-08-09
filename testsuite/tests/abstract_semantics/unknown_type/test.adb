@@ -1,6 +1,6 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
-procedure Ex1 is
+procedure Test is
    x : Integer;
 begin
    x := 2;

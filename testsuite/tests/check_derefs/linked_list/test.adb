@@ -8,7 +8,7 @@ package body Null_Deref is
       Value : Integer;
    end record;
 
-   function Foo(My_List : Integer_Linked_List_Access) return Integer is
+   function Get_42_Or_First(My_List : Integer_Linked_List_Access) return Integer is
       List_Cursor : Integer_Linked_List_Access := My_List;
       Found : Boolean := False;
    begin

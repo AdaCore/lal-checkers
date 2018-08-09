@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    from : Integer := 0;
    to : Integer := 100;
    step: Integer := 2;

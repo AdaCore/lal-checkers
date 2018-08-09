@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    X : String := "abcd";
 begin
    null;

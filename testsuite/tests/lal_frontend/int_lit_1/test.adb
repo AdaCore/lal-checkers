@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    X : Integer := 3#211_102#e+3;
 begin
    null;

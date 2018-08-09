@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type Integer_Access is access all Integer;
    x : Integer_Access;
    y : Integer := 0;

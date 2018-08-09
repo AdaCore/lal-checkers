@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type Kind is (BinExpr, UnExpr, Lit);
 
    expr_kind : Kind;

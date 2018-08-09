@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    subtype My_Index is Integer range 1 .. 5;
    type My_String is array (My_Index) of Character;
    X : My_String := "hello";

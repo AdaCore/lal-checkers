@@ -1,4 +1,4 @@
-procedure A is
+procedure Test is
    C_A : String := "abc";
    Char : Character;
 

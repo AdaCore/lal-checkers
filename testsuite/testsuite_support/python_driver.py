@@ -50,6 +50,11 @@ class PythonDriver(TestDriver):
     The typer to use for tests based on the abstract_semantics analysis.
     """
 
+    test_subprogram = "Test"
+    """
+    The default name of the subprograms to test.
+    """
+
     @property
     def python_interpreter(self):
         """
@@ -97,6 +102,9 @@ class PythonDriver(TestDriver):
                 ),
                 '--typer={}'.format(
                     self.test_env.get('typer', self.typer)
+                ),
+                '--test_subprogram={}'.format(
+                    self.test_env.get('test_subprogram', self.test_subprogram)
                 )
             ]
         else:

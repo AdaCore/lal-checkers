@@ -1,4 +1,4 @@
-procedure Access_Test is
+procedure Test is
    type Point is record
       x : Integer;
       y : Integer;

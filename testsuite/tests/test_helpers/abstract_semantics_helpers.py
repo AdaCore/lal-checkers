@@ -6,6 +6,7 @@ import lalcheck.ai.irs.basic.frontends.lal as lal2basic
 from lalcheck.ai.interpretations import default_type_interpreter
 from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.tools import Models
+from test_helper import find_test_program
 
 default_merge_predicates = {
     'le_t_eq_v': (
@@ -26,7 +27,8 @@ typers = {
 def do_analysis(checker,
                 merge_predicates='always',
                 call_strategy_name='unknown',
-                typer='default'):
+                typer='default',
+                test_subprogram='Test'):
 
     progs = ctx.extract_programs_from_file("test.adb")
 
@@ -49,6 +51,10 @@ def do_analysis(checker,
 
     res = {}
     for pred_name, pred in merge_predicates.iteritems():
-        res[pred_name] = checker(progs[0], model, pred)
+        res[pred_name] = checker(
+            find_test_program(progs, test_subprogram),
+            model,
+            pred
+        )
 
     return res, model

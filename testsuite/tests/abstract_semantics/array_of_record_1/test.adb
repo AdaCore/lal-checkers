@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type My_Range is range 0 .. 3;
    type My_Record is record
       x : Integer;

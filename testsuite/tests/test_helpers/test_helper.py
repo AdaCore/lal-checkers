@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser(description="Generic Test Helper")
 parser.add_argument('--output_dir', required=False)
 parser.add_argument('--call_strategy', required=False, default='unknown')
 parser.add_argument('--typer', required=False, default='default')
+parser.add_argument('--test_subprogram', required=False, default='Test')
 
 
 def run(fun):
@@ -33,3 +34,11 @@ def ensure_dir(path):
     """
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def find_test_program(progs, name):
+    return next(
+        prog
+        for prog in progs
+        if prog.data.fun_id.f_subp_spec.f_subp_name.text == name
+    )

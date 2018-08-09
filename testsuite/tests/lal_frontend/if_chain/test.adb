@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    x : Integer;
    C1, C2, C3 : Boolean;
 begin

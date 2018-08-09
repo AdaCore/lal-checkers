@@ -1,3 +1,4 @@
 driver: python
 helper: test_null_derefs.py
 call_strategy: unknown
+test_subprogram: Get_42_Or_First

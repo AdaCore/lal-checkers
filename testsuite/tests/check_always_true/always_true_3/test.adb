@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type Unsigned is mod 10
    y : Unsigned := 0;
 begin

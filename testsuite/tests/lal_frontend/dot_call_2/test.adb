@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    package O is
       type A is tagged record
         E : Integer;

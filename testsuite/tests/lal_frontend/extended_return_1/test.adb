@@ -1,4 +1,4 @@
-function Ex1 return Integer is
+function Test return Integer is
 begin
    return X : Integer do
       X := 2;

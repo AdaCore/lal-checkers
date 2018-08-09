@@ -45,7 +45,8 @@ def run(args):
         abstract_semantics.compute_semantics,
         abstract_semantics_helpers.default_merge_predicates,
         args.call_strategy,
-        args.typer
+        args.typer,
+        args.test_subprogram
     )
 
     if args.output_dir is not None:

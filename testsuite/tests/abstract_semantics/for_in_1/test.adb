@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    S : Integer := 0;
 begin
    for I in 0 .. 10 loop

@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    subtype My_Range is Integer range 0 .. 10;
    S : Integer := 0;
 begin

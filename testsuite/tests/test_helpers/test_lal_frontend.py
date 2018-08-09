@@ -16,7 +16,7 @@ def run(args):
     progs = ctx.extract_programs_from_file("test.adb")
 
     output = PrettyPrinter.pretty_print(
-        progs[0],
+        test_helper.find_test_program(progs, args.test_subprogram),
         PrettyPrinter.Opts(print_ids=True)
     )
 

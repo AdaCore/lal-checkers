@@ -1,4 +1,4 @@
-procedure Ex1 is
+procedure Test is
    type My_Int is range -100000 .. 100000;
    subtype My_Nat is My_Int range 0 .. My_Int'Last;
    x : My_Int;

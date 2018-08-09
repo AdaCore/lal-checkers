@@ -1,4 +1,4 @@
-procedure A is
+procedure Test is
    procedure P (X : out Integer) with Import;
 
    X : Integer;
