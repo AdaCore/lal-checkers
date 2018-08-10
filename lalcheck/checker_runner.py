@@ -122,15 +122,16 @@ def get_working_checkers(args):
     Retrieves the list of checkers to run from the information passed as
     command-line arguments using the --checkers or --checkers-from options.
 
-    The return value is a pair of (Checker, list[str]) corresponding to the
-    actual checker objects to run together with a list of arguments specific
-    to each checker run.
+    The return value is a list of pairs of (Checker, list[str]) corresponding
+    to the actual checker objects to run together with a list of arguments
+    specific to each checker run. Additionnally, a boolean is returned to
+    indicate whether all checkers were successfully loaded or not.
 
     Errors may be reported if the specified checkers are not found or do
     not export the checker interface.
 
     :param argparse.Namespace args: The command-line arguments.
-    :rtype: list[(Checker, list[str])]
+    :rtype: list[(Checker, list[str])], bool
     """
 
     if args.checkers_from:
@@ -167,7 +168,7 @@ def get_working_checkers(args):
             else:
                 checkers.append((checker_module.checker, checker_args[1:]))
 
-    return checkers
+    return checkers, len(checkers) == len(checker_commands)
 
 
 def get_working_files(args):
@@ -452,7 +453,11 @@ def do_all(args, diagnostic_action):
         ]
 
     partitions = compute_partitions()
-    checkers = get_working_checkers(args)
+    checkers, checker_loading_success = get_working_checkers(args)
+
+    if not checker_loading_success:
+        logger.log('error', 'Some checkers could not be loaded, exiting.')
+        sys.exit(1)
 
     if args.list_categories:
         list_categories(checkers)
