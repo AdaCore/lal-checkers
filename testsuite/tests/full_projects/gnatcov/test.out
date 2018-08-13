@@ -10,6 +10,7 @@
 1067:10: unreachable code (until line 1068)
 106:15: (potential) precondition failure
 106:7: (potential) assertion failure
+1070:22: (potential) null dereference of 'D_Occ'
 1074:13: (potential) invalid field Operands
 1074:13: (potential) invalid field Operands
 108:10: (potential) assertion failure
@@ -34,7 +35,6 @@
 119:28: (potential) null dereference of 'File.Ehdr'
 1206:20: (potential) null dereference of 'O'
 120:21: (potential) null dereference of 'U.File_Name'
-1210:19: unreachable code (until line 1211)
 1213:20: (potential) null dereference of 'Parser'
 1219:16: (potential) null dereference of 'O'
 1226:13: (potential) null dereference of 'Shdr'
@@ -139,14 +139,17 @@
 1476:19: (potential) null dereference of 'Default_SCIs (CP_SCI.Kind)'
 147:36: (potential) null dereference of 'FI'
 147:7: (potential) precondition failure
-1485:13: test always true
 148:10: (potential) precondition failure
 148:16: (potential) assertion failure
 148:18: (potential) null dereference of 'Report'
 148:56: (potential) null dereference of 'Info'
 149:16: (potential) assertion failure
 149:18: (potential) null dereference of 'Parser'
+1512:16: (potential) invalid field Lines
+1512:16: (potential) null dereference of 'Ctx.Subprg'
 1516:10: (potential) invalid field Basic_Block_Has_Code
+1518:16: (potential) invalid field Lines
+1518:16: (potential) null dereference of 'Ctx.Subprg'
 151:15: (potential) null dereference of 'Stream.S'
 153:7: (potential) assertion failure
 1544:30: (potential) invalid field Basic_Block_Has_Code
@@ -199,9 +202,11 @@
 1823:27: (potential) null dereference of 'Exe'
 1824:16: (potential) invalid field Section_Name
 1824:16: (potential) null dereference of 'Section.Section_Name'
+1839:25: (potential) assertion failure
 183:14: (potential) null dereference of 'Prg'
 183:23: (potential) null dereference of 'Opts'
 183:25: (potential) invalid field Lines
+1842:25: (potential) assertion failure
 185:48: (potential) invalid field Stats
 1907:18: (potential) null dereference of 'Output.File'
 1921:18: (potential) null dereference of 'Output.File'
@@ -549,6 +554,7 @@
 525:20: (potential) null dereference of 'Key_To_Name (Key (Cur))'
 534:26: (potential) null dereference of 'Insn'
 540:20: (potential) null dereference of 'Get (Element (Cur))'
+544:13: (potential) assertion failure
 550:19: (potential) null dereference of 'Insn'
 555:22: (potential) null dereference of 'Context'
 557:10: (potential) assertion failure

@@ -531,11 +531,11 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         def gen_when_range_lit(lhs_val, rhs_val):
             """
-            Generate the expression for when the two range bounds are int
+            Generate the expression for when the two range bounds are known
             literals.
 
-            :param int lhs_val: The integer for the lower bound.
-            :param int rhs_val: The integer for the higher bound.
+            :param object lhs_val: The literal value for the lower bound.
+            :param object rhs_val: The literal value the higher bound.
             :rtype: (list[irt.Stmt], irt.Expr)
             """
             return [], build_range_condition(
@@ -573,9 +573,17 @@ def gen_ir(ctx, subp, typer, subpdata):
                     return gen_when_range_lit(
                         actual_type.frm, actual_type.to
                     )
+                elif actual_type.is_a(types.Enum):
+                    return gen_when_range_lit(
+                        actual_type.lits[0], actual_type.lits[-1]
+                    )
             except Transformer.TransformationFailure:
                 pass
             raise NotImplementedError("Cannot transform type reference")
+
+        if (iter_expr.is_a(lal.AttributeRef)
+                and iter_expr.f_attribute.text.lower() == 'range'):
+            iter_expr = iter_expr.f_prefix
 
         if (iter_expr.is_a(lal.Identifier)
                 and iter_expr.p_referenced_decl.is_a(lal.BaseTypeDecl)):
