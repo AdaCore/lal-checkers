@@ -15,7 +15,7 @@ checkers = [
     'lalcheck.checkers.dead_code',
     'lalcheck.checkers.null_dereference',
     'lalcheck.checkers.invalid_discriminant',
-    'lalcheck.checkers.always_true',
+    'lalcheck.checkers.predetermined_test',
     'lalcheck.checkers.bad_unequal',
     'lalcheck.checkers.same_logic',
     'lalcheck.checkers.same_operands',

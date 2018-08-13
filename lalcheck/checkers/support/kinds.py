@@ -53,14 +53,14 @@ class InvalidContract(MessageKind):
                 "assertion) might be violated")
 
 
-class AlwaysTrue(MessageKind):
+class PredeterminedExpression(MessageKind):
     @classmethod
     def name(cls):
-        return "always true"
+        return "predetermined expression"
 
     @classmethod
     def description(cls):
-        return "boolean expression is always true"
+        return "expression takes a known constant value"
 
 
 class DeadCode(MessageKind):

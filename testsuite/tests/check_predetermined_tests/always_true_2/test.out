@@ -1,12 +1,14 @@
 {
   "always": [
     {
+      "kind": true,
       "traces": [
         [
           "assign0",
           "assign1",
           "assume0",
-          "loop_start0",
+          "assume1",
+          "read0",
           "start0"
         ]
       ]
@@ -14,12 +16,14 @@
   ],
   "le_t_eq_v": [
     {
+      "kind": true,
       "traces": [
         [
           "assign0",
           "assign1",
           "assume0",
-          "loop_start0",
+          "assume1",
+          "read0",
           "start0"
         ]
       ]

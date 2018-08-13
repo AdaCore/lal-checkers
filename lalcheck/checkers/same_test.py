@@ -13,7 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
-from lalcheck.checkers.support.kinds import DeadCode
+from lalcheck.checkers.support.kinds import PredeterminedExpression
 from lalcheck.checkers.support.utils import tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -29,7 +29,7 @@ class Results(SyntacticChecker.Results):
         return (
             DiagnosticPosition.from_node(diag[1]),
             'duplicate test with line {}'.format(fst_line),
-            DeadCode,
+            PredeterminedExpression,
             cls.HIGH
         )
 
@@ -117,7 +117,7 @@ class SameTestChecker(SyntacticChecker):
 
     @classmethod
     def kinds(cls):
-        return [DeadCode]
+        return [PredeterminedExpression]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

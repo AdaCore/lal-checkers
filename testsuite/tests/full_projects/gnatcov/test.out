@@ -7,6 +7,7 @@
 103:30: left and right operands of "-" are identical
 1049:16: (potential) invalid field Unique_Name
 1060:13: (potential) invalid field Unique_Name
+1066:10: test always false
 1067:10: unreachable code (until line 1068)
 106:15: (potential) precondition failure
 106:7: (potential) assertion failure
@@ -161,6 +162,7 @@
 1590:44: (potential) null dereference of 'BB'
 1593:22: (potential) null dereference of 'BB.Last_Element'
 159:21: (potential) invalid field Stats
+1602:16: test always false
 160:13: (potential) null dereference of 'File.Ehdr'
 1617:19: (potential) assertion failure
 1637:19: (potential) assertion failure
@@ -308,6 +310,9 @@
 2644:7: (potential) assertion failure
 264:20: (potential) invalid field Sloc
 264:29: (potential) invalid field Sloc
+2660:13: test always false
+2660:13: test always false
+2660:13: test always false
 2660:14: (potential) null dereference of 'Shdr'
 2664:13: (potential) assertion failure
 2665:13: unreachable code (until line 2676)
@@ -319,6 +324,7 @@
 27:7: (potential) assertion failure
 2800:16: (potential) invalid field Decision_BDD
 2800:16: (potential) invalid field Decision_BDD
+280:17: test always false
 281:38: (potential) null dereference of 'M1'
 2828:21: (potential) invalid field Subprogram_DIE_CU
 282:38: (potential) null dereference of 'M2'
@@ -398,6 +404,7 @@
 323:22: (potential) null dereference of 'Parser'
 3243:52: (potential) invalid field Section_Sec_Idx
 3243:52: (potential) null dereference of 'Section'
+3267:10: test always false
 3268:10: unreachable code (until line 3271)
 326:14: (potential) null dereference of 'Get_Shdr (File, Elf_Half (Index))'
 327:19: (potential) invalid field Symbol_Name
@@ -492,6 +499,9 @@
 424:50: (potential) null dereference of 'BB.Called_Sym'
 424:53: (potential) null dereference of 'Info.Full_Name'
 424:69: (potential) null dereference of 'Exec'
+4279:13: test always false
+4279:13: test always false
+4279:13: test always false
 4279:14: (potential) null dereference of 'Shdr'
 428:26: (potential) null dereference of 'Root_Project'
 428:7: (potential) precondition failure
@@ -536,6 +546,7 @@
 485:18: (potential) invalid field Lines
 485:18: (potential) null dereference of 'FI'
 4874:10: (potential) assertion failure
+487:13: test always false
 487:16: (potential) null dereference of 'Traces'
 48:26: (potential) precondition failure
 48:34: (potential) invalid field Lines
@@ -640,6 +651,7 @@
 767:10: (potential) assertion failure
 772:13: (potential) assertion failure
 775:28: (potential) null dereference of 'Parser'
+779:10: test always false
 780:10: unreachable code
 783:10: (potential) null dereference of 'Symtab_Shdr'
 783:7: (potential) null dereference of 'Context'

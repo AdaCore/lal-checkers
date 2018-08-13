@@ -7,7 +7,7 @@ import os
 
 import abstract_semantics_helpers
 import test_helper
-from lalcheck.checkers.always_true import check_tests_always_true
+from lalcheck.checkers.predetermined_test import check_predetermined_tests
 
 
 def format_analysis_results(results):
@@ -17,9 +17,10 @@ def format_analysis_results(results):
                 'traces': sorted([
                     sorted([n.name for n in trace])
                     for trace in traces
-                ], key=lambda t: "".join(t))
+                ], key=lambda t: "".join(t)),
+                'kind': always_true
             }
-            for traces, _ in analysis.diagnostics
+            for traces, _, always_true in analysis.diagnostics
         ]
         for pred_name, analysis in results.iteritems()
     }, sort_keys=True, indent=2)
@@ -28,7 +29,7 @@ def format_analysis_results(results):
 @test_helper.run
 def run(args):
     results, _ = abstract_semantics_helpers.do_analysis(
-        check_tests_always_true,
+        check_predetermined_tests,
         abstract_semantics_helpers.default_merge_predicates,
         args.call_strategy,
         args.typer,
