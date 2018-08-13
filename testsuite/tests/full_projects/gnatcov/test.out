@@ -414,8 +414,8 @@
 345:27: (potential) null dereference of 'Context.Exe_File'
 349:10: (potential) invalid field E
 349:18: test always true
-350:35: (potential) invalid field E
-352:41: (potential) invalid field E_Name
+352:10: unreachable code
+352:41: invalid field E_Name
 3573:19: (potential) null dereference of 'Prev'
 3573:32: (potential) null dereference of 'Sym'
 357:21: (potential) null dereference of 'Exe'
@@ -453,7 +453,6 @@
 3972:19: (potential) null dereference of 'Sec'
 39:14: (potential) null dereference of 'L'
 39:22: (potential) null dereference of 'R'
-39:50: (potential) invalid field Value
 402:54: (potential) precondition failure
 402:64: (potential) null dereference of 'FI'
 404:47: (potential) null dereference of 'Info'

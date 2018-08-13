@@ -7,7 +7,7 @@
           "start0"
         ],
         "values": {
-          "x": "(frozenset(['False', 'True']), (-2147483648, 2147483647), frozenset(['False', 'True']))"
+          "x": "({False, True}, [-2147483648, 2147483647], {False, True})"
         }
       }
     ],
@@ -19,7 +19,7 @@
           "start0"
         ],
         "values": {
-          "x": "(frozenset(['False']), (-2147483648, 2147483647), frozenset(['True']))"
+          "x": "({False}, [-2147483648, 2147483647], {True})"
         }
       }
     ],
@@ -29,10 +29,24 @@
           "assign0",
           "assign1",
           "assign2",
+          "assume0",
           "start0"
         ],
         "values": {
-          "x": "(frozenset(['False']), (-2147483648, 2147483647), frozenset(['False']))"
+          "x": "({False}, [-2147483648, 2147483647], {False})"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "x": "({False}, [-2147483648, 2147483647], {True})"
         }
       }
     ],
@@ -42,7 +56,7 @@
           "start0"
         ],
         "values": {
-          "x": "(frozenset(['False', 'True']), (-2147483648, 2147483647), frozenset(['False', 'True']))"
+          "x": "({False, True}, [-2147483648, 2147483647], {False, True})"
         }
       }
     ]
@@ -55,7 +69,7 @@
           "start0"
         ],
         "values": {
-          "x": "(frozenset(['False', 'True']), (-2147483648, 2147483647), frozenset(['False', 'True']))"
+          "x": "({False, True}, [-2147483648, 2147483647], {False, True})"
         }
       }
     ],
@@ -67,7 +81,7 @@
           "start0"
         ],
         "values": {
-          "x": "(frozenset(['False']), (-2147483648, 2147483647), frozenset(['True']))"
+          "x": "({False}, [-2147483648, 2147483647], {True})"
         }
       }
     ],
@@ -77,10 +91,24 @@
           "assign0",
           "assign1",
           "assign2",
+          "assume0",
           "start0"
         ],
         "values": {
-          "x": "(frozenset(['False']), (-2147483648, 2147483647), frozenset(['False']))"
+          "x": "({False}, [-2147483648, 2147483647], {False})"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "x": "({False}, [-2147483648, 2147483647], {True})"
         }
       }
     ],
@@ -90,7 +118,7 @@
           "start0"
         ],
         "values": {
-          "x": "(frozenset(['False', 'True']), (-2147483648, 2147483647), frozenset(['False', 'True']))"
+          "x": "({False, True}, [-2147483648, 2147483647], {False, True})"
         }
       }
     ]

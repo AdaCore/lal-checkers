@@ -6,6 +6,7 @@ these middle-end types that are supported straightaway by lalcheck, i.e. that
 already have a default interpretation (see interpretations.py).
 """
 from utils import Transformer
+from constants import lits
 
 
 Typer = Transformer
@@ -35,13 +36,6 @@ class Type(object):
         return iter(())
 
 
-class Boolean(Type):
-    """
-    Represents the default Boolean type.
-    """
-    pass
-
-
 class IntRange(Type):
     """
     Represents an integer range.
@@ -63,7 +57,18 @@ class Enum(Type):
     Represents an enum type.
     """
     def __init__(self, lits):
+        """
+        :param list[object] lits: The (ordered) list of literals of the enums.
+        """
         self.lits = lits
+
+
+class Boolean(Enum):
+    """
+    Represents the default Boolean type.
+    """
+    def __init__(self):
+        super(Boolean, self).__init__([lits.FALSE, lits.TRUE])
 
 
 class Pointer(Type):

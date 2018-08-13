@@ -1,3 +1,2 @@
 driver: python
 helper: test_abstract_semantics.py
-expect_failure: Waiting for enum literals to be supported in case constructs.

@@ -1,0 +1,46 @@
+{
+  "always": [
+    {
+      "precise": false,
+      "trace": [
+        "assume0",
+        "read0",
+        "read1",
+        "start0"
+      ]
+    },
+    {
+      "precise": true,
+      "trace": [
+        "assume0",
+        "assume2",
+        "assume3",
+        "read0",
+        "read1",
+        "start0"
+      ]
+    }
+  ],
+  "le_t_eq_v": [
+    {
+      "precise": false,
+      "trace": [
+        "assume0",
+        "read0",
+        "read1",
+        "start0"
+      ]
+    },
+    {
+      "precise": true,
+      "trace": [
+        "assume0",
+        "assume2",
+        "assume3",
+        "read0", 
+        "read1",
+        "start0"
+      ]
+    }
+  ]
+}
