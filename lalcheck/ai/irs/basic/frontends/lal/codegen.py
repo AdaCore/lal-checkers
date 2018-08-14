@@ -927,6 +927,37 @@ def gen_ir(ctx, subp, typer, subpdata):
             orig_node=orig_node
         )]
 
+    def gen_dereference_dest(prefix, prefix_type, dest, dest_type, expr):
+        """
+        Generates the actual destination for a dereference expression.
+        Example:
+
+        E.g. x.all := 2 becomes $stack = Updated($stack, x, 2)
+
+        :param lal.Expr prefix: The expression to dereference ("x" in the
+            example).
+        :param lal.TypeDecl prefix_type: The type of the expression to
+            dereference (an access type).
+        :param lal.Expr dest: The dereference expression ("x.all" in the
+            example).
+        :param lal.TypeDecl dest_type: The type of the dereferencing expression
+            (the type of the accessed elements).
+        :param irt.Expr expr: The expression on the RHS.
+        :rtype: list[irt.Stmt], (irt.Identifier, irt.Expr)
+        """
+        prefix_pre_stmts, prefix_expr = transform_expr(prefix)
+
+        return prefix_pre_stmts, (stack, irt.FunCall(
+            ops.UPDATED,
+            [stack, prefix_expr, expr],
+            type_hint=stack.data.type_hint,
+            orig_node=dest,
+            param_types=_deref_assign_param_types(
+                prefix_type,
+                dest_type
+            )
+        ))
+
     def gen_actual_dest(dest, expr):
         """
         Examples:
@@ -944,6 +975,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         :param irt.Expr expr: The expression to assign (rhs).
         :rtype: list[irt.Stmt], (irt.Identifier, irt.Expr)
         """
+
         if dest.is_a(lal.Identifier, lal.DefiningName):
             ref = dest.p_xref if dest.is_a(lal.Identifier) else dest
 
@@ -969,22 +1001,42 @@ def gen_ir(ctx, subp, typer, subpdata):
                 ), expr)
 
         elif dest.is_a(lal.DottedName) and is_record_field(dest.f_suffix):
-            field_info = get_field_info(dest.f_suffix)
-            updated_index = field_info.index
-            prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
+            implicit_deref = dest.f_prefix.p_expression_type.p_is_access_type()
+            if implicit_deref:
+                prefix_type = (dest.f_prefix.p_expression_type
+                               .f_type_def.f_subtype_indication
+                               .p_designated_type_decl_from(dest))
+                prefix_pre_stmts, prefix_expr = transform_dereference(
+                    dest.f_prefix, prefix_type, dest.f_prefix
+                )
+            else:
+                prefix_type = dest.f_prefix.p_expression_type
+                prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
 
             exist_stmts = gen_field_existence_condition(
                 prefix_expr,
                 dest.f_suffix
             )
 
-            pre_stmts, ret = gen_actual_dest(dest.f_prefix, irt.FunCall(
+            field_info = get_field_info(dest.f_suffix)
+            updated_index = field_info.index
+
+            updated_expr = irt.FunCall(
                 ops.UpdatedName(updated_index),
                 [prefix_expr, expr],
-                type_hint=dest.f_prefix.p_expression_type,
+                type_hint=prefix_type,
                 orig_node=dest.f_prefix,
                 param_types=_field_assign_param_types(field_info)
-            ))
+            )
+
+            if implicit_deref:
+                pre_stmts, ret = gen_dereference_dest(
+                    dest.f_prefix, dest.f_prefix.p_expression_type,
+                    dest.f_prefix, prefix_type, updated_expr
+                )
+            else:
+                pre_stmts, ret = gen_actual_dest(dest.f_prefix, updated_expr)
+
             return prefix_pre_stmts + exist_stmts + pre_stmts, ret
 
         elif dest.is_a(lal.CallExpr):
@@ -1029,18 +1081,10 @@ def gen_ir(ctx, subp, typer, subpdata):
             )
 
         elif dest.is_a(lal.ExplicitDeref):
-            prefix_pre_stmts, prefix_expr = transform_expr(dest.f_prefix)
-
-            return prefix_pre_stmts, (stack, irt.FunCall(
-                ops.UPDATED,
-                [stack, prefix_expr, expr],
-                type_hint=stack.data.type_hint,
-                orig_node=dest,
-                param_types=_deref_assign_param_types(
-                    dest.f_prefix.p_expression_type,
-                    dest.p_expression_type
-                )
-            ))
+            return gen_dereference_dest(
+                dest.f_prefix, dest.f_prefix.p_expression_type,
+                dest, dest.p_expression_type, expr
+            )
 
         return unimplemented_dest(dest)
 

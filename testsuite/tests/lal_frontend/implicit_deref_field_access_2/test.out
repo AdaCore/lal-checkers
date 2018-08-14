@@ -2,9 +2,11 @@ Program:
   read(a#1)
   assume(!=(Get_0(a#1), null))
   assume(!=(Get_0(*(Get_0(a#1), $stack#2)), null))
+  assume(!=(Get_0(*(Get_0(*(Get_0(a#1), $stack#2)), $stack#2)), null))
   assume(!=(Get_0(a#1), null))
+  assume(!=(Get_0(*(Get_0(a#1), $stack#2)), null))
   assume(!=(Get_0(a#1), null))
   assume(!=(Get_0(*(Get_0(a#1), $stack#2)), null))
   assume(!=(Get_0(*(Get_0(*(Get_0(a#1), $stack#2)), $stack#2)), null))
-  a#1 = Updated_0(a#1, Updated_0(Get_0(a#1), Updated_0(Get_0(*(Get_0(a#1), $stack#2)), Updated_0(Get_0(*(Get_0(*(Get_0(a#1), $stack#2)), $stack#2)), Get_0(*(Get_0(*(Get_0(*(Get_0(a#1), $stack#2)), $stack#2)), $stack#2))))))
+  $stack#2 = Updated($stack#2, Get_0(*(Get_0(*(Get_0(a#1), $stack#2)), $stack#2)), Updated_0(*(Get_0(*(Get_0(*(Get_0(a#1), $stack#2)), $stack#2)), $stack#2), Get_0(*(Get_0(*(Get_0(*(Get_0(a#1), $stack#2)), $stack#2)), $stack#2))))
   end:

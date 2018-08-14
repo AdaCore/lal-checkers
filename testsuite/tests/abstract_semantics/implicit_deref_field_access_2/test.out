@@ -1,0 +1,202 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
+          "R": "({[all-path]})"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([21, 21])'}, 0)",
+          "R": "({[all-path]})"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([21, 21])'}, 0)",
+          "R": "({[all-path]})"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([21, 21])'}, 0)",
+          "R": "({0x00000001})"
+        }
+      }
+    ],
+    "assign4": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([12, 12])'}, 0)",
+          "R": "({0x00000001})"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([21, 21])'}, 0)",
+          "R": "({0x00000001})"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
+          "R": "({[all-path]})"
+        }
+      }
+    ]
+  },
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
+          "R": "({[all-path]})"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([21, 21])'}, 0)",
+          "R": "({[all-path]})"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([21, 21])'}, 0)",
+          "R": "({[all-path]})"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([21, 21])'}, 0)",
+          "R": "({0x00000001})"
+        }
+      }
+    ],
+    "assign4": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assign4",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([12, 12])'}, 0)",
+          "R": "({0x00000001})"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '([21, 21])'}, 0)",
+          "R": "({0x00000001})"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
+          "R": "({[all-path]})"
+        }
+      }
+    ]
+  }
+}
