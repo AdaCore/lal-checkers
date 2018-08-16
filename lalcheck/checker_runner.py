@@ -342,7 +342,6 @@ def list_categories(checkers):
         for kind in checker.kinds():
             kinds_map[kind].append(checker)
 
-    print("[ lal-checkers message categories ]")
     for kind, checkers in kinds_map.iteritems():
         print("{} ({}) - {}".format(
             kind.name(),
