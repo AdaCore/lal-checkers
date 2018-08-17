@@ -71,6 +71,19 @@ def partition(it, predicate):
     return res_true, res_false
 
 
+def unzip(list, n):
+    """
+    Unzips the given list of n-tuples n into an n-tuples of lists of the
+    equivalent size.
+
+    :param list[tuple] list: The list to unzip.
+    :param int n: The arity of the tuples contained in the list.
+    :rtype: tuple
+    """
+    res = zip(*list)
+    return res if len(res) == n else ([],) * n
+
+
 def zip_dicts(a, b, all=True):
     """
     Returns a dictionary, which contains a key for each key present in either

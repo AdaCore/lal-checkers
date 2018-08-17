@@ -3,7 +3,7 @@ from lalcheck.ai import types
 from lalcheck.ai.constants import lits, ops, access_paths
 from lalcheck.ai.irs.basic import tree as irt, purpose
 from lalcheck.ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
-from lalcheck.ai.utils import KeyCounter, Transformer, profile
+from lalcheck.ai.utils import KeyCounter, Transformer, profile, unzip
 from lalcheck.tools.logger import log_stdout
 from funcy.calc import memoize
 
@@ -325,6 +325,155 @@ def gen_ir(ctx, subp, typer, subpdata):
         ),
         type_hint=StackType()
     )
+
+    class CallExprBuilder(object):
+        """
+        Builder object which can be used to simplify the creation of call
+        expressions.
+        """
+        def __init__(self, orig_call_expr, called_name, res_type):
+            """
+            :param lal.AdaNode orig_call_expr: The original call expression
+                in the source code.
+            :param lal.SubpBody | lal.SubpDecl called_name: The subprogram
+                being called.
+            :param lal.AdaNode res_type: The type of the returned value.
+            """
+            self.orig_call_expr = orig_call_expr
+            self.called_name = called_name
+            self.res_type = res_type
+            self.args = []
+            self.preconditions = []
+            self.postconditions = []
+
+        def add_argument(self, param_type, arg_stmts_expr, assigner=None):
+            """
+            Append a new argument to the call expression.
+            :param lal.AdaNode param_type: The expected type of the argument.
+                (The type of the parameter).
+            :param (list[irt.Stmt], irt.Expr) arg_stmts_expr: The transformed
+                expression of the argument as returned by transform_expr.
+            :param (irt.Expr -> irt.AssignStmt) | None assigner: If not None,
+                this argument is "out" and the assigner function will be
+                called to generate the assignment of the out parameter after
+                the call. The expression passed to that function describes the
+                value of that argument as modified by the function called.
+                See gen_call_expr for an example of usage.
+            """
+            self.args.append((param_type, arg_stmts_expr, assigner))
+
+        def add_contracts(self, preconditions, postconditions):
+            """
+            Adds new pre- and postconditions to that call.
+            :param list[lal.Expr] preconditions: Preconditions to add.
+            :param list[lal.Expr] postconditions: Postconditions to add.
+            """
+            self.preconditions.extend(preconditions)
+            self.postconditions.extend(postconditions)
+
+        def build(self):
+            """
+            Generates the call expression.
+            :rtype: list[irt.Stmt], irt.Expr
+            """
+            param_types, arg_stmts_expr, args_out = unzip(self.args, 3)
+
+            arg_pre_stmts, arg_exprs = unzip(arg_stmts_expr, 2)
+            arg_pre_stmts = [
+                stmt
+                for pre_stmts in arg_pre_stmts
+                for stmt in pre_stmts
+            ]
+
+            out_indices = tuple(
+                i
+                for i, out in enumerate(args_out)
+                if out is not None
+            )
+
+            if len(out_indices) > 0:
+                ret_type = ExtendedCallReturnType(
+                    out_indices,
+                    tuple(param_types[i] for i in out_indices),
+                    self.res_type
+                )
+            else:
+                ret_type = self.res_type
+
+            call_expr = irt.FunCall(
+                self.called_name,
+                arg_exprs,
+                param_types=param_types,
+                type_hint=ret_type,
+                orig_node=self.orig_call_expr
+            )
+
+            call_assignment = []
+            out_exprs = {}
+            assignments = []
+
+            if len(out_indices) > 0 or len(self.postconditions) > 0:
+                # If we have out arguments or postconditions, we have no choice
+                # but to store the result of the call in a temporary variable
+                # "ret" so that we can:
+                #  - retrieve each out argument.
+                #  - apply postconditions on it.
+                ret_var = irt.Identifier(
+                    irt.Variable(
+                        fresh_name("ret"),
+                        purpose=purpose.SyntheticVariable(),
+                        type_hint=ret_type,
+                        mode=Mode.Local,
+                        index=next_var_idx()
+                    ),
+                    type_hint=ret_type
+                )
+
+                call_assignment = [irt.AssignStmt(
+                    ret_var, call_expr, orig_node=self.orig_call_expr
+                )]
+
+                if len(out_indices) > 0:
+                    out_exprs = {
+                        out_index: irt.FunCall(
+                            ops.GetName(i), [ret_var],
+                            type_hint=param_types[out_index]
+                        )
+                        for i, out_index in enumerate(out_indices)
+                    }
+                    assignments = [
+                        stmt
+                        for out_index, out_expr in out_exprs.iteritems()
+                        for stmt in args_out[out_index](out_expr)
+                    ]
+
+                    result_expr = irt.FunCall(
+                        ops.GetName(len(out_indices)),
+                        [ret_var],
+                        type_hint=self.res_type
+                    )
+                else:
+                    result_expr = ret_var
+            else:
+                result_expr = call_expr
+
+            preconds_stmts, postconds_stmts = gen_contract_conditions(
+                self.called_name,
+                self.preconditions,
+                self.postconditions,
+                arg_exprs,
+                out_exprs,
+                result_expr,
+                self.orig_call_expr
+            )
+
+            return (
+                arg_pre_stmts +
+                preconds_stmts +
+                call_assignment +
+                postconds_stmts +
+                assignments
+            ), result_expr
 
     def fresh_name(name):
         """
@@ -1301,6 +1450,25 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         return pre_stmts, post_stmts
 
+    def get_arg_for_index(i, prefix, args, call):
+        """
+        Returns the right expression that must be used for the given argument
+        index.
+
+        :param int i: The index of argument to retrieve.
+        :param lal.Name prefix: The prefix of the call.
+        :param list[lal.ParamAssoc] args: The arguments of the call.
+        :param lal.Name call: The call node.
+        :rtype: lal.Expr
+        """
+        if call.p_is_dot_call:
+            if i == 0:
+                return prefix.f_prefix
+            else:
+                return args[i - 1].f_r_expr
+        else:
+            return args[i].f_r_expr
+
     @profile()
     def gen_call_expr(prefix, args, type_hint, orig_node):
         """
@@ -1340,49 +1508,38 @@ def gen_ir(ctx, subp, typer, subpdata):
         if any(x.f_designator is not None for x in args):
             return unimplemented_expr(orig_node)
 
-        arg_exprs = [suffix.f_r_expr for suffix in args]
-
-        suffixes = [transform_expr(e) for e in arg_exprs]
-        suffix_pre_stmts = [
-            suffix_stmt
-            for suffix in suffixes
-            for suffix_stmt in suffix[0]
-        ]
-        suffix_exprs = [suffix[1] for suffix in suffixes]
-
-        def gen_out_arg_assignment(i):
-            def do(out_expr):
-                return gen_assignment(arg_exprs[i], [], out_expr)
-            return do
-
-        def gen_global_out_assignment(local_id):
-            def do(out_expr):
-                return [irt.AssignStmt(local_id, out_expr)]
-            return do
-
         if prefix.is_a(lal.Identifier, lal.DottedName):
             ref = prefix.p_referenced_decl
             if ref is not None and ref.is_a(lal.SubpBody, lal.SubpDecl):
                 # The call target is statically known.
-
                 if any(p.f_default_expr is not None
                        for _, _, p in proc_parameters(ref)):
                     return unimplemented_expr(orig_node)
 
-                if prefix.p_is_dot_call:
-                    # handle dot calls
-                    prefix_expr = prefix.f_prefix
-                    arg_exprs.insert(0, prefix_expr)
-                    prefix_expr_tr = transform_expr(prefix_expr)
-                    suffixes.insert(0, prefix_expr_tr)
-                    suffix_pre_stmts = prefix_expr_tr[0] + suffix_pre_stmts
-                    suffix_exprs.insert(0, prefix_expr_tr[1])
+                called_name = ref
+                if ref.is_a(lal.BasicSubpDecl):
+                    try:
+                        body = ref.p_body_part
+                        if body is not None:
+                            called_name = body
+                    except lal.PropertyError:
+                        pass
+                builder = CallExprBuilder(orig_node, called_name, type_hint)
 
-                out_params = [
-                    (i, param.f_type_expr, gen_out_arg_assignment(i))
-                    for i, _, param in proc_parameters(ref)
-                    if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut)
-                ]
+                for i, _, param in proc_parameters(ref):
+                    arg_expr = get_arg_for_index(i, prefix, args, prefix)
+                    param_type = param.f_type_expr
+
+                    assigner = None
+                    if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut):
+                        def assigner(out_expr, arg_expr=arg_expr):
+                            return gen_assignment(arg_expr, [], out_expr)
+
+                    builder.add_argument(
+                        param_type,
+                        transform_expr(arg_expr),
+                        assigner
+                    )
 
                 # Pass global variables
 
@@ -1394,12 +1551,12 @@ def gen_ir(ctx, subp, typer, subpdata):
                             local_instance,
                             type_hint=local_instance.data.type_hint
                         )
-                        suffix_exprs.append(local_id)
-                        out_params.append((
-                            len(suffix_exprs) - 1,
-                            local_instance.data.type_hint,
-                            gen_global_out_assignment(local_id)
-                        ))
+
+                        builder.add_argument(
+                            local_id.data.type_hint,
+                            ([], local_id),
+                            lambda x, id=local_id: [irt.AssignStmt(id, x)]
+                        )
 
                 # Pass stack too
 
@@ -1408,136 +1565,41 @@ def gen_ir(ctx, subp, typer, subpdata):
                 if global_access != _IGNORES_GLOBAL_STATE:
                     offset = var_idx.value
 
-                    suffix_exprs.append(irt.FunCall(
-                        ops.OffsetName(offset),
-                        [stack],
-                        type_hint=stack.data.type_hint
-                    ))
-
+                    assigner = None
                     if global_access == _WRITES_GLOBAL_STATE:
-                        out_params.append((
-                            len(suffix_exprs) - 1,
-                            stack.data.type_hint,
-                            lambda expr: [irt.AssignStmt(
-                                stack,
-                                irt.FunCall(
+                        def assigner(expr):
+                            return [irt.AssignStmt(
+                                stack, irt.FunCall(
                                     ops.COPY_OFFSET,
                                     [stack, expr],
                                     type_hint=stack.data.type_hint
                                 )
                             )]
-                        ))
 
-                pres, posts = retrieve_function_contracts(ctx, ref)
-                subp_param_types = _subprogram_param_types(
-                    ref,
-                    (called_subpdata.all_global_vars
-                     if called_subpdata is not None else []),
-                    global_access != _IGNORES_GLOBAL_STATE
-                )
-
-                if len(out_params) == len(pres) == len(posts) == 0:
-                    return suffix_pre_stmts, irt.FunCall(
-                        ref,
-                        suffix_exprs,
-                        orig_node=orig_node,
-                        type_hint=type_hint,
-                        param_types=subp_param_types
-                    )
-                else:
-                    ret_tpe = ExtendedCallReturnType(
-                        tuple(index for index, _, _ in out_params),
-                        tuple(param_type for _, param_type, _ in out_params),
-                        type_hint
-                    ) if len(out_params) != 0 else type_hint
-
-                    ret_var = irt.Identifier(
-                        irt.Variable(
-                            fresh_name("ret"),
-                            purpose=purpose.SyntheticVariable(),
-                            type_hint=ret_tpe,
-                            mode=Mode.Local,
-                            index=next_var_idx()
-                        ),
-                        type_hint=ret_tpe
+                    builder.add_argument(
+                        stack.data.type_hint,
+                        ([], irt.FunCall(
+                            ops.OffsetName(offset),
+                            [stack],
+                            type_hint=stack.data.type_hint
+                        )),
+                        assigner
                     )
 
-                    called_name = ref
-                    if ref.is_a(lal.BasicSubpDecl):
-                        try:
-                            body = ref.p_body_part
-                            if body is not None:
-                                called_name = body
-                        except lal.PropertyError:
-                            pass
+                builder.add_contracts(*retrieve_function_contracts(ctx, ref))
 
-                    call = [irt.AssignStmt(
-                        ret_var,
-                        irt.FunCall(
-                            called_name,
-                            suffix_exprs,
-                            orig_node=orig_node,
-                            type_hint=ret_tpe,
-                            param_types=subp_param_types
-                        ),
-                        orig_node=orig_node
-                    )]
-
-                    out_arg_exprs = {
-                        j: irt.FunCall(
-                            ops.GetName(i),
-                            [ret_var],
-                            type_hint=tpe
-                        )
-                        for i, (j, tpe, _) in enumerate(out_params)
-                    }
-
-                    assignments = [
-                        stmt
-                        for i, _, assign_out in out_params
-                        for stmt in assign_out(out_arg_exprs[i])
-                    ]
-
-                    if type_hint is None:
-                        res = None
-                    elif len(out_params) == 0:
-                        res = ret_var
-                    else:
-                        res = irt.FunCall(
-                            ops.GetName(len(out_params)),
-                            [ret_var],
-                            type_hint=type_hint
-                        )
-
-                    pre_conds, post_conds = gen_contract_conditions(
-                        ref,
-                        pres,
-                        posts,
-                        suffix_exprs,
-                        out_arg_exprs,
-                        res,
-                        orig_node
-                    )
-
-                    return (
-                        (suffix_pre_stmts +
-                         pre_conds +
-                         call +
-                         post_conds +
-                         assignments),
-                        res
-                    )
+                return builder.build()
 
         if is_array_type_decl(prefix.p_expression_type):
-            prefix_pre_stmts, prefix_expr_tr = transform_expr(prefix)
+            arr_type = prefix.p_expression_type.f_type_def
+            builder = CallExprBuilder(orig_node, ops.CALL, type_hint)
 
-            return prefix_pre_stmts + suffix_pre_stmts, irt.FunCall(
-                ops.CALL,
-                [prefix_expr_tr] + suffix_exprs,
-                type_hint=type_hint,
-                orig_node=orig_node,
-                param_types=_array_access_param_types(prefix.p_expression_type)
-            )
+            builder.add_argument(arr_type, transform_expr(prefix))
+
+            for idx_type, arg in zip(arr_type.f_indices.f_list, args):
+                builder.add_argument(idx_type, transform_expr(arg.f_r_expr))
+
+            return builder.build()
 
         return unimplemented_expr(orig_node)
 

@@ -33,21 +33,6 @@
           "start0"
         ],
         "values": {
-          "p": "([2, 2], [3, 3], [12, 12])"
-        }
-      }
-    ],
-    "assign3": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "start0"
-        ],
-        "values": {
           "p": "([2, 2], [-2147483648, 2147483647], [12, 12])"
         }
       }
@@ -106,21 +91,6 @@
           "assign0",
           "assign1",
           "assign2",
-          "assume0",
-          "start0"
-        ],
-        "values": {
-          "p": "([2, 2], [3, 3], [12, 12])"
-        }
-      }
-    ],
-    "assign3": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
           "assume0",
           "start0"
         ],

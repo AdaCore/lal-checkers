@@ -1,4 +1,4 @@
 Program:
   read(P#1)
-  R#2 = <SubpDecl ["Get_E"] 7:7-7:44>(P#1)
+  R#2 = <SubpBody ["Get_E"] 11:7-14:17>(P#1)
   end:
