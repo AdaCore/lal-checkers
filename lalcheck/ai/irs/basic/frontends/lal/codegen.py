@@ -274,16 +274,8 @@ def gen_ir(ctx, subp, typer, subpdata):
     :rtype: irt.Program
     """
 
-    var_decls = {}
     param_vars = []
     tmp_vars = KeyCounter()
-
-    # Used to assign a unique index to each variable.
-    var_idx = ValueHolder(0)
-
-    def next_var_idx():
-        var_idx.value += 1
-        return var_idx.value - 1
 
     # A synthetic variable used to store the result of a function (what is
     # returned). Use a ValueHolder so it can be rebound by closures (e.g.
@@ -316,15 +308,293 @@ def gen_ir(ctx, subp, typer, subpdata):
     # Contains variables that are spilled.
     to_spill = subpdata.vars_to_spill
 
-    stack = irt.Identifier(
-        irt.Variable(
-            "$stack",
-            type_hint=StackType(),
-            mode=Mode.Local,
-            index=next_var_idx()
-        ),
-        type_hint=StackType()
-    )
+    class StorageManager(object):
+        """
+        Singleton object (see variable "stores") that is used to track all
+        variables considered in this program. It can be used to register new
+        variables and to access them using their libadalang defining name.
+
+        This object manages variable handles (see VariableHandle) and provides
+        a common API for manipulating different kind of variables without
+        having to specialize your code for each possible underlying
+        representation of a variable (irt.Variable, index on the stack, etc.).
+        """
+        class VariableHandle(object):
+            """
+            The base class for variable handles, stores the libadalang
+            DefiningName associated to the variable.
+            """
+            def __init__(self, defining_name):
+                """
+                :param lal.DefiningName|None defining_name: The defining name
+                    of the Ada variable that this handle wraps.
+                """
+                self.defining_name = defining_name
+
+            def havoc(self, **data):
+                """
+                Returns a list of statements which, when executed, destroys
+                the previous knowledge that we had on the variable.
+
+                :param **object data: User data to attach on the returned
+                    statements.
+                :rtype: list[irt.Stmt]
+                """
+                raise NotImplementedError
+
+            def get(self, **data):
+                """
+                Returns an expression which holds the value of the variable.
+                :param **object data: The data to attach to the expression.
+
+                :rtype: irt.Expr | irt.Identifier
+                """
+                raise NotImplementedError
+
+            def gen_dest(self, expr, **data):
+                """
+                Generates a pair (LHS, RHS) for an assignment of expr into the
+                variable. RHS originates from expr but might be refined.
+
+                :param irt.Expr expr: The expression to assign
+                :param **object data: User data to attach to the generated
+                    object.
+                :rtype: (irt.Expr, irt.Expr)
+                """
+                raise NotImplementedError
+
+            def access(self, **data):
+                """
+                Returns an expression representing an access (in the sense of
+                pointer) to this variable.
+
+                :param **object data: User data to attach to the generated
+                    expression.
+                :rtype: irt.Expr
+                """
+                raise NotImplementedError
+
+        class NormalVariableHandle(VariableHandle):
+            """
+            Represents local variables which cannot be aliased, and which are
+            always read and written to directly (wraps an irt.Variable object).
+            """
+            def __init__(self, defining_name, var):
+                """
+                :param lal.DefiningName | None defining_name: The defining name
+                    of the Ada variable that this handle wraps.
+                :param irt.Variable var: The intermediate language node
+                    representing the variable.
+                """
+                StorageManager.VariableHandle.__init__(self, defining_name)
+                self.var = var
+
+            def havoc(self, read_orig_node, **id_data):
+                # todo: remove read statements all together.
+                return [
+                    irt.ReadStmt(self.get(**id_data), orig_node=read_orig_node)
+                ]
+
+            def get(self, **data):
+                return irt.Identifier(
+                    self.var, type_hint=self.var.data.type_hint, **data
+                )
+
+            def gen_dest(self, expr, **data):
+                return self.get(**data), expr
+
+            def access(self, **data):
+                raise AccessingUnspilledVar
+
+        class SpilledRelativeVariableHandle(VariableHandle):
+            """
+            Represents a local variable that lives on the stack.
+            """
+            def __init__(self, defining_name, var_index, type_hint):
+                """
+                :param lal.DefiningName | None defining_name: The defining name
+                    of the Ada variable that this handle wraps.
+                :param int var_index: The index of this variable, to use as
+                    its location on the stack.
+                :param lal.TypeDecl type_hint: The type of the variable.
+                """
+                StorageManager.VariableHandle.__init__(self, defining_name)
+                self.var_index = var_index
+                self.type_hint = type_hint
+
+            def havoc(self, **data):
+                raise NotImplementedError
+
+            def get(self, **data):
+                return irt.FunCall(
+                    ops.GetName(self.var_index),
+                    [stack],
+                    type_hint=self.type_hint,
+                    param_types=[stack.data.type_hint],
+                    **data
+                )
+
+            def gen_dest(self, expr, **data):
+                return stack, irt.FunCall(
+                    ops.UpdatedName(self.var_index),
+                    [stack, expr],
+                    type_hint=stack.data.type_hint,
+                    param_types=[stack.data.type_hint, self.type_hint],
+                    **data
+                )
+
+            def access(self, **data):
+                return irt.FunCall(
+                    access_paths.Var(self.var_index),
+                    [stack],
+                    type_hint=PointerType(self.type_hint),
+                    additional_arg=self.type_hint,
+                    **data
+                )
+
+        class SpilledAbsoluteVariableHandle(VariableHandle):
+            """
+            Represents a variable that lives in the stack, but which is not
+            necessarily local. It is accessed using another variable handle,
+            representing its address.
+            """
+            def __init__(self, defining_name, address_var, type_hint):
+                """
+                :param lal.DefiningName | None defining_name: The defining name
+                    of the Ada variable that this handle wraps.
+                :param VariableHandle address_var: The handle representing
+                    the address of this variable.
+                :param lal.TypeDecl type_hint: The type of this variable.
+                """
+                StorageManager.VariableHandle.__init__(self, defining_name)
+                self.address_var = address_var
+                self.type_hint = type_hint
+
+            def havoc(self, **data):
+                raise NotImplementedError
+
+            def get(self, **data):
+                address_expr = self.address_var.get()
+                return irt.FunCall(
+                    ops.DEREF,
+                    [address_expr, stack],
+                    type_hint=self.type_hint,
+                    param_types=[address_expr.data.type_hint,
+                                 stack.data.type_hint],
+                    **data
+                )
+
+            def gen_dest(self, expr, **data):
+                address_expr = self.address_var.get()
+                return stack, irt.FunCall(
+                    ops.UPDATED,
+                    [stack, address_expr, expr],
+                    type_hint=stack.data.type_hint,
+                    param_types=_deref_assign_param_types(
+                        address_expr.data.type_hint,
+                        expr.data.type_hint
+                    ),
+                    **data
+                )
+
+            def access(self, **data):
+                return self.address_var.get(**data)
+
+        def __init__(self):
+            self.vars = {}
+            self.var_index = 0
+
+        def register_normal(self, defining_name=None, name=None, **data):
+            """
+            Creates a new "normal" variable handle. At least one of (name,
+            defining_name) must be given.
+
+            :param lal.DefiningName | None defining_name: The defining name of
+                the Ada variable that this handle wraps.
+            :param str|None name: The name to associate to the variable.
+            :param **object data: User data to attach to this variable.
+            :rtype: NormalVariableHandle
+            """
+            if name is None:
+                assert defining_name is not None
+                name = defining_name.text
+
+            var = self.NormalVariableHandle(defining_name, irt.Variable(
+                name,
+                index=self.var_index,
+                **data
+            ))
+
+            self.var_index += 1
+
+            if defining_name is not None:
+                self.vars[defining_name] = var
+
+            return var
+
+        def register_spilled_relative(self, type_hint, defining_name=None):
+            """
+            Creates a new "spilled relative" variable handle.
+
+            :param lal.TypeDecl type_hint: The type of this variable.
+            :param lal.DefiningName | None defining_name: The defining name of
+                the Ada variable that this handle wraps.
+            :rtype: SpilledRelativeVariableHandle
+            """
+            var = self.SpilledRelativeVariableHandle(
+                defining_name, self.var_index, type_hint
+            )
+            self.var_index += 1
+
+            if defining_name is not None:
+                self.vars[defining_name] = var
+
+            return var
+
+        def register_spilled_absolute(self, address_handle, type_hint,
+                                      defining_name=None):
+            """
+            Creates a new "spilled absolute" variable handle.
+
+            :param VariableHandle address_handle: The variable handle of the
+                variable holding the address of this variable.
+            :param lal.TypeDecl type_hint: The type of this variable.
+            :param lal.DefiningName | None defining_name: The defining name of
+                the Ada variable that this handle wraps.
+            :rtype: SpilledAbsoluteVariableHandle
+            """
+            var = self.SpilledAbsoluteVariableHandle(
+                defining_name, address_handle, type_hint
+            )
+
+            if defining_name is not None:
+                self.vars[defining_name] = var
+
+            return var
+
+        def get(self, defining_name, default=None):
+            """
+            Finds the variable of the given defining name.
+            :param lal.DefiningName defining_name: The defining name to look
+                for.
+            :param object | None default: The value to return if the lookup
+                fails.
+            :rtype: VariableHandle | object
+            """
+            return self.vars.get(defining_name, default)
+
+        def current_index(self):
+            """
+            Returns the current variable index.
+            :rtype: int
+            """
+            return self.var_index
+
+    stores = StorageManager()
+
+    stack = stores.register_normal(
+        name="$stack", type_hint=StackType(), mode=Mode.Local
+    ).get()
 
     class CallExprBuilder(object):
         """
@@ -418,16 +688,12 @@ def gen_ir(ctx, subp, typer, subpdata):
                 # "ret" so that we can:
                 #  - retrieve each out argument.
                 #  - apply postconditions on it.
-                ret_var = irt.Identifier(
-                    irt.Variable(
-                        fresh_name("ret"),
-                        purpose=purpose.SyntheticVariable(),
-                        type_hint=ret_type,
-                        mode=Mode.Local,
-                        index=next_var_idx()
-                    ),
+                ret_var = stores.register_normal(
+                    name=fresh_name("ret"),
+                    purpose=purpose.SyntheticVariable(),
+                    mode=Mode.Local,
                     type_hint=ret_type
-                )
+                ).get()
 
                 call_assignment = [irt.AssignStmt(
                     ret_var, call_expr, orig_node=self.orig_call_expr
@@ -544,18 +810,13 @@ def gen_ir(ctx, subp, typer, subpdata):
         :rtype: irt.Identifier
         """
         tpe = replaced_expr.p_expression_type
-        return irt.Identifier(
-            irt.Variable(
-                fresh_name(name),
-                purpose=purpose.SyntheticVariable(),
-                type_hint=tpe,
-                orig_node=replaced_expr,
-                mode=Mode.Local,
-                index=next_var_idx()
-            ),
+        return stores.register_normal(
+            name=fresh_name(name),
+            purpose=purpose.SyntheticVariable(),
             type_hint=tpe,
-            orig_node=replaced_expr
-        )
+            orig_node=replaced_expr,
+            mode=Mode.Local
+        ).get(orig_node=replaced_expr)
 
     def get_var(expr, ref):
         """
@@ -563,23 +824,11 @@ def gen_ir(ctx, subp, typer, subpdata):
         :param lal.ObjectDecl ref:
         :return:
         """
-        var = var_decls.get(ref)
+        var = stores.get(ref)
         if var is None:
             return new_expression_replacing_var("unknown", expr)
-
-        if ref in to_spill:
-            return irt.FunCall(
-                ops.GetName(var.data.index),
-                [stack],
-                type_hint=var.data.type_hint,
-                orig_node=expr
-            )
         else:
-            return irt.Identifier(
-                var,
-                type_hint=var.data.type_hint,
-                orig_node=expr
-            )
+            return var.get(orig_node=expr)
 
     def gen_split_stmt(orig_cond, then_stmts, else_stmts, **data):
         """
@@ -1128,26 +1377,9 @@ def gen_ir(ctx, subp, typer, subpdata):
         if dest.is_a(lal.Identifier, lal.DefiningName):
             ref = dest.p_xref if dest.is_a(lal.Identifier) else dest
 
-            var = var_decls[ref]
-
-            if ref in to_spill:
-                updated_index = var.data.index
-                return [], (
-                    stack,
-                    irt.FunCall(
-                        ops.UpdatedName(updated_index),
-                        [stack, expr],
-                        type_hint=stack.data.type_hint,
-                        orig_node=dest,
-                        param_types=_stack_assign_param_types(var)
-                    )
-                )
-            else:
-                return [], (irt.Identifier(
-                    var,
-                    type_hint=var.data.type_hint,
-                    orig_node=dest
-                ), expr)
+            var = stores.get(ref)
+            if var is not None:
+                return [], var.gen_dest(expr, orig_node=dest)
 
         elif dest.is_a(lal.DottedName) and is_record_field(dest.f_suffix):
             implicit_deref = dest.f_prefix.p_expression_type.p_is_access_type()
@@ -1309,18 +1541,9 @@ def gen_ir(ctx, subp, typer, subpdata):
                 expr = substitutions[ref][1].data.orig_node
                 ref = expr.p_xref
 
-            if ref not in to_spill:
-                raise AccessingUnspilledVar
-
-            var = var_decls[ref]
-
-            return irt.FunCall(
-                access_paths.Var(var.data.index),
-                [stack],
-                type_hint=PointerType(expr.p_expression_type),
-                additional_arg=expr.p_expression_type,
-                orig_node=expr
-            )
+            var = stores.get(ref)
+            if var is not None:
+                return var.access(orig_node=expr)
 
         elif expr.is_a(lal.DottedName) and is_record_field(expr.f_suffix):
             info = get_field_info(expr.f_suffix)
@@ -1541,29 +1764,22 @@ def gen_ir(ctx, subp, typer, subpdata):
                         assigner
                     )
 
-                # Pass global variables
+                # Pass global variables by reference
 
                 called_subpdata = ctx.subpdata.get(get_subp_identity(ref))
                 if called_subpdata is not None:
                     for global_var_id in called_subpdata.all_global_vars:
-                        local_instance = var_decls[global_var_id]
-                        local_id = irt.Identifier(
-                            local_instance,
-                            type_hint=local_instance.data.type_hint
-                        )
-
+                        local_id = stores.get(global_var_id).access()
                         builder.add_argument(
-                            local_id.data.type_hint,
-                            ([], local_id),
-                            lambda x, id=local_id: [irt.AssignStmt(id, x)]
+                            local_id.data.type_hint, ([], local_id)
                         )
 
                 # Pass stack too
 
-                global_access = _find_global_access(typer, ref)
+                global_access = _find_global_access(ctx, ref)
 
                 if global_access != _IGNORES_GLOBAL_STATE:
-                    offset = var_idx.value
+                    offset = stores.current_index()
 
                     assigner = None
                     if global_access == _WRITES_GLOBAL_STATE:
@@ -2086,36 +2302,26 @@ def gen_ir(ctx, subp, typer, subpdata):
         for param in params:
             mode = Mode.from_lal_mode(param.f_mode)
             for var_id in param.f_ids:
-                param_var = irt.Variable(
-                    var_id.text,
+                param_vars.append(stores.register_normal(
+                    defining_name=var_id,
                     type_hint=param.f_type_expr,
                     orig_node=var_id,
-                    mode=mode,
-                    index=next_var_idx()
-                )
-                var_decls[var_id] = param_var
-                param_vars.append(param_var)
+                    mode=mode
+                ).var)
 
         if spec.f_subp_returns is not None:
-            result_var.value = irt.Identifier(
-                irt.Variable(
-                    fresh_name("result"),
-                    type_hint=spec.f_subp_returns,
-                    index=next_var_idx()
-                ),
+            result_var.value = stores.register_normal(
+                name=fresh_name("result"),
                 type_hint=spec.f_subp_returns
-            )
+            ).get()
 
         for glob_id in subpdata.all_global_vars:
-            param_var = irt.Variable(
-                glob_id.text,
+            param_vars.append(stores.register_normal(
+                defining_name=glob_id,
                 type_hint=glob_id.p_basic_decl.f_type_expr,
                 orig_node=glob_id,
-                mode=Mode.Out,
-                index=next_var_idx()
-            )
-            var_decls[glob_id] = param_var
-            param_vars.append(param_var)
+                mode=Mode.Out
+            ).var)
 
         if (_find_global_access(typer, subp) ==
                 _WRITES_GLOBAL_STATE):
@@ -2144,25 +2350,26 @@ def gen_ir(ctx, subp, typer, subpdata):
             tdecl = decl.f_type_expr
 
             for var_id in decl.f_ids:
-                var_decls[var_id] = irt.Variable(
-                    var_id.text,
-                    type_hint=tdecl,
-                    orig_node=var_id,
-                    mode=Mode.Out,
-                    index=next_var_idx()
-                )
+                if var_id in to_spill:
+                    stores.register_spilled_relative(
+                        defining_name=var_id,
+                        type_hint=tdecl
+                    )
+                else:
+                    stores.register_normal(
+                        defining_name=var_id,
+                        type_hint=tdecl,
+                        orig_node=var_id,
+                        mode=Mode.Out
+                    )
 
             if decl.f_default_expr is None:
                 return [
-                    irt.ReadStmt(
-                        irt.Identifier(
-                            var_decls[var_id],
-                            type_hint=tdecl,
-                            orig_node=var_id
-                        ),
-                        orig_node=decl
-                    )
+                    stmt
                     for var_id in decl.f_ids
+                    for stmt in stores.get(var_id).havoc(
+                        read_orig_node=decl, orig_node=var_id
+                    )
                 ]
             else:
                 dval_pre_stmts, dval_expr = transform_expr(decl.f_default_expr)
@@ -2387,17 +2594,13 @@ def gen_ir(ctx, subp, typer, subpdata):
             spec = stmt.f_spec
             if spec.f_loop_type.is_a(lal.IterTypeIn):
                 loop_var = spec.f_var_decl.f_id
-                var_expr = irt.Identifier(
-                    irt.Variable(
-                        loop_var.f_name.text,
-                        index=next_var_idx(),
-                        orig_node=loop_var,
-                        mode=Mode.Local,
-                        type_hint=loop_var.p_expression_type
-                    ),
-                    type_hint=loop_var.p_expression_type
-                )
-                var_decls[loop_var] = var_expr.var
+                var_expr = stores.register_normal(
+                    defining_name=loop_var,
+                    type_hint=loop_var.p_expression_type,
+                    orig_node=loop_var,
+                    mode=Mode.Local
+                ).get()
+
                 pre_stmts, cond = gen_for_condition(var_expr, spec.f_iter_expr)
 
                 exit_label = irt.LabelStmt(fresh_name('exit_for_loop'))
@@ -2497,17 +2700,13 @@ def gen_ir(ctx, subp, typer, subpdata):
             stmts.extend(transform_decl(stmt.f_decl))
             stmts.extend(transform_stmts(stmt.f_stmts.f_stmts))
 
-            var = var_decls.get(var_decl)
+            var = stores.get(var_decl)
             if var is None:
                 unimplemented(stmt)
 
             stmts.append(irt.AssignStmt(
                 result_var.value,
-                irt.Identifier(
-                    var,
-                    type_hint=var.data.type_hint,
-                    orig_node=var.data.orig_node
-                ),
+                var.get(orig_node=var.var.data.orig_node),
                 orig_node=stmt
             ))
             stmts.append(irt.GotoStmt(
