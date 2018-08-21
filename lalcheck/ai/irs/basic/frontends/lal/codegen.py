@@ -639,6 +639,32 @@ def gen_ir(ctx, subp, typer, subpdata):
             """
             self.args.append((param_type, arg_stmts_expr, assigner))
 
+        @staticmethod
+        def _stack_assigner(expr):
+            return [irt.AssignStmt(
+                stack, irt.FunCall(
+                    ops.COPY_OFFSET,
+                    [stack, expr],
+                    type_hint=stack.data.type_hint
+                )
+            )]
+
+        def add_stack_argument(self, out=False):
+            """
+            Adds the stack as argument to this call expression.
+            :param bool out: Indicates if the stack should be updated after
+                the call.
+            """
+            self.add_argument(
+                stack.data.type_hint,
+                ([], irt.FunCall(
+                    ops.OffsetName(stores.current_index()),
+                    [stack],
+                    type_hint=stack.data.type_hint
+                )),
+                self._stack_assigner if out else None
+            )
+
         def add_contracts(self, preconditions, postconditions):
             """
             Adds new pre- and postconditions to that call.
@@ -1794,9 +1820,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                             return gen_assignment(arg_expr, [], out_expr)
 
                     builder.add_argument(
-                        param_type,
-                        transform_expr(arg_expr),
-                        assigner
+                        param_type, transform_expr(arg_expr), assigner
                     )
 
                 # Pass global variables by reference
@@ -1814,27 +1838,8 @@ def gen_ir(ctx, subp, typer, subpdata):
                 global_access = _find_global_access(ctx, ref)
 
                 if global_access != _IGNORES_GLOBAL_STATE:
-                    offset = stores.current_index()
-
-                    assigner = None
-                    if global_access == _WRITES_GLOBAL_STATE:
-                        def assigner(expr):
-                            return [irt.AssignStmt(
-                                stack, irt.FunCall(
-                                    ops.COPY_OFFSET,
-                                    [stack, expr],
-                                    type_hint=stack.data.type_hint
-                                )
-                            )]
-
-                    builder.add_argument(
-                        stack.data.type_hint,
-                        ([], irt.FunCall(
-                            ops.OffsetName(offset),
-                            [stack],
-                            type_hint=stack.data.type_hint
-                        )),
-                        assigner
+                    builder.add_stack_argument(
+                        global_access == _WRITES_GLOBAL_STATE
                     )
 
                 builder.add_contracts(*retrieve_function_contracts(ctx, ref))
