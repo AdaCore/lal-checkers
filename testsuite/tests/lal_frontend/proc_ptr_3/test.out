@@ -1,0 +1,3 @@
+Program:
+  $stack#1 = Updated($stack#1, P_ptr#2, Subp_<SubpBody ["G"] 5:4-8:10>(X_ptr#3))
+  end:

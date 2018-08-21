@@ -1334,6 +1334,76 @@ class AccessPathsLattice(AbstractDomain):
         def __str__(self):
             return "0x{}".format(format(self.val, '08x'))
 
+    class Subprogram(AccessPath):
+        """
+        Represents the access path to a subprogram.
+        """
+        def __init__(self, name, capture_paths):
+            """
+            :param object name: The object identifying the subprogram accessed.
+            :param list[AccessPath] capture_paths: The access paths to the
+                captured variables.
+            """
+            self.name = name
+            self.vars = capture_paths
+
+        def size(self):
+            return 1
+
+        def access(self, state):
+            raise NotImplementedError
+
+        def inv_access(self, state):
+            raise NotImplementedError
+
+        def __or__(self, other):
+            if self <= other:
+                return other
+            elif other < self:
+                return self
+            elif isinstance(other, AccessPathsLattice.Null):
+                return AccessPathsLattice.AllPath()
+            else:
+                return AccessPathsLattice.NonNull()
+
+        def __and__(self, other):
+            if self <= other:
+                return self
+            elif other < self:
+                return other
+            else:
+                return AccessPathsLattice.NoPath()
+
+        def __lt__(self, other):
+            return (isinstance(other, AccessPathsLattice.NonNull) or
+                    isinstance(other, AccessPathsLattice.AllPath))
+
+        def __eq__(self, other):
+            return (
+                isinstance(other, AccessPathsLattice.Subprogram) and
+                self.name == other.name and
+                all(a == b for a, b in zip(self.vars, other.vars))
+            )
+
+        def split(self, separator):
+            if (isinstance(separator, AccessPathsLattice.NonNull) or
+                    isinstance(separator, AccessPathsLattice.AllPath) or
+                    self == separator):
+                return []
+            else:
+                return [self]
+
+        def touches(self, other):
+            return False
+
+        def __hash__(self):
+            return hash((self.name, self.vars))
+
+        def __str__(self):
+            return "Subprogram {} capturing ({})".format(
+                self.name, ", ".join(str(x) for x in self.vars)
+            )
+
     class ProductGet(AccessPath):
         def __init__(self, prefix, component, dom):
             self.prefix = prefix

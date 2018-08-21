@@ -256,18 +256,32 @@ def get_field_info(field_id):
 
 def is_record_field(ident):
     """
-    Returns true if the given name refers to the field of a record.
+    Returns True if the given name refers to the field of a record.
     :param lal.Identifier ident: The identifier to check.
+    :rtype: bool
     """
     ref = ident.p_referenced_decl
     return (ref is not None and
             ref.is_a(lal.ComponentDecl, lal.DiscriminantSpec))
 
 
+def is_access_to_subprogram(tpe):
+    """
+    Returns True iff the given type is an access to subprogram type.
+    :param lal.AdaNode tpe: The type to check
+    :rtype: bool
+    """
+    if tpe is not None and tpe.is_a(lal.TypeDecl):
+        return tpe.f_type_def.is_a(lal.AccessToSubpDef)
+
+    return False
+
+
 def is_array_type_decl(tpe):
     """
     Returns True iff the given type is an array type decl.
     :param lal.AdaNode tpe: The type to check.
+    :rtype: bool
     """
     if tpe is not None and tpe.is_a(lal.TypeDecl):
         return tpe.f_type_def.is_a(lal.ArrayTypeDef)

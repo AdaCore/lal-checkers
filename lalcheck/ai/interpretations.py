@@ -199,6 +199,10 @@ def _signer(input_domains, output_domain, out_param_indices=()):
     return f
 
 
+def _not_implemented(*_):
+    raise NotImplementedError
+
+
 @type_interpreter
 def default_boolean_interpreter(tpe):
     if tpe.is_a(types.Boolean):
@@ -721,6 +725,14 @@ def custom_pointer_interpreter(tpe):
                         access_paths_ops.inv_var_address(ptr_dom, idx)
                     )
 
+            if isinstance(sig.name, access_paths.Subprogram):
+                if sig.output_domain == ptr_dom:
+                    subp = sig.name.subp_obj
+                    return (
+                        access_paths_ops.subp_address(ptr_dom, subp),
+                        access_paths_ops.inv_subp_address()
+                    )
+
             elif isinstance(sig.name, access_paths.Field):
                 if sig.output_domain == ptr_dom:
                     idx = sig.name.field_obj
@@ -767,9 +779,6 @@ def default_ram_interpreter(tpe):
         bin_rel_signer = _signer((mem_dom, mem_dom), boolean_ops.Boolean)
         cpy_offset_sig = _signer((mem_dom, mem_dom), mem_dom)(ops.COPY_OFFSET)
 
-        def not_implemented(*_):
-            raise NotImplementedError
-
         @def_provider_builder
         def provider(sig):
             if isinstance(sig.name, ops.GetName):
@@ -797,7 +806,7 @@ def default_ram_interpreter(tpe):
 
             elif (sig == bin_rel_signer(ops.EQ) or
                   sig == bin_rel_signer(ops.NEQ)):
-                return not_implemented, not_implemented
+                return _not_implemented, _not_implemented
 
         return TypeInterpretation(
             mem_dom,

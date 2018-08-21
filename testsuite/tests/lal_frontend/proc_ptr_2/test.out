@@ -1,0 +1,4 @@
+Program:
+  ret0#1 = <SubpBody ["F"] 10:4-13:10>(Var_1($stack#2), Var_2($stack#2), Offset_3($stack#2))
+  $stack#2 = CopyOffset($stack#2, Get_0(ret0#1))
+  end:

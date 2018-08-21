@@ -7,15 +7,12 @@
 103:30: left and right operands of "-" are identical
 1049:16: (potential) invalid field Unique_Name
 1060:13: (potential) invalid field Unique_Name
-1066:10: test always false
-1067:10: unreachable code (until line 1068)
 106:15: (potential) precondition failure
 106:7: (potential) assertion failure
 1070:22: (potential) null dereference of 'D_Occ'
 1074:13: (potential) invalid field Operands
 1074:13: (potential) invalid field Operands
 108:10: (potential) assertion failure
-108:10: test always true
 1109:10: (potential) invalid field PC_Set
 1109:14: (potential) null dereference of 'Context'
 1109:28: (potential) null dereference of 'From_BB.Last_Element'
@@ -47,6 +44,7 @@
 1237:10: (potential) null dereference of 'Shdr'
 1239:13: (potential) assertion failure
 1247:7: (potential) precondition failure
+1249:7: (potential) precondition failure
 124:10: (potential) assertion failure
 124:34: (potential) null dereference of 'Buffer'
 1250:7: (potential) null dereference of 'CS'
@@ -179,6 +177,7 @@
 1690:22: (potential) assertion failure
 1691:22: (potential) assertion failure
 169:14: (potential) null dereference of 'Info'
+169:7: (potential) precondition failure
 1704:22: (potential) null dereference of 'Trace_File.Filename'
 1707:42: (potential) null dereference of 'Trace_File.Filename'
 170:26: (potential) null dereference of 'Right'
@@ -425,12 +424,17 @@
 327:19: (potential) null dereference of 'Sec'
 327:36: (potential) null dereference of 'Root_Project'
 3283:23: (potential) invalid field Dests
+3289:36: (potential) invalid field BDD_Node
 329:26: (potential) invalid field Section_Content
 331:44: (potential) invalid field Section_Content
 331:44: (potential) null dereference of 'Section'
 3321:14: (potential) invalid field Op_Kind
 3321:14: (potential) invalid field Op_Kind
+332:35: (potential) invalid field Section_Content
+332:35: (potential) null dereference of 'Sec'
 332:56: (potential) invalid field Section_Sec_Idx
+333:28: (potential) null dereference of 'Get_Insn_Set_Ranges (SO, Sec.Section_...'
+333:53: (potential) invalid field Section_Sec_Idx
 3343:20: (potential) invalid field Operands
 3361:20: (potential) null dereference of 'Sections_Info (ESym.St_Shndx)'
 3379:49: (potential) null dereference of 'Sym'
@@ -460,6 +464,10 @@
 3692:10: (potential) assertion failure
 3692:10: (potential) assertion failure
 3692:10: (potential) assertion failure
+370:18: (potential) null dereference of 'File'
+370:18: (potential) null dereference of 'File'
+370:18: (potential) null dereference of 'File'
+370:18: (potential) null dereference of 'File'
 3721:28: (potential) null dereference of 'Prev_Info'
 373:21: (potential) null dereference of 'File.Ehdr'
 375:18: (potential) null dereference of 'File'
@@ -577,10 +585,12 @@
 480:13: (potential) null dereference of 'FI'
 4812:10: (potential) null dereference of 'I_Ranges'
 484:10: (potential) invalid field Stats
+484:10: (potential) null dereference of 'FI'
+485:10: (potential) precondition failure
 485:18: (potential) invalid field Lines
 485:18: (potential) null dereference of 'FI'
+486:10: (potential) precondition failure
 4874:10: (potential) assertion failure
-487:13: test always false
 487:16: (potential) null dereference of 'Traces'
 48:26: (potential) precondition failure
 48:34: (potential) invalid field Lines
@@ -662,11 +672,17 @@
 690:10: (potential) assertion failure
 692:17: (potential) null dereference of 'Output'
 694:13: (potential) null dereference of 'Parser'
+697:17: (potential) null dereference of 'Output'
 698:13: (potential) null dereference of 'Parser'
+699:17: (potential) null dereference of 'Output'
 700:59: (potential) null dereference of 'Prj_Tree'
 701:16: (potential) assertion failure
+703:17: (potential) null dereference of 'Output'
+704:17: (potential) null dereference of 'Output'
 704:40: (potential) null dereference of 'Pp.Context'
+707:17: (potential) null dereference of 'Output'
 710:16: (potential) assertion failure
+711:17: (potential) null dereference of 'Output'
 714:24: (potential) null dereference of 'Exec.File'
 720:10: (potential) assertion failure
 720:25: (potential) null dereference of 'DS_Top'
@@ -705,6 +721,7 @@
 797:45: (potential) invalid field Line_Executed
 79:23: (potential) null dereference of 'HW_Trigger_Arg'
 802:13: (potential) assertion failure
+80:19: (potential) null dereference of 'Info.Exec'
 812:14: (potential) precondition failure
 813:18: (potential) invalid field Value
 821:17: (potential) invalid field Lines

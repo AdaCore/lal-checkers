@@ -73,7 +73,7 @@ class Boolean(Enum):
 
 class Pointer(Type):
     """
-    Given a type, represents the type of pointers on that type.
+    Represents the type of pointers on any value.
     """
     def __init__(self):
         pass

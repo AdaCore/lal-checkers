@@ -1,4 +1,5 @@
 import boolean_ops
+from itertools import product as cartesian_product
 
 
 def deref(ptr_dom, elem_dom):
@@ -85,6 +86,48 @@ def inv_var_address(ptr_dom, var_index):
             isinstance(addr, path_dom.Address) for addr in ptrs
         )
         return stack_constr[0], next(iter(ptrs)).val - var_index
+
+    return do
+
+
+def subp_address(ptr_dom, subp):
+    """
+    Returns a function which can construct a representation of a pointer on
+    subprogram "subp" given a list of captures (pointers on variables).
+
+    :param domains.Powerset ptr_dom: The pointer domain.
+    :param object subp: The object identifying the subprogram accessed.
+    :rtype: (*list) -> list
+    """
+    path_dom = ptr_dom.dom
+
+    def do(*capture_ptrs):
+        """
+        Given a list of captures as elements of the pointer domain, constructs
+        an element of the pointer domain representing an access on subprogram
+        "subp" with the given captures.
+
+        :param *list capture_ptrs: Elements of the pointer domain representing
+            the variables that are captured by this subprogram.
+        :rtype: list
+        """
+        return ptr_dom.build(
+            path_dom.Subprogram(subp, capture_paths)
+            for capture_paths in cartesian_product(*capture_ptrs)
+        )
+
+    return do
+
+
+def inv_subp_address():
+    """
+    Returns a function which computes the inverse of taking the access on a
+    subprogram.
+
+    Note: unimplemented.
+    """
+    def do(_, *constrs):
+        return constrs[0] if len(constrs) == 1 else constrs
 
     return do
 

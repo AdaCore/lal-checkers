@@ -278,7 +278,15 @@ def traverse_unit(unit, config=_default_configuration):
                 if node.f_attribute.text.lower() == 'access':
                     accessed = _base_accessed_var(node.f_prefix)
                     if accessed is not None:
-                        subpdata[subp].vars_to_spill.add(accessed)
+                        ref_decl = accessed.p_basic_decl
+                        if ref_decl.is_a(lal.BasicSubpDecl, lal.BaseSubpBody):
+                            # Access is done on a subprogram.
+                            subpdata[subp].out_calls.add(
+                                get_subp_identity(ref_decl)
+                            )
+                        else:
+                            # Access is done on a variable.
+                            subpdata[subp].vars_to_spill.add(accessed)
 
             if config.global_var_predicate != AnalysisConfiguration.NO_GLOBAL:
                 if node.is_a(lal.Name):

@@ -7,6 +7,20 @@ class Null(AccessPath):
         return "null"
 
 
+class Subprogram(AccessPath):
+    """
+    Represents an access to a subprogram.
+    """
+    def __init__(self, subp_obj):
+        """
+        :param object subp_obj: An object identifying the subprogram accessed.
+        """
+        self.subp_obj = subp_obj
+
+    def __str__(self):
+        return "Subp_{}".format(self.subp_obj)
+
+
 class Var(AccessPath):
     def __init__(self, var_obj):
         self.var_obj = var_obj

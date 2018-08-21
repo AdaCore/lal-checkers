@@ -10,9 +10,9 @@ from funcy.calc import memoize
 from utils import (
     Mode,
     NotConstExprError,
-    StackType, PointerType, ExtendedCallReturnType, ValueHolder,
-    record_fields, proc_parameters, get_field_info, is_array_type_decl,
-    is_record_field, closest, get_subp_identity
+    StackType, PointerType, ExtendedCallReturnType,
+    ValueHolder, record_fields, proc_parameters, get_field_info,
+    is_array_type_decl, is_record_field, closest, get_subp_identity
 )
 
 _lal_op_type_to_symbol = {
@@ -1541,16 +1541,44 @@ def gen_ir(ctx, subp, typer, subpdata):
         return res
 
     def gen_access_path(expr):
-        if expr.is_a(lal.Identifier):
-            ref = expr.p_xref
+        """
+        Generates the IR expression corresponding to an access on the given
+        expression.
 
-            if ref in substitutions:
-                expr = substitutions[ref][1].data.orig_node
+        :param lal.Expr expr: The expression on which an access is taken.
+        :rtype: irt.Expr
+        """
+        if expr.is_a(lal.Identifier):
+            decl = expr.p_referenced_decl
+            if decl.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
+                #  Access on subprogram
+                accessed_subp = get_subp_identity(decl)
+                subp_data = ctx.subpdata.get(accessed_subp)
+
+                if subp_data is not None:
+                    args = [
+                        stores.get(global_id).access()
+                        for global_id in subp_data.all_global_vars
+                    ]
+                else:
+                    args = []
+
+                return irt.FunCall(
+                    access_paths.Subprogram(accessed_subp), args,
+                    type_hint=PointerType(expr.p_expression_type),
+                    orig_node=expr,
+                )
+            else:
+                #  Access on variable
                 ref = expr.p_xref
 
-            var = stores.get(ref)
-            if var is not None:
-                return var.access(orig_node=expr)
+                if ref in substitutions:
+                    expr = substitutions[ref][1].data.orig_node
+                    ref = expr.p_xref
+
+                var = stores.get(ref)
+                if var is not None:
+                    return var.access(orig_node=expr)
 
         elif expr.is_a(lal.DottedName) and is_record_field(expr.f_suffix):
             info = get_field_info(expr.f_suffix)
