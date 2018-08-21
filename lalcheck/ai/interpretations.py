@@ -695,31 +695,12 @@ def default_array_interpreter(attribute_interpreter):
     )
 
 
-def custom_pointer_interpreter(inner_interpreter):
+@type_interpreter
+def custom_pointer_interpreter(tpe):
     """
-    Builds a simple type interpreter for pointers, representing them as either
-    null or nonnull. Provides comparison ops and deref/address.
-
-    :param TypeInterpreter inner_interpreter: interpreter for pointer elements.
-    :rtype: TypeInterpreter
+    :rtype: TypeInterpretation
     """
-
-    @Transformer.as_transformer
-    def get_pointer_element(tpe):
-        """
-        :param types.Type tpe: The type.
-        :return: The type of the element of the pointer, if relevant.
-        :rtype: type.Type
-        """
-        if tpe.is_a(types.Pointer):
-            return tpe
-
-    @Transformer.as_transformer
-    def pointer_interpreter(_):
-        """
-        :return: A type interpreter for pointers of such elements.
-        :rtype: TypeInterpreter
-        """
+    if tpe.is_a(types.Pointer):
         def merge_predicate(a, b):
             return path_dom.le(a, b) or path_dom.touches(a, b)
 
@@ -777,8 +758,6 @@ def custom_pointer_interpreter(inner_interpreter):
             provider,
             access_paths_ops.lit(ptr_dom)
         )
-
-    return get_pointer_element >> pointer_interpreter
 
 
 @type_interpreter
@@ -936,7 +915,7 @@ def default_type_interpreter():
         default_char_interpreter(default_int_range_interpreter) |
         default_int_range_interpreter |
         default_enum_interpreter |
-        custom_pointer_interpreter(default_type_interpreter) |
+        custom_pointer_interpreter |
         default_product_interpreter(default_type_interpreter) |
         default_array_interpreter(default_type_interpreter) |
         default_ram_interpreter |
