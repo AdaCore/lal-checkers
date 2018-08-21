@@ -320,7 +320,7 @@ def _build_resulting_graph(file_name, cfg, results, trace_domain, model):
     def print_result_builder(v):
         return lambda value: (
             "{} &isin;".format(v.name),
-            model[v].domain.str(value)
+            escape(model[v].domain.str(value))
         )
 
     with open(file_name, 'w') as f:
