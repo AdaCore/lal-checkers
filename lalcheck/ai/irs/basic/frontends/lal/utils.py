@@ -2,6 +2,7 @@ import libadalang as lal
 from lalcheck.ai.constants import ops
 from lalcheck.ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
 from funcy.calc import memoize
+from lalcheck.ai.utils import dataclass
 
 
 class Mode(object):
@@ -52,52 +53,31 @@ class ValueHolder(object):
         self.value = init
 
 
-class ExtendedCallReturnType(object):
+@dataclass
+class CustomTypeHint(object):
+    """
+    Represents a type that lives in the same space as types of Ada expressions
+    that come from libadalang.
+    """
+    def is_a(self, tpe):
+        return isinstance(self, tpe)
+
+
+class ExtendedCallReturnType(CustomTypeHint):
     def __init__(self, out_indices, out_types, ret_type=None):
         self.out_indices = out_indices
         self.out_types = out_types
         self.ret_type = ret_type
 
-    def __eq__(self, other):
-        return (isinstance(other, ExtendedCallReturnType) and
-                self.out_indices == other.out_indices and
-                self.out_types == other.out_types and
-                self.ret_type == other.ret_type)
 
-    def __hash__(self):
-        return hash((self.out_indices, self.out_types, self.ret_type))
-
-    def is_a(self, tpe):
-        return isinstance(self, tpe)
-
-
-class PointerType(object):
+class PointerType(CustomTypeHint):
     def __init__(self, elem_type):
         self.elem_type = elem_type
 
-    def __eq__(self, other):
-        return (isinstance(other, PointerType) and
-                self.elem_type == other.elem_type)
 
-    def __hash__(self):
-        return hash(self.elem_type)
-
-    def is_a(self, tpe):
-        return isinstance(self, tpe)
-
-
-class StackType(object):
+class StackType(CustomTypeHint):
     def __init__(self):
         pass
-
-    def __eq__(self, other):
-        return isinstance(other, StackType)
-
-    def __hash__(self):
-        return hash(self.__class__)
-
-    def is_a(self, tpe):
-        return isinstance(self, tpe)
 
 
 class RecordField(object):

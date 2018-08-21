@@ -338,14 +338,14 @@ class Transformer(object):
 
 def dataclass(cls):
     def new_eq(self, other):
-        return isinstance(other, cls) and vars(self) == vars(other)
+        return isinstance(other, self.__class__) and vars(self) == vars(other)
 
     def new_hash(self):
         return hash(tuple(v for v in vars(self).values()))
 
     def new_repr(self):
         return "{}({})".format(
-            cls.__name__,
+            self.__class__.__name__,
             ", ".join("{}={}".format(k, v) for k, v in vars(self).iteritems())
         )
 
