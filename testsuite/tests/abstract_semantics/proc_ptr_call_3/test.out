@@ -1,0 +1,126 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '[12, 12]'}, 0)"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)"
+        }
+      }
+    ]
+  },
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)"
+        }
+      }
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '[12, 12]'}, 0)"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)"
+        }
+      }
+    ]
+  }
+}

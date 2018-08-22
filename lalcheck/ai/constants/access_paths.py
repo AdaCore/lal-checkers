@@ -11,11 +11,16 @@ class Subprogram(AccessPath):
     """
     Represents an access to a subprogram.
     """
-    def __init__(self, subp_obj):
+    def __init__(self, subp_obj, out_indices, does_return):
         """
         :param object subp_obj: An object identifying the subprogram accessed.
+        :param list[int] out_indices: The indices of the parameters that are
+            "out".
+        :param bool does_return: True iff the subprogram returns a value.
         """
         self.subp_obj = subp_obj
+        self.out_indices = out_indices
+        self.does_return = does_return
 
     def __str__(self):
         return "Subp_{}".format(self.subp_obj)

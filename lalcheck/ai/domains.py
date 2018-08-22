@@ -1338,13 +1338,16 @@ class AccessPathsLattice(AbstractDomain):
         """
         Represents the access path to a subprogram.
         """
-        def __init__(self, name, capture_paths):
+        def __init__(self, name, defs, capture_paths):
             """
             :param object name: The object identifying the subprogram accessed.
+            :param (function, function) defs: The forward and backward
+                implementations of the subprogram.
             :param list[AccessPath] capture_paths: The access paths to the
                 captured variables.
             """
             self.name = name
+            self.defs = defs
             self.vars = capture_paths
 
         def size(self):

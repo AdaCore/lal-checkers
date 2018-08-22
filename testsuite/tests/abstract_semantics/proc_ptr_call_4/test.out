@@ -1,0 +1,146 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "assign2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({1: '[12, 14]'}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "read0": [
+      {
+        "trace:": [
+          "assign0", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "Y": "[-2147483648, 2147483647]", 
+          "Z": "{False, True}"
+        }
+      }
+    ]
+  }, 
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "assign2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({1: '[12, 14]'}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "read0": [
+      {
+        "trace:": [
+          "assign0", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "Y": "[-2147483648, 2147483647]", 
+          "Z": "{False, True}"
+        }
+      }
+    ]
+  }
+}

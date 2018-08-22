@@ -67,6 +67,78 @@ def inv_updated(*_):
     raise NotImplementedError
 
 
+def call(sig):
+    """
+    Returns a function which implements the call to a subprogram access.
+    :param lalcheck.ai.interpretations.Signature sig: The signature of
+        subprogram called.
+    :rtype: (list, *object) -> tuple
+    """
+    ptr_dom = sig.input_domains[0]
+    out_doms = tuple(sig.input_domains[i] for i in sig.out_param_indices)
+    ret_dom = sig.output_domain
+    res_doms = out_doms + ((ret_dom,) if ret_dom is not None else ())
+
+    def do_single(fun_path, args, stack):
+        """
+        Calls the given subprogram with the given arguments. Takes care of
+        passing the pointers on the captures and the stack.
+
+        :param lalcheck.ai.domains.AccessPathsLattice.Subprogram fun_path: The
+            access path to the subprogram to call.
+        :param *object args: The arguments to call the subprogram with.
+        :param object stack: The stack argument.
+        :rtype: object
+        """
+        actual_args = [arg for arg in args]
+        for var in fun_path.vars:  # Append captures
+            actual_args.append(ptr_dom.build([var]))
+
+        actual_args.append(stack)
+
+        res = fun_path.defs[0](*actual_args)
+        return res
+
+    def do(fun_ptrs, *args):
+        """
+        Implements the call to the given subprogram pointer with the given
+        arguments.
+
+        The subprogram pointer may represent multiple subprograms, in which
+        case each of them are called independently and the final return value
+        is the join of all independent return values.
+
+        :param list fun_ptrs: An element of the pointer domain representing
+            the subprogram pointers.
+        :param *object args: The arguments of the call, as element of their
+            respective domains.
+        :return: tuple
+        """
+        results = (
+            do_single(path, args[:-1], args[-1])
+            for path in fun_ptrs
+        )
+        return tuple(
+            reduce(res_dom.join, res, res_dom.bottom)
+            for res_dom, res in zip(res_doms, zip(*results))
+        )
+
+    return do
+
+
+def inv_call():
+    """
+    Returns a function which implements the inverse of the call to a subprogram
+    pointer.
+
+    Note: unimplemented.
+    """
+    def do(_, *constrs):
+        return constrs[0] if len(constrs) == 1 else constrs
+
+    return do
+
+
 def var_address(ptr_dom, elem_dom, var_index):
     path_dom = ptr_dom.dom
 
@@ -90,13 +162,15 @@ def inv_var_address(ptr_dom, var_index):
     return do
 
 
-def subp_address(ptr_dom, subp):
+def subp_address(ptr_dom, subp, defs):
     """
     Returns a function which can construct a representation of a pointer on
     subprogram "subp" given a list of captures (pointers on variables).
 
     :param domains.Powerset ptr_dom: The pointer domain.
     :param object subp: The object identifying the subprogram accessed.
+    :param (function, function) defs: The forward and backward implementations
+        of the subprogram.
     :rtype: (*list) -> list
     """
     path_dom = ptr_dom.dom
@@ -112,7 +186,7 @@ def subp_address(ptr_dom, subp):
         :rtype: list
         """
         return ptr_dom.build(
-            path_dom.Subprogram(subp, capture_paths)
+            path_dom.Subprogram(subp, defs, capture_paths)
             for capture_paths in cartesian_product(*capture_ptrs)
         )
 

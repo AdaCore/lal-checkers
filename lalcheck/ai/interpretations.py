@@ -720,24 +720,15 @@ def custom_pointer_interpreter(tpe):
 
         bin_rel_sig = _signer((ptr_dom, ptr_dom), bool_dom)
 
-        @def_provider_builder
-        def provider(sig):
+        @def_provider
+        def provide_simple(sig):
             if isinstance(sig.name, access_paths.Var):
                 if sig.output_domain == ptr_dom:
                     idx = sig.name.var_obj
                     elem_dom = sig.userdata[0]
-
                     return (
                         access_paths_ops.var_address(ptr_dom, elem_dom, idx),
                         access_paths_ops.inv_var_address(ptr_dom, idx)
-                    )
-
-            if isinstance(sig.name, access_paths.Subprogram):
-                if sig.output_domain == ptr_dom:
-                    subp = sig.name.subp_obj
-                    return (
-                        access_paths_ops.subp_address(ptr_dom, subp),
-                        access_paths_ops.inv_subp_address()
                     )
 
             elif isinstance(sig.name, access_paths.Field):
@@ -764,6 +755,13 @@ def custom_pointer_interpreter(tpe):
                     access_paths_ops.inv_updated,
                 )
 
+            elif (sig.name == ops.CALL and len(sig.input_domains) >= 1
+                  and sig.input_domains[0] == ptr_dom):
+                return (
+                    access_paths_ops.call(sig),
+                    access_paths_ops.inv_call()
+                )
+
             elif sig == bin_rel_sig(ops.EQ):
                 return (access_paths_ops.eq(ptr_dom),
                         access_paths_ops.inv_eq(ptr_dom))
@@ -771,6 +769,69 @@ def custom_pointer_interpreter(tpe):
             elif sig == bin_rel_sig(ops.NEQ):
                 return (access_paths_ops.neq(ptr_dom),
                         access_paths_ops.inv_neq(ptr_dom))
+
+        def provide_subprogram_access(inner_provider):
+            # This provider is composed of several providers in the following
+            # manner:
+            # 1. A first transformer (get_subprogram_access_signature)
+            #    constructs dynamically the Signature object of the subprogram
+            #    being accessed and returns the pair (access_sig, subp_sig)
+            #    where access_sig is the signature of the function which
+            #    creates the subprogram access, and subp_sig is the signature
+            #    of the subprogram being accessed.
+            #
+            # 2. A second transformer (inner_provider) transforms the second
+            #    element of this pair in order to retrieve the forward and
+            #    backward implementations of the subprogram being accessed.
+            #
+            # 3. A third transformer (subprogram_access_provider) creates the
+            #    definition of the subprogram access is finally constructed
+            #    using the pair (access_sig, subp_defs).
+
+            @Transformer.as_transformer
+            def get_subprogram_access_signature(sig):
+                if isinstance(sig.name, access_paths.Subprogram):
+                    if sig.output_domain == ptr_dom:
+                        if sig.name.does_return:
+                            input_domains = sig.userdata[:-1]
+                            output_domain = sig.userdata[-1]
+                        else:
+                            input_domains = sig.userdata
+                            output_domain = None
+
+                        subp_signature = Signature(
+                            sig.name.subp_obj,
+                            tuple(input_domains),
+                            output_domain,
+                            tuple(sig.name.out_indices)
+                        )
+
+                        return sig, subp_signature
+
+            @def_provider
+            def subprogram_access_provider(args):
+                access_sig, subp_defs = args
+                subp = access_sig.name.subp_obj
+                return (
+                    access_paths_ops.subp_address(ptr_dom, subp, subp_defs),
+                    access_paths_ops.inv_subp_address()
+                )
+
+            return (
+                get_subprogram_access_signature >>
+                (Transformer.identity() & inner_provider) >>
+                subprogram_access_provider
+            )
+
+        def provider(inner_provider):
+            # The definition provider for pointers can be split in two main
+            # parts: the provider for simple definitions that do not themselves
+            # require access to a def provider, and the provider for subprogram
+            # accesses, which is a bit more complex.
+            return (
+                provide_simple |
+                provide_subprogram_access(inner_provider)
+            )
 
         return TypeInterpretation(
             ptr_dom,

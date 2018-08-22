@@ -58,9 +58,6 @@
 127:10: (potential) assertion failure
 1287:10: (potential) assertion failure
 1291:50: (potential) null dereference of 'Trace_File'
-1299:20: (potential) invalid field Lines
-1299:20: (potential) null dereference of 'File'
-1299:46: (potential) invalid field Lines
 129:44: (potential) precondition failure
 1302:41: (potential) invalid field Lines
 1302:41: (potential) null dereference of 'Ctx.Subprg'
@@ -157,14 +154,12 @@
 1561:21: (potential) null dereference of 'Line'
 1564:7: (potential) null dereference of 'CS'
 156:17: (potential) null dereference of 'Report'
-1587:13: (potential) null dereference of 'SCIA'
 1589:7: (potential) null dereference of 'CS'
 1590:23: (potential) null dereference of 'Map'
 1590:44: (potential) null dereference of 'BB'
 1593:22: (potential) null dereference of 'BB.Last_Element'
 159:21: (potential) invalid field Stats
 160:13: (potential) null dereference of 'File.Ehdr'
-1613:13: (potential) null dereference of 'New_SCI'
 1617:19: (potential) assertion failure
 1637:19: (potential) assertion failure
 1644:10: (potential) null dereference of 'Context'
@@ -662,7 +657,6 @@
 673:20: (potential) null dereference of 'Output'
 673:32: (potential) null dereference of 'E.Filename'
 674:20: (potential) null dereference of 'Output'
-675:13: (potential) null dereference of 'Parser'
 676:20: (potential) null dereference of 'Output'
 677:30: (potential) null dereference of 'DS_Top'
 677:7: (potential) assertion failure
@@ -671,9 +665,7 @@
 68:17: (potential) null dereference of 'Element (Cur).Factory'
 690:10: (potential) assertion failure
 692:17: (potential) null dereference of 'Output'
-694:13: (potential) null dereference of 'Parser'
 697:17: (potential) null dereference of 'Output'
-698:13: (potential) null dereference of 'Parser'
 699:17: (potential) null dereference of 'Output'
 700:59: (potential) null dereference of 'Prj_Tree'
 701:16: (potential) assertion failure
@@ -709,7 +701,6 @@
 766:7: (potential) assertion failure
 767:10: (potential) assertion failure
 772:13: (potential) assertion failure
-775:28: (potential) null dereference of 'Parser'
 779:10: test always false
 780:10: unreachable code
 783:10: (potential) null dereference of 'Symtab_Shdr'
@@ -726,7 +717,6 @@
 813:18: (potential) invalid field Value
 821:17: (potential) invalid field Lines
 821:17: (potential) null dereference of 'File'
-824:31: (potential) invalid field String_List_Option
 835:28: (potential) invalid field Known_Outcome_Taken
 835:28: (potential) null dereference of 'Get_SCI (Dom_SCO, Tag)'
 835:31: (potential) null dereference of 'Context'
@@ -742,8 +732,6 @@
 873:14: (potential) null dereference of 'Files_Table.Element (Index)'
 873:14: (potential) null dereference of 'Files_Table.Element (Index).Simple_Name'
 882:35: (potential) null dereference of 'D_Occ'
-887:34: (potential) invalid field String_List_Option
-910:19: (potential) null dereference of 'Parser'
 918:27: (potential) null dereference of 'Last_Insn'
 927:13: test always true
 927:19: (potential) null dereference of 'Last_Insn'

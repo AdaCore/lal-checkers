@@ -12,7 +12,8 @@ from utils import (
     NotConstExprError,
     StackType, PointerType, ExtendedCallReturnType,
     ValueHolder, record_fields, proc_parameters, get_field_info,
-    is_array_type_decl, is_record_field, closest, get_subp_identity
+    is_array_type_decl, is_record_field, is_access_to_subprogram,
+    closest, get_subp_identity
 )
 
 _lal_op_type_to_symbol = {
@@ -158,6 +159,46 @@ def _string_literal_param_types(array_type_decl, text):
     index_type = assignment_param_types[2]
 
     return (array_type_decl,) + (index_type, component_type) * len(text)
+
+
+def get_subp_interface(subp, subp_data):
+    """
+    Returns the call interface of the given subprogram as a triplet containing:
+     1. The types of its parameters and return value as a list. If the
+        subprogram returns a value, its type is the last element of the list.
+     2. The indices of its out parameters.
+     3. Whether it returns a value or not.
+
+    :param lal.SubpDecl | lal.SubpBody subp: The subprogram for which to
+        retrieve this interface.
+    :param SubpAnalysisData subp_data: The analysis data of the subprogram.
+    :rtype: (list[lal.TypeDecl], list[int], bool)
+    """
+    params = [
+        param for _, _, param in proc_parameters(subp)
+    ]
+
+    param_types = [param.f_type_expr for param in params]
+    out_indices = [
+        i
+        for i, param in enumerate(params)
+        if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut)
+    ]
+
+    if subp_data is not None:
+        for global_id in subp_data.all_global_vars:
+            param_types.append(
+                PointerType(global_id.p_basic_decl.f_type_expr)
+            )
+
+    param_types.append(StackType())
+    out_indices.append(len(param_types) - 1)
+
+    ret_type = subp.f_subp_spec.f_subp_returns
+    if ret_type is not None:
+        param_types.append(ret_type)
+
+    return param_types, out_indices, ret_type
 
 
 def _find_cousin_conditions(record_fields, cond_prefix):
@@ -1574,28 +1615,44 @@ def gen_ir(ctx, subp, typer, subpdata):
         :param lal.Expr expr: The expression on which an access is taken.
         :rtype: irt.Expr
         """
+
         if expr.is_a(lal.Identifier):
             decl = expr.p_referenced_decl
             if decl.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
-                #  Access on subprogram
+                # Access on subprogram. Generate a function call which name
+                # carries information on the subprogram that is accessed,
+                # including the types of its parameters, etc.
+                # The arguments of that function call are the addresses of
+                # its captures.
+
                 accessed_subp = get_subp_identity(decl)
                 subp_data = ctx.subpdata.get(accessed_subp)
 
                 if subp_data is not None:
-                    args = [
+                    captures = [
                         stores.get(global_id).access()
                         for global_id in subp_data.all_global_vars
                     ]
                 else:
-                    args = []
+                    captures = []
+
+                param_types, out_indices, ret_type = get_subp_interface(
+                    accessed_subp, subp_data
+                )
 
                 return irt.FunCall(
-                    access_paths.Subprogram(accessed_subp), args,
+                    access_paths.Subprogram(
+                        accessed_subp,
+                        out_indices,
+                        ret_type is not None
+                    ),
+                    captures,
                     type_hint=PointerType(expr.p_expression_type),
+                    additional_args=param_types,
                     orig_node=expr,
                 )
             else:
-                #  Access on variable
+                # Access on variable
                 ref = expr.p_xref
 
                 if ref in substitutions:
@@ -1776,6 +1833,10 @@ def gen_ir(ctx, subp, typer, subpdata):
         x_2 := Get_1(tmp)
         r := Get_2(tmp)
 
+        3. `F` is an access on function (without out parameters):
+
+        r := Call(F, x_1, ..., x_n, $stack)
+
         Additionally, contract checks are added around the call.
 
         :param lal.Expr prefix: The object being called.
@@ -1845,6 +1906,28 @@ def gen_ir(ctx, subp, typer, subpdata):
                 builder.add_contracts(*retrieve_function_contracts(ctx, ref))
 
                 return builder.build()
+
+        if is_access_to_subprogram(prefix.p_expression_type):
+            subp_type = prefix.p_expression_type.f_type_def
+            builder = CallExprBuilder(orig_node, ops.CALL, type_hint)
+
+            builder.add_argument(subp_type, transform_expr(prefix))
+
+            for i, _, param in proc_parameters(subp_type):
+                arg_expr = get_arg_for_index(i, prefix, args, prefix)
+                param_type = param.f_type_expr
+
+                assigner = None
+                if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut):
+                    def assigner(out_expr, arg_expr=arg_expr):
+                        return gen_assignment(arg_expr, [], out_expr)
+
+                builder.add_argument(
+                    param_type, transform_expr(arg_expr), assigner
+                )
+
+            builder.add_stack_argument(out=True)
+            return builder.build()
 
         if is_array_type_decl(prefix.p_expression_type):
             arr_type = prefix.p_expression_type.f_type_def
@@ -2457,6 +2540,10 @@ def gen_ir(ctx, subp, typer, subpdata):
                 )[0]
             elif call_expr.is_a(lal.AttributeRef):
                 unimplemented(stmt)
+            elif call_expr.is_a(lal.ExplicitDeref):
+                return gen_call_expr(
+                    call_expr.f_prefix, [], call_expr.p_expression_type, stmt
+                )[0]
             else:
                 return gen_call_expr(
                     call_expr.f_name,
