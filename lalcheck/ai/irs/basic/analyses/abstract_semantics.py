@@ -441,7 +441,7 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
     non_roots = [n for n in cfg.nodes if n not in roots]
 
     # find the variables that appear in the program
-    var_set = set(visitors.findall(prog, lambda n: isinstance(n, Variable)))
+    var_set = set(n for n in prog_model.keys() if isinstance(n, Variable))
 
     # build an index
     indexed_vars = {var.data.index: var for var in var_set}

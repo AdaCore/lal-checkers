@@ -425,6 +425,11 @@ class Models(visitors.Visitor):
 
             typeable = visitors.findall(prog, self._has_type_hint)
 
+            if 'param_vars' in prog.data:
+                # Explicitly add the parameters of the program to the model
+                # even if they are not referenced inside the body.
+                typeable.extend(prog.data.param_vars)
+
             for node in typeable:
                 interp = self._typeable_to_interp(node)
 
