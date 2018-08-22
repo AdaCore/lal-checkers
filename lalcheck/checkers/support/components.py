@@ -248,7 +248,7 @@ class ModelGenerator(Task):
                 self.get_call_strategy_for(
                     self.model_config.call_strategy,
                     progs,
-                    lambda: models,
+                    lambda p: models[p],
                     lambda: merge_pred_builder
                 ).as_def_provider()
             )
@@ -305,7 +305,7 @@ class AbstractAnalyser(Task):
             for prog in ir:
                 try:
                     res.append(abstract_analysis.compute_semantics(
-                        prog, model, merge_pred_builder
+                        prog, model[prog], merge_pred_builder
                     ))
                 except Exception as e:
                     fun = prog.data.fun_id

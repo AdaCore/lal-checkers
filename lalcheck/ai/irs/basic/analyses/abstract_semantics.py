@@ -194,11 +194,11 @@ class TopDownCallStrategy(KnownTargetCallStrategy):
                 for param, value in zip(prog.data.param_vars, args)
             }
 
-            model = self.get_model()
+            prog_model = self.get_model(prog)
 
             analysis = compute_semantics(
                 prog,
-                model,
+                prog_model,
                 self.get_merge_pred_builder(),
                 arg_values
             )
@@ -220,9 +220,9 @@ class TopDownCallStrategy(KnownTargetCallStrategy):
             # Compute their value after the call using the environments.
             param_values = tuple(
                 reduce(
-                    model[var].domain.join,
+                    prog_model[var].domain.join,
                     (env[var] for env in envs),
-                    model[var].domain.bottom
+                    prog_model[var].domain.bottom
                 )
                 for var in out_vars
             )
@@ -231,9 +231,9 @@ class TopDownCallStrategy(KnownTargetCallStrategy):
             # using the environments.
             result_var = prog.data.result_var
             result_value = (reduce(
-                model[result_var].domain.join,
+                prog_model[result_var].domain.join,
                 (env[result_var] for env in envs),
-                model[result_var].domain.bottom
+                prog_model[result_var].domain.bottom
             ),) if result_var is not None else ()
 
             if len(out_vars) == 0 and result_var is not None:
@@ -420,9 +420,9 @@ class AnalysisResults(object):
 _unit_domain = domains.Product()
 
 
-def compute_semantics(prog, model, merge_pred_builder, arg_values=None):
-    evaluator = ExprEvaluator(model)
-    solver = ExprSolver(model)
+def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
+    evaluator = ExprEvaluator(prog_model)
+    solver = ExprSolver(prog_model)
 
     # setup widening configuration
     visit_counter = KeyCounter()
@@ -449,7 +449,8 @@ def compute_semantics(prog, model, merge_pred_builder, arg_values=None):
 
     # define the variables domain
     vars_domain = domains.Product(*(
-        model[indexed_vars[i]].domain if i in indexed_vars else _unit_domain
+        prog_model[indexed_vars[i]].domain
+        if i in indexed_vars else _unit_domain
         for i in range(last_index + 1)
     ))
 

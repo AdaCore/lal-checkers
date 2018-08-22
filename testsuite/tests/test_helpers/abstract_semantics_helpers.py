@@ -28,15 +28,16 @@ def do_analysis(checker,
                 merge_predicates='always',
                 call_strategy_name='unknown',
                 typer='default',
-                test_subprogram='Test'):
+                test_subprogram_name='Test'):
 
     progs = ctx.extract_programs_from_file("test.adb")
+    test_program = find_test_program(progs, test_subprogram_name)
 
     call_strategies = {
         'unknown': abstract_semantics.UnknownTargetCallStrategy(),
         'topdown': abstract_semantics.TopDownCallStrategy(
             progs,
-            lambda: model,
+            lambda p: model[p],
             lambda: pred
         )
     }
@@ -48,13 +49,10 @@ def do_analysis(checker,
     )
 
     model = model_builder.of(*progs)
+    prog_model = model[test_program]
 
     res = {}
     for pred_name, pred in merge_predicates.iteritems():
-        res[pred_name] = checker(
-            find_test_program(progs, test_subprogram),
-            model,
-            pred
-        )
+        res[pred_name] = checker(test_program, prog_model, pred)
 
-    return res, model
+    return res, prog_model

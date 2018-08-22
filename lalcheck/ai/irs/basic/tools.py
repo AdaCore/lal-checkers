@@ -406,23 +406,23 @@ class Models(visitors.Visitor):
 
     def of(self, *programs):
         """
-        :param iterable[irt.Program] programs: Programs for which to build
-            a model.
+        Returns a dictionary that has an entry for each program passed. For
+        each of these programs, there is a corresponding dictionary where each
+        node of that program is associated valuable information, such as the
+        domain used to represent the value it computes, the referenced
+        definition if any, etc.
 
-        :return: A dictionary that has an entry for any node in the given
-            programs that has a type hint. This entry associates to the node
-            valuable information, such as the domain used to represent the
-            value it computes, the referenced definition if any, etc.
-
-        :rtype: dict[tree.Node, Bunch]
+        :param *irt.Program programs: Programs for which to build a model.
+        :rtype: dict[tree.Program, dict[tree.Node, Bunch]]
         """
 
         model = {}
-        node_domains = {}
-        def_provider_builders = set()
-        builders = {}
 
         for prog in programs:
+            node_domains = {}
+            def_provider_builders = set()
+            builders = {}
+
             typeable = visitors.findall(prog, self._has_type_hint)
 
             for node in typeable:
@@ -432,15 +432,18 @@ class Models(visitors.Visitor):
                 def_provider_builders.add(interp.def_provider_builder)
                 builders[interp.domain] = interp.builder
 
-        final_provider = self._make_def_provider(def_provider_builders)
+            final_provider = self._make_def_provider(def_provider_builders)
 
-        for node in node_domains.keys():
-            model[node] = node.visit(
-                self,
-                node_domains,
-                final_provider,
-                builders
-            )
+            prog_model = {}
+            for node in node_domains.keys():
+                prog_model[node] = node.visit(
+                    self,
+                    node_domains,
+                    final_provider,
+                    builders
+                )
+
+            model[prog] = prog_model
 
         return model
 
