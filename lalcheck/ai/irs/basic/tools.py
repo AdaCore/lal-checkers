@@ -349,19 +349,19 @@ class Models(visitors.Visitor):
 
         input_doms = tuple(node_domains[arg] for arg in funcall.args)
 
-        if 'additional_arg' in funcall.data:
-            arg_interp = self._interp_of(
-                self._type_of(
-                    funcall.data.additional_arg
-                )
+        userdata = None
+        if 'additional_args' in funcall.data:
+            userdata = tuple(
+                self._interp_of(self._type_of(additional_arg)).domain
+                for additional_arg in funcall.data.additional_args
             )
-            input_doms = input_doms + (arg_interp.domain,)
 
         sig = Signature(
             funcall.fun_id,
             input_doms,
             ret_dom,
-            out_indices
+            out_indices,
+            userdata
         )
 
         definition, inverse = defs.get(sig)

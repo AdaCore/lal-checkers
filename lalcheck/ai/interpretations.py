@@ -74,7 +74,8 @@ class Signature(object):
       )
     """
 
-    def __init__(self, name, input_domains, output_domain, out_param_indices):
+    def __init__(self, name, input_domains, output_domain, out_param_indices,
+                 userdata=None):
         """
         :param string name: The name of the function.
 
@@ -86,11 +87,14 @@ class Signature(object):
 
         :param tuple[int] out_param_indices: The tuple indicating which
             of the parameters are out.
+
+        :param object userdata: Any user data.
         """
         self.name = name
         self.input_domains = input_domains
         self.output_domain = output_domain
         self.out_param_indices = out_param_indices
+        self.userdata = userdata
 
     def contains(self, domain):
         """
@@ -125,8 +129,9 @@ class Signature(object):
             self.name,
             self.input_domains,
             self.output_domain,
-            self.out_param_indices)
-        )
+            self.out_param_indices,
+            self.userdata
+        ))
 
     def __eq__(self, other):
         """
@@ -136,7 +141,8 @@ class Signature(object):
         return (self.name == other.name and
                 self.input_domains == other.input_domains and
                 self.output_domain == other.output_domain and
-                self.out_param_indices == other.out_param_indices)
+                self.out_param_indices == other.out_param_indices and
+                self.userdata == other.userdata)
 
     def __str__(self):
         return "{}({}){}".format(
@@ -719,7 +725,8 @@ def custom_pointer_interpreter(tpe):
             if isinstance(sig.name, access_paths.Var):
                 if sig.output_domain == ptr_dom:
                     idx = sig.name.var_obj
-                    elem_dom = sig.input_domains[1]
+                    elem_dom = sig.userdata[0]
+
                     return (
                         access_paths_ops.var_address(ptr_dom, elem_dom, idx),
                         access_paths_ops.inv_var_address(ptr_dom, idx)
@@ -736,7 +743,7 @@ def custom_pointer_interpreter(tpe):
             elif isinstance(sig.name, access_paths.Field):
                 if sig.output_domain == ptr_dom:
                     idx = sig.name.field_obj
-                    elem_dom = sig.input_domains[1]
+                    elem_dom = sig.userdata[0]
                     return (
                         access_paths_ops.field_address(ptr_dom, elem_dom, idx),
                         access_paths_ops.inv_field_address(idx)

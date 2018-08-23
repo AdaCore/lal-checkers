@@ -455,7 +455,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                     access_paths.Var(self.var_index),
                     [stack],
                     type_hint=PointerType(self.type_hint),
-                    additional_arg=self.type_hint,
+                    additional_args=[self.type_hint],
                     **data
                 )
 
@@ -1617,7 +1617,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                 access_paths.Field(updated_index),
                 [gen_access_path(expr.f_prefix)],
                 type_hint=PointerType(expr.p_expression_type),
-                additional_arg=expr.p_expression_type,
+                additional_args=[expr.p_expression_type],
                 orig_node=expr
             )
 
@@ -1629,7 +1629,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                 access_paths.Field(updated_index),
                 [gen_access_path(expr.f_prefix)],
                 type_hint=PointerType(expr.p_expression_type),
-                additional_arg=expr.p_expression_type,
+                additional_args=[expr.p_expression_type],
                 orig_node=expr
             )
 
