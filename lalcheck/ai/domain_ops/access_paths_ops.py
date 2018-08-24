@@ -94,10 +94,30 @@ def call(sig):
         for var in fun_path.vars:  # Append captures
             actual_args.append(ptr_dom.build([var]))
 
-        actual_args.append(stack)
+        if fun_path.interface.takes_stack():
+            # Append stack if needed
+            actual_args.append(stack)
 
         res = fun_path.defs[0](*actual_args)
-        return res
+
+        if fun_path.interface.returns_stack():
+            # If the stack is already returned by the function, we can return
+            # the result as is.
+            return res
+        elif len(fun_path.interface.out_indices) == 0:
+            # If the subprogram called does not have out parameters, the stack
+            # is expected to be the first element of the result.
+            return stack, res
+        elif fun_path.interface.does_return:
+            # If the subprogram called has out parameters and returns a value,
+            # the stack is expected to be the last element before the returned
+            # value.
+            return res[:-1] + (stack, res[-1])
+        else:
+            # If the subprogram called has out parameters but does not return
+            # anything, the stack is expected to be the last element of the
+            # result.
+            return res + (stack,)
 
     def do(fun_ptrs, *args):
         """
@@ -162,13 +182,14 @@ def inv_var_address(ptr_dom, var_index):
     return do
 
 
-def subp_address(ptr_dom, subp, defs):
+def subp_address(ptr_dom, subp, interface, defs):
     """
     Returns a function which can construct a representation of a pointer on
     subprogram "subp" given a list of captures (pointers on variables).
 
     :param domains.Powerset ptr_dom: The pointer domain.
     :param object subp: The object identifying the subprogram accessed.
+    :param CallInterface interface: The call interface of the subprogram.
     :param (function, function) defs: The forward and backward implementations
         of the subprogram.
     :rtype: (*list) -> list
@@ -186,7 +207,7 @@ def subp_address(ptr_dom, subp, defs):
         :rtype: list
         """
         return ptr_dom.build(
-            path_dom.Subprogram(subp, defs, capture_paths)
+            path_dom.Subprogram(subp, interface, defs, capture_paths)
             for capture_paths in cartesian_product(*capture_ptrs)
         )
 

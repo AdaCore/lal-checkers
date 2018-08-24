@@ -792,7 +792,7 @@ def custom_pointer_interpreter(tpe):
             def get_subprogram_access_signature(sig):
                 if isinstance(sig.name, access_paths.Subprogram):
                     if sig.output_domain == ptr_dom:
-                        if sig.name.does_return:
+                        if sig.name.interface.does_return:
                             input_domains = sig.userdata[:-1]
                             output_domain = sig.userdata[-1]
                         else:
@@ -803,7 +803,7 @@ def custom_pointer_interpreter(tpe):
                             sig.name.subp_obj,
                             tuple(input_domains),
                             output_domain,
-                            tuple(sig.name.out_indices)
+                            tuple(sig.name.interface.out_indices)
                         )
 
                         return sig, subp_signature
@@ -812,8 +812,11 @@ def custom_pointer_interpreter(tpe):
             def subprogram_access_provider(args):
                 access_sig, subp_defs = args
                 subp = access_sig.name.subp_obj
+                interface = access_sig.name.interface
                 return (
-                    access_paths_ops.subp_address(ptr_dom, subp, subp_defs),
+                    access_paths_ops.subp_address(
+                        ptr_dom, subp, interface, subp_defs
+                    ),
                     access_paths_ops.inv_subp_address()
                 )
 

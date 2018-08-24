@@ -161,18 +161,16 @@ def _string_literal_param_types(array_type_decl, text):
     return (array_type_decl,) + (index_type, component_type) * len(text)
 
 
-def get_subp_interface(subp, subp_data):
+def get_subp_interface(ctx, subp):
     """
-    Returns the call interface of the given subprogram as a triplet containing:
-     1. The types of its parameters and return value as a list. If the
-        subprogram returns a value, its type is the last element of the list.
-     2. The indices of its out parameters.
-     3. Whether it returns a value or not.
+    Returns a pair containing the parameter types (plus the return value if
+    any) and the call interface of the given subprogram.
+    See access_paths.Subprogram.CallInterface.
 
+    :param ExtractionContext ctx: The current extraction context.
     :param lal.SubpDecl | lal.SubpBody subp: The subprogram for which to
         retrieve this interface.
-    :param SubpAnalysisData subp_data: The analysis data of the subprogram.
-    :rtype: (list[lal.TypeDecl], list[int], bool)
+    :rtype: (list[lal.TypeDecl], access_paths.Subprogram.CallInterface)
     """
     params = [
         param for _, _, param in proc_parameters(subp)
@@ -185,20 +183,26 @@ def get_subp_interface(subp, subp_data):
         if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut)
     ]
 
+    subp_data = ctx.subpdata.get(subp)
     if subp_data is not None:
         for global_id in subp_data.all_global_vars:
             param_types.append(
                 PointerType(global_id.p_basic_decl.f_type_expr)
             )
 
-    param_types.append(StackType())
-    out_indices.append(len(param_types) - 1)
+    global_access = _find_global_access(ctx, subp)
+    if global_access != _IGNORES_GLOBAL_STATE:
+        param_types.append(StackType())
+        if global_access == _WRITES_GLOBAL_STATE:
+            out_indices.append(len(param_types) - 1)
 
     ret_type = subp.f_subp_spec.f_subp_returns
     if ret_type is not None:
         param_types.append(ret_type)
 
-    return param_types, out_indices, ret_type
+    return param_types, access_paths.Subprogram.CallInterface(
+        out_indices, global_access, ret_type is not None
+    )
 
 
 def _find_cousin_conditions(record_fields, cond_prefix):
@@ -1636,16 +1640,12 @@ def gen_ir(ctx, subp, typer, subpdata):
                 else:
                     captures = []
 
-                param_types, out_indices, ret_type = get_subp_interface(
-                    accessed_subp, subp_data
+                param_types, call_interface = get_subp_interface(
+                    ctx, accessed_subp
                 )
 
                 return irt.FunCall(
-                    access_paths.Subprogram(
-                        accessed_subp,
-                        out_indices,
-                        ret_type is not None
-                    ),
+                    access_paths.Subprogram(accessed_subp, call_interface),
                     captures,
                     type_hint=PointerType(expr.p_expression_type),
                     additional_args=param_types,
