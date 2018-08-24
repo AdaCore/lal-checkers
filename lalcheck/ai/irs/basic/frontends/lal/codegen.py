@@ -3056,9 +3056,14 @@ class ConvertUniversalTypes(IRImplicitVisitor):
         :rtype: irt.Expr
         """
         try:
+            data = {}
+            if 'orig_node' in expr.data:
+                data['orig_node'] = expr.data.orig_node
+
             return irt.Lit(
                 self.evaluator.eval(expr),
-                type_hint=expected_type
+                type_hint=expected_type,
+                **data
             )
         except NotConstExprError:
             if self.has_universal_type(expr):
