@@ -30,6 +30,19 @@ def collect_assumes_with_purpose(cfg, purpose_type):
     ]
 
 
+def orig_text_matches(expr, texts):
+    """
+    Returns True iff the given expression has an orig_node which textual
+    representation matches one of the given ones.
+
+    :param lalcheck.ai.irs.basic.tree.Expr expr: The expression to consider
+    :param iterable[str] texts: The texts to match.
+    :rtype: bool
+    """
+    return ('orig_node' in expr.data
+            and expr.data.orig_node.text.lower() in texts)
+
+
 def eval_expr_at(analysis, node, expr):
     """
     Evaluates the given expression "expr" at the given program point "node".

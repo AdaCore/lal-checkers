@@ -331,7 +331,6 @@
 27:7: (potential) assertion failure
 2800:16: (potential) invalid field Decision_BDD
 2800:16: (potential) invalid field Decision_BDD
-280:17: test always false
 281:38: (potential) null dereference of 'M1'
 2828:21: (potential) invalid field Subprogram_DIE_CU
 282:38: (potential) null dereference of 'M2'

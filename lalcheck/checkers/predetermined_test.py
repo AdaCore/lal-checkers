@@ -8,7 +8,7 @@ from lalcheck.checkers.support.checker import (
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.checkers.support.kinds import PredeterminedExpression
 from lalcheck.checkers.support.utils import (
-    collect_assumes_with_purpose, eval_expr_at
+    collect_assumes_with_purpose, orig_text_matches, eval_expr_at
 )
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -51,10 +51,12 @@ def find_predetermined_tests(analysis):
     )
 
     # Use the semantic analysis to evaluate at those program points the
-    # corresponding conditions being tested.
+    # corresponding conditions being tested. Filter out conditions explicitly
+    # set to True of False by users.
     if_conds_values = [
         (purpose.condition, eval_expr_at(analysis, node, check_expr))
         for node, check_expr, purpose in predetermined_checks
+        if not orig_text_matches(check_expr, ('true', 'false'))
     ]
 
     # Finally, keep those that are TRUE and only TRUE or FALSE and only FALSE.
