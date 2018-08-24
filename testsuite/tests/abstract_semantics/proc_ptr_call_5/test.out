@@ -61,6 +61,7 @@
           "assign3",
           "assume0",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -85,6 +86,7 @@
           "assign4",
           "assume0",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -110,6 +112,7 @@
           "assign5",
           "assume0",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -156,6 +159,29 @@
           "$stack": "({1: '[42, 42]'}, 0)",
           "B": "{False}",
           "P": "{[all-path]}",
+          "R": "[-2147483648, 2147483647]"
+        }
+      }
+    ],
+    "assume2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assume0",
+          "assume1",
+          "assume2",
+          "read0",
+          "read1",
+          "read2",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '[42, 42]'}, 0)",
+          "B": "{False, True}",
+          "P": "{Subprogram <SubpBody [\"F\"] 5:4-8:10> capturing (), Subprogram <SubpBody [\"G\"] 10:4-13:10> capturing (0x00000001)}",
           "R": "[-2147483648, 2147483647]"
         }
       }
@@ -304,6 +330,7 @@
           "assign1",
           "assign3",
           "assume0",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -323,6 +350,7 @@
           "assign2",
           "assign3",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -345,6 +373,7 @@
           "assign3",
           "assign4",
           "assume0",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -365,6 +394,7 @@
           "assign3",
           "assign4",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -388,6 +418,7 @@
           "assign4",
           "assign5",
           "assume0",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -409,6 +440,7 @@
           "assign4",
           "assign5",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "read2",
@@ -455,6 +487,46 @@
           "$stack": "({1: '[42, 42]'}, 0)",
           "B": "{False}",
           "P": "{[all-path]}",
+          "R": "[-2147483648, 2147483647]"
+        }
+      }
+    ],
+    "assume2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume2",
+          "read0",
+          "read1",
+          "read2",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '[42, 42]'}, 0)",
+          "B": "{True}",
+          "P": "{Subprogram <SubpBody [\"F\"] 5:4-8:10> capturing ()}",
+          "R": "[-2147483648, 2147483647]"
+        }
+      },
+      {
+        "trace:": [
+          "assign0",
+          "assign2",
+          "assume1",
+          "assume2",
+          "read0",
+          "read1",
+          "read2",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({1: '[42, 42]'}, 0)",
+          "B": "{False}",
+          "P": "{Subprogram <SubpBody [\"G\"] 10:4-13:10> capturing (0x00000001)}",
           "R": "[-2147483648, 2147483647]"
         }
       }

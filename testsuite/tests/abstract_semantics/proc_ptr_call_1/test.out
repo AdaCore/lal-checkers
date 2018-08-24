@@ -17,76 +17,106 @@
         "trace:": [
           "assign0", 
           "assign1", 
+          "assume0",
           "start0"
-        ], 
+        ],
         "values": {
-          "$stack": "({}, 0)", 
+          "$stack": "({}, 0)",
           "P": "{Subprogram <SubpBody [\"F\"] 4:4-7:10> capturing (0x00000001)}"
         }
       }
-    ], 
+    ],
     "assign2": [
       {
         "trace:": [
-          "assign0", 
-          "assign1", 
-          "assign2", 
+          "assign0",
+          "assign1",
+          "assign2",
+          "assume0",
           "start0"
-        ], 
+        ],
         "values": {
-          "$stack": "({1: '[12, 12]'}, 0)", 
+          "$stack": "({1: '[12, 12]'}, 0)",
           "P": "{Subprogram <SubpBody [\"F\"] 4:4-7:10> capturing (0x00000001)}"
         }
       }
-    ], 
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
+          "P": "{Subprogram <SubpBody [\"F\"] 4:4-7:10> capturing (0x00000001)}"
+        }
+      }
+    ],
     "start0": [
       {
         "trace:": [
           "start0"
-        ], 
+        ],
         "values": {
-          "$stack": "({}, 0)", 
+          "$stack": "({}, 0)",
           "P": "{[all-path]}"
         }
       }
     ]
-  }, 
+  },
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0", 
+          "assign0",
           "start0"
-        ], 
+        ],
         "values": {
-          "$stack": "({}, 0)", 
+          "$stack": "({}, 0)",
           "P": "{Subprogram <SubpBody [\"F\"] 4:4-7:10> capturing (0x00000001)}"
         }
       }
-    ], 
+    ],
     "assign1": [
       {
         "trace:": [
-          "assign0", 
-          "assign1", 
+          "assign0",
+          "assign1",
+          "assume0",
           "start0"
-        ], 
+        ],
         "values": {
-          "$stack": "({}, 0)", 
+          "$stack": "({}, 0)",
           "P": "{Subprogram <SubpBody [\"F\"] 4:4-7:10> capturing (0x00000001)}"
         }
       }
-    ], 
+    ],
     "assign2": [
       {
         "trace:": [
-          "assign0", 
-          "assign1", 
-          "assign2", 
+          "assign0",
+          "assign1",
+          "assign2",
+          "assume0",
           "start0"
-        ], 
+        ],
         "values": {
-          "$stack": "({1: '[12, 12]'}, 0)", 
+          "$stack": "({1: '[12, 12]'}, 0)",
+          "P": "{Subprogram <SubpBody [\"F\"] 4:4-7:10> capturing (0x00000001)}"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
           "P": "{Subprogram <SubpBody [\"F\"] 4:4-7:10> capturing (0x00000001)}"
         }
       }

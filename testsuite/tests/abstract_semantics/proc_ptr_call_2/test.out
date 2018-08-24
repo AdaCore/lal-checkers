@@ -40,6 +40,7 @@
           "assign2",
           "assume0",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "split_join0",
@@ -61,6 +62,7 @@
           "assign3",
           "assume0",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "split_join0",
@@ -100,6 +102,26 @@
           "$stack": "({}, 0)",
           "B": "{False}",
           "P": "{[all-path]}"
+        }
+      }
+    ],
+    "assume2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "assume2",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
+          "B": "{False, True}",
+          "P": "{Subprogram <SubpBody [\"F\"] 6:4-9:10> capturing (0x00000001), Subprogram <SubpBody [\"G\"] 11:4-15:10> capturing (0x00000001, 0x00000002)}"
         }
       }
     ],
@@ -201,6 +223,7 @@
           "assign0",
           "assign2",
           "assume0",
+          "assume2",
           "read0",
           "read1",
           "split_join0",
@@ -217,6 +240,7 @@
           "assign1",
           "assign2",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "split_join0",
@@ -236,6 +260,7 @@
           "assign2",
           "assign3",
           "assume0",
+          "assume2",
           "read0",
           "read1",
           "split_join0",
@@ -253,6 +278,7 @@
           "assign2",
           "assign3",
           "assume1",
+          "assume2",
           "read0",
           "read1",
           "split_join0",
@@ -292,6 +318,40 @@
           "$stack": "({}, 0)",
           "B": "{False}",
           "P": "{[all-path]}"
+        }
+      }
+    ],
+    "assume2": [
+      {
+        "trace:": [
+          "assign0",
+          "assume0",
+          "assume2",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
+          "B": "{True}",
+          "P": "{Subprogram <SubpBody [\"F\"] 6:4-9:10> capturing (0x00000001)}"
+        }
+      },
+      {
+        "trace:": [
+          "assign1",
+          "assume1",
+          "assume2",
+          "read0",
+          "read1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "$stack": "({}, 0)",
+          "B": "{False}",
+          "P": "{Subprogram <SubpBody [\"G\"] 11:4-15:10> capturing (0x00000001, 0x00000002)}"
         }
       }
     ],

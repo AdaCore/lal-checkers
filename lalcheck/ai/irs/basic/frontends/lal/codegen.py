@@ -1909,9 +1909,25 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         if is_access_to_subprogram(prefix.p_expression_type):
             subp_type = prefix.p_expression_type.f_type_def
-            builder = CallExprBuilder(orig_node, ops.CALL, type_hint)
 
-            builder.add_argument(subp_type, transform_expr(prefix))
+            # Transform the expression being dereferenced and build the
+            # assume expression stating that the prefix is not null.
+            prefix_pre_stmts, prefix_expr = transform_expr(prefix)
+            assumed_expr = irt.FunCall(
+                ops.NEQ,
+                [
+                    prefix_expr,
+                    irt.Lit(lits.NULL, type_hint=prefix.p_expression_type)
+                ],
+                type_hint=ctx.evaluator.bool
+            )
+            prefix_pre_stmts.append(irt.AssumeStmt(
+                assumed_expr,
+                purpose=purpose.DerefCheck(prefix_expr)
+            ))
+
+            builder = CallExprBuilder(orig_node, ops.CALL, type_hint)
+            builder.add_argument(subp_type, (prefix_pre_stmts, prefix_expr))
 
             for i, _, param in proc_parameters(subp_type):
                 arg_expr = get_arg_for_index(i, prefix, args, prefix)
