@@ -1954,11 +1954,19 @@ def gen_ir(ctx, subp, typer, subpdata):
         assume(y != null)
         x := F(y.all)
 
+        Note that dereference can also be a function call. Check out
+        gen_call_expr to see how calls through subprogram pointers are
+        transformed.
+
         :param lal.Expr derefed_expr: The expression being dereferenced.
         :param lal.AdaNode deref_type: The type of the dereference expression.
         :param lal.Expr deref_orig: The original dereference node.
         :rtype: (list[irt.Stmt], irt.Expr)
         """
+
+        if is_access_to_subprogram(derefed_expr.p_expression_type):
+            return gen_call_expr(derefed_expr, [], deref_type, deref_orig)
+
         # Transform the expression being dereferenced and build the
         # assume expression stating that the expr is not null.
         expr_pre_stmts, expr = transform_expr(derefed_expr)
