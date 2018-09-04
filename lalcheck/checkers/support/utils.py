@@ -1,5 +1,6 @@
 import libadalang as lal
 from lalcheck.ai.irs.basic.tree import AssumeStmt
+from lalcheck.ai.domain_capabilities import Capability
 
 
 def collect_assumes_with_purpose(cfg, purpose_type):
@@ -49,20 +50,23 @@ def eval_expr_at(analysis, node, expr):
     Returns a list of results, where a result is a pair holding:
      1. The program trace leading to that node from which evaluating the
         expression will return the result in the second element.
-     2. The result of the evaluation (element of a domain).
+     2. The result of the evaluation as the set of concrete elements which the
+        expression can evaluate to. This means that the domain must support
+        concretization (if not, an empty list is returned).
 
     :param abstract_semantics.AnalysisResults analysis: The results of the
         abstract semantics analysis.
     :param lalcheck.tools.digraph.Digraph.Node node: The program point at which
         to evaluate the given expression.
     :param lalcheck.ai.irs.basic.tree.Expr expr: The expression to evaluate.
-    :rtype: list[(frozenset[Digraph.Node], object)]
+    :rtype: list[(frozenset[Digraph.Node], frozenset[object])]
     """
+    expr_domain = analysis.evaluator.model[expr].domain
+    if not Capability.HasConcretize(expr_domain):
+        return []
+
     return [
-        (
-            frozenset(trace) | {node},
-            analysis.evaluator.model[expr].domain.concretize(value)
-        )
+        (frozenset(trace) | {node}, expr_domain.concretize(value))
         for anc in analysis.cfg.ancestors(node)
         for trace, value in analysis.eval_at(anc, expr).iteritems()
         if value is not None

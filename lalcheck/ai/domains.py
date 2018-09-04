@@ -36,6 +36,7 @@ class AbstractDomain(object):
     """
 
     HasSplit = Capability.No
+    HasConcretize = Capability.No
 
     def build(self, *args):
         """
@@ -211,6 +212,7 @@ class Intervals(AbstractDomain):
     """
 
     HasSplit = Capability.Yes
+    HasConcretize = Capability.Yes
 
     def __init__(self, m_inf, inf):
         """
@@ -357,6 +359,9 @@ class Product(AbstractDomain):
     """
 
     HasSplit = Capability.IfAll(lambda self: self.domains, Capability.HasSplit)
+    HasConcretize = Capability.IfAll(
+        lambda self: self.domains, Capability.HasConcretize
+    )
 
     def __init__(self, *domains):
         """
@@ -612,6 +617,7 @@ class FiniteLattice(AbstractDomain):
     """
 
     HasSplit = Capability(lambda self: self.splitter is not None)
+    HasConcretize = Capability.Yes
 
     @staticmethod
     def _relations_count(lts):
@@ -741,6 +747,7 @@ class FiniteSubsetLattice(AbstractDomain):
     """
 
     HasSplit = Capability.Yes
+    HasConcretize = Capability.Yes
 
     def __init__(self, elems):
         self.bottom = frozenset()
@@ -788,6 +795,8 @@ class FiniteSubsetLattice(AbstractDomain):
 
 
 class SparseArray(AbstractDomain):
+    HasConcretize = Capability.Yes
+
     def __init__(self, index_dom, elem_dom, max_elems=0):
         """
         Creates a sparse array domain in which array elements use the given

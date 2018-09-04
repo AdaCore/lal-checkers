@@ -59,7 +59,8 @@ class Capability(object):
 
     # Predefine build in capabilities so they are available for completions
     # by IDEs.
-    No, Yes, IfSingle, IfAll, HasSplit = None, None, None, None, None
+    No, Yes, IfSingle, IfAll = None, None, None, None
+    HasSplit, HasConcretize = None, None
 
 
 # Singleton capabilities
@@ -73,3 +74,6 @@ Capability.IfAll = staticmethod(Capability._if_all)
 
 # Dynamic capabilities
 Capability.HasSplit = Capability(lambda domain: domain.HasSplit(domain))
+Capability.HasConcretize = Capability(
+    lambda domain: domain.HasConcretize(domain)
+)
