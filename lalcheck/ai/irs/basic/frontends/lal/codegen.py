@@ -1791,24 +1791,39 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         return pre_stmts, post_stmts
 
-    def get_arg_for_index(i, prefix, args, call):
+    def zip_with_params(params, prefix, args, is_dot_call):
         """
-        Returns the right expression that must be used for the given argument
-        index.
+        Zips the given parameters with the given arguments.
 
-        :param int i: The index of argument to retrieve.
-        :param lal.Name prefix: The prefix of the call.
-        :param list[lal.ParamAssoc] args: The arguments of the call.
-        :param lal.Name call: The call node.
-        :rtype: lal.Expr
+        :param list[(int, lal.Identifier, lal.ParamSpec)] params: The
+            parameters to zip with.
+        :param lal.Name prefix: The name being called.
+        :param lal.AssocList args: The arguments of the call.
+        :param bool is_dot_call: Whether the original call is a dot call.
+        :rtype: list[(lal.ParamSpec, lal.Expr)]
         """
-        if call.p_is_dot_call:
-            if i == 0:
-                return prefix.f_prefix
+        actual_args = [(arg.f_designator, arg.f_r_expr) for arg in args]
+        if is_dot_call:
+            actual_args.insert(0, (None, prefix.f_prefix))
+
+        param_index = {
+            name: i
+            for i, name, _ in params
+        }
+
+        ordered_args = [None] * len(param_index)
+        for i, (designator, expr) in enumerate(actual_args):
+            if designator is None:
+                arg_index = i
             else:
-                return args[i - 1].f_r_expr
-        else:
-            return args[i].f_r_expr
+                arg_index = param_index[designator.p_xref]
+
+            ordered_args[arg_index] = expr
+
+        return [
+            (param, arg)
+            for (_, _, param), arg in zip(params, ordered_args)
+        ]
 
     @profile()
     def gen_call_expr(prefix, args, type_hint, orig_node):
@@ -1850,9 +1865,6 @@ def gen_ir(ctx, subp, typer, subpdata):
             # array slices
             return unimplemented_expr(orig_node)
 
-        if any(x.f_designator is not None for x in args):
-            return unimplemented_expr(orig_node)
-
         if prefix.is_a(lal.Identifier, lal.DottedName):
             ref = prefix.p_referenced_decl
             if ref is not None and ref.is_a(lal.SubpBody, lal.SubpDecl):
@@ -1871,8 +1883,14 @@ def gen_ir(ctx, subp, typer, subpdata):
                         pass
                 builder = CallExprBuilder(orig_node, called_name, type_hint)
 
-                for i, _, param in proc_parameters(ref):
-                    arg_expr = get_arg_for_index(i, prefix, args, prefix)
+                param_args = zip_with_params(
+                    proc_parameters(ref),
+                    prefix,
+                    args,
+                    prefix.p_is_dot_call
+                )
+
+                for param, arg_expr in param_args:
                     param_type = param.f_type_expr
 
                     assigner = None
@@ -1929,8 +1947,14 @@ def gen_ir(ctx, subp, typer, subpdata):
             builder = CallExprBuilder(orig_node, ops.CALL, type_hint)
             builder.add_argument(subp_type, (prefix_pre_stmts, prefix_expr))
 
-            for i, _, param in proc_parameters(subp_type):
-                arg_expr = get_arg_for_index(i, prefix, args, prefix)
+            param_args = zip_with_params(
+                proc_parameters(subp_type),
+                prefix,
+                args,
+                False
+            )
+
+            for param, arg_expr in param_args:
                 param_type = param.f_type_expr
 
                 assigner = None

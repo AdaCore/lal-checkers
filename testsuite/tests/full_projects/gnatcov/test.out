@@ -70,6 +70,7 @@
 1304:13: (potential) null dereference of 'Context'
 1304:13: (potential) null dereference of 'Context.Exec'
 1304:7: (potential) assertion failure
+130:10: (potential) null dereference of 'Stream.S'
 130:13: (potential) null dereference of 'File.Ehdr'
 130:29: (potential) null dereference of 'Trace_Output'
 1315:50: (potential) null dereference of 'Exec'
@@ -420,6 +421,7 @@
 316:42: (potential) null dereference of 'TF.Filename'
 3185:19: (potential) assertion failure
 3185:34: (potential) invalid field Dominant
+31:38: (potential) null dereference of 'Subp_Info.Exec'
 31:61: (potential) null dereference of 'Context'
 3210:22: (potential) assertion failure
 3221:22: (potential) assertion failure
@@ -553,6 +555,7 @@
 428:7: (potential) precondition failure
 430:18: (potential) null dereference of 'File'
 4351:22: (potential) null dereference of 'Shdr_Sets (A_Sym.St_Shndx)'
+441:45: (potential) null dereference of 'Prj_Tree'
 448:13: (potential) precondition failure
 4506:54: (potential) invalid field Symbol_Name
 4506:54: (potential) null dereference of 'Sym'
