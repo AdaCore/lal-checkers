@@ -59,7 +59,10 @@ def eval_expr_at(analysis, node, expr):
     :rtype: list[(frozenset[Digraph.Node], object)]
     """
     return [
-        (frozenset(trace) | {node}, value)
+        (
+            frozenset(trace) | {node},
+            analysis.evaluator.model[expr].domain.concretize(value)
+        )
         for anc in analysis.cfg.ancestors(node)
         for trace, value in analysis.eval_at(anc, expr).iteritems()
         if value is not None

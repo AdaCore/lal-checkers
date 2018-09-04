@@ -1,7 +1,6 @@
 from collections import defaultdict
 from xml.sax.saxutils import escape
 
-from lalcheck.ai.constants import lits
 from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import ExistCheck
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
@@ -160,7 +159,7 @@ def find_invalid_accesses(analysis):
     infeasibles = [
         (trace, purpose, len(value) == 1)
         for trace, purpose, value in exist_check_values
-        if lits.FALSE in value
+        if False in value
     ]
 
     return Results(analysis, infeasibles)

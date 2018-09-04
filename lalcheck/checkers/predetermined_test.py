@@ -1,4 +1,3 @@
-from lalcheck.ai.constants import lits
 from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import PredeterminedCheck
 from lalcheck.ai.utils import dataclass
@@ -65,10 +64,10 @@ def find_predetermined_tests(analysis):
         (
             frozenset(trace for trace, _ in trace_values),
             condition,
-            lit == lits.TRUE
+            lit
         )
         for condition, trace_values in if_conds_values
-        for lit in (lits.TRUE, lits.FALSE)
+        for lit in (True, False)
         if len(trace_values) > 0
         if all(
             lit in value and len(value) == 1

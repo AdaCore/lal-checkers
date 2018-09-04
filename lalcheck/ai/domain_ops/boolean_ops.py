@@ -8,12 +8,12 @@ from lalcheck.ai import domains
 
 from lalcheck.ai.constants import lits
 
-Boolean = domains.FiniteLattice.of_subsets({lits.TRUE, lits.FALSE})
+Boolean = domains.FiniteLattice.of_subsets({True, False})
 
 none = Boolean.build(frozenset([]))
-false = Boolean.build(frozenset([lits.FALSE]))
-true = Boolean.build(frozenset([lits.TRUE]))
-both = Boolean.build(frozenset([lits.TRUE, lits.FALSE]))
+false = Boolean.build(frozenset([False]))
+true = Boolean.build(frozenset([True]))
+both = Boolean.build(frozenset([True, False]))
 
 
 def not_(x):
