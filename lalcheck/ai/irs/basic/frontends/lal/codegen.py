@@ -1821,7 +1821,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             ordered_args[arg_index] = expr
 
         return [
-            (param, arg)
+            (param, arg if arg is not None else param.f_default_expr)
             for (_, _, param), arg in zip(params, ordered_args)
         ]
 
@@ -1869,9 +1869,6 @@ def gen_ir(ctx, subp, typer, subpdata):
             ref = prefix.p_referenced_decl
             if ref is not None and ref.is_a(lal.SubpBody, lal.SubpDecl):
                 # The call target is statically known.
-                if any(p.f_default_expr is not None
-                       for _, _, p in proc_parameters(ref)):
-                    return unimplemented_expr(orig_node)
 
                 called_name = ref
                 if ref.is_a(lal.BasicSubpDecl):
