@@ -75,6 +75,7 @@ def call(sig):
     :rtype: (list, *object) -> tuple
     """
     ptr_dom = sig.input_domains[0]
+    path_dom = ptr_dom.dom
     out_doms = tuple(sig.input_domains[i] for i in sig.out_param_indices)
     ret_dom = sig.output_domain
     res_doms = out_doms + ((ret_dom,) if ret_dom is not None else ())
@@ -90,6 +91,9 @@ def call(sig):
         :param object stack: The stack argument.
         :rtype: object
         """
+        if not isinstance(fun_path, path_dom.Subprogram):
+            return tuple(dom.top for dom in res_doms)
+
         actual_args = [arg for arg in args]
         for var in fun_path.vars:  # Append captures
             actual_args.append(ptr_dom.build([var]))
