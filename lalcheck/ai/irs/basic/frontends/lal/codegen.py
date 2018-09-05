@@ -1317,7 +1317,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                        for _, _, p in proc_parameters(ref)):
                     return unimplemented_expr(orig_node)
 
-                if ref.metadata.f_dottable_subp:
+                if prefix.p_is_dot_call:
                     # handle dot calls
                     prefix_expr = prefix.f_prefix
                     arg_exprs.insert(0, prefix_expr)

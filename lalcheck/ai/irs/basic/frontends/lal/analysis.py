@@ -278,7 +278,7 @@ def traverse_unit(unit, config=_default_configuration):
                 if node.is_a(lal.Name):
                     ref = _get_ref_decl(node)
 
-                    if ref is not None and ref.metadata.f_is_call:
+                    if ref is not None and node.p_is_call:
                         actual = _solve_renamings(ref)
                         if actual is not None:
                             subpdata[subp].out_calls.add(
