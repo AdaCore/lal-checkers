@@ -6,7 +6,7 @@ calculates useful information about them.
 import libadalang as lal
 from funcy.calc import memoize
 
-from utils import get_subp_identity
+from utils import get_subp_identity, sorted_by_position
 
 
 class AnalysisConfiguration(object):
@@ -144,7 +144,7 @@ def compute_global_vars(subpdata):
 
     # Guarantee fixed iteration order
     for subp, userdata in subpdata.iteritems():
-        userdata.all_global_vars = list(userdata.all_global_vars)
+        userdata.all_global_vars = sorted_by_position(userdata.all_global_vars)
 
 
 def _solve_renamings(ref):

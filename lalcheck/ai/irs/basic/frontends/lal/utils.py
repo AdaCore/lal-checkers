@@ -213,6 +213,19 @@ def get_subp_identity(subp):
     return subp
 
 
+def sorted_by_position(nodes):
+    """
+    Sorts the given list of lal nodes such that a node X in the resulting list
+    occurs after another node Y in the list iff X appears after Y in the source
+    code.
+
+    :param list[lal.AdaNode] nodes: The nodes to sort.
+    :rtype: list[lal.AdaNode]
+    """
+    return sorted(nodes, key=lambda node: (node.sloc_range.start,
+                                           node.sloc_range.end))
+
+
 @memoize
 def proc_parameters(proc):
     """
