@@ -1367,6 +1367,20 @@ def gen_ir(ctx, subp, typer, subpdata):
             )
         ]
 
+        if len(case_alts) + len(others_potential_stmts) == 1:
+            # If there is only one branch, it must match all possible values
+            # since case stmts must be complete. Therefore, we can drop all
+            # assume statements
+            return case_pre_stmts + [
+                stmt
+                for (_, stmts) in case_alts
+                for stmt in stmts
+            ] + [
+                stmt
+                for others_stmts in others_potential_stmts
+                for stmt in others_stmts
+            ]
+
         # Build the conditions that correspond to matching the choices,
         # for each alternative that is not the "others".
         # See `gen_case_condition`.

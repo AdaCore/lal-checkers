@@ -1,0 +1,4 @@
+Program:
+  read(expr_kind#1)
+  expr_kind#1 = BinExpr
+  end:

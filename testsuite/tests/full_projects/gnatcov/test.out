@@ -72,6 +72,7 @@
 1339:28: (potential) null dereference of 'D_Occ'
 133:20: (potential) null dereference of 'File.Ehdr'
 134:10: (potential) assertion failure
+134:40: (potential) null dereference of 'LI'
 1350:13: (potential) null dereference of 'SCI'
 135:60: (potential) null dereference of 'Exec'
 1365:49: (potential) null dereference of 'Exec'
