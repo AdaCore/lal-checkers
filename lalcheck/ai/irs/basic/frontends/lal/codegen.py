@@ -1825,6 +1825,29 @@ def gen_ir(ctx, subp, typer, subpdata):
             for (_, _, param), arg in zip(params, ordered_args)
         ]
 
+    def out_assigner(arg_expr):
+        """
+        Returns a function that creates the list of statements that assign
+        arg_expr to an out parameter. This function returns an empty list if
+        there was a problem during the creation of the assignment, for example
+        if the destination of the assignment failed to be generated.
+
+        :param lal.Expr arg_expr: The out expression that will be assigned.
+        :rtype: irt.Expr -> list[irt.Stmt]
+        """
+        def do(out_expr):
+            """
+            :param irt.Expr out_expr: The expression to assign.
+            :rtype: list[irt.Stmt]
+            """
+            try:
+                return gen_assignment(arg_expr, [], out_expr)
+            except (lal.PropertyError, NotImplementedError,
+                    KeyError, NotConstExprError) as e:
+                print_warning(arg_expr, e)
+                return []
+        return do
+
     @profile()
     def gen_call_expr(prefix, args, type_hint, orig_node):
         """
@@ -1892,8 +1915,7 @@ def gen_ir(ctx, subp, typer, subpdata):
 
                     assigner = None
                     if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut):
-                        def assigner(out_expr, arg_expr=arg_expr):
-                            return gen_assignment(arg_expr, [], out_expr)
+                        assigner = out_assigner(arg_expr)
 
                     builder.add_argument(
                         param_type, transform_expr(arg_expr), assigner
@@ -1956,8 +1978,7 @@ def gen_ir(ctx, subp, typer, subpdata):
 
                 assigner = None
                 if param.f_mode.is_a(lal.ModeOut, lal.ModeInOut):
-                    def assigner(out_expr, arg_expr=arg_expr):
-                        return gen_assignment(arg_expr, [], out_expr)
+                    assigner = out_assigner(arg_expr)
 
                 builder.add_argument(
                     param_type, transform_expr(arg_expr), assigner
