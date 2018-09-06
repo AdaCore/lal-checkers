@@ -11,6 +11,7 @@ from lalcheck.tools.logger import log, log_stdout
 
 import sys
 import traceback
+import time
 
 ProjectProvider = namedtuple(
     'ProjectProvider', ['project_file', 'scenario_vars']
@@ -153,7 +154,13 @@ class IRGenerator(Task):
         if unit is not None:
             log('info', 'Transforming {}'.format(self.filename))
             try:
+                start_t = time.clock()
                 irtree = ctx.extract_programs_from_unit(unit)
+                end_t = time.clock()
+
+                log('timings', "Transformation of {} took {}s.".format(
+                    self.filename, end_t - start_t
+                ))
             except Exception as e:
                 with log_stdout('info'):
                     print('error: could not generate IR for file {}: {}.'
@@ -302,17 +309,37 @@ class AbstractAnalyser(Task):
             log('info', 'Analyzing file {}'.format(self.analysis_file))
 
             model, merge_pred_builder = model_and_merge_pred
+
+            start_t = time.clock()
+
             for prog in ir:
+                fun = prog.data.fun_id
+                subp_start_t = time.clock()
+
                 try:
                     res.append(abstract_analysis.compute_semantics(
                         prog, model[prog], merge_pred_builder
                     ))
                 except Exception as e:
-                    fun = prog.data.fun_id
                     with log_stdout('info'):
                         print('error: analysis of subprocedure {}({}) failed: '
                               '{}.'.format(fun.f_subp_spec.f_subp_name.text,
                                            fun.sloc_range, e))
                         traceback.print_exc(file=sys.stdout)
+
+                subp_end_t = time.clock()
+
+                log(
+                    'timings',
+                    " - Analysis of subprocedure {} took {}s.".format(
+                        fun.f_subp_spec.f_subp_name.text,
+                        subp_end_t - subp_start_t
+                    )
+                )
+
+            end_t = time.clock()
+            log('timings', "Analysis of {} took {}s.".format(
+                self.analysis_file, end_t - start_t
+            ))
 
         return {'res': res}

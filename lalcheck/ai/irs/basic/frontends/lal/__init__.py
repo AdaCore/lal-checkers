@@ -4,11 +4,12 @@ Provides a libadalang frontend for the Basic IR.
 
 import libadalang as lal
 from lalcheck.ai.utils import profile
-from lalcheck.tools.logger import log_stdout
+from lalcheck.tools.logger import log_stdout, log
 
 import analysis
 import typers
 import utils
+import time
 from codegen import ConvertUniversalTypes, gen_ir
 
 
@@ -151,11 +152,21 @@ class ExtractionContext(object):
         subpdata = analysis.traverse_unit(unit.root)
         self.subpdata.update(subpdata)
 
-        progs = [
-            gen_ir(self, subp, self._internal_typer, subpuserdata)
-            for subp, subpuserdata in subpdata.iteritems()
-            if subp.is_a(lal.BaseSubpBody)
-        ]
+        progs = []
+        for subp, subpuserdata in subpdata.iteritems():
+            if subp.is_a(lal.BaseSubpBody):
+                start_t = time.clock()
+                progs.append(
+                    gen_ir(self, subp, self._internal_typer, subpuserdata)
+                )
+                end_t = time.clock()
+                log(
+                    'timings',
+                    " - Transformation of subprocedure {} took {}s".format(
+                        subp.f_subp_spec.f_subp_name.text,
+                        end_t - start_t
+                    )
+                )
 
         converter = ConvertUniversalTypes(self.evaluator, self._internal_typer)
 
