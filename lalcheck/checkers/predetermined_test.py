@@ -42,6 +42,18 @@ def check_predetermined_tests(prog, model, merge_pred_builder):
     return find_predetermined_tests(analysis)
 
 
+def _contains(node, other):
+    """
+    Given two nodes a and b, returns True if b appears inside a, as one of its
+    (possibly indirect) children. Returns False if a is b.
+
+    :param lal.AdaNode node: The node in which to search.
+    :param lal.AdaNode other: The node to find.
+    :rtype: bool
+    """
+    return node is not other and node.find(lambda x: x == other)
+
+
 def find_predetermined_tests(analysis):
     # Collect assume statements that have a PredeterminedCheck purpose.
     predetermined_checks = collect_assumes_with_purpose(
@@ -75,7 +87,22 @@ def find_predetermined_tests(analysis):
         )
     ]
 
-    return Results(analysis, predermined_tests)
+    # Filter out redundant ones. For example in "if False and then B", two
+    # messages are generated: one for the sub-condition "False" and one for the
+    # enclosing condition "False and then B", which is trivially also false.
+    # This can be worked around by removing messages of nodes on which a child
+    # node already has a message.
+
+    filtered_predetermined_tests = [
+        test
+        for test in predermined_tests
+        if not any(
+            _contains(test[1], cond)
+            for _, cond, _ in predermined_tests
+        )
+    ]
+
+    return Results(analysis, filtered_predetermined_tests)
 
 
 @Requirement.as_requirement

@@ -320,8 +320,6 @@
 264:20: (potential) invalid field Sloc
 264:29: (potential) invalid field Sloc
 2660:13: test always false
-2660:13: test always false
-2660:13: test always false
 2660:14: (potential) null dereference of 'Shdr'
 2664:13: (potential) assertion failure
 2665:13: unreachable code (until line 2689)
@@ -439,7 +437,6 @@
 3361:20: (potential) null dereference of 'Sections_Info (ESym.St_Shndx)'
 3379:49: (potential) null dereference of 'Sym'
 3391:20: (potential) invalid field Value
-345:10: test always true
 345:27: (potential) null dereference of 'Context.Exe_File'
 3480:31: (potential) invalid field C_SCO
 349:10: (potential) invalid field E
@@ -532,8 +529,6 @@
 424:50: (potential) null dereference of 'BB.Called_Sym'
 424:53: (potential) null dereference of 'Info.Full_Name'
 424:69: (potential) null dereference of 'Exec'
-4279:13: test always false
-4279:13: test always false
 4279:13: test always false
 4279:14: (potential) null dereference of 'Shdr'
 428:26: (potential) null dereference of 'Root_Project'
