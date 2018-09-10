@@ -824,8 +824,8 @@ class SparseArray(AbstractDomain):
         assert self.le(elems, self.top)
         return elems
 
-    def size(self, x):
-        return sum(self.prod_dom.size(e) for e in x)
+    def is_empty(self, x):
+        return len(x) == 0
 
     def _merge_element(self, array, e):
         """
