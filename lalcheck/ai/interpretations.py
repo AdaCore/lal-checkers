@@ -621,9 +621,11 @@ def default_array_interpreter(attribute_interpreter):
         array_get = sparse_array_ops.get(array_dom)
         array_updated = sparse_array_ops.updated(array_dom)
         array_index_range = sparse_array_ops.index_range(array_dom)
+        array_in_values_of = sparse_array_ops.in_values_of(array_dom)
         array_inv_get = sparse_array_ops.inv_get(array_dom)
         array_inv_updated = sparse_array_ops.inv_updated(array_dom)
         array_inv_index_range = sparse_array_ops.inv_index_range(array_dom)
+        array_inv_in_values_of = sparse_array_ops.inv_in_values_of(array_dom)
         array_string = sparse_array_ops.array_string(array_dom)
 
         # Wrap them in actual implementations. Indeed, the format of the
@@ -719,6 +721,10 @@ def default_array_interpreter(attribute_interpreter):
             elif (sig.name == ops.STRING
                     and sig.output_domain == array_dom):
                 return actual_string, actual_inv_string
+            elif (sig.name == ops.IN_VALUES_OF
+                    and len(sig.input_domains) == 2
+                    and sig.input_domains[1] == array_dom):
+                return array_in_values_of, array_inv_in_values_of
             elif (isinstance(sig.name, ops.InRangeName)
                     and len(sig.input_domains) == 2
                     and sig.input_domains[1] == array_dom):

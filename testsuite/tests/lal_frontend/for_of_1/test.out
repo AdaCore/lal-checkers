@@ -1,0 +1,7 @@
+Program:
+  read(My_Array#1)
+  assume(InValuesOf(E#2, My_Array#1))
+  loop:
+
+  exit_for_loop0:
+  end:

@@ -3,6 +3,8 @@ Provides a collection of common useful operations on sparse array domains.
 """
 from lalcheck.ai.utils import partition
 from lalcheck.ai.domain_capabilities import Capability
+import boolean_ops
+import util_ops
 
 
 def get(domain):
@@ -148,6 +150,50 @@ def index_range(domain):
         :rtype: object
         """
         return reduce(index_dom.join, [i for i, e in array], index_dom.bottom)
+
+    return do
+
+
+def in_values_of(domain):
+    """
+    Returns a function which checks that the given element belongs to the set
+    of values that a given array holds.
+
+    For example, let:
+      - my_domain = SparseArrayDomain(Intervals(-10, 10), Intervals(-10, 10)).
+      - my_array = [((-10, 3), (2, 3)), ((4, 10), (6, 10))]
+      - do = in_values_of(my_domain)
+
+    Then:
+      - do((2, 2),  my_array) returns {True}.
+      - do((4, 5),  my_array) returns {False}.
+      - do((2, 10), my_array) returns {True, False}.
+      - do(bottom, my_array) returns {}.
+
+    :param lalcheck.ai.domains.SparseArray domain: The sparse array domain.
+    :rtype: (object, list) -> frozenset
+    """
+    elem_dom = domain.elem_dom
+    is_included = util_ops.included(elem_dom)
+
+    def do(x, array):
+        """
+        Checks whether the given set of elements (as an element of the
+        component domain of the array domain) is included in the set of
+        values that the given array holds.
+
+        :type x: object
+        :type array: list
+        :rtype: frozenset
+        """
+        res = boolean_ops.none
+        for _, e in array:
+            res = boolean_ops.Boolean.join(res, is_included(x, e))
+            if res == boolean_ops.both:
+                # Early exit, as the rest of the iterations would be joins on
+                # the top element.
+                break
+        return res
 
     return do
 
@@ -309,6 +355,76 @@ def inv_index_range(domain):
             for i, e in array_constr
             if not index_dom.is_empty(index_dom.meet(res, i))
         ]
+
+    return do
+
+
+def inv_in_values_of(domain):
+    """
+    Returns a function which performs the inverse of checking that a given
+    element is in the range of values that the array holds.
+
+    For example, let:
+      - my_domain = SparseArrayDomain(Intervals(-10, 10), Intervals(-10, 10)).
+      - my_array_constr = [((-10, 3), (2, 3)), ((4, 10), (6, 10))]
+      - do_inv = inv_in_values_of(my_domain)
+
+    Then:
+      - do_inv({False}, X_CONSTR, ARRAY_CONSTR) returns X_CONSTR, ARRAY_CONSTR:
+            do_inv is only precise for res = {True}.
+
+      - do_inv({True}, (2, 3),  my_array_constr) returns
+            (2, 3), [((-10, 3), (2, 3))].
+
+      - do_inv({True}, (2, 10), my_array_constr) returns
+            (2, 10), [((-10, 3), (2, 3)), ((4, 10), (6, 10))]
+
+      - do_inv({True}, (-3, 10), my_array_constr) returns
+            (2, 10), [((-10, 3), (2, 3)), ((4, 10), (6, 10))]
+
+      - do_inv({True}, (-3, 8), my_array_constr) returns
+            (2, 8), [((-10, 3), (2, 3)), ((4, 10), (6, 8))]
+
+    :param lalcheck.ai.domains.SparseArray domain: The sparse array domain.
+    :rtype: (frozenset, object, list) -> (object, list)
+    """
+    elem_dom = domain.elem_dom
+
+    def do(res, x_constr, array_constr):
+        """
+        Performs the inverse of checking whether a given set of elements (as
+        an element of the component domain of the array domain) is included
+        in the values that the array can hold.
+
+        :param frozenset res: The expected boolean result.
+        :param object x_constr: A constraint on the element.
+        :param list array_constr: A constraint on the array.
+        :rtype: (object, list)
+        """
+        if (elem_dom.is_empty(x_constr) or
+                domain.is_empty(array_constr) or
+                res == boolean_ops.none):
+            return None
+
+        if res == boolean_ops.true:
+            # Compute the meet with all elements in the array.
+            meets = [elem_dom.meet(x_constr, e) for i, e in array_constr]
+
+            # Refine the constraint on the array knowing that its values cannot
+            # hold what is outside the previously computed meet.
+            expected_arr = [
+                (i, meet)
+                for meet, (i, _) in zip(meets, array_constr)
+                if not elem_dom.is_empty(meet)
+            ]
+
+            # If the resulting array is empty, there are no solutions.
+            if domain.is_empty(expected_arr):
+                return None
+
+            return reduce(elem_dom.join, meets, elem_dom.bottom), expected_arr
+
+        return x_constr, array_constr
 
     return do
 

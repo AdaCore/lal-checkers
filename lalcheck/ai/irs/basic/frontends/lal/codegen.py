@@ -978,10 +978,10 @@ def gen_ir(ctx, subp, typer, subpdata):
         """
         return irt.FunCall(op, [lhs, rhs], type_hint=ctx.evaluator.bool)
 
-    def gen_for_condition(iter_var, iter_expr):
+    def gen_for_condition(iter_var, iter_expr, iter_type):
         """
-        Generate the condition (I in E) where I is the iteration variable and
-        E the expression on which to iterate over. E.g:
+        Generate the condition (I in E) or (I of E) where I is the iteration
+        variable and E the expression on which to iterate over. E.g:
 
         - I in 0 .. 10: I >= 0 && I <= 10
         - I in Positive: I >= 1 && I <= 2**32 - 1
@@ -989,6 +989,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         :param irt.Expr iter_var: The iteration variable.
         :param lal.Expr iter_expr: The LAL node representing the expression to
             iterate over.
+        :param lal.IterType iter_type: The type of iteration (In or Of).
         :rtype: irt.Expr
         """
         def build_range_condition(low, high):
@@ -1063,6 +1064,12 @@ def gen_ir(ctx, subp, typer, subpdata):
                 ops.InRangeName(dimension), iter_var, expr
             )
 
+        def gen_when_array_values(array_expr):
+            pre_stmts, expr = transform_expr(array_expr)
+            return pre_stmts, build_relational(
+                ops.IN_VALUES_OF, iter_var, expr
+            )
+
         range_dim = 1
         if (iter_expr.is_a(lal.AttributeRef)
                 and iter_expr.f_attribute.text.lower() == 'range'):
@@ -1081,8 +1088,12 @@ def gen_ir(ctx, subp, typer, subpdata):
                 # iterating over a (sub)type
                 return gen_when_type_reference(ref)
             elif iter_expr.p_expression_type is not None:
-                # iterating over an array
-                return gen_when_array_range(iter_expr, range_dim)
+                if iter_type.is_a(lal.IterTypeIn):
+                    # iterating over an array's range
+                    return gen_when_array_range(iter_expr, range_dim)
+                else:
+                    # iterating over an array's values
+                    return gen_when_array_values(iter_expr)
 
         unimplemented(iter_expr)
 
@@ -2815,28 +2826,29 @@ def gen_ir(ctx, subp, typer, subpdata):
             # todo: handle "for x of ..." pattern.
 
             spec = stmt.f_spec
-            if spec.f_loop_type.is_a(lal.IterTypeIn):
-                loop_var = spec.f_var_decl.f_id
-                var_expr = stores.register_normal(
-                    defining_name=loop_var,
-                    type_hint=loop_var.p_expression_type,
-                    orig_node=loop_var,
-                    mode=Mode.Local
-                ).get()
+            loop_var = spec.f_var_decl.f_id
+            var_expr = stores.register_normal(
+                defining_name=loop_var,
+                type_hint=loop_var.p_expression_type,
+                orig_node=loop_var,
+                mode=Mode.Local
+            ).get()
 
-                pre_stmts, cond = gen_for_condition(var_expr, spec.f_iter_expr)
+            pre_stmts, cond = gen_for_condition(
+                var_expr,
+                spec.f_iter_expr,
+                spec.f_loop_type
+            )
 
-                exit_label = irt.LabelStmt(fresh_name('exit_for_loop'))
+            exit_label = irt.LabelStmt(fresh_name('exit_for_loop'))
 
-                loop_stack.append((stmt, exit_label))
-                loop_stmts = transform_stmts(stmt.f_stmts)
-                loop_stack.pop()
+            loop_stack.append((stmt, exit_label))
+            loop_stmts = transform_stmts(stmt.f_stmts)
+            loop_stack.pop()
 
-                return pre_stmts + [irt.AssumeStmt(cond), irt.LoopStmt(
-                    loop_stmts
-                ), exit_label]
-
-            return []
+            return pre_stmts + [irt.AssumeStmt(cond), irt.LoopStmt(
+                loop_stmts
+            ), exit_label]
 
         elif stmt.is_a(lal.Label):
             # Use the pre-transformed label.

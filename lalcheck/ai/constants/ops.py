@@ -29,6 +29,8 @@ GET_MODEL = 'GetModel'
 
 STRING = 'String'
 
+IN_VALUES_OF = 'InValuesOf'
+
 
 class _IndexedName(object):
     def __init__(self, index, frmt):
