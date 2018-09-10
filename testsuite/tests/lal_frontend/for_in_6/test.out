@@ -1,0 +1,8 @@
+Program:
+  read(My_Array#1)
+  X#2 = 0
+  assume(InRange_1(I#3, My_Array#1))
+  loop:
+    X#2 = I#3
+  exit_for_loop0:
+  end:

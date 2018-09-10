@@ -971,7 +971,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         Generate a function call to the given binary relational operator
         between the two given expressions.
 
-        :param str op: The operator to call.
+        :param object op: The operator to call.
         :param irt.Expr lhs: The left-hand side.
         :param irt.Expr rhs: The right-hand side.
         :rtype: irt.Expr
@@ -1057,18 +1057,32 @@ def gen_ir(ctx, subp, typer, subpdata):
                 pass
             raise NotImplementedError("Cannot transform type reference")
 
+        def gen_when_array_range(array_expr, dimension):
+            pre_stmts, expr = transform_expr(array_expr)
+            return pre_stmts, build_relational(
+                ops.InRangeName(dimension), iter_var, expr
+            )
+
+        range_dim = 1
         if (iter_expr.is_a(lal.AttributeRef)
                 and iter_expr.f_attribute.text.lower() == 'range'):
+            if iter_expr.f_args is not None:
+                range_dim = iter_expr.f_args[0].f_r_expr.p_eval_as_int
             iter_expr = iter_expr.f_prefix
 
-        if (iter_expr.is_a(lal.Identifier)
-                and iter_expr.p_referenced_decl.is_a(lal.BaseTypeDecl)):
-            return gen_when_type_reference(iter_expr.p_referenced_decl)
-        elif iter_expr.is_a(lal.DiscreteSubtypeIndication):
+        if iter_expr.is_a(lal.DiscreteSubtypeIndication):
             return gen_when_type_reference(iter_expr)
         elif (iter_expr.is_a(lal.BinOp)
                 and iter_expr.f_op.is_a(lal.OpDoubleDot)):
             return gen_when_range_exprs(iter_expr.f_left, iter_expr.f_right)
+        else:
+            ref = iter_expr.p_referenced_decl
+            if ref.is_a(lal.BaseTypeDecl):
+                # iterating over a (sub)type
+                return gen_when_type_reference(ref)
+            elif iter_expr.p_expression_type is not None:
+                # iterating over an array
+                return gen_when_array_range(iter_expr, range_dim)
 
         unimplemented(iter_expr)
 

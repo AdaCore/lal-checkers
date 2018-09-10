@@ -58,3 +58,9 @@ class UpdatedName(_IndexedName):
 class OffsetName(_IndexedName):
     def __init__(self, index):
         super(OffsetName, self).__init__(index, "Offset_{}")
+
+
+class InRangeName(_IndexedName):
+    def __init__(self, dimension):
+        # self.index will actually be the dimension.
+        super(InRangeName, self).__init__(dimension, "InRange_{}")

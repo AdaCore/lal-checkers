@@ -13,7 +13,8 @@ from lalcheck.ai.domain_ops import (
     product_ops,
     sparse_array_ops,
     access_paths_ops,
-    ram_ops
+    ram_ops,
+    util_ops
 )
 from lalcheck.ai.utils import Transformer
 
@@ -619,8 +620,10 @@ def default_array_interpreter(attribute_interpreter):
 
         array_get = sparse_array_ops.get(array_dom)
         array_updated = sparse_array_ops.updated(array_dom)
+        array_index_range = sparse_array_ops.index_range(array_dom)
         array_inv_get = sparse_array_ops.inv_get(array_dom)
         array_inv_updated = sparse_array_ops.inv_updated(array_dom)
+        array_inv_index_range = sparse_array_ops.inv_index_range(array_dom)
         array_string = sparse_array_ops.array_string(array_dom)
 
         # Wrap them in actual implementations. Indeed, the format of the
@@ -657,6 +660,14 @@ def default_array_interpreter(attribute_interpreter):
                 *((arg,) if i % 2 == 0 else arg for i, arg in enumerate(args))
             )
 
+        def actual_in_index_range(dim):
+            idx_included = util_ops.included(indices_dom.domains[dim - 1])
+
+            def do(index, array):
+                return idx_included(index, array_index_range(array)[dim - 1])
+
+            return do
+
         def actual_inv_get(res, array_constr, *indices_constr):
             arr, indices = array_inv_get(res, array_constr, indices_constr)
             return (arr,) + indices
@@ -672,6 +683,33 @@ def default_array_interpreter(attribute_interpreter):
             # an index occurs every even argument.
             return arg_constrs
 
+        def actual_inv_in_index_range(dim):
+            index_dom = indices_dom.domains[dim - 1]
+            inv_included = util_ops.inv_included(index_dom)
+            prod_get = product_ops.getter(dim - 1)
+            prod_inv_get = product_ops.inv_getter(indices_dom, dim - 1)
+
+            def do(res, index_constr, array_constr):
+                rng_constr = array_index_range(array_constr)
+
+                index_constr, rng_dim_constr = inv_included(
+                    res, index_constr, prod_get(rng_constr)
+                ) or (index_dom.bottom, index_dom.bottom)
+
+                array_constr = array_inv_index_range(
+                    prod_inv_get(rng_dim_constr, rng_constr)
+                    or indices_dom.bottom,
+                    array_constr
+                )
+
+                if (index_dom.is_empty(index_constr) or
+                        array_dom.is_empty(array_constr)):
+                    return None
+
+                return index_constr, array_constr
+
+            return do
+
         @def_provider_builder
         def provider(sig):
             if sig == call_sig:
@@ -681,6 +719,13 @@ def default_array_interpreter(attribute_interpreter):
             elif (sig.name == ops.STRING
                     and sig.output_domain == array_dom):
                 return actual_string, actual_inv_string
+            elif (isinstance(sig.name, ops.InRangeName)
+                    and len(sig.input_domains) == 2
+                    and sig.input_domains[1] == array_dom):
+                dim = sig.name.index
+                return (
+                    actual_in_index_range(dim), actual_inv_in_index_range(dim)
+                )
 
         return TypeInterpretation(
             array_dom,

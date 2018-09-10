@@ -128,6 +128,30 @@ def updated(domain):
     return do_precise if has_split else do_imprecise
 
 
+def index_range(domain):
+    """
+    Returns a function which takes an abstract array and returns an abstract
+    element representing the range of the indices which are defined in the
+    array.
+
+    :param lalcheck.ai.domains.SparseArray domain: The sparse array domain.
+    :rtype: list -> object
+    """
+    index_dom = domain.index_dom
+
+    def do(array):
+        """
+        Returns an abstract element of the index domain which represents the
+        range of indices that are defined in the array.
+
+        :param list array: The abstract array.
+        :rtype: object
+        """
+        return reduce(index_dom.join, [i for i, e in array], index_dom.bottom)
+
+    return do
+
+
 def array_string(domain):
     """
     :param lalcheck.domains.SparseArray domain: The sparse array domain.
@@ -251,6 +275,40 @@ def inv_get(domain):
 def inv_updated(domain):
     def do(res, array_constr, val_constr, indices_constr):
         raise NotImplementedError
+
+    return do
+
+
+def inv_index_range(domain):
+    """
+    Returns a function which performs the inverse of retrieving the index
+    range of an abstract array.
+
+    :param lalcheck.ai.domains.SparseArray domain: The array domain.
+    :rtype: (object, list) -> list
+    """
+    index_dom = domain.index_dom
+
+    def do(res, array_constr):
+        """
+        Given an expected range and an abstract array constraint, returns
+        all possible arrays which have the given index range and satisfy the
+        array constraint, as an element of the sparse array domain.
+
+        :param object res: The expected index range as an element of the
+            index domain of the array domain.
+        :param list array_constr: The constraint on the array as an element
+            of the array domain.
+        :rtype: list
+        """
+        if index_dom.is_empty(res) or domain.is_empty(array_constr):
+            return None
+
+        return [
+            (index_dom.meet(res, i), e)
+            for i, e in array_constr
+            if not index_dom.is_empty(index_dom.meet(res, i))
+        ]
 
     return do
 
