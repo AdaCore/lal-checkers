@@ -622,7 +622,6 @@ def default_array_interpreter(attribute_interpreter):
         array_inv_get = sparse_array_ops.inv_get(array_dom)
         array_inv_updated = sparse_array_ops.inv_updated(array_dom)
         array_string = sparse_array_ops.array_string(array_dom)
-        array_inv_string = sparse_array_ops.inv_array_string(array_dom)
 
         # Wrap them in actual implementations. Indeed, the format of the
         # arguments differ between the function call generated during the IR
@@ -650,12 +649,11 @@ def default_array_interpreter(attribute_interpreter):
         def actual_updated(array, val, *indices):
             return array_updated(array, val, indices)
 
-        def actual_string(array, *args):
+        def actual_string(*args):
             # Every index i must become (i,) to be a valid element of the index
             # domain. Since args is a flattened list of pairs (index, elem),
             # an index occurs every even argument.
             return array_string(
-                array,
                 *((arg,) if i % 2 == 0 else arg for i, arg in enumerate(args))
             )
 
@@ -668,18 +666,11 @@ def default_array_interpreter(attribute_interpreter):
                 res, array_constr, val_constr, indices_constr
             )
 
-        def actual_inv_string(res, array_constr, *arg_constrs):
+        def actual_inv_string(res, *arg_constrs):
             # Every index i must become (i,) to be a valid element of the index
             # domain. Since args is a flattened list of pairs (index, elem),
             # an index occurs every even argument.
-            return array_inv_string(
-                res,
-                array_constr,
-                *(
-                    (arg,) if i % 2 == 0 else arg
-                    for i, arg in enumerate(arg_constrs)
-                )
-            )
+            return arg_constrs
 
         @def_provider_builder
         def provider(sig):
@@ -688,8 +679,7 @@ def default_array_interpreter(attribute_interpreter):
             elif sig == updated_sig:
                 return actual_updated, actual_inv_udpated
             elif (sig.name == ops.STRING
-                    and len(sig.input_domains) > 0
-                    and sig.input_domains[0] == array_dom):
+                    and sig.output_domain == array_dom):
                 return actual_string, actual_inv_string
 
         return TypeInterpretation(

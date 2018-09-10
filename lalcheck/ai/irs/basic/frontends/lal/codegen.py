@@ -158,7 +158,7 @@ def _string_literal_param_types(array_type_decl, text):
     component_type = assignment_param_types[1]
     index_type = assignment_param_types[2]
 
-    return (array_type_decl,) + (index_type, component_type) * len(text)
+    return (index_type, component_type) * len(text)
 
 
 def get_subp_interface(ctx, subp):
@@ -2385,40 +2385,36 @@ def gen_ir(ctx, subp, typer, subpdata):
             )
 
         elif expr.is_a(lal.StringLiteral):
-            lit = new_expression_replacing_var("tmp", expr)
+            # Transform the string literal into a call to the "String"
+            # method as such:
+            #
+            # Ada:
+            # ---------------------------------
+            # "abc"
+            #
+            # Basic IR:
+            # ---------------------------------
+            # String(0, a, 1, b, 2, c)
             text = expr.p_denoted_value
 
-            def build_lit():
-                # Transform the string literal into a call to the "String"
-                # method as such:
-                #
-                # Ada:
-                # ---------------------------------
-                # "abc"
-                #
-                # Basic IR:
-                # ---------------------------------
-                # String(tmp, 0, a, 1, b, 2, c)
+            args = []  # type: list[irt.Expr]
+            for i in range(len(text)):
+                args.append(irt.Lit(
+                    i + 1, type_hint=ctx.evaluator.universal_int
+                ))
+                args.append(irt.Lit(
+                    text[i], type_hint=ctx.evaluator.char
+                ))
 
-                args = [lit]  # type: list[irt.Expr]
-                for i in range(len(text)):
-                    args.append(irt.Lit(
-                        i + 1, type_hint=ctx.evaluator.universal_int
-                    ))
-                    args.append(irt.Lit(
-                        text[i], type_hint=ctx.evaluator.char
-                    ))
-                return irt.FunCall(
-                    ops.STRING,
-                    args,
-                    type_hint=expr.p_expression_type,
-                    orig_node=expr,
-                    param_types=_string_literal_param_types(
-                        expr.p_expression_type, text
-                    )
+            return [], irt.FunCall(
+                ops.STRING,
+                args,
+                type_hint=expr.p_expression_type,
+                orig_node=expr,
+                param_types=_string_literal_param_types(
+                    expr.p_expression_type, text
                 )
-
-            return [irt.AssignStmt(lit, build_lit())], lit
+            )
 
         elif expr.is_a(lal.Aggregate):
             type_decl = expr.p_expression_type
