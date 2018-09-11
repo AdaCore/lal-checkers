@@ -1,0 +1,5 @@
+Program:
+  read(X#1)
+  ret0#2 = <AbstractFormalSubpDecl ["F"] 3:7-3:53>(X#1)
+  X#1 = Get_0(ret0#2)
+  end:
