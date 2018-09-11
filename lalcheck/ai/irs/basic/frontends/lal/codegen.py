@@ -40,6 +40,10 @@ _attr_to_unop = {
 }
 
 
+_gen_failure = (lal.PropertyError, NotImplementedError,
+                KeyError, NotConstExprError)
+
+
 class AccessingUnspilledVar(ValueError):
     """
     Is raised when accessing a variable that was not spilled
@@ -1884,8 +1888,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             """
             try:
                 return gen_assignment(arg_expr, [], out_expr)
-            except (lal.PropertyError, NotImplementedError,
-                    KeyError, NotConstExprError) as e:
+            except _gen_failure as e:
                 print_warning(arg_expr, e)
                 return []
         return do
@@ -2988,8 +2991,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         for decl in decls:
             try:
                 res.extend(transform_decl(decl))
-            except (lal.PropertyError, NotImplementedError,
-                    KeyError, NotConstExprError) as e:
+            except _gen_failure as e:
                 print_warning(decl.text, e)
         return res
 
@@ -3003,8 +3005,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         for stmt in stmts:
             try:
                 res.extend(transform_stmt(stmt))
-            except (lal.PropertyError, NotImplementedError,
-                    KeyError, NotConstExprError) as e:
+            except _gen_failure as e:
                 print_warning(stmt.text, e)
         return res
 
@@ -3021,8 +3022,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             ret_expr_stmts, ret_expr = transform_expr(expr)
             res.extend(ret_expr_stmts)
             res.append(irt.AssignStmt(result_var.value, ret_expr))
-        except (lal.PropertyError, NotImplementedError,
-                KeyError, NotConstExprError) as e:
+        except _gen_failure as e:
             print_warning(expr.text, e)
         return res
 
