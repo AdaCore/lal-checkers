@@ -44,6 +44,27 @@ _gen_failure = (lal.PropertyError, NotImplementedError,
                 KeyError, NotConstExprError)
 
 
+def try_gen(fun, else_fun, *args, **kwargs):
+    """
+    Calls the given "generation" function knowing that it can fail with an
+    exception belonging to the _gen_failure set of exceptions. If such
+    exception is raised, it calls the else_fun with the exception that was
+    raised as well as original arguments.
+
+    :param (*object, **object)->object fun: The function to call.
+    :param (Exception, *object, **object)->object else_fun: The function to
+        execute in case the original function raises.
+    :param *object args: The positional arguments.
+    :param **object kwargs: The keyword arguments.
+    :rtype: object
+    """
+
+    try:
+        return fun(*args, **kwargs)
+    except _gen_failure as e:
+        return else_fun(e, *args, **kwargs)
+
+
 class AccessingUnspilledVar(ValueError):
     """
     Is raised when accessing a variable that was not spilled
@@ -1101,6 +1122,15 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         unimplemented(iter_expr)
 
+    def gen_case_condition_fallback(exception, expr, choices):
+        """
+        The fallback function for transformation of case conditions.
+
+        :type exception: Exception
+        :param lal.AdaNode choices: The node that failed to be generated.
+        """
+        print_warning(choices.text, exception)
+
     def gen_case_condition(expr, choices):
         """
         Example:
@@ -1414,33 +1444,43 @@ def gen_ir(ctx, subp, typer, subpdata):
         # for each alternative that is not the "others".
         # See `gen_case_condition`.
         alts_conditions = [
-            gen_case_condition(case_expr, choices)
+            try_gen(gen_case_condition, gen_case_condition_fallback,
+                    case_expr, choices)
             for choices, _ in case_alts
         ]
 
         # Build the condition for the "others" alternative, which is the
         # negation of the disjunction of all the previous conditions.
-        others_condition = irt.FunCall(
-            ops.NOT,
-            [
-                reduce(
-                    binexpr_builder(ops.OR, ctx.evaluator.bool),
-                    alts_conditions
-                )
-            ],
-            type_hint=ctx.evaluator.bool
-        )
+
+        non_none_conds = [cond for cond in alts_conditions if cond is not None]
+        if len(non_none_conds) > 0:
+            others_condition = irt.FunCall(
+                ops.NOT,
+                [
+                    reduce(
+                        binexpr_builder(ops.OR, ctx.evaluator.bool),
+                        non_none_conds
+                    )
+                ],
+                type_hint=ctx.evaluator.bool
+            )
+        else:
+            others_condition = None
 
         # Generate the branches of the split statement.
         branches = [
-            [irt.AssumeStmt(
-                cond,
-                purpose=purpose.PredeterminedCheck(choices)
-            )] + stmts
-            for cond, (choices, stmts) in
-            zip(alts_conditions, case_alts)
+            (
+                [irt.AssumeStmt(
+                    cond, purpose=purpose.PredeterminedCheck(choices)
+                )] if cond is not None else []
+            ) + stmts
+            for cond, (choices, stmts) in zip(alts_conditions, case_alts)
         ] + [
-            [irt.AssumeStmt(others_condition)] + others_stmts
+            (
+                [irt.AssumeStmt(
+                    others_condition
+                )] if others_condition else []
+            ) + others_stmts
             for others_stmts in others_potential_stmts
         ]
 
@@ -1602,6 +1642,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         :param lal.Identifier field: The field being accessed
         :rtype: list[irt.AssumeStmt]
         """
+
         info = get_field_info(field)
         all_fields = record_fields(
             closest(field.p_referenced_decl, lal.TypeDecl)
@@ -1615,7 +1656,10 @@ def gen_ir(ctx, subp, typer, subpdata):
             )
 
             if not any(x.is_a(lal.OthersDesignator) for x in alternatives):
-                condition = gen_case_condition(discr_getter, alternatives)
+                condition = try_gen(
+                    gen_case_condition, gen_case_condition_fallback,
+                    discr_getter, alternatives
+                )
             else:
                 # Find all the other conditions
                 cousin_conditions = _find_cousin_conditions(
@@ -1631,29 +1675,36 @@ def gen_ir(ctx, subp, typer, subpdata):
                 ]
 
                 alts_conditions = [
-                    gen_case_condition(discr_getter, alt)
+                    try_gen(gen_case_condition, gen_case_condition_fallback,
+                            discr_getter, alt)
                     for alt in other_alts
                 ]
 
-                condition = irt.FunCall(
-                    ops.NOT,
-                    [
-                        reduce(
-                            binexpr_builder(ops.OR, ctx.evaluator.bool),
-                            alts_conditions
-                        )
-                    ],
-                    type_hint=ctx.evaluator.bool
-                )
+                non_none_conds = [
+                    cond for cond in alts_conditions if cond is not None
+                ]
 
-            res.append(irt.AssumeStmt(
-                condition,
-                purpose=purpose.ExistCheck(
-                    prefix,
-                    field.text,
-                    discr.text
-                )
-            ))
+                if len(non_none_conds) > 0:
+                    condition = irt.FunCall(
+                        ops.NOT,
+                        [reduce(
+                            binexpr_builder(ops.OR, ctx.evaluator.bool),
+                            non_none_conds
+                        )],
+                        type_hint=ctx.evaluator.bool
+                    )
+                else:
+                    condition = None
+
+            if condition is not None:
+                res.append(irt.AssumeStmt(
+                    condition,
+                    purpose=purpose.ExistCheck(
+                        prefix,
+                        field.text,
+                        discr.text
+                    )
+                ))
 
         return res
 
