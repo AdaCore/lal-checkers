@@ -1,0 +1,50 @@
+{
+  "always": [
+    {
+      "kind": true,
+      "traces": [
+        [
+          "assign0",
+          "assume0",
+          "read0",
+          "start0"
+        ]
+      ]
+    },
+    {
+      "kind": false,
+      "traces": [
+        [
+          "assign0",
+          "assume1",
+          "read0",
+          "start0"
+        ]
+      ]
+    }
+  ],
+  "le_t_eq_v": [
+    {
+      "kind": true,
+      "traces": [
+        [
+          "assign0",
+          "assume0",
+          "read0",
+          "start0"
+        ]
+      ]
+    },
+    {
+      "kind": false,
+      "traces": [
+        [
+          "assign0",
+          "assume1",
+          "read0",
+          "start0"
+        ]
+      ]
+    }
+  ]
+}

@@ -1429,7 +1429,10 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         # Generate the branches of the split statement.
         branches = [
-            [irt.AssumeStmt(cond)] + stmts
+            [irt.AssumeStmt(
+                cond,
+                purpose=purpose.PredeterminedCheck(choices)
+            )] + stmts
             for cond, (choices, stmts) in
             zip(alts_conditions, case_alts)
         ] + [
