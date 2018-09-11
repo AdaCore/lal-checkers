@@ -379,7 +379,7 @@ def do_partition(args, checkers, partition):
         for checker_result in schedule.run().values():
             for program_result in checker_result:
                 for diag in program_result.diagnostics:
-                    report = program_result.memoized_diag_report(diag)
+                    report = program_result.diag_report(diag)
                     if report is not None:
                         diags.append(report)
     except Exception:

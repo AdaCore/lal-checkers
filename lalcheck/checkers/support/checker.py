@@ -4,7 +4,6 @@ from components import (
 )
 from utils import closest_enclosing
 import libadalang as lal
-from funcy.calc import memoize
 
 
 def create_best_provider(project_file, scenario_vars, filenames):
@@ -86,25 +85,6 @@ class CheckerResults(object):
 
     def __init__(self, diagnostics):
         self.diagnostics = diagnostics
-        # Workaround PA24-023 (libadalang issue):
-        # We force the reporting of all diagnostic so that memoization
-        # takes place. This means that the reporting will keep working
-        # after the analysis context is freed.
-        # Todo: remove after PA24-023 is solved
-        for diag in diagnostics:
-            self.memoized_diag_report(diag)
-
-    @classmethod
-    @memoize
-    def memoized_diag_report(cls, diag):
-        """
-        Temporary workaround PA24-023, wraps diag_report with a memoization
-        mechanism.
-
-        :param object diag: The diagnostic to report
-        :rtype: (DiagnosticPosition, str, kinds.MessageKind, str)
-        """
-        return cls.diag_report(diag)
 
     @classmethod
     def diag_report(cls, diag):
