@@ -14,8 +14,11 @@
 108:10: (potential) assertion failure
 1109:10: (potential) invalid field PC_Set
 111:10: (potential) assertion failure
+1124:49: (potential) null dereference of 'Tr_Info'
+1125:18: (potential) null dereference of 'Tr_Info'
 1128:22: (potential) null dereference of 'Parser'
 112:19: (potential) null dereference of 'Entry_Output'
+1137:21: (potential) null dereference of 'Tr_Info'
 1149:72: (potential) null dereference of 'LI'
 1151:7: (potential) assertion failure
 1164:7: (potential) assertion failure

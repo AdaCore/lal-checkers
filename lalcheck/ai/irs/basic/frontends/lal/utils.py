@@ -42,6 +42,17 @@ def closest(node, *tpe):
         return None
 
 
+def is_access_attribute(attribute_text):
+    """
+    Returns true if the given attribute text denotes an "access" attribute,
+    such as "access", "unrestricted_access" or "address".
+
+    :param str attribute_text: The text to check (in lower case).
+    :rtype: bool
+    """
+    return attribute_text in ('access', 'address', 'unrestricted_access')
+
+
 class ValueHolder(object):
     """
     Holds a value.

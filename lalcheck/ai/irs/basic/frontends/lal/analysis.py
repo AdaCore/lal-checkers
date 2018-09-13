@@ -6,7 +6,7 @@ calculates useful information about them.
 import libadalang as lal
 from funcy.calc import memoize
 
-from utils import get_subp_identity, sorted_by_position
+from utils import get_subp_identity, sorted_by_position, is_access_attribute
 
 
 class AnalysisConfiguration(object):
@@ -300,7 +300,7 @@ def traverse_unit(unit, config=_default_configuration):
                         # are defined in an up-level procedure.
                         subpdata[subp].explicit_global_vars.add(node.p_xref)
             elif node.is_a(lal.AttributeRef) and config.discover_spills:
-                if node.f_attribute.text.lower() == 'access':
+                if is_access_attribute(node.f_attribute.text.lower()):
                     accessed = _base_accessed_var(node.f_prefix)
                     if accessed is not None:
                         ref_decl = accessed.p_basic_decl

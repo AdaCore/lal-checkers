@@ -13,7 +13,7 @@ from utils import (
     StackType, PointerType, ExtendedCallReturnType,
     ValueHolder, record_fields, proc_parameters, get_field_info,
     is_array_type_decl, is_record_field, is_access_to_subprogram,
-    closest, get_subp_identity
+    closest, get_subp_identity, is_access_attribute
 )
 
 _lal_op_type_to_symbol = {
@@ -2527,7 +2527,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                     type_hint=expr.p_expression_type,
                     orig_node=expr
                 )
-            elif attribute_text == 'access':
+            elif is_access_attribute(attribute_text):
                 try:
                     return [], gen_access_path(expr.f_prefix)
                 except AccessingUnspilledVar:
