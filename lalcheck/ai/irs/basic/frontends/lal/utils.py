@@ -185,7 +185,11 @@ def get_subp_identity(subp):
     :param lal.BaseSubpBody | lal.BasicSubpDecl subp: The subprogram for which
         to retrieve a unique identity object.
     """
-    if subp.is_a(lal.BasicSubpDecl):
+    if subp.is_a(lal.GenericSubpInternal):
+        # This case needs to come first because a GenericSubpInternal is a
+        # BasicSubpDecl.
+        return subp.p_generic_instantiations[0]
+    elif subp.is_a(lal.BasicSubpDecl, lal.GenericSubpDecl):
         body = subp.p_body_part
         if body is not None:
             return body

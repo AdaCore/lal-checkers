@@ -451,7 +451,6 @@
 345:27: (potential) null dereference of 'Context.Exe_File'
 3480:31: (potential) invalid field C_SCO
 349:10: (potential) invalid field E
-349:18: test always true
 3520:42: (potential) precondition failure
 352:10: unreachable code
 352:41: invalid field E_Name

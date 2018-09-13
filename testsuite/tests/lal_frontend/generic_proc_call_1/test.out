@@ -1,0 +1,4 @@
+Program:
+  ret0#1 = <SubpBody ["Find"] 6:4-9:13>(Var_1($stack#2), Offset_2($stack#2))
+  $stack#2 = CopyOffset($stack#2, Get_0(ret0#1))
+  end:

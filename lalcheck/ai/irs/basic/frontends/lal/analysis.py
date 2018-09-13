@@ -261,6 +261,31 @@ def traverse_unit(unit, config=_default_configuration):
         if node.is_a(lal.BaseSubpBody):
             subp = node
             subpdata[subp] = SubpAnalysisData()
+        elif node.is_a(lal.GenericSubpInstantiation):
+            # For a function which is an instantiation of a generic subprogram,
+            # we conservatively say it calls all subprograms that we
+            # instantiate it with, and has access to all object declarations
+            # that we instantiate it with.
+            subpdata[node] = inst_data = SubpAnalysisData()
+
+            generic_subp = _get_ref_decl(node.f_generic_subp_name)
+            if generic_subp is not None:
+                # Add a synthetic call to the generic subprogram, to make sure
+                # that global variables of the generic subprogram are also
+                # global variables of the instantiations.
+                inst_data.out_calls.add(get_subp_identity(generic_subp))
+
+            if config.global_var_predicate != AnalysisConfiguration.NO_GLOBAL:
+                for assoc in node.f_params:
+                    actual = assoc.f_r_expr
+                    ref = _get_ref_decl(actual)
+
+                    if ref is not None:
+                        if _is_concrete_object_decl(ref):
+                            inst_data.explicit_global_vars.add(actual.p_xref)
+                        elif ref.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
+                            inst_data.out_calls.add(get_subp_identity(ref))
+
         elif node.is_a(lal.BasePackageDecl):
             subp = None
         elif subp is not None:
