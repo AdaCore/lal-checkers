@@ -51,7 +51,6 @@
 124:10: (potential) assertion failure
 124:34: (potential) null dereference of 'Buffer'
 1250:7: (potential) null dereference of 'CS'
-1253:30: (potential) null dereference of 'CS'
 125:7: (potential) assertion failure
 126:51: (potential) null dereference of 'Context.Exe_File'
 126:7: (potential) assertion failure
@@ -131,7 +130,6 @@
 1561:21: (potential) null dereference of 'Line'
 1564:7: (potential) null dereference of 'CS'
 156:17: (potential) null dereference of 'Report'
-157:17: (potential) null dereference of 'Report'
 1587:13: (potential) null dereference of 'SCIA'
 1588:13: (potential) null dereference of 'Process'
 1590:23: (potential) null dereference of 'Map'
@@ -237,8 +235,6 @@
 2295:19: (potential) assertion failure
 2296:20: (potential) null dereference of 'D_Occ'
 2302:41: (potential) null dereference of 'D_Occ'
-2306:34: (potential) null dereference of 'D_Occ'
-2311:47: (potential) null dereference of 'D_Occ'
 2311:7: (potential) assertion failure
 2318:20: (potential) invalid field Pragma_Name
 232:49: (potential) invalid field Sloc
@@ -263,7 +259,6 @@
 2440:10: (potential) null dereference of 'P'
 2441:22: (potential) null dereference of 'Filenames.Last_Element'
 2448:27: (potential) null dereference of 'Exec'
-2450:30: (potential) null dereference of 'Exec'
 2450:40: (potential) invalid field Section_Sec_Idx
 2450:40: (potential) null dereference of 'Context.Subprg'
 2450:40: (potential) null dereference of 'Context.Subprg.Parent'
@@ -352,7 +347,6 @@
 2896:50: (potential) invalid field Symbol_Name
 2896:50: (potential) null dereference of 'Sym'
 2896:50: (potential) null dereference of 'Sym.Symbol_Name'
-2899:25: (potential) null dereference of 'D_Occ'
 289:27: (potential) null dereference of 'Context.Exe_File'
 2907:19: (potential) assertion failure
 2908:32: (potential) invalid field Section_Sec_Idx
@@ -547,7 +541,6 @@
 4597:16: (potential) null dereference of 'Line'
 4597:29: (potential) null dereference of 'Sym'
 45:7: (potential) assertion failure
-4628:21: (potential) null dereference of 'Exec'
 4629:32: (potential) invalid field Lines
 4629:32: (potential) null dereference of 'Subprg'
 4638:26: (potential) null dereference of 'Cached_Line'
@@ -592,7 +585,6 @@
 4812:10: (potential) null dereference of 'I_Ranges'
 481:25: (potential) invalid field Known_Outcome_Taken
 484:10: (potential) invalid field Stats
-484:10: (potential) null dereference of 'FI'
 485:10: (potential) precondition failure
 486:10: (potential) precondition failure
 4874:10: (potential) assertion failure
@@ -636,21 +628,13 @@
 594:10: (potential) null dereference of 'TP'
 594:10: (potential) null dereference of 'TP.Current_Subp'
 595:23: (potential) null dereference of 'DS_Top'
-596:24: (potential) null dereference of 'DS_Top'
 599:16: (potential) null dereference of 'DS_Top'
 606:14: (potential) null dereference of 'TP'
 606:14: (potential) null dereference of 'TP.Routine_Tags.Element (Tag)'
-614:19: (potential) null dereference of 'DS_Top'
-614:43: (potential) null dereference of 'DS_Top'
-615:27: (potential) null dereference of 'DS_Top'
+607:10: unreachable code (until line 636)
 617:23: (potential) null dereference of 'Info'
 61:15: (potential) null dereference of 'Key_To_Name (Key)'
-621:22: (potential) null dereference of 'DS_Top'
 622:13: (potential) invalid field Evaluations
-630:43: (potential) invalid field Stats
-635:20: (potential) null dereference of 'DS_Top'
-638:18: (potential) null dereference of 'DS_Top'
-639:53: (potential) null dereference of 'DS_Top'
 645:21: (potential) null dereference of 'Opt_Vec'
 64:7: (potential) assertion failure
 651:60: (potential) null dereference of 'Info'
@@ -659,7 +643,6 @@
 662:13: (potential) null dereference of 'Callback'
 662:23: (potential) null dereference of 'Exec'
 669:41: (potential) null dereference of 'E'
-671:20: (potential) null dereference of 'DS_Top'
 671:47: (potential) null dereference of 'Filename'
 672:20: (potential) null dereference of 'Output'
 673:20: (potential) null dereference of 'Output'
@@ -679,20 +662,10 @@
 694:13: (potential) null dereference of 'Parser'
 695:13: (potential) null dereference of 'Parser'
 695:13: (potential) null dereference of 'Parser.String_List_Callback'
-696:17: (potential) null dereference of 'Output'
-697:17: (potential) null dereference of 'Output'
 698:13: (potential) null dereference of 'Parser'
-699:17: (potential) null dereference of 'Output'
 69:36: (potential) null dereference of 'Name2'
 701:16: (potential) assertion failure
-701:17: (potential) null dereference of 'Output'
-703:17: (potential) null dereference of 'Output'
-704:17: (potential) null dereference of 'Output'
 704:40: (potential) null dereference of 'Pp.Context'
-705:17: (potential) null dereference of 'Output'
-707:17: (potential) null dereference of 'Output'
-709:17: (potential) null dereference of 'Output'
-711:17: (potential) null dereference of 'Output'
 714:24: (potential) null dereference of 'Exec.File'
 720:10: (potential) assertion failure
 720:25: (potential) null dereference of 'DS_Top'
@@ -707,9 +680,6 @@
 731:10: (potential) assertion failure
 732:24: (potential) null dereference of 'Exec.File'
 733:26: (potential) null dereference of 'DS_Top'
-734:13: (potential) null dereference of 'DS_Top'
-737:10: (potential) null dereference of 'DS_Top'
-737:10: (potential) null dereference of 'DS_Top'
 741:30: (potential) null dereference of 'Exec.File'
 750:25: (potential) null dereference of 'Exec.File'
 751:16: (potential) invalid field Line_Executed
@@ -732,8 +702,6 @@
 805:34: (potential) null dereference of 'Parser'
 80:19: (potential) null dereference of 'Info.Exec'
 813:18: (potential) invalid field Value
-814:34: (potential) null dereference of 'Parser'
-815:34: (potential) null dereference of 'Parser'
 815:34: (potential) null dereference of 'Parser.String_Callback'
 824:31: (potential) invalid field String_List_Option
 835:28: (potential) invalid field Known_Outcome_Taken
@@ -743,13 +711,10 @@
 866:23: (potential) null dereference of 'Strings (I)'
 86:14: (potential) null dereference of 'Report_Output_Dir'
 878:37: (potential) null dereference of 'Parser'
-879:37: (potential) null dereference of 'Parser'
 879:37: (potential) null dereference of 'Parser.String_Callback'
 882:35: (potential) null dereference of 'D_Occ'
-884:34: (potential) null dereference of 'D_Occ'
 887:34: (potential) invalid field String_List_Option
 910:19: (potential) null dereference of 'Parser'
-911:19: (potential) null dereference of 'Parser'
 911:19: (potential) null dereference of 'Parser.Arg_Callback'
 931:19: (potential) invalid field Outcome_Taken
 93:23: (potential) null dereference of 'HW_Trigger_Arg'
