@@ -2102,7 +2102,8 @@ def gen_ir(ctx, subp, typer, subpdata):
         if prefix.is_a(lal.Identifier, lal.DottedName):
             ref = prefix.p_referenced_decl
             if ref is not None and ref.is_a(lal.BaseSubpBody,
-                                            lal.BasicSubpDecl):
+                                            lal.BasicSubpDecl,
+                                            lal.SubpBodyStub):
                 # The call target is statically known.
 
                 called_name = ref
