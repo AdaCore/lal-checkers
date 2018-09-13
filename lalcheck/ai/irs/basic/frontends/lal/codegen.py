@@ -2998,7 +2998,7 @@ def gen_ir(ctx, subp, typer, subpdata):
 
             stmts.append(irt.AssignStmt(
                 result_var.value,
-                var.get(orig_node=var.var.data.orig_node),
+                var.get(orig_node=var_decl),
                 orig_node=stmt
             ))
             stmts.append(irt.GotoStmt(
