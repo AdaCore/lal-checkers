@@ -176,11 +176,8 @@ class UpdateInverseTest(InverseOperationTest):
         # todo
         return iter(())
 
-    def _updated(self, tple, val):
-        return tuple(
-            val if i == self.n else old
-            for i, old in enumerate(tple)
-        )
+    def _updated(self, x, val):
+        return x[:self.n] + (val,) + x[self.n+1:]
 
     def concrete_inverse(self, tuples, vals, res):
         concr_res = test_dom.concretize(res)

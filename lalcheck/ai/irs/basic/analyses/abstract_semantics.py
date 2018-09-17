@@ -23,10 +23,8 @@ from lalcheck.ai.irs.basic.tools import PrettyPrinter
 
 
 def updated_state(state, var, value):
-    return tuple(
-        value if i == var.data.index else x
-        for i, x in enumerate(state)
-    )
+    i = var.data.index
+    return state[:i] + (value,) + state[i+1:]
 
 
 class _VarTracker(visitors.CFGNodeVisitor):

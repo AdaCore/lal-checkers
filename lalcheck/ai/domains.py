@@ -434,18 +434,12 @@ class Product(AbstractDomain):
             sep = separator[dimension]
 
             self_splits = [
-                tuple(
-                    x_split if dimension == j else y_elem
-                    for j, y_elem in enumerate(elem)
-                )
+                elem[:dimension] + (x_split,) + elem[dimension+1:]
                 for x_split in dom.split(x_slice, sep)
             ]
 
             rest_splits = inner(
-                tuple(
-                    sep if dimension == j else y_elem
-                    for j, y_elem in enumerate(elem)
-                ),
+                elem[:dimension] + (sep,) + elem[dimension+1:],
                 dimension + 1
             )
 
@@ -1559,16 +1553,18 @@ class AccessPathsLattice(AbstractDomain):
             return self.prefix.access(state)[self.component]
 
         def inv_access(self, state, value):
-            self.prefix.inv_access(state, tuple(
-                value if i == self.component else x
-                for i, x in enumerate(self.prefix.dom.top)
-            ))
+            top = self.prefix.dom.top
+            self.prefix.inv_access(
+                state,
+                top[:self.component] + (value,) + top[self.component+1:]
+            )
 
         def update(self, state, value):
-            self.prefix.inv_access(state, tuple(
-                value if i == self.component else x
-                for i, x in enumerate(self.prefix.access(state))
-            ))
+            prod = self.prefix.access(state)
+            self.prefix.inv_access(
+                state,
+                prod[:self.component] + (value,) + prod[self.component+1:]
+            )
 
         def __or__(self, other):
             if self <= other:

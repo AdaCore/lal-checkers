@@ -111,10 +111,7 @@ def updater(n):
 
         :rtype: tuple
         """
-        return tuple(
-            new if i == n else old
-            for i, old in enumerate(x)
-        )
+        return x[:n] + (new,) + x[n+1:]
 
     return do
 
@@ -254,6 +251,8 @@ def inv_getter(domain, n):
 
     :rtype: (object, tuple) -> tuple
     """
+    nth_domain = domain.domains[n]
+
     def do(res, constr):
         """
         :param object res: The expected output of the get operation.
@@ -265,17 +264,13 @@ def inv_getter(domain, n):
 
         :rtype: tuple | None
         """
-        biggest = tuple(
-            res if i == n else e_dom.top
-            for i, e_dom in enumerate(domain.domains)
-        )
+        elem_meet = nth_domain.meet(res, constr[n])
 
-        meet = domain.meet(biggest, constr)
-
-        if domain.is_empty(meet):
+        r = constr[:n] + (elem_meet,) + constr[n+1:]
+        if domain.is_empty(r):
             return None
 
-        return meet
+        return r
 
     return do
 
