@@ -191,10 +191,14 @@ class AbstractSemanticsChecker(Checker):
     @classmethod
     def get_arg_parser(cls):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--typer', default="default_robust")
-        parser.add_argument('--type-interpreter', default="default")
-        parser.add_argument('--call-strategy', default="unknown")
-        parser.add_argument('--merge-predicate', default='always')
+        parser.add_argument('--typer', default="default_robust",
+                            help=argparse.SUPPRESS)
+        parser.add_argument('--type-interpreter', default="default",
+                            help=argparse.SUPPRESS)
+        parser.add_argument('--call-strategy', default="unknown",
+                            help=argparse.SUPPRESS)
+        parser.add_argument('--merge-predicate', default='always',
+                            help=argparse.SUPPRESS)
         return parser
 
 

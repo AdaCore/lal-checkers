@@ -9,7 +9,7 @@ from lalcheck.checkers.support.checker import (
     AbstractSemanticsChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AbstractSemantics
-from lalcheck.checkers.support.kinds import InvalidDiscriminant
+from lalcheck.checkers.support.kinds import DiscriminantCheck
 from lalcheck.checkers.support.utils import (
     collect_assumes_with_purpose, eval_expr_at
 )
@@ -114,9 +114,9 @@ class Results(AbstractSemanticsChecker.Results):
                 and purpose.accessed_expr.data.orig_node is not None):
 
             if precise:
-                frmt = "invalid field {}"
+                frmt = "invalid field '{}'"
             else:
-                frmt = "(potential) invalid field {}"
+                frmt = "(potential) invalid field '{}'"
 
             return (
                 DiagnosticPosition.from_node(
@@ -126,7 +126,7 @@ class Results(AbstractSemanticsChecker.Results):
                     purpose.field_name,
                     purpose.discr_name
                 ),
-                InvalidDiscriminant,
+                DiscriminantCheck,
                 cls.gravity(precise)
             )
 
@@ -212,15 +212,18 @@ class InvalidAccessFinder(Task):
 class VariantChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "invalid discriminant"
+        return "invalid_discriminant"
 
     @classmethod
     def description(cls):
-        return "Finds invalid field accesses of variant records"
+        return ("Reports a message of kind '{}' when a field for the wrong "
+                "variant/discriminant is accessed.").format(
+            DiscriminantCheck.name()
+        )
 
     @classmethod
     def kinds(cls):
-        return [InvalidDiscriminant]
+        return [DiscriminantCheck]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

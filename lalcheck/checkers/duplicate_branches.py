@@ -21,7 +21,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition, create_best_provider
 )
 from lalcheck.checkers.support.components import AnalysisUnit
-from lalcheck.checkers.support.kinds import DuplicateCode
+from lalcheck.checkers.support.kinds import CodeDuplicated
 from lalcheck.checkers.support.utils import relevant_tokens, tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -40,15 +40,14 @@ class Results(SyntacticChecker.Results):
         fst_line = diag[0].sloc_range.start.line
         return (
             DiagnosticPosition.from_node(diag[1]),
-            'duplicate code with line {}'.format(fst_line) + diag[2],
-            DuplicateCode,
+            'code duplicated with line {}'.format(fst_line) + diag[2],
+            CodeDuplicated,
             cls.HIGH
         )
 
 
 CheckerConfig = namedtuple('CheckerConfig', (
     'size_threshold',
-    'newline_factor',
     'min_duplicates',
     'smart_conditional_filter',
     'do_ifs',
@@ -101,8 +100,7 @@ def find_duplicate_branches(config, unit):
             return len(relevant_tokens(node))
 
         def block_size(node):
-            newlines = node.text.count('\n')
-            return num_tokens(node) * (1 + config.newline_factor * newlines)
+            return num_tokens(node)
 
         def select_if_block(block, test):
             # Only report blocks of length greater than 10 tokens, and if the
@@ -349,16 +347,17 @@ class DuplicateBranchesFinder(Task):
 class DuplicateBranchesChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "duplicate branches"
+        return "duplicate_branches"
 
     @classmethod
     def description(cls):
-        return ("Finds if/case statements/expressions in which multiple "
-                "alternatives contain a syntactically equivalent body.")
+        return ("Reports a message of kind '{}' when there are two "
+                "syntactically equivalent branch bodies in a common 'case' or "
+                "'if' construct .").format(CodeDuplicated.name())
 
     @classmethod
     def kinds(cls):
-        return [DuplicateCode]
+        return [CodeDuplicated]
 
     @classmethod
     def create_requirement(cls, project_file, scenario_vars, filenames, args):
@@ -369,7 +368,6 @@ class DuplicateBranchesChecker(SyntacticChecker):
             tuple(filenames),
             CheckerConfig(
                 size_threshold=arg_values.size_threshold,
-                newline_factor=arg_values.newline_factor,
                 min_duplicates=arg_values.min_duplicates,
                 smart_conditional_filter=arg_values.smart_conditional_filter,
                 do_ifs=not arg_values.only_cases,
@@ -380,20 +378,12 @@ class DuplicateBranchesChecker(SyntacticChecker):
     @classmethod
     def get_arg_parser(cls):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--size-threshold', type=int, default=0,
-                            help="The minimal amount of code that must be in "
-                                 "common between two branches. By default, "
-                                 "it is only based on the number of tokens, "
-                                 "but newlines can be taken into account "
-                                 "using --newline-factor.")
-        parser.add_argument('--newline-factor', type=float, default=0,
-                            help="To be used with --tokens-threshold. Adjusts "
-                                 "the weight of duplicate code that spans "
-                                 "multiple lines. The token threshold is "
-                                 "compared against \"Tokens * "
-                                 "(1 + Newline-Factor * Newlines)\"")
+        parser.add_argument('--size-threshold', type=int, default=30,
+                            help="The minimal amount of code that must be "
+                                 "shared between two branches in terms of "
+                                 "number of tokens.")
 
-        parser.add_argument('--min-duplicates', type=int, default=-1,
+        parser.add_argument('--min-duplicates', type=int, default=0,
                             help="Only report when at least 'min-duplicates' "
                                  "branches in the if/case statement are "
                                  "considered duplicates. Use -1 to report "

@@ -9,7 +9,7 @@ from lalcheck.checkers.support.checker import (
     AbstractSemanticsChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AbstractSemantics
-from lalcheck.checkers.support.kinds import InvalidContract
+from lalcheck.checkers.support.kinds import ContractCheck as KindContractCheck
 from lalcheck.checkers.support.utils import (
     collect_assumes_with_purpose, orig_text_matches, eval_expr_at
 )
@@ -113,7 +113,7 @@ class Results(AbstractSemanticsChecker.Results):
         return (
             DiagnosticPosition.from_node(purpose.orig_call),
             frmt.format(purpose.contract_name),
-            InvalidContract,
+            KindContractCheck,
             cls.gravity(precise)
         )
 
@@ -201,15 +201,18 @@ class ContractViolationFinder(Task):
 class ContractChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "invalid contract"
+        return "invalid_contract"
 
     @classmethod
     def description(cls):
-        return "Finds violated pre/post-conditions and assertions"
+        return ("Reports a message of kind '{}' when a user-"
+                "defined contract (pre/post/assert) does not hold.").format(
+            KindContractCheck.name()
+        )
 
     @classmethod
     def kinds(cls):
-        return [InvalidContract]
+        return [KindContractCheck]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

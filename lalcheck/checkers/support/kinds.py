@@ -21,46 +21,54 @@ class MessageKind(object):
         raise NotImplementedError
 
 
-class NullDereference(MessageKind):
+class AccessCheck(MessageKind):
     @classmethod
     def name(cls):
-        return "null dereference"
+        return "access check"
 
     @classmethod
     def description(cls):
-        return "dereference of an access that could be null"
+        return "dereference of a possibly null reference"
 
 
-class InvalidDiscriminant(MessageKind):
+class DiscriminantCheck(MessageKind):
     @classmethod
     def name(cls):
-        return "invalid discriminant"
+        return "discriminant check"
 
     @classmethod
     def description(cls):
-        return ("access to a field of a variant record that holds"
-                " the wrong determinant")
+        return "a field for the wrong variant/discriminant is accessed"
 
 
-class InvalidContract(MessageKind):
+class ContractCheck(MessageKind):
     @classmethod
     def name(cls):
-        return "invalid contract"
+        return "contract check"
 
     @classmethod
     def description(cls):
-        return ("user-provided contract (precondition, postcondition or "
-                "assertion) might be violated")
+        return "user contract (pragma Assert, pre/postcondition) could fail"
 
 
-class PredeterminedExpression(MessageKind):
+class TestAlwaysTrue(MessageKind):
     @classmethod
     def name(cls):
-        return "predetermined expression"
+        return "test always true"
 
     @classmethod
     def description(cls):
-        return "expression takes a known constant value"
+        return "test is always 'true'"
+
+
+class TestAlwaysFalse(MessageKind):
+    @classmethod
+    def name(cls):
+        return "test always false"
+
+    @classmethod
+    def description(cls):
+        return "test is always 'false'"
 
 
 class DeadCode(MessageKind):
@@ -73,10 +81,10 @@ class DeadCode(MessageKind):
         return "code is unreachable"
 
 
-class DuplicateCode(MessageKind):
+class CodeDuplicated(MessageKind):
     @classmethod
     def name(cls):
-        return "duplicate code"
+        return "code duplicated"
 
     @classmethod
     def description(cls):

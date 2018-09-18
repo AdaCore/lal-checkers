@@ -27,7 +27,7 @@ class Results(SyntacticChecker.Results):
     def diag_report(cls, diag):
         return (
             DiagnosticPosition.from_node(diag),
-            'left and right operands of "{}" are identical'.format(
+            "operands of '{}' are identical".format(
                 diag.f_op.text
             ),
             KindSameOperands,
@@ -145,12 +145,14 @@ class SameOperandsFinder(Task):
 class SameOperandsChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "same operands"
+        return "same_operands"
 
     @classmethod
     def description(cls):
-        return ("Finds logical or arithmetic expressions in which the two "
-                "operands are syntactically identical.")
+        return ("Reports message of kind '{}' when an arithmetic expression "
+                "has the same two operands. This checker filters out "
+                "irrelevant operators like '+', '*', etc. as well as float "
+                "inequality").format(KindSameOperands.name())
 
     @classmethod
     def kinds(cls):

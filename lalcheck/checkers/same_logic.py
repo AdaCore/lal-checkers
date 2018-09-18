@@ -14,7 +14,9 @@ from lalcheck.checkers.support.checker import (
 )
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.kinds import SameOperands
-from lalcheck.checkers.support.utils import same_as_parent, tokens_info
+from lalcheck.checkers.support.utils import (
+    same_as_parent, tokens_info, format_text_for_output
+)
 
 from lalcheck.tools.scheduler import Task, Requirement
 
@@ -28,7 +30,10 @@ class Results(SyntacticChecker.Results):
         fst_line = diag[0].sloc_range.start.line
         return (
             DiagnosticPosition.from_node(diag[1]),
-            'duplicate operand with line {}'.format(fst_line),
+            "'{}' duplicated with line {}".format(
+                format_text_for_output(diag[0].text),
+                fst_line
+            ),
             SameOperands,
             cls.HIGH
         )
@@ -142,12 +147,15 @@ class SameLogicFinder(Task):
 class SameLogicChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "same logic"
+        return "same_logic"
 
     @classmethod
     def description(cls):
-        return ("Finds chains of boolean operators which contain syntactically"
-                " identical expressions.")
+        return ("Reports a message of kind '{}' when a chain of the same "
+                "boolean operator (e.g. A or B or C or ...) contains two "
+                "syntactically equivalent operands.").format(
+            SameOperands.name()
+        )
 
     @classmethod
     def kinds(cls):

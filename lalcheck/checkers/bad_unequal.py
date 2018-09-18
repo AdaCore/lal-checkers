@@ -13,7 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
-from lalcheck.checkers.support.kinds import PredeterminedExpression
+from lalcheck.checkers.support.kinds import TestAlwaysTrue
 from lalcheck.checkers.support.utils import same_as_parent, tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -28,9 +28,10 @@ class Results(SyntacticChecker.Results):
         op, fst_val, snd_val = diag
         return (
             DiagnosticPosition.from_node(op),
-            'expression always true: "{}" /= '
-            '{} or {}'.format(op.text, fst_val.text, snd_val.text),
-            PredeterminedExpression,
+            "expression always true: '{}' /= {} or {}".format(
+                op.text, fst_val.text, snd_val.text
+            ),
+            TestAlwaysTrue,
             cls.HIGH
         )
 
@@ -155,16 +156,18 @@ class BadUnequalFinder(Task):
 class BadUnequalChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "bad unequal"
+        return "bad_unequal"
 
     @classmethod
     def description(cls):
-        return ("Finds disjunctions containing 'not equal' binary operators "
-                "that have one operand in common.")
+        return ("Reports a message of the kind '{}' when an expression matches"
+                " the pattern 'X /= A or X /= B'.").format(
+            TestAlwaysTrue.name()
+        )
 
     @classmethod
     def kinds(cls):
-        return [PredeterminedExpression]
+        return [TestAlwaysTrue]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

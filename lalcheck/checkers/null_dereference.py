@@ -9,7 +9,7 @@ from lalcheck.checkers.support.checker import (
     AbstractSemanticsChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AbstractSemantics
-from lalcheck.checkers.support.kinds import NullDereference
+from lalcheck.checkers.support.kinds import AccessCheck
 from lalcheck.checkers.support.utils import (
     format_text_for_output, collect_assumes_with_purpose, eval_expr_at
 )
@@ -117,7 +117,7 @@ class Results(AbstractSemanticsChecker.Results):
                 frmt.format(
                     format_text_for_output(derefed.data.orig_node.text)
                 ),
-                NullDereference,
+                AccessCheck,
                 cls.gravity(precise)
             )
 
@@ -203,15 +203,16 @@ class NullDerefFinder(Task):
 class DerefChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "null dereference"
+        return "null_dereference"
 
     @classmethod
     def description(cls):
-        return "Finds null dereferences"
+        return ("Reports a message of kind '{}' when attempting to dereference"
+                " a reference that could be null.").format(AccessCheck.name())
 
     @classmethod
     def kinds(cls):
-        return [NullDereference]
+        return [AccessCheck]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

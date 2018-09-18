@@ -1,30 +1,27 @@
-1005:13: (potential) invalid field BDD_Node
+1005:13: (potential) invalid field 'BDD_Node'
 100:7: (potential) assertion failure
-1019:35: (potential) invalid field Lines
+1019:35: (potential) invalid field 'Lines'
 1019:35: (potential) null dereference of 'Ctx.Subprg'
-101:30: left and right operands of "-" are identical
+101:30: operands of '-' are identical
 1026:13: (potential) assertion failure
-103:30: left and right operands of "-" are identical
+103:30: operands of '-' are identical
 106:15: (potential) precondition failure
 106:7: (potential) assertion failure
 1070:22: (potential) null dereference of 'D_Occ'
-1074:13: (potential) invalid field Operands
-1074:13: (potential) invalid field Operands
+1074:13: (potential) invalid field 'Operands'
+1074:13: (potential) invalid field 'Operands'
 1082:24: (potential) null dereference of 'Opt_Vec'
 108:10: (potential) assertion failure
-1109:10: (potential) invalid field PC_Set
+1109:10: (potential) invalid field 'PC_Set'
 111:10: (potential) assertion failure
-1124:49: (potential) null dereference of 'Tr_Info'
-1125:18: (potential) null dereference of 'Tr_Info'
 1128:22: (potential) null dereference of 'Parser'
 112:19: (potential) null dereference of 'Entry_Output'
 1132:18: (potential) null dereference of 'Parser'
-1137:21: (potential) null dereference of 'Tr_Info'
 1142:16: (potential) null dereference of 'Parser'
 1149:72: (potential) null dereference of 'LI'
 1151:7: (potential) assertion failure
 1164:7: (potential) assertion failure
-1166:19: test always true
+1166:19: 'SCOs = null' is always true
 1174:27: (potential) null dereference of 'SCOs'
 117:10: (potential) null dereference of 'Process'
 117:19: (potential) null dereference of 'IE.Name'
@@ -40,7 +37,7 @@
 1219:16: (potential) null dereference of 'O'
 1226:13: (potential) null dereference of 'Shdr'
 1226:22: (potential) null dereference of 'D_Occ'
-1227:30: test always true
+1227:30: 'Edge_Info.Dest_Kind = Outcome' is always true
 122:13: (potential) precondition failure
 122:7: (potential) assertion failure
 1232:44: (potential) null dereference of 'D_Occ'
@@ -59,7 +56,7 @@
 127:28: (potential) null dereference of 'File.Ehdr'
 1287:10: (potential) assertion failure
 129:7: (potential) null dereference of 'Cmd'
-1302:41: (potential) invalid field Lines
+1302:41: (potential) invalid field 'Lines'
 1302:41: (potential) null dereference of 'Ctx.Subprg'
 1304:7: (potential) assertion failure
 130:10: (potential) null dereference of 'Stream.S'
@@ -76,10 +73,10 @@
 134:10: (potential) assertion failure
 1350:13: (potential) null dereference of 'SCI'
 135:60: (potential) null dereference of 'Exec'
-1376:33: (potential) invalid field Operands
-1377:36: (potential) invalid field Operands
-1377:36: (potential) invalid field Operands
-1377:36: (potential) invalid field Operands
+1376:33: (potential) invalid field 'Operands'
+1377:36: (potential) invalid field 'Operands'
+1377:36: (potential) invalid field 'Operands'
+1377:36: (potential) invalid field 'Operands'
 1390:41: (potential) null dereference of 'Exec.File'
 1391:10: (potential) assertion failure
 1391:10: (potential) assertion failure
@@ -88,25 +85,25 @@
 139:16: (potential) assertion failure
 139:16: (potential) null dereference of 'Report'
 140:51: (potential) null dereference of 'Exe_Name'
-1414:39: (potential) invalid field C_SCO
+1414:39: (potential) invalid field 'C_SCO'
 141:18: (potential) null dereference of 'Symbols.To_String (User_Loc.Name)'
 1423:10: (potential) assertion failure
 142:49: (potential) null dereference of 'Tag'
-1432:46: (potential) invalid field Basic_Block_Has_Code
-1433:53: (potential) invalid field Executed
-1434:58: (potential) invalid field Line_Executed
-1436:31: (potential) invalid field Symbol_Name
+1432:46: (potential) invalid field 'Basic_Block_Has_Code'
+1433:53: (potential) invalid field 'Executed'
+1434:58: (potential) invalid field 'Line_Executed'
+1436:31: (potential) invalid field 'Symbol_Name'
 1436:31: (potential) null dereference of 'Sym.Symbol_Name'
-1438:45: (potential) invalid field Known_Outcome_Taken
+1438:45: (potential) invalid field 'Known_Outcome_Taken'
 143:10: (potential) null dereference of 'Process'
 143:30: (potential) null dereference of 'Exec'
 143:49: (potential) null dereference of 'Tag'
-1446:19: (potential) invalid field Outcome_Taken
-1446:50: (potential) invalid field Outcome_Taken
+1446:19: (potential) invalid field 'Outcome_Taken'
+1446:50: (potential) invalid field 'Outcome_Taken'
 1448:16: (potential) assertion failure
-1449:42: (potential) invalid field Outcome_Taken
+1449:42: (potential) invalid field 'Outcome_Taken'
 144:13: (potential) null dereference of 'IE.Name'
-1452:39: (potential) invalid field Evaluations
+1452:39: (potential) invalid field 'Evaluations'
 145:56: (potential) null dereference of 'Kernel'
 146:10: (potential) precondition failure
 146:16: (potential) null dereference of 'Report'
@@ -118,14 +115,14 @@
 149:16: (potential) assertion failure
 149:18: (potential) null dereference of 'Parser'
 149:23: (potential) null dereference of 'Report'
-1512:16: (potential) invalid field Lines
+1512:16: (potential) invalid field 'Lines'
 1512:16: (potential) null dereference of 'Ctx.Subprg'
-1516:10: (potential) invalid field Basic_Block_Has_Code
-1518:16: (potential) invalid field Lines
+1516:10: (potential) invalid field 'Basic_Block_Has_Code'
+1518:16: (potential) invalid field 'Lines'
 1518:16: (potential) null dereference of 'Ctx.Subprg'
 151:15: (potential) null dereference of 'Stream.S'
 153:7: (potential) assertion failure
-1544:30: (potential) invalid field Basic_Block_Has_Code
+1544:30: (potential) invalid field 'Basic_Block_Has_Code'
 1544:30: (potential) null dereference of 'Get_SCI (S_SCO, Tag)'
 1561:21: (potential) null dereference of 'Line'
 1564:7: (potential) null dereference of 'CS'
@@ -141,82 +138,82 @@
 1637:19: (potential) assertion failure
 1652:29: (potential) null dereference of 'Exe'
 1663:19: (potential) null dereference of 'Exe'
-1668:26: (potential) invalid field Section_Content
+1668:26: (potential) invalid field 'Section_Content'
 1668:26: (potential) null dereference of 'Sec'
-1669:19: (potential) invalid field Decision_BDD
-1669:19: (potential) invalid field Decision_BDD
+1669:19: (potential) invalid field 'Decision_BDD'
+1669:19: (potential) invalid field 'Decision_BDD'
 166:17: (potential) null dereference of 'Position.Buffer'
 1690:22: (potential) assertion failure
 1691:22: (potential) assertion failure
 169:14: (potential) null dereference of 'Info'
 1728:38: (potential) null dereference of 'Unit_Filename'
-1755:20: (potential) invalid field Degraded_Origins
-1755:20: (potential) invalid field Degraded_Origins
+1755:20: (potential) invalid field 'Degraded_Origins'
+1755:20: (potential) invalid field 'Degraded_Origins'
 175:14: (potential) null dereference of 'F.Filename'
 175:45: (potential) null dereference of 'File.Ehdr'
-1783:21: (potential) invalid field Dominant
+1783:21: (potential) invalid field 'Dominant'
 178:17: (potential) null dereference of 'Context.Trace_File'
 179:27: (potential) null dereference of 'Exe'
 181:24: (potential) null dereference of 'U.File_Name'
 1839:25: (potential) assertion failure
 183:14: (potential) null dereference of 'Prg'
 183:23: (potential) null dereference of 'Opts'
-183:25: (potential) invalid field Lines
+183:25: (potential) invalid field 'Lines'
 1842:25: (potential) assertion failure
-185:48: (potential) invalid field Stats
+185:48: (potential) invalid field 'Stats'
 193:41: (potential) precondition failure
 1943:10: (potential) null dereference of 'Symtab_Shdr'
 195:10: (potential) assertion failure
-1961:10: (potential) invalid field Parent
-1964:24: (potential) invalid field C_SCO
+1961:10: (potential) invalid field 'Parent'
+1964:24: (potential) invalid field 'C_SCO'
 196:17: (potential) null dereference of 'Output'
 197:10: (potential) null dereference of 'Process'
-1981:28: (potential) invalid field Lines
+1981:28: (potential) invalid field 'Lines'
 1981:28: (potential) null dereference of 'TP'
 1981:28: (potential) null dereference of 'TP.Current_Subp'
 1993:7: (potential) assertion failure
 2005:13: (potential) null dereference of 'Line_Info'
-2007:35: (potential) invalid field Sloc
+2007:35: (potential) invalid field 'Sloc'
 200:26: (potential) null dereference of 'File.Ehdr'
-2012:39: (potential) invalid field Disc
+2012:39: (potential) invalid field 'Disc'
 201:27: (potential) null dereference of 'Context.Exe_File'
 2021:16: (potential) assertion failure
 2024:16: (potential) assertion failure
-2026:23: (potential) invalid field Subprogram_CU
+2026:23: (potential) invalid field 'Subprogram_CU'
 2026:23: (potential) null dereference of 'TP.Current_Subp'
 202:16: (potential) null dereference of 'Process'
-203:14: (potential) invalid field Basic_Block_Has_Code
+203:14: (potential) invalid field 'Basic_Block_Has_Code'
 203:14: (potential) null dereference of 'Get_SCI (SCO, Tag)'
-2048:16: (potential) invalid field Handler_Range
-204:19: (potential) invalid field Section_Content
+2048:16: (potential) invalid field 'Handler_Range'
+204:19: (potential) invalid field 'Section_Content'
 2059:10: (potential) null dereference of 'Last_Line'
 2069:30: (potential) null dereference of 'Last_Line'
-2070:13: (potential) invalid field Is_Non_Empty
+2070:13: (potential) invalid field 'Is_Non_Empty'
 2070:13: (potential) null dereference of 'Last_Line'
-2073:16: (potential) invalid field Lines
+2073:16: (potential) invalid field 'Lines'
 2073:16: (potential) null dereference of 'Subprg'
 2073:46: (potential) null dereference of 'Last_Line'
-2074:20: (potential) invalid field Decision_BDD
-2074:20: (potential) invalid field Decision_BDD
+2074:20: (potential) invalid field 'Decision_BDD'
+2074:20: (potential) invalid field 'Decision_BDD'
 2075:32: (potential) null dereference of 'Info'
 2076:19: (potential) assertion failure
-2076:38: (potential) invalid field Is_Non_Empty
+2076:38: (potential) invalid field 'Is_Non_Empty'
 2077:32: (potential) null dereference of 'Last_Line'
 207:10: (potential) null dereference of 'Result'
 207:44: (potential) precondition failure
-207:49: (potential) invalid field Section_Sec_Idx
-2090:36: (potential) invalid field Lines
+207:49: (potential) invalid field 'Section_Sec_Idx'
+2090:36: (potential) invalid field 'Lines'
 2090:36: (potential) null dereference of 'Ctx.Subprg'
 211:13: (potential) null dereference of 'I_Ranges'
-2130:16: (potential) invalid field Lines
-2130:16: (potential) invalid field Lines
+2130:16: (potential) invalid field 'Lines'
+2130:16: (potential) invalid field 'Lines'
 2130:16: (potential) null dereference of 'Subprg'
 2130:16: (potential) null dereference of 'Subprg'
 216:7: (potential) assertion failure
 2186:66: (potential) null dereference of 'D_Occ'
-2188:13: (potential) invalid field S_Kind
+2188:13: (potential) invalid field 'S_Kind'
 218:7: (potential) precondition failure
-2195:12: (potential) invalid field S_Kind
+2195:12: (potential) invalid field 'S_Kind'
 219:41: (potential) precondition failure
 2201:27: (potential) null dereference of 'Cache'
 2202:7: (potential) assertion failure
@@ -229,80 +226,80 @@
 225:20: (potential) null dereference of 'R'
 2266:23: (potential) null dereference of 'D_Occ'
 2276:25: (potential) null dereference of 'D_Occ'
-2279:20: (potential) invalid field Index
+2279:20: (potential) invalid field 'Index'
 2287:23: (potential) null dereference of 'D_Occ'
-228:42: (potential) invalid field Lines
+228:42: (potential) invalid field 'Lines'
 2295:19: (potential) assertion failure
 2296:20: (potential) null dereference of 'D_Occ'
 2302:41: (potential) null dereference of 'D_Occ'
 2311:7: (potential) assertion failure
-2318:20: (potential) invalid field Pragma_Name
-232:49: (potential) invalid field Sloc
-233:16: (potential) invalid field Section_LS
-233:16: (potential) invalid field Section_LS
+2318:20: (potential) invalid field 'Pragma_Name'
+232:49: (potential) invalid field 'Sloc'
+233:16: (potential) invalid field 'Section_LS'
+233:16: (potential) invalid field 'Section_LS'
 233:26: (potential) null dereference of 'Prg'
-234:10: (potential) invalid field Section_Content
+234:10: (potential) invalid field 'Section_Content'
 234:7: (potential) assertion failure
-2351:20: (potential) invalid field D_Kind
-2351:20: (potential) invalid field D_Kind
-2360:22: (potential) invalid field S_Kind
+2351:20: (potential) invalid field 'D_Kind'
+2351:20: (potential) invalid field 'D_Kind'
+2360:22: (potential) invalid field 'S_Kind'
 2375:7: (potential) assertion failure
-238:31: (potential) invalid field Section_Name
+238:31: (potential) invalid field 'Section_Name'
 238:31: (potential) null dereference of 'Section.Section_Name'
 238:33: (potential) null dereference of 'Context.Exe_File'
 239:11: (potential) null dereference of 'Shdr'
 2408:43: (potential) null dereference of 'Dir'
 2416:29: (potential) null dereference of 'Filenames.Last_Element'
-2418:21: (potential) invalid field S_Kind
+2418:21: (potential) invalid field 'S_Kind'
 2424:22: (potential) null dereference of 'FI'
-2426:26: (potential) invalid field Has_Source_Coverage_Info
+2426:26: (potential) invalid field 'Has_Source_Coverage_Info'
 2440:10: (potential) null dereference of 'P'
 2441:22: (potential) null dereference of 'Filenames.Last_Element'
 2448:27: (potential) null dereference of 'Exec'
-2450:40: (potential) invalid field Section_Sec_Idx
+2450:40: (potential) invalid field 'Section_Sec_Idx'
 2450:40: (potential) null dereference of 'Context.Subprg'
 2450:40: (potential) null dereference of 'Context.Subprg.Parent'
 245:27: (potential) null dereference of 'Key (Cur)'
 2461:10: (potential) null dereference of 'I_Ranges'
 2476:7: (potential) assertion failure
-2477:14: (potential) invalid field Last_Cond_Index
-2477:14: (potential) invalid field Last_Cond_Index
+2477:14: (potential) invalid field 'Last_Cond_Index'
+2477:14: (potential) invalid field 'Last_Cond_Index'
 2492:30: (potential) null dereference of 'LI'
 2492:30: (potential) null dereference of 'LI.SCOs'
-250:20: (potential) invalid field DIE_CU
-250:31: (potential) invalid field DIE_CU
+250:20: (potential) invalid field 'DIE_CU'
+250:31: (potential) invalid field 'DIE_CU'
 2524:19: (potential) null dereference of 'Exec'
-252:30: (potential) invalid field Section_Name
-252:46: (potential) invalid field Section_Name
+252:30: (potential) invalid field 'Section_Name'
+252:46: (potential) invalid field 'Section_Name'
 254:25: (potential) null dereference of 'Exec'
 254:35: (potential) null dereference of 'Sym'
 255:27: (potential) null dereference of 'Context.Exe_File'
-255:30: (potential) invalid field Subprogram_Name
-255:49: (potential) invalid field Subprogram_Name
+255:30: (potential) invalid field 'Subprogram_Name'
+255:49: (potential) invalid field 'Subprogram_Name'
 256:33: (potential) null dereference of 'Filename'
-256:37: (potential) invalid field Symbol_Name
+256:37: (potential) invalid field 'Symbol_Name'
 256:37: (potential) null dereference of 'Sym.Symbol_Name'
 2571:35: (potential) null dereference of 'Filenames.Element (Inlined_Subp.File)'
-258:20: (potential) invalid field Call_Sloc
-258:26: (potential) invalid field Symbol_Origin
-258:34: (potential) invalid field Call_Sloc
+258:20: (potential) invalid field 'Call_Sloc'
+258:26: (potential) invalid field 'Symbol_Origin'
+258:34: (potential) invalid field 'Call_Sloc'
 259:10: (potential) assertion failure
 260:16: (potential) precondition failure
-2615:10: (potential) invalid field LI
+2615:10: (potential) invalid field 'LI'
 2615:10: (potential) null dereference of 'Get_File (Main_Source)'
 2615:10: (potential) null dereference of 'Get_File (Main_Source)'
-261:30: (potential) invalid field Symbol_Name
-261:45: (potential) invalid field Symbol_Name
-2626:7: (potential) invalid field LI
+261:30: (potential) invalid field 'Symbol_Name'
+261:45: (potential) invalid field 'Symbol_Name'
+2626:7: (potential) invalid field 'LI'
 2626:7: (potential) null dereference of 'Get_File (Main_Source)'
-2627:7: (potential) invalid field Main_Source
+2627:7: (potential) invalid field 'Main_Source'
 2627:7: (potential) null dereference of 'Get_File (ALI_Index)'
 263:10: (potential) assertion failure
-263:25: left and right operands of "=" are identical
+263:25: operands of '=' are identical
 2644:7: (potential) assertion failure
-264:20: (potential) invalid field Sloc
-264:29: (potential) invalid field Sloc
-2660:13: test always false
+264:20: (potential) invalid field 'Sloc'
+264:29: (potential) invalid field 'Sloc'
+2660:13: '(Shdr.Sh_Flags and (SHF_ALLOC or SHF_...' is always false
 2660:14: (potential) null dereference of 'Shdr'
 2664:13: (potential) assertion failure
 2665:13: unreachable code (until line 2689)
@@ -312,48 +309,48 @@
 2749:10: (potential) assertion failure
 275:16: (potential) precondition failure
 2770:30: (potential) null dereference of 'Addr_Info'
-2772:14: (potential) invalid field Is_Non_Empty
-2775:30: (potential) invalid field Sloc
+2772:14: (potential) invalid field 'Is_Non_Empty'
+2775:30: (potential) invalid field 'Sloc'
 277:16: (potential) precondition failure
 277:47: (potential) null dereference of 'CS'
 2783:16: (potential) assertion failure
 279:10: (potential) assertion failure
 27:7: (potential) assertion failure
-2800:16: (potential) invalid field Decision_BDD
-2800:16: (potential) invalid field Decision_BDD
+2800:16: (potential) invalid field 'Decision_BDD'
+2800:16: (potential) invalid field 'Decision_BDD'
 281:38: (potential) null dereference of 'M1'
-2828:21: (potential) invalid field Subprogram_DIE_CU
+2828:21: (potential) invalid field 'Subprogram_DIE_CU'
 282:38: (potential) null dereference of 'M2'
-2832:19: (potential) invalid field DIE_CU
+2832:19: (potential) invalid field 'DIE_CU'
 2839:19: (potential) assertion failure
 283:19: (potential) null dereference of 'Diff_Exec'
 283:20: (potential) null dereference of 'M1'
 283:29: (potential) null dereference of 'M2'
 284:19: (potential) null dereference of 'Argument_String_To_List("-u " & Name1...'
-2860:25: (potential) invalid field Section_Content
+2860:25: (potential) invalid field 'Section_Content'
 2860:25: (potential) null dereference of 'Sec'
-2862:19: (potential) invalid field Section_Sec_Idx
-2863:18: (potential) invalid field Section_Content
-2863:18: (potential) invalid field Section_Content
-2863:39: (potential) invalid field Section_LS
-2863:39: (potential) invalid field Section_LS
-2864:20: (potential) invalid field Section_Content
-2864:20: (potential) invalid field Section_Content
+2862:19: (potential) invalid field 'Section_Sec_Idx'
+2863:18: (potential) invalid field 'Section_Content'
+2863:18: (potential) invalid field 'Section_Content'
+2863:39: (potential) invalid field 'Section_LS'
+2863:39: (potential) invalid field 'Section_LS'
+2864:20: (potential) invalid field 'Section_Content'
+2864:20: (potential) invalid field 'Section_Content'
 2867:19: (potential) assertion failure
-287:13: (potential) invalid field Disc
+287:13: (potential) invalid field 'Disc'
 287:13: (potential) null dereference of 'L'
 2884:20: (potential) null dereference of 'Exec'
 2892:62: (potential) null dereference of 'D_Occ'
-2896:50: (potential) invalid field Symbol_Name
+2896:50: (potential) invalid field 'Symbol_Name'
 2896:50: (potential) null dereference of 'Sym'
 2896:50: (potential) null dereference of 'Sym.Symbol_Name'
 289:27: (potential) null dereference of 'Context.Exe_File'
 2907:19: (potential) assertion failure
-2908:32: (potential) invalid field Section_Sec_Idx
+2908:32: (potential) invalid field 'Section_Sec_Idx'
 2908:32: (potential) null dereference of 'Sec'
 290:26: (potential) null dereference of 'Exe_File'
-2914:19: (potential) invalid field Section_Sec_Idx
-2915:26: (potential) invalid field Section_Content
+2914:19: (potential) invalid field 'Section_Sec_Idx'
+2915:26: (potential) invalid field 'Section_Content'
 2922:19: (potential) assertion failure
 292:7: (potential) assertion failure
 2930:19: (potential) assertion failure
@@ -363,88 +360,88 @@
 2981:21: (potential) null dereference of 'Element (Subprg_Cur)'
 2989:13: (potential) assertion failure
 2989:28: (potential) null dereference of 'Subprg'
-2996:25: (potential) invalid field Lines
+2996:25: (potential) invalid field 'Lines'
 2997:16: (potential) null dereference of 'Process'
 299:18: (potential) null dereference of 'Parser'
 29:32: (potential) null dereference of 'El'
 300:12: (potential) null dereference of 'El'
 3022:34: (potential) null dereference of 'Base'
 3022:44: (potential) null dereference of 'Line_Info'
-3025:13: (potential) invalid field Sloc
+3025:13: (potential) invalid field 'Sloc'
 3025:13: (potential) null dereference of 'Line_Info'
-3027:13: (potential) invalid field Sloc
+3027:13: (potential) invalid field 'Sloc'
 303:10: (potential) null dereference of 'Line_Info'
-3040:36: (potential) invalid field S_Kind
-3042:35: (potential) invalid field Value
-3044:37: (potential) invalid field D_Kind
-3044:37: (potential) invalid field D_Kind
-3047:37: (potential) invalid field Op_Kind
-3047:37: (potential) invalid field Op_Kind
+3040:36: (potential) invalid field 'S_Kind'
+3042:35: (potential) invalid field 'Value'
+3044:37: (potential) invalid field 'D_Kind'
+3044:37: (potential) invalid field 'D_Kind'
+3047:37: (potential) invalid field 'Op_Kind'
+3047:37: (potential) invalid field 'Op_Kind'
 305:34: (potential) null dereference of 'Line'
-305:37: (potential) invalid field Symbol_Name
+305:37: (potential) invalid field 'Symbol_Name'
 305:37: (potential) null dereference of 'Sym.Symbol_Name'
 3084:22: (potential) assertion failure
 309:7: (potential) null dereference of 'Result'
 30:10: (potential) null dereference of 'Line'
-310:13: (potential) invalid field Symbol_Name
-311:21: (potential) invalid field Symbol_Name
+310:13: (potential) invalid field 'Symbol_Name'
+311:21: (potential) invalid field 'Symbol_Name'
 311:21: (potential) null dereference of 'Symbol.Symbol_Name'
-314:16: (potential) invalid field Section_Sec_Idx
+314:16: (potential) invalid field 'Section_Sec_Idx'
 314:16: (potential) null dereference of 'Sec'
 314:18: (potential) null dereference of 'Line_Info.SCOs'
-315:23: (potential) invalid field Section_Content
+315:23: (potential) invalid field 'Section_Content'
 316:14: (potential) null dereference of 'File.Ehdr'
 3185:19: (potential) assertion failure
-3185:34: (potential) invalid field Dominant
+3185:34: (potential) invalid field 'Dominant'
 31:20: (potential) null dereference of 'Line.Obj_Infos'
 31:38: (potential) null dereference of 'Subp_Info.Exec'
 31:61: (potential) null dereference of 'Context'
 3210:22: (potential) assertion failure
 3221:22: (potential) assertion failure
-3243:52: (potential) invalid field Section_Sec_Idx
+3243:52: (potential) invalid field 'Section_Sec_Idx'
 3243:52: (potential) null dereference of 'Section'
 3258:19: (potential) null dereference of 'I_Ranges'
 3269:13: (potential) null dereference of 'I_Ranges'
 326:14: (potential) null dereference of 'Get_Shdr (File, Elf_Half (Index))'
 326:20: (potential) null dereference of 'Addr'
-327:19: (potential) invalid field Symbol_Name
+327:19: (potential) invalid field 'Symbol_Name'
 327:19: (potential) null dereference of 'Sec'
 327:36: (potential) null dereference of 'Root_Project'
-3283:23: (potential) invalid field Dests
-3289:36: (potential) invalid field BDD_Node
-329:26: (potential) invalid field Section_Content
-3321:14: (potential) invalid field Op_Kind
-3321:14: (potential) invalid field Op_Kind
-332:35: (potential) invalid field Section_Content
+3283:23: (potential) invalid field 'Dests'
+3289:36: (potential) invalid field 'BDD_Node'
+329:26: (potential) invalid field 'Section_Content'
+3321:14: (potential) invalid field 'Op_Kind'
+3321:14: (potential) invalid field 'Op_Kind'
+332:35: (potential) invalid field 'Section_Content'
 332:35: (potential) null dereference of 'Sec'
 333:28: (potential) null dereference of 'Get_Insn_Set_Ranges (SO, Sec.Section_...'
-333:53: (potential) invalid field Section_Sec_Idx
-3343:20: (potential) invalid field Operands
+333:53: (potential) invalid field 'Section_Sec_Idx'
+3343:20: (potential) invalid field 'Operands'
 3361:20: (potential) null dereference of 'Sections_Info (ESym.St_Shndx)'
 3379:49: (potential) null dereference of 'Sym'
-3391:20: (potential) invalid field Value
+3391:20: (potential) invalid field 'Value'
 341:19: (potential) null dereference of 'Context.Eargs'
 342:30: (potential) null dereference of 'Earg'
 345:27: (potential) null dereference of 'Context.Exe_File'
-3480:31: (potential) invalid field C_SCO
-349:10: (potential) invalid field E
+3480:31: (potential) invalid field 'C_SCO'
+349:10: (potential) invalid field 'E'
 3520:42: (potential) precondition failure
 352:10: unreachable code
-352:41: invalid field E_Name
+352:41: invalid field 'E_Name'
 355:67: (potential) null dereference of 'SCI'
 3573:19: (potential) null dereference of 'Prev'
 3573:32: (potential) null dereference of 'Sym'
 357:21: (potential) null dereference of 'Exe'
 3592:13: (potential) null dereference of 'Sym'
 3592:25: (potential) null dereference of 'Sym.Parent'
-3597:20: (potential) invalid field S_Kind
+3597:20: (potential) invalid field 'S_Kind'
 35:7: (potential) null dereference of 'TP'
-361:13: (potential) invalid field Lines
+361:13: (potential) invalid field 'Lines'
 361:13: (potential) null dereference of 'Subp'
-361:27: (potential) invalid field Symbol_Name
+361:27: (potential) invalid field 'Symbol_Name'
 3620:26: (potential) null dereference of 'Get_Desc_Set (Exec, Kind, PC)'
-3626:10: (potential) invalid field Degraded_Origins
-3626:10: (potential) invalid field Degraded_Origins
+3626:10: (potential) invalid field 'Degraded_Origins'
+3626:10: (potential) invalid field 'Degraded_Origins'
 362:29: (potential) null dereference of 'Context.Target_Family'
 364:26: (potential) null dereference of 'T.Driver_Creator'
 3655:24: (potential) null dereference of 'Cache.Last_Info'
@@ -462,7 +459,7 @@
 3748:10: (potential) null dereference of 'Get_Desc_Set (Exec, Kind, PC)'
 375:18: (potential) null dereference of 'File'
 375:18: (potential) null dereference of 'File'
-3787:19: (potential) invalid field Symbol_Name
+3787:19: (potential) invalid field 'Symbol_Name'
 3787:19: (potential) null dereference of 'Symbol.Symbol_Name'
 3818:13: (potential) assertion failure
 381:20: (potential) null dereference of 'Cu.Compile_Unit_Filename'
@@ -470,38 +467,38 @@
 3855:32: (potential) null dereference of 'Info.Exec'
 386:48: (potential) null dereference of 'SCI'
 388:24: (potential) null dereference of 'Subp_Info.Traces'
-389:25: (potential) invalid field Executed
+389:25: (potential) invalid field 'Executed'
 389:25: (potential) null dereference of 'SCI'
 38:7: (potential) assertion failure
 3912:42: (potential) null dereference of 'Info.Exec'
-392:25: (potential) invalid field Line_Executed
+392:25: (potential) invalid field 'Line_Executed'
 3932:13: (potential) null dereference of 'Info.Traces'
 3934:13: (potential) null dereference of 'Get_Insn_Set_Ranges (Info.Exec.all, I...'
 3934:34: (potential) null dereference of 'Info.Exec'
 395:16: (potential) null dereference of 'Base'
-3972:19: (potential) invalid field Section_Content
+3972:19: (potential) invalid field 'Section_Content'
 3972:19: (potential) null dereference of 'Sec'
 39:14: (potential) null dereference of 'L'
 39:22: (potential) null dereference of 'R'
 402:54: (potential) precondition failure
 404:7: assertion failure
 404:7: unreachable code (until line 677)
-4050:49: (potential) invalid field Section_Sec_Idx
+4050:49: (potential) invalid field 'Section_Sec_Idx'
 4050:49: (potential) null dereference of 'Sec'
-4055:15: (potential) invalid field Section_Name
+4055:15: (potential) invalid field 'Section_Name'
 4055:15: (potential) null dereference of 'Sec.Section_Name'
 406:14: (potential) null dereference of 'To_Elf_Rela_Acc (Addr)'
 407:20: (potential) null dereference of 'Output'
 408:15: (potential) null dereference of 'Output'
 40:17: (potential) null dereference of 'TF'
-4104:24: (potential) invalid field Subprogram_Name
+4104:24: (potential) invalid field 'Subprogram_Name'
 4104:24: (potential) null dereference of 'Subprg.Subprogram_Name'
 410:18: (potential) null dereference of 'Output'
-4118:43: (potential) invalid field Subprogram_Name
+4118:43: (potential) invalid field 'Subprogram_Name'
 4118:43: (potential) null dereference of 'Subprg.Subprogram_Name'
-4119:48: (potential) invalid field Symbol_Name
+4119:48: (potential) invalid field 'Symbol_Name'
 4119:48: (potential) null dereference of 'Symbol.Symbol_Name'
-4122:24: (potential) invalid field Symbol_Name
+4122:24: (potential) invalid field 'Symbol_Name'
 4122:24: (potential) null dereference of 'Symbol.Symbol_Name'
 413:15: (potential) null dereference of 'Output'
 4140:32: (potential) null dereference of 'Symbol'
@@ -514,7 +511,7 @@
 419:32: (potential) null dereference of 'E.Message'
 4209:10: (potential) null dereference of 'Sym_Cb'
 420:14: (potential) null dereference of 'To_Elf_Sym_Acc (Addr)'
-420:25: (potential) invalid field Executed
+420:25: (potential) invalid field 'Executed'
 424:50: (potential) null dereference of 'BB.Called_Sym'
 424:69: (potential) null dereference of 'Exec'
 430:18: (potential) null dereference of 'File'
@@ -522,16 +519,16 @@
 434:54: (potential) null dereference of 'SCI'
 444:35: (potential) null dereference of 'SCI'
 44:23: (potential) null dereference of 'Info'
-4506:54: (potential) invalid field Symbol_Name
+4506:54: (potential) invalid field 'Symbol_Name'
 4506:54: (potential) null dereference of 'Sym'
 4506:54: (potential) null dereference of 'Sym.Symbol_Name'
 450:35: (potential) null dereference of 'SCI'
-4517:17: (potential) invalid field Symbol_Name
+4517:17: (potential) invalid field 'Symbol_Name'
 4517:17: (potential) null dereference of 'Sym'
 4517:17: (potential) null dereference of 'Sym.Symbol_Name'
-4519:54: (potential) invalid field Symbol_Name
+4519:54: (potential) invalid field 'Symbol_Name'
 4519:54: (potential) null dereference of 'Sym.Symbol_Name'
-4525:13: (potential) invalid field Symbol_Name
+4525:13: (potential) invalid field 'Symbol_Name'
 452:19: (potential) null dereference of 'Output'
 453:21: (potential) null dereference of 'Output'
 454:51: (potential) null dereference of 'Info'
@@ -541,90 +538,90 @@
 4597:16: (potential) null dereference of 'Line'
 4597:29: (potential) null dereference of 'Sym'
 45:7: (potential) assertion failure
-4629:32: (potential) invalid field Lines
+4629:32: (potential) invalid field 'Lines'
 4629:32: (potential) null dereference of 'Subprg'
 4638:26: (potential) null dereference of 'Cached_Line'
 4638:47: (potential) null dereference of 'Cached_Symbol'
 463:21: (potential) null dereference of 'Output'
 463:47: (potential) precondition failure
-4644:63: (potential) invalid field Sloc
+4644:63: (potential) invalid field 'Sloc'
 4644:63: (potential) null dereference of 'Line_Addr'
 464:21: (potential) null dereference of 'Output'
 464:63: (potential) null dereference of 'LI'
-4667:37: (potential) invalid field Sloc
+4667:37: (potential) invalid field 'Sloc'
 4667:37: (potential) null dereference of 'Next_Line_Addr'
 467:18: (potential) null dereference of 'Output'
 469:21: (potential) null dereference of 'Output'
 4704:39: (potential) null dereference of 'Selected'
 4711:42: (potential) null dereference of 'Selected'
-471:16: (potential) invalid field Stats
-471:16: (potential) invalid field Stats
+471:16: (potential) invalid field 'Stats'
+471:16: (potential) invalid field 'Stats'
 471:16: (potential) null dereference of 'FI'
 471:16: (potential) null dereference of 'FI'
-471:38: (potential) invalid field Stats
+471:38: (potential) invalid field 'Stats'
 471:38: (potential) null dereference of 'FI'
-4733:32: (potential) invalid field Symbol_Name
+4733:32: (potential) invalid field 'Symbol_Name'
 4733:32: (potential) null dereference of 'Symbol.Symbol_Name'
-4735:50: (potential) invalid field Symbol_Name
+4735:50: (potential) invalid field 'Symbol_Name'
 4735:50: (potential) null dereference of 'Symbol.Symbol_Name'
-473:16: (potential) invalid field Stats
-473:16: (potential) invalid field Stats
+473:16: (potential) invalid field 'Stats'
+473:16: (potential) invalid field 'Stats'
 473:16: (potential) null dereference of 'FI'
 473:16: (potential) null dereference of 'FI'
-473:32: (potential) invalid field Stats
+473:32: (potential) invalid field 'Stats'
 473:32: (potential) null dereference of 'FI'
-4742:34: (potential) invalid field Section_Sec_Idx
+4742:34: (potential) invalid field 'Section_Sec_Idx'
 4742:34: (potential) null dereference of 'Symbol.Parent'
-4743:25: (potential) invalid field Symbol_Origin
-4751:24: (potential) invalid field Lines
+4743:25: (potential) invalid field 'Symbol_Origin'
+4751:24: (potential) invalid field 'Lines'
 475:23: (potential) null dereference of 'Output'
-479:25: (potential) invalid field Outcome_Taken
+479:25: (potential) invalid field 'Outcome_Taken'
 479:25: (potential) null dereference of 'SCI'
 4809:40: (potential) null dereference of 'Exec'
 480:13: (potential) null dereference of 'FI'
 4812:10: (potential) null dereference of 'I_Ranges'
-481:25: (potential) invalid field Known_Outcome_Taken
-484:10: (potential) invalid field Stats
+481:25: (potential) invalid field 'Known_Outcome_Taken'
+484:10: (potential) invalid field 'Stats'
 485:10: (potential) precondition failure
 486:10: (potential) precondition failure
 4874:10: (potential) assertion failure
 487:16: (potential) null dereference of 'Traces'
 488:23: (potential) null dereference of 'Output'
-488:25: (potential) invalid field Outcome_Taken
+488:25: (potential) invalid field 'Outcome_Taken'
 48:26: (potential) precondition failure
-48:34: (potential) invalid field Lines
+48:34: (potential) invalid field 'Lines'
 48:34: (potential) null dereference of 'TP'
 48:34: (potential) null dereference of 'TP.Current_Subp'
-490:25: (potential) invalid field Known_Outcome_Taken
+490:25: (potential) invalid field 'Known_Outcome_Taken'
 493:20: (potential) null dereference of 'Output'
 498:38: (potential) null dereference of 'Info'
 500:13: (potential) null dereference of 'FI'
 500:29: (potential) null dereference of 'Name'
 500:44: (potential) precondition failure
 505:16: (potential) null dereference of 'DS_Top'
-505:28: (potential) invalid field Known_Outcome_Taken
-506:30: (potential) invalid field Known_Outcome_Taken
-509:43: (potential) invalid field Known_Outcome_Taken
+505:28: (potential) invalid field 'Known_Outcome_Taken'
+506:30: (potential) invalid field 'Known_Outcome_Taken'
+509:43: (potential) invalid field 'Known_Outcome_Taken'
 50:19: (potential) null dereference of 'Res'
-513:43: (potential) invalid field Outcome_Taken
+513:43: (potential) invalid field 'Outcome_Taken'
 514:57: (potential) null dereference of 'DS_Top'
 517:26: (potential) null dereference of 'Output'
 525:20: (potential) null dereference of 'Key_To_Name (Key (Cur))'
 532:36: (potential) null dereference of 'DS_Top'
 540:20: (potential) null dereference of 'Get (Element (Cur))'
 548:23: (potential) null dereference of 'Exec.File'
-556:35: (potential) invalid field Executed
+556:35: (potential) invalid field 'Executed'
 557:10: (potential) assertion failure
-557:35: (potential) invalid field Line_Executed
+557:35: (potential) invalid field 'Line_Executed'
 557:35: (potential) null dereference of 'S_SCI'
 563:13: (potential) assertion failure
 565:10: (potential) null dereference of 'Info'
 566:38: (potential) null dereference of 'SCI'
-580:44: (potential) invalid field Stats
+580:44: (potential) invalid field 'Stats'
 589:15: (potential) null dereference of 'Exec'
 58:26: (potential) null dereference of 'Exec'
 590:7: (potential) assertion failure
-594:10: (potential) invalid field Lines
+594:10: (potential) invalid field 'Lines'
 594:10: (potential) null dereference of 'TP'
 594:10: (potential) null dereference of 'TP.Current_Subp'
 595:23: (potential) null dereference of 'DS_Top'
@@ -634,7 +631,7 @@
 607:10: unreachable code (until line 636)
 617:23: (potential) null dereference of 'Info'
 61:15: (potential) null dereference of 'Key_To_Name (Key)'
-622:13: (potential) invalid field Evaluations
+622:13: (potential) invalid field 'Evaluations'
 645:21: (potential) null dereference of 'Opt_Vec'
 64:7: (potential) assertion failure
 651:60: (potential) null dereference of 'Info'
@@ -671,9 +668,9 @@
 720:25: (potential) null dereference of 'DS_Top'
 722:24: (potential) null dereference of 'Parser'
 723:54: (potential) null dereference of 'Command'
-726:10: (potential) invalid field Stats
+726:10: (potential) invalid field 'Stats'
 726:10: (potential) null dereference of 'Info'
-726:45: (potential) invalid field Stats
+726:45: (potential) invalid field 'Stats'
 727:10: (potential) assertion failure
 72:37: (potential) null dereference of 'CP_File'
 730:10: (potential) assertion failure
@@ -682,11 +679,11 @@
 733:26: (potential) null dereference of 'DS_Top'
 741:30: (potential) null dereference of 'Exec.File'
 750:25: (potential) null dereference of 'Exec.File'
-751:16: (potential) invalid field Line_Executed
+751:16: (potential) invalid field 'Line_Executed'
 752:17: (potential) null dereference of 'Output'
-753:16: (potential) invalid field Executed
+753:16: (potential) invalid field 'Executed'
 765:12: (potential) assertion failure
-765:13: (potential) invalid field Known_Outcome_Taken
+765:13: (potential) invalid field 'Known_Outcome_Taken'
 766:7: (potential) assertion failure
 767:10: (potential) assertion failure
 772:13: (potential) assertion failure
@@ -694,17 +691,17 @@
 783:10: (potential) null dereference of 'Symtab_Shdr'
 788:10: (potential) assertion failure
 78:28: (potential) null dereference of 'Exec'
-796:26: (potential) invalid field Executed
+796:26: (potential) invalid field 'Executed'
 796:26: (potential) null dereference of 'Cur_SCI'
-797:45: (potential) invalid field Line_Executed
+797:45: (potential) invalid field 'Line_Executed'
 79:23: (potential) null dereference of 'HW_Trigger_Arg'
 802:13: (potential) assertion failure
 805:34: (potential) null dereference of 'Parser'
 80:19: (potential) null dereference of 'Info.Exec'
-813:18: (potential) invalid field Value
+813:18: (potential) invalid field 'Value'
 815:34: (potential) null dereference of 'Parser.String_Callback'
-824:31: (potential) invalid field String_List_Option
-835:28: (potential) invalid field Known_Outcome_Taken
+824:31: (potential) invalid field 'String_List_Option'
+835:28: (potential) invalid field 'Known_Outcome_Taken'
 835:28: (potential) null dereference of 'Get_SCI (Dom_SCO, Tag)'
 846:10: (potential) null dereference of 'D_Occ'
 846:24: (potential) null dereference of 'Parser'
@@ -713,13 +710,13 @@
 878:37: (potential) null dereference of 'Parser'
 879:37: (potential) null dereference of 'Parser.String_Callback'
 882:35: (potential) null dereference of 'D_Occ'
-887:34: (potential) invalid field String_List_Option
+887:34: (potential) invalid field 'String_List_Option'
 910:19: (potential) null dereference of 'Parser'
 911:19: (potential) null dereference of 'Parser.Arg_Callback'
-931:19: (potential) invalid field Outcome_Taken
+931:19: (potential) invalid field 'Outcome_Taken'
 93:23: (potential) null dereference of 'HW_Trigger_Arg'
-95:36: (potential) invalid field Section_Name
+95:36: (potential) invalid field 'Section_Name'
 95:36: (potential) null dereference of 'Section'
 95:36: (potential) null dereference of 'Section.Section_Name'
 990:19: (potential) assertion failure
-996:13: (potential) invalid field Dest
+996:13: (potential) invalid field 'Dest'

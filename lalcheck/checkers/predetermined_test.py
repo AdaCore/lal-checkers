@@ -2,15 +2,20 @@ from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import PredeterminedCheck
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import (
-    AbstractSemanticsChecker, DiagnosticPosition
+    AbstractSemanticsChecker, DiagnosticPosition, create_best_provider
 )
-from lalcheck.checkers.support.components import AbstractSemantics
-from lalcheck.checkers.support.kinds import PredeterminedExpression
+from lalcheck.checkers.support.components import AbstractSemantics, ModelConfig
+from lalcheck.checkers.support.kinds import TestAlwaysTrue, TestAlwaysFalse
 from lalcheck.checkers.support.utils import (
-    collect_assumes_with_purpose, orig_text_matches, eval_expr_at
+    collect_assumes_with_purpose, orig_text_matches, eval_expr_at,
+    format_text_for_output
 )
 
 from lalcheck.tools.scheduler import Task, Requirement
+from collections import namedtuple
+
+
+CheckerConfig = namedtuple('CheckerConfig', ('lits',))
 
 
 class Results(AbstractSemanticsChecker.Results):
@@ -26,8 +31,11 @@ class Results(AbstractSemanticsChecker.Results):
 
         return (
             DiagnosticPosition.from_node(cond),
-            "test always {}".format("true" if always_true else "false"),
-            PredeterminedExpression,
+            "'{}' is always {}".format(
+                format_text_for_output(cond.text),
+                "true" if always_true else "false"
+            ),
+            TestAlwaysTrue if always_true else TestAlwaysFalse,
             cls.HIGH
         )
 
@@ -39,7 +47,9 @@ def check_predetermined_tests(prog, model, merge_pred_builder):
         merge_pred_builder
     )
 
-    return find_predetermined_tests(analysis)
+    return find_predetermined_tests(analysis, CheckerConfig(
+        lits=(True, False)
+    ))
 
 
 def _contains(node, other):
@@ -54,7 +64,7 @@ def _contains(node, other):
     return node is not other and node.find(lambda x: x == other)
 
 
-def find_predetermined_tests(analysis):
+def find_predetermined_tests(analysis, config):
     # Collect assume statements that have a PredeterminedCheck purpose.
     predetermined_checks = collect_assumes_with_purpose(
         analysis.cfg,
@@ -79,7 +89,7 @@ def find_predetermined_tests(analysis):
             lit
         )
         for condition, trace_values in if_conds_values
-        for lit in (True, False)
+        for lit in config.lits
         if len(trace_values) > 0
         if all(
             lit in value and len(value) == 1
@@ -106,18 +116,19 @@ def find_predetermined_tests(analysis):
 
 
 @Requirement.as_requirement
-def PredeterminedTests(provider_config, model_config, files):
+def PredeterminedTests(provider_config, model_config, files, config):
     return [PredeterminedTestFinder(
-        provider_config, model_config, files
+        provider_config, model_config, files, config
     )]
 
 
 @dataclass
 class PredeterminedTestFinder(Task):
-    def __init__(self, provider_config, model_config, files):
+    def __init__(self, provider_config, model_config, files, config):
         self.provider_config = provider_config
         self.model_config = model_config
         self.files = files
+        self.config = config
 
     def requires(self):
         return {
@@ -135,14 +146,15 @@ class PredeterminedTestFinder(Task):
             'res': PredeterminedTests(
                 self.provider_config,
                 self.model_config,
-                self.files
+                self.files,
+                self.config
             )
         }
 
     def run(self, **sems):
         return {
             'res': [
-                find_predetermined_tests(analysis)
+                find_predetermined_tests(analysis, self.config)
                 for sem in sems.values()
                 for analysis in sem
             ]
@@ -152,19 +164,48 @@ class PredeterminedTestFinder(Task):
 class PredeterminedTestChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "predetermined tests"
+        return "predetermined_test"
 
     @classmethod
     def description(cls):
-        return "Finds conditions that are always or never satisfied"
+        return ("Reports a message of kind '{}' (resp. '{}') when a test "
+                "always evaluates to 'True' (resp. 'False')").format(
+            TestAlwaysTrue.name(), TestAlwaysFalse.name()
+        )
 
     @classmethod
     def kinds(cls):
-        return [PredeterminedExpression]
+        return [TestAlwaysTrue, TestAlwaysFalse]
 
     @classmethod
-    def create_requirement(cls, *args, **kwargs):
-        return cls.requirement_creator(PredeterminedTests)(*args, **kwargs)
+    def create_requirement(cls, project_file, scenario_vars, filenames, args):
+        arg_values = cls.get_arg_parser().parse_args(args)
+
+        return PredeterminedTests(
+            create_best_provider(project_file, scenario_vars, filenames),
+            ModelConfig(arg_values.typer,
+                        arg_values.type_interpreter,
+                        arg_values.call_strategy,
+                        arg_values.merge_predicate),
+            tuple(filenames),
+            CheckerConfig(
+                lits=(
+                    (() if arg_values.ignore_always_true else (True,)) +
+                    (() if arg_values.ignore_always_false else (False,))
+                )
+            )
+        )
+
+    @classmethod
+    def get_arg_parser(cls):
+        parser = AbstractSemanticsChecker.get_arg_parser()
+        parser.add_argument('--ignore-always-true', action='store_true',
+                            help="Ignore messages for tests that are always "
+                                 "true.")
+        parser.add_argument('--ignore-always-false', action='store_true',
+                            help="Ignore messages for tests that are always "
+                                 "false.")
+        return parser
 
 
 checker = PredeterminedTestChecker

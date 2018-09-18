@@ -13,7 +13,7 @@ from lalcheck.checkers.support.checker import (
     SyntacticChecker, DiagnosticPosition
 )
 from lalcheck.checkers.support.components import AnalysisUnit
-from lalcheck.checkers.support.kinds import PredeterminedExpression
+from lalcheck.checkers.support.kinds import TestAlwaysFalse
 from lalcheck.checkers.support.utils import tokens_info
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -28,8 +28,8 @@ class Results(SyntacticChecker.Results):
         fst_line = diag[0].sloc_range.start.line
         return (
             DiagnosticPosition.from_node(diag[1]),
-            'duplicate test with line {}'.format(fst_line),
-            PredeterminedExpression,
+            "test duplicated with line {}".format(fst_line),
+            TestAlwaysFalse,
             cls.HIGH
         )
 
@@ -108,16 +108,17 @@ class SameTestFinder(Task):
 class SameTestChecker(SyntacticChecker):
     @classmethod
     def name(cls):
-        return "same test"
+        return "same_test"
 
     @classmethod
     def description(cls):
-        return ("Finds alternatives in if statements/expressions that contain "
-                "multiple times syntactically identical conditions.")
+        return ("Reports message of kind '{}' when an if statement/"
+                "expression contains several syntactically equivalent "
+                "conditions.").format(TestAlwaysFalse.name())
 
     @classmethod
     def kinds(cls):
-        return [PredeterminedExpression]
+        return [TestAlwaysFalse]
 
     @classmethod
     def create_requirement(cls, *args, **kwargs):

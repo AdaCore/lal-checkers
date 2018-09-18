@@ -209,7 +209,7 @@ class DeadCodeFinder(Task):
 class DeadCodeChecker(AbstractSemanticsChecker):
     @classmethod
     def name(cls):
-        return "dead code"
+        return "dead_code"
 
     @classmethod
     def description(cls):
