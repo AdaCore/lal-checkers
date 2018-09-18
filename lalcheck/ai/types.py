@@ -48,8 +48,8 @@ class ASCIICharacter(IntRange):
     """
     Represents an ASCII Character.
     """
-    def __init__(self):
-        super(ASCIICharacter, self).__init__(0, 255)
+    def __init__(self, frm=0, to=255):
+        super(ASCIICharacter, self).__init__(frm, to)
 
 
 class Enum(Type):

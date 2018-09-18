@@ -1,0 +1,190 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume0", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[121, 121]"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign1", 
+          "assume1", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[122, 122]"
+        }
+      }
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assume0", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[97, 99]"
+        }
+      }
+    ], 
+    "assume1": [
+      {
+        "trace:": [
+          "assume1", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[0, 255]"
+        }
+      }
+    ], 
+    "read0": [
+      {
+        "trace:": [
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[0, 255]"
+        }
+      }
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assume0", 
+          "assume1", 
+          "read0", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[121, 122]"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "C": "[0, 255]"
+        }
+      }
+    ]
+  }, 
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume0", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[121, 121]"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign1", 
+          "assume1", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[122, 122]"
+        }
+      }
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assume0", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[97, 99]"
+        }
+      }
+    ], 
+    "assume1": [
+      {
+        "trace:": [
+          "assume1", 
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[0, 255]"
+        }
+      }
+    ], 
+    "read0": [
+      {
+        "trace:": [
+          "read0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[0, 255]"
+        }
+      }
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume0", 
+          "read0", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[121, 121]"
+        }
+      }, 
+      {
+        "trace:": [
+          "assign1", 
+          "assume1", 
+          "read0", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "C": "[122, 122]"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "C": "[0, 255]"
+        }
+      }
+    ]
+  }
+}

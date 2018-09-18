@@ -207,7 +207,7 @@ def name_typer(inner_typer):
         """
         tpe, (c_left, c_right) = args
         assert (tpe.frm <= c_left and tpe.to >= c_right)
-        return types.IntRange(c_left, c_right)
+        return type(tpe)(c_left, c_right)
 
     # Transforms a lal.RangeConstraint into a pair of int ('First and 'Last)
     get_range_constraint = get_range >> (_eval_as_int & _eval_as_int)
