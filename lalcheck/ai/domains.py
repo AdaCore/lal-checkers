@@ -1079,61 +1079,159 @@ class SparseArray(AbstractDomain):
 
 
 class AccessPathsLattice(AbstractDomain):
+    """
+    Abstract domain that represents an access path. Its elements are
+    sentences of a simple access path language. For example:
+     - ProductGet(Address(3, A), 1, A_1) for some product domain A represents
+       the access to the component at index 1 of the element located at
+       address 3 in the abstract memory representation.
+     - NonNull() represents any access path that is not null.
+    """
     HasSplit = Capability.Yes
 
     class NullDeref(LookupError):
+        """
+        The exception to throw in case a null dereference occurs.
+        """
         pass
 
     class TopValue(LookupError):
+        """
+        The exception to throw in case a dereference on the top value occurs.
+        """
         pass
 
     class BottomValue(LookupError):
+        """
+        The exception to throw in case a dereference on the bottom value
+        occurs.
+        """
         pass
 
     class AccessPath(object):
+        """
+        Base class for access paths expressions.
+        """
         def size(self):
+            """
+            Returns the size of this access path.
+            :rtype: int
+            """
             raise NotImplementedError
 
         def access(self, state):
+            """
+            Returns the value stored in the memory at this access path.
+            :param object state: The memory state.
+            :rtype: object
+            """
             raise NotImplementedError
 
         def inv_access(self, state, value):
+            """
+            Assigns the given value to the location in the memory at this
+            access path.
+            :param object state: The memory state.
+            :param object value: The value to assign.
+            """
             raise NotImplementedError
 
         def update(self, state, value):
+            """
+            See inv_access.
+            """
             return self.inv_access(state, value)
 
         def __or__(self, other):
+            """
+            Returns the abstract join with another access path.
+            :type other: AccessPathsLattice.AccessPath
+            :rtype: AccessPathsLattice.AccessPath
+            """
             raise NotImplementedError
 
         def __and__(self, other):
+            """
+            Returns the abstract meet with another access path.
+            :type other: AccessPathsLattice.AccessPath
+            :rtype: AccessPathsLattice.AccessPath
+            """
             raise NotImplementedError
 
         def __eq__(self, other):
+            """
+            Returns true iff self represents the same concrete access paths as
+            other.
+            :type other: AccessPathsLattice.AccessPath
+            :rtype: bool
+            """
             raise NotImplementedError
 
         def __lt__(self, other):
+            """
+            Returns true iff self represents a strict subset of the concrete
+            access paths represented by other.
+            :type other: AccessPathsLattice.AccessPath
+            :rtype: bool
+            """
             raise NotImplementedError
 
         def __le__(self, other):
+            """
+            Returns true iff self represents a subset of the concrete access
+            paths represented by other.
+            :type other: AccessPathsLattice.AccessPath
+            :rtype: bool
+            """
             return self < other or self == other
 
         def __gt__(self, other):
+            """
+            Returns true iff self represents a strict superset of the concrete
+            access paths represented by other.
+            :type other: AccessPathsLattice.AccessPath
+            :rtype: bool
+            """
             return other < self
 
         def __ge__(self, other):
+            """
+            Returns true iff self represents a superset of the concrete access
+            paths represented by other.
+            :type other: AccessPathsLattice.AccessPath
+            :rtype: bool
+            """
             return other <= self
 
         def split(self, separator):
+            """
+            Splits this access path using the given separator.
+            See AbstractDomain.split for more details.
+            :rtype separator: AccessPathsLattice.AccessPath
+            :rtype: list[AccessPathsLattice.AccessPath]
+            """
             raise NotImplementedError
 
         def touches(self, other):
+            """
+            Returns true if this access path touches the other access path.
+            For example, NonNull() touches Null() because their concretizations
+            does not overlap and their join AllPath() does not include elements
+            that where not already in NonNull() or Null().
+
+            :type other: AccessPathsLattice.AccessPath
+            :rtype: bool
+            """
+            # todo: rename touches to adjacent
             raise NotImplementedError
 
         def __hash__(self):
             raise NotImplementedError
 
     class AllPath(AccessPath):
+        """
+        Represents all access paths.
+        """
         def __init__(self):
             pass
 
@@ -1178,6 +1276,9 @@ class AccessPathsLattice(AbstractDomain):
             return "[all-path]"
 
     class Null(AccessPath):
+        """
+        Represents the null access path.
+        """
         def __init__(self):
             pass
 
@@ -1227,6 +1328,9 @@ class AccessPathsLattice(AbstractDomain):
             return "null"
 
     class NonNull(AccessPath):
+        """
+        Represents all access paths except the null access path.
+        """
         def __init__(self):
             pass
 
@@ -1279,7 +1383,15 @@ class AccessPathsLattice(AbstractDomain):
             return "[non-null]"
 
     class Address(AccessPath):
+        """
+        Represents the access path to a precise memory location.
+        """
         def __init__(self, val, dom):
+            """
+            :param int val: The address of the access path.
+            :param AbstractDomain dom: The domain of the elements living at
+                this address.
+            """
             self.val = val
             self.dom = dom
 
@@ -1420,7 +1532,17 @@ class AccessPathsLattice(AbstractDomain):
             )
 
     class ProductGet(AccessPath):
+        """
+        Represents the access path to a specific component of another access
+        path.
+        """
         def __init__(self, prefix, component, dom):
+            """
+            :param AccessPathsLattice.AccessPath prefix: The access path of
+                the element which component is being taken.
+            :param int component: The index of the component.
+            :param AbstractDomain dom: The domain of the component elements.
+            """
             self.prefix = prefix
             self.component = component
             self.dom = dom
@@ -1498,6 +1620,9 @@ class AccessPathsLattice(AbstractDomain):
             return "Get_{}({})".format(self.component, self.prefix)
 
     class NoPath(AccessPath):
+        """
+        Represents no access path.
+        """
         def __init__(self):
             pass
 

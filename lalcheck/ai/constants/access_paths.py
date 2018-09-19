@@ -3,6 +3,9 @@ class AccessPath(object):
 
 
 class Null(AccessPath):
+    """
+    Represents the singleton "null" access path.
+    """
     def __str__(self):
         return "null"
 
@@ -65,7 +68,13 @@ class Subprogram(AccessPath):
 
 
 class Var(AccessPath):
+    """
+    Represents an access to a local variable.
+    """
     def __init__(self, var_obj):
+        """
+        :param object var_obj: An object identifying the variable accessed.
+        """
         self.var_obj = var_obj
 
     def __str__(self):
@@ -73,7 +82,13 @@ class Var(AccessPath):
 
 
 class Field(AccessPath):
+    """
+    Represents an access to a field of an object.
+    """
     def __init__(self, field_obj):
+        """
+        :param object field_obj: An object identifying the field accessed.
+        """
         self.field_obj = field_obj
 
     def __str__(self):
