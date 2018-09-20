@@ -30,6 +30,9 @@ files_group.add_argument('--list-categories', action='store_true',
                               'the subset of checkers that can actually '
                               'output this message kind; a description of '
                               'this message kind')
+files_group.add_argument('--checkers-help', action='store_true',
+                         help='Prints a help message for each checker '
+                              'passed through --checkers of --checkers-from.')
 
 checkers_group = parser.add_mutually_exclusive_group(required=True)
 checkers_group.add_argument('--checkers-from', metavar='FILE_PATH', type=str)
@@ -350,6 +353,22 @@ def list_categories(checkers):
         ))
 
 
+def print_checkers_help(checkers):
+    """
+    Prints the usage of the given list of checkers.
+    :param list[Checker] checkers: The checkers for which to print usage.
+    """
+    for i, (checker, _) in enumerate(checkers):
+        checker_parser = checker.get_arg_parser()
+        checker_parser.description = checker.description()
+        checker_parser.prog = checker.name()
+        checker_parser.print_help()
+        if i != len(checkers) - 1:
+            print('\n')
+            print('_' * 80)
+            print('\n')
+
+
 def do_partition(args, checkers, partition):
     """
     Runs the checkers on a single partition of the whole set of files.
@@ -460,6 +479,8 @@ def do_all(args, diagnostic_action):
 
     if args.list_categories:
         list_categories(checkers)
+    if args.checkers_help:
+        print_checkers_help(checkers)
 
     logger.log('info', 'Created {} partitions of {} files.'.format(
         len(partitions), ps
