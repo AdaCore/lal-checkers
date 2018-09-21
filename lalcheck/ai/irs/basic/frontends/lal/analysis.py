@@ -142,9 +142,15 @@ def compute_global_vars(subpdata):
         old_count = count
         count = compute_size()
 
-    # Guarantee fixed iteration order
     for subp, userdata in subpdata.iteritems():
+        # Guarantee fixed iteration order
         userdata.all_global_vars = sorted_by_position(userdata.all_global_vars)
+        for called in userdata.out_calls:
+            called_userdata = subpdata.get(called, None)
+            if called_userdata is not None:
+                # All variables that are accessed as globals by subprograms
+                # that are called inside ours must be spilled.
+                userdata.vars_to_spill.update(called_userdata.all_global_vars)
 
 
 def _solve_renamings(ref):

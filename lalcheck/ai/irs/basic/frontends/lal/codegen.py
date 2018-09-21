@@ -207,19 +207,26 @@ def _contains_access_type(typer, type_hint):
 
 
 @memoize
-def _find_global_access(typer, proc):
+def _find_global_access(ctx, proc):
     """
     Analyzes the side effects of the given subprogram. returns the following:
     - _IGNORES_GLOBAL_STATE if the function doesn't access the global state.
     - _READS_GLOBAL_STATE if the function may read from the global state.
     - _WRITES_GLOBAL_STATE if the function may write to the global state.
 
-    :param types.Typer[lal.AdaNode] typer:
-    :param lal.SubpBody | lal.SubpDecl proc:
-    :return:
+    :param ExtractionContext ctx: The extraction context.
+    :param lal.SubpBody | lal.SubpDecl proc: The subprogram to analyze.
+    :rtype: int
     """
-    for i, id, param in proc_parameters(proc):
-        if _contains_access_type(typer, param.f_type_expr):
+    procdata = ctx.subpdata.get(get_subp_identity(proc))
+    if procdata is not None and len(procdata.all_global_vars) > 0:
+        # The subprogram has access to global variables.
+        return _WRITES_GLOBAL_STATE
+
+    for _, _, param in proc_parameters(proc):
+        if _contains_access_type(ctx._internal_typer, param.f_type_expr):
+            # The subprogram takes pointers as parameters, and may therefore
+            # produce global side effects.
             return _WRITES_GLOBAL_STATE
 
     return _IGNORES_GLOBAL_STATE
@@ -2316,15 +2323,20 @@ def gen_ir(ctx, subp, typer, subpdata):
             ).get()
 
         for glob_id in subpdata.all_global_vars:
-            param_vars.append(stores.register_normal(
-                defining_name=glob_id,
-                type_hint=glob_id.p_basic_decl.f_type_expr,
+            glob_access_param = stores.register_normal(
+                name=glob_id.text + "_ptr",
+                type_hint=PointerType(glob_id.p_basic_decl.f_type_expr),
                 orig_node=glob_id,
-                mode=Mode.Out
-            ).var)
+                mode=Mode.Local
+            )
+            param_vars.append(glob_access_param.var)
+            stores.register_spilled_absolute(
+                defining_name=glob_id,
+                address_handle=glob_access_param,
+                type_hint=glob_id.p_basic_decl.f_type_expr
+            )
 
-        if (_find_global_access(typer, subp) ==
-                _WRITES_GLOBAL_STATE):
+        if _find_global_access(ctx, subp) != _IGNORES_GLOBAL_STATE:
             param_vars.append(stack.var)
 
         return []
