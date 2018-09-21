@@ -1,0 +1,136 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '[-2147483648, 2147483647]'}, 0)", 
+          "X_orig": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '[-2147483648, 2147483647]'}, 0)", 
+          "X_orig": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '[12, 12]'}, 0)", 
+          "X_orig": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign3": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '[12, 12]'}, 0)", 
+          "X_orig": "[12, 12]"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "X_orig": "[-2147483648, 2147483647]"
+        }
+      }
+    ]
+  }, 
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '[-2147483648, 2147483647]'}, 0)", 
+          "X_orig": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '[-2147483648, 2147483647]'}, 0)", 
+          "X_orig": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '[12, 12]'}, 0)", 
+          "X_orig": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign3": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '[12, 12]'}, 0)", 
+          "X_orig": "[12, 12]"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({}, 0)", 
+          "X_orig": "[-2147483648, 2147483647]"
+        }
+      }
+    ]
+  }
+}

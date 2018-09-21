@@ -577,9 +577,81 @@ def gen_ir(ctx, subp, typer, subpdata):
             def access(self, **data):
                 return self.address_var.get(**data)
 
+        class SubstitutedVariableHandle(VariableHandle):
+            """
+            Represents a variable that is substituted by another one. It uses
+            two handles, one for managing the original variable, and one for
+            managing the stand in variable.
+
+            Methods sync_standin and sync_orig can be used to update the
+            standin with the original and to update the original with the
+            standin (respectively).
+
+            This is used for example to handle variables that are expected to
+            be stored in two different ways according to two different points
+            of view. For example, the parameter of a subprogram might need to
+            live on the stack according to the subprogram itself because
+            accesses on this parameter are taken. On the other hand, when
+            calling a subprogram, all arguments are expected to be passed
+            through a specific storage (here, normal variable) to simplify the
+            generation of calls. To unlock this situation, a new "substitute"
+            variable can act as the parameter living on the stack to the
+            subprogram so that the original parameter keeps its expected
+            representation. See transform_spec for more details.
+            """
+            def __init__(self, defining_name, orig_handle, standin_handle):
+                """
+                :param lal.DefiningName | None defining_name: The original
+                    defining name of the Ada variable that this handle wraps.
+                :param VariableHandle orig_handle: The handle of the original
+                    variable.
+                :param VariableHandle standin_handle: The handle of the stand
+                    in variable.
+                """
+                StorageManager.VariableHandle.__init__(self, defining_name)
+                self.orig_handle = orig_handle
+                self.standin_handle = standin_handle
+
+            def havoc(self, **data):
+                return self.standin_handle.read(**data)
+
+            def get(self, **data):
+                return self.standin_handle.get(**data)
+
+            def gen_dest(self, expr, **data):
+                return self.standin_handle.gen_dest(expr, **data)
+
+            def access(self, **data):
+                return self.standin_handle.access(**data)
+
+            def sync_standin(self):
+                """
+                Generates a list of statement that, when executed, synchronizes
+                the value held by the original variable into the stand in
+                variable.
+                :rtype: list[irt.Stmt]
+                """
+                dest, updated_expr = (
+                    self.standin_handle.gen_dest(self.orig_handle.get())
+                )
+                return [irt.AssignStmt(dest, updated_expr)]
+
+            def sync_orig(self):
+                """
+                Generates a list of statement that, when executed, synchronizes
+                the value held by the standin variable back into the original
+                variable.
+                :rtype: list[irt.Stmt]
+                """
+                dest, updated_expr = (
+                    self.orig_handle.gen_dest(self.standin_handle.get())
+                )
+                return [irt.AssignStmt(dest, updated_expr)]
+
         def __init__(self):
             self.vars = {}
             self.var_index = 0
+            self.substs = []
 
         def register_normal(self, defining_name=None, name=None, **data):
             """
@@ -648,6 +720,49 @@ def gen_ir(ctx, subp, typer, subpdata):
                 self.vars[defining_name] = var
 
             return var
+
+        def register_substitute(self, orig_handle, standin_handle,
+                                defining_name=None):
+            """
+            Creates a new "substituted" variable handle using a variable handle
+            that represents the original variable and a variable handle that
+            represents the standin variable.
+
+            Also, appends this variable to an internal list of substitute
+            variables, to simplify the overall synchronization of substitutes
+            back to original at, for example, the epilog of a subprogram. (see
+            gen_substs_update)
+
+            :param VariableHandle orig_handle: The variable handle of the
+                variable holding the original variable.
+            :param VariableHandle standin_handle: The variable handle of the
+                variable holding the stand in variable.
+            :param lal.DefiningName | None defining_name: The original
+                defining name of the Ada variable that this handle wraps.
+            :rtype: SubstitutedVariableHandle
+            """
+            var = self.SubstitutedVariableHandle(
+                defining_name, orig_handle, standin_handle
+            )
+
+            if defining_name is not None:
+                self.vars[defining_name] = var
+
+            self.substs.append(var)
+
+            return var
+
+        def gen_substs_update(self):
+            """
+            Returns a list of statements that, when executed, synchronizes all
+            substitute variables, such that each original variable is updated
+            with the value of its stand in variable.
+            :rtype: list[irt.Stmt]
+            """
+            ret = []
+            for subst in self.substs:
+                ret.extend(subst.sync_orig())
+            return ret
 
         def get(self, defining_name, default=None):
             """
@@ -2576,6 +2691,8 @@ def gen_ir(ctx, subp, typer, subpdata):
         :param lal.SubpSpec spec: The subprogram's specification
         :return:
         """
+        ret = []
+
         if spec.f_subp_params is not None:
             params = spec.f_subp_params.f_params
         else:
@@ -2584,12 +2701,53 @@ def gen_ir(ctx, subp, typer, subpdata):
         for param in params:
             mode = Mode.from_lal_mode(param.f_mode)
             for var_id in param.f_ids:
-                param_vars.append(stores.register_normal(
-                    defining_name=var_id,
-                    type_hint=param.f_type_expr,
-                    orig_node=var_id,
-                    mode=mode
-                ).var)
+                if var_id in to_spill:
+                    # All parameters of a function are supposed to be normal
+                    # variables, so that all subprogram provide the same call
+                    # interface, i.e. the caller never needs to know how the
+                    # callee stores the parameter locally.
+
+                    orig_handle = stores.register_normal(
+                        name=var_id.text + '_orig',
+                        type_hint=param.f_type_expr,
+                        orig_node=var_id
+                    )
+                    param_vars.append(orig_handle.var)
+
+                    # However, some of these parameter would need to live on
+                    # the stack because they are "'Access"ed inside the body of
+                    # the subprogram. There is therefore a conflict in how the
+                    # variable is supposed to be stored. To circumvent this, a
+                    # new variable will act as the original parameter but will
+                    # live on the stack throughout the execution of the
+                    # subprogram.
+
+                    standin_handle = stores.register_spilled_relative(
+                        type_hint=param.f_type_expr
+                    )
+                    subst_handle = stores.register_substitute(
+                        defining_name=var_id,
+                        orig_handle=orig_handle,
+                        standin_handle=standin_handle
+                    )
+
+                    # In order to completely mimic the parameter variable, the
+                    # value received as argument through the original variable
+                    # is stored inside the substitute at the beginning of the
+                    # subprogram using the sync_standin() primitive.
+                    ret.extend(subst_handle.sync_standin())
+
+                    # Conversely, at the end of the subprogram, the value of
+                    # the standin variable is synced back into the original
+                    # variable, using sync_orig. See stores.gen_substs_update()
+                    # and where it is called.
+                else:
+                    param_vars.append(stores.register_normal(
+                        defining_name=var_id,
+                        type_hint=param.f_type_expr,
+                        orig_node=var_id,
+                        mode=mode
+                    ).var)
 
         if spec.f_subp_returns is not None:
             result_var.value = stores.register_normal(
@@ -2614,7 +2772,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         if _find_global_access(ctx, subp) != _IGNORES_GLOBAL_STATE:
             param_vars.append(stack.var)
 
-        return []
+        return ret
 
     def transform_decl(decl):
         """
@@ -3097,6 +3255,7 @@ def gen_ir(ctx, subp, typer, subpdata):
     else:
         fun_body_stmts.extend(transform_subp_body(subp))
     fun_body_stmts.append(func_end_label)
+    fun_body_stmts.extend(stores.gen_substs_update())
 
     return irt.Program(
         fun_body_stmts,

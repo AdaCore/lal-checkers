@@ -230,7 +230,7 @@ def _is_up_level_local_decl(decl, subp):
 
 
 def _is_concrete_object_decl(node):
-    return (node.is_a(lal.ObjectDecl)
+    return (node.is_a(lal.ObjectDecl, lal.ParamSpec)
             and not node.parent.is_a(lal.GenericFormalObjDecl))
 
 
@@ -294,7 +294,7 @@ def traverse_unit(unit, config=_default_configuration):
         elif node.is_a(lal.BasePackageDecl):
             subp = None
         elif subp is not None:
-            if node.is_a(lal.ObjectDecl):
+            if node.is_a(lal.ObjectDecl, lal.ParamSpec):
                 subpdata[subp].local_vars.update(node.f_ids)
             elif node.is_a(lal.Identifier):
                 ref = _get_ref_decl(node)
