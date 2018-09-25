@@ -1,6 +1,6 @@
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
-from lalcheck.checkers.support.checker import Checker, create_best_provider
+from lalcheck.checkers.support.checker import Checker, create_provider
 from lalcheck.checkers.support.components import IRTrees
 
 from lalcheck.tools.scheduler import Task, Requirement
@@ -58,10 +58,10 @@ class IRPrinterChecker(Checker):
         return []
 
     @classmethod
-    def create_requirement(cls, project_file, scenario_vars, filenames, args):
+    def create_requirement(cls, provider_config, analysis_files, args):
         return PrintIR(
-            create_best_provider(project_file, scenario_vars, filenames),
-            tuple(filenames)
+            create_provider(provider_config),
+            analysis_files
         )
 
 

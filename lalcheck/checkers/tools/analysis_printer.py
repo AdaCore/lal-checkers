@@ -1,6 +1,6 @@
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import (
-    AbstractSemanticsChecker, create_best_provider
+    AbstractSemanticsChecker, create_provider
 )
 from lalcheck.checkers.support.components import (
     AbstractSemantics, ModelConfig
@@ -146,16 +146,16 @@ class AnalysisPrinterChecker(AbstractSemanticsChecker):
         return []
 
     @classmethod
-    def create_requirement(cls, project_file, scenario_vars, filenames, args):
+    def create_requirement(cls, provider_config, analysis_files, args):
         arg_values = cls.get_arg_parser().parse_args(args)
 
         return PrintAnalysis(
-            create_best_provider(project_file, scenario_vars, filenames),
+            create_provider(provider_config),
             ModelConfig(arg_values.typer,
                         arg_values.type_interpreter,
                         arg_values.call_strategy,
                         arg_values.merge_predicate),
-            tuple(filenames),
+            analysis_files,
             arg_values.file_matcher,
             arg_values.subp_matcher,
             arg_values.file_format

@@ -2,7 +2,7 @@ from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import PredeterminedCheck
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import (
-    AbstractSemanticsChecker, DiagnosticPosition, create_best_provider
+    AbstractSemanticsChecker, DiagnosticPosition, create_provider
 )
 from lalcheck.checkers.support.components import AbstractSemantics, ModelConfig
 from lalcheck.checkers.support.kinds import TestAlwaysTrue, TestAlwaysFalse
@@ -178,16 +178,16 @@ class PredeterminedTestChecker(AbstractSemanticsChecker):
         return [TestAlwaysTrue, TestAlwaysFalse]
 
     @classmethod
-    def create_requirement(cls, project_file, scenario_vars, filenames, args):
+    def create_requirement(cls, provider_config, analysis_files, args):
         arg_values = cls.get_arg_parser().parse_args(args)
 
         return PredeterminedTests(
-            create_best_provider(project_file, scenario_vars, filenames),
+            create_provider(provider_config),
             ModelConfig(arg_values.typer,
                         arg_values.type_interpreter,
                         arg_values.call_strategy,
                         arg_values.merge_predicate),
-            tuple(filenames),
+            analysis_files,
             CheckerConfig(
                 lits=(
                     (() if arg_values.ignore_always_true else (True,)) +

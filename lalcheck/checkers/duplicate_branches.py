@@ -18,7 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
 from lalcheck.checkers.support.checker import (
-    SyntacticChecker, DiagnosticPosition, create_best_provider
+    SyntacticChecker, DiagnosticPosition, create_provider
 )
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.kinds import CodeDuplicated
@@ -360,12 +360,12 @@ class DuplicateBranchesChecker(SyntacticChecker):
         return [CodeDuplicated]
 
     @classmethod
-    def create_requirement(cls, project_file, scenario_vars, filenames, args):
+    def create_requirement(cls, provider_config, analysis_files, args):
         arg_values = cls.get_arg_parser().parse_args(args)
 
         return DuplicateBranches(
-            create_best_provider(project_file, scenario_vars, filenames),
-            tuple(filenames),
+            create_provider(provider_config),
+            analysis_files,
             CheckerConfig(
                 size_threshold=arg_values.size_threshold,
                 min_duplicates=arg_values.min_duplicates,

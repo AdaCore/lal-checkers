@@ -4,15 +4,29 @@ from components import (
 )
 from utils import closest_enclosing
 import libadalang as lal
+from collections import namedtuple
 
 
-def create_best_provider(project_file, scenario_vars, filenames):
-    if project_file is None:
-        return AutoProvider(tuple(filenames))
+ProviderConfig = namedtuple(
+    'ProviderConfig', ['project_file', 'scenario_vars', 'provider_files']
+)
+
+
+def create_provider(provider_config):
+    """
+    Returns the provider that should be used depending on the given provider
+    configuration. In particular, if a project file is given, it will always
+    have priority.
+
+    :param ProviderConfig provider_config: The configuration of the provider.
+    :rtype: AutoProvider | ProjectProvider
+    """
+    if provider_config.project_file is None:
+        return AutoProvider(provider_config.provider_files)
     else:
         return ProjectProvider(
-            project_file,
-            tuple(scenario_vars.iteritems())
+            provider_config.project_file,
+            provider_config.scenario_vars
         )
 
 
@@ -158,16 +172,16 @@ class AbstractSemanticsChecker(Checker):
     def requirement_creator(requirement_class):
         parser = AbstractSemanticsChecker.get_arg_parser()
 
-        def create_requirement(project_file, scenario_vars, filenames, args):
+        def create_requirement(provider_config, analysis_files, args):
             arg_values = parser.parse_args(args)
 
             return requirement_class(
-                create_best_provider(project_file, scenario_vars, filenames),
+                create_provider(provider_config),
                 ModelConfig(arg_values.typer,
                             arg_values.type_interpreter,
                             arg_values.call_strategy,
                             arg_values.merge_predicate),
-                tuple(filenames)
+                analysis_files
             )
 
         return create_requirement
@@ -213,10 +227,10 @@ class SyntacticChecker(Checker):
 
     @staticmethod
     def requirement_creator(requirement_class):
-        def create_requirement(project_file, scenario_vars, filenames, args):
+        def create_requirement(provider_config, analysis_files, args):
             return requirement_class(
-                create_best_provider(project_file, scenario_vars, filenames),
-                tuple(filenames)
+                create_provider(provider_config),
+                analysis_files
             )
 
         return create_requirement

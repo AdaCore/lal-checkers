@@ -8,7 +8,9 @@ import signal
 import traceback
 import sys
 
-from lalcheck.checkers.support.checker import Checker, CheckerResults
+from lalcheck.checkers.support.checker import (
+    Checker, CheckerResults, ProviderConfig
+)
 from lalcheck.tools.digraph import Digraph
 from lalcheck.tools.dot_printer import gen_dot, DataPrinter
 from lalcheck.tools.scheduler import Scheduler
@@ -16,7 +18,18 @@ from lalcheck.tools import logger
 
 parser = argparse.ArgumentParser(description='lal-checker runner.')
 
-parser.add_argument('-P', default=None, metavar='PROJECT_FILE', type=str)
+provider_group = parser.add_mutually_exclusive_group(required=False)
+provider_group.add_argument('-P', default=None, metavar='FILE_PATH', type=str,
+                            help="The path to the project file to use.")
+provider_group.add_argument('--provider-files-from', default=None,
+                            metavar='FILE_PATH', type=str,
+                            help="The path to a file containing a list of "
+                                 "files that are dependencies of the files to "
+                                 "analyze.")
+provider_group.add_argument('--provider-files', default=None,
+                            metavar='FILE_PATHS', type=str,
+                            help="A list of files that are dependencies of the"
+                                 " files to analyze.")
 
 parser.add_argument('-X', action='append', metavar='VAR=STR', type=str,
                     default=[])
@@ -193,29 +206,61 @@ def get_working_checkers(args):
     return checkers, len(checkers) == len(checker_commands)
 
 
-def get_requirements(args, checkers, files_to_check):
+def create_provider_config(args, analysis_files):
     """
-    Returns a list of requirements corresponding to the execution of the
-    specified checkers on the specified list of files.
+    Creates a ProviderConfig object using the switches have been passed
+    as argument, among "-P", "-X", "--provider-files[-from]".
+
+    Note that if the "--provider-files[-from]" switches have not been
+    specified, it uses the set of files to analyze as provider files.
 
     :param argparse.Namespace args: The command-line arguments.
-    :param list[(Checker, list[str])] checkers: The checkers to run.
-    :param list[str] files_to_check: The files to analyze.
-    :rtype: list[lalcheck.tools.scheduler.Requirement]
+    :param list[str] analysis_files: The files to analyze.
+    :rtype: ProviderConfig
     """
     project_file = args.P
     scenario_vars = dict([eq.split('=') for eq in args.X])
+    provider_files = set(commands_from_file_or_list(
+        args.provider_files_from, args.provider_files
+    ) or [])
+
+    # Make sure that files to analyze are part of the auto provider.
+    provider_files.update(analysis_files)
 
     if project_file is None and len(scenario_vars) > 0:
         logger.log('info', "warning: use of scenario vars without a "
                            "project file.")
 
+    return ProviderConfig(
+        project_file=project_file,
+        scenario_vars=tuple(scenario_vars.iteritems()),
+        provider_files=tuple(provider_files)
+    )
+
+
+def get_requirements(provider_config, checkers, files_to_check):
+    """
+    Returns a list of requirements corresponding to the execution of the
+    specified checkers on the specified list of files.
+
+    For example, the checker null_dereference creates a requirement NullDerefs,
+    which in itself contains all the information necessary to compute the list
+    of null dereferences in the given list of files: NullDerefs says that it
+    can be fulfilled with the NullDerefFinder task, which itself depends on
+    other requirements, etc. The scheduler then takes care of arranging the
+    tasks in order to fulfill all the necessary requirements.
+
+    :param ProviderConfig provider_config: The provider configuration.
+    :param list[(Checker, list[str])] checkers: The checkers to run.
+    :param list[str] files_to_check: The files to analyze.
+    :rtype: list[lalcheck.tools.scheduler.Requirement]
+    """
     requirements = []
+
     for checker, checker_args in checkers:
         requirements.append(checker.create_requirement(
-            project_file=project_file,
-            scenario_vars=scenario_vars,
-            filenames=files_to_check,
+            provider_config=provider_config,
+            analysis_files=tuple(files_to_check),
             args=checker_args
         ))
 
@@ -368,12 +413,13 @@ def print_checkers_help(checkers):
             print('\n')
 
 
-def do_partition(args, checkers, partition):
+def do_partition(args, provider_config, checkers, partition):
     """
     Runs the checkers on a single partition of the whole set of files.
     Returns a list of diagnostics.
 
     :param argparse.Namespace args: The command-line arguments.
+    :param ProviderConfig provider_config: The provider configuration.
     :param list[(Checker, list[str])] checkers: The list of checkers to run
         together with their specific arguments.
     :param (int, list[str]) partition: The index of that partition and the list
@@ -391,7 +437,7 @@ def do_partition(args, checkers, partition):
     )
 
     try:
-        reqs = get_requirements(args, checkers, files)
+        reqs = get_requirements(provider_config, checkers, files)
         schedule = get_schedules(reqs)[0]
 
         if args.export_schedule is not None:
@@ -429,6 +475,7 @@ def do_all(args, diagnostic_action):
     working_files = sort_files_by_line_count(
         commands_from_file_or_list(args.files_from, args.files)
     )
+    provider_config = create_provider_config(args, working_files)
     ps = args.partition_size
     ps = len(working_files) / args.j if ps == 0 else ps
     ps = max(ps, 1)
@@ -509,7 +556,7 @@ def do_all(args, diagnostic_action):
     signal.signal(signal.SIGINT, orig_handler)
 
     all_diags = p.map_async(
-        partial(do_partition, args, checkers),
+        partial(do_partition, args, provider_config, checkers),
         enumerate(partitions),
         chunksize=1
     )

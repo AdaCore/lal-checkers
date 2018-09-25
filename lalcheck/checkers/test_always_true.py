@@ -18,9 +18,9 @@ class TestAlwaysTrueChecker(AbstractSemanticsChecker):
         return [TestAlwaysTrue]
 
     @classmethod
-    def create_requirement(cls, project_file, scenario_vars, filenames, args):
+    def create_requirement(cls, provider_config, analysis_files, args):
         return PredeterminedTestChecker.create_requirement(
-            project_file, scenario_vars, filenames, ["--ignore-always-false"]
+            provider_config, analysis_files, ["--ignore-always-false"]
         )
 
 
