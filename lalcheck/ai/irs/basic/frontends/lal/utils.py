@@ -201,9 +201,12 @@ def get_subp_identity(subp):
         # BasicSubpDecl.
         return subp.p_generic_instantiations[0]
     elif subp.is_a(lal.BasicSubpDecl, lal.GenericSubpDecl):
-        body = subp.p_body_part
-        if body is not None:
-            return body
+        try:
+            body = subp.p_body_part
+            if body is not None:
+                return body
+        except lal.PropertyError:
+            pass
 
     return subp
 
