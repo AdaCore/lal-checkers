@@ -120,6 +120,31 @@ def import_checker(module_path):
         )
 
 
+def commands_from_file_or_list(file_path, commands):
+    """
+    Returns a list of commands, by taking them either from a file (if
+    file_path is not None) or from a list of strings.
+
+    If both are None, returns None.
+
+    :param str | None file_path: The path to a file that contains a list of
+        commands on each line.
+    :param list[str] | None commands: The list of command strings, where each
+        string holds multiple commands separated by semicolons.
+    :rtype: list[str] | None
+    """
+    if file_path is not None:
+        return lines_from_file(file_path)
+    elif commands is not None:
+        return [
+            c
+            for cs in commands
+            for c in cs.split(';')
+        ]
+    else:
+        return None
+
+
 def get_working_checkers(args):
     """
     Retrieves the list of checkers to run from the information passed as
@@ -137,15 +162,9 @@ def get_working_checkers(args):
     :rtype: list[(Checker, list[str])], bool
     """
 
-    if args.checkers_from:
-        checker_commands = lines_from_file(args.checkers_from)
-    else:
-        checker_commands = [
-            c
-            for cs in args.checkers
-            for c in cs.split(';')
-        ]
-
+    checker_commands = commands_from_file_or_list(
+        args.checkers_from, args.checkers
+    )
     split_commands = [command.split() for command in checker_commands]
 
     checkers = []
@@ -172,26 +191,6 @@ def get_working_checkers(args):
                 checkers.append((checker_module.checker, checker_args[1:]))
 
     return checkers, len(checkers) == len(checker_commands)
-
-
-def get_working_files(args):
-    """
-    Retrieves the list of files to analyze from the information passed as
-    command-line arguments using the --files or --files-from options.
-
-    :param argparse.Namespace args: The command-line arguments.
-    :rtype: list[str]
-    """
-    if args.files_from:
-        return lines_from_file(args.files_from)
-    elif args.files:
-        return [
-            f
-            for fs in args.files
-            for f in fs.split(';')
-        ]
-    else:
-        return []
 
 
 def get_requirements(args, checkers, files_to_check):
@@ -427,7 +426,9 @@ def do_all(args, diagnostic_action):
          - 'log': Output them in the logger.
     """
     args.j = cpu_count() if args.j <= 0 else args.j
-    working_files = sort_files_by_line_count(get_working_files(args))
+    working_files = sort_files_by_line_count(
+        commands_from_file_or_list(args.files_from, args.files)
+    )
     ps = args.partition_size
     ps = len(working_files) / args.j if ps == 0 else ps
     ps = max(ps, 1)
