@@ -386,6 +386,11 @@ def do_partition(args, checkers, partition):
     diags = []
     index, files = partition
 
+    logger.log(
+        'debug',
+        "started partition {} with files {}".format(index, files)
+    )
+
     try:
         reqs = get_requirements(args, checkers, files)
         schedule = get_schedules(reqs)[0]
@@ -405,6 +410,7 @@ def do_partition(args, checkers, partition):
         with logger.log_stdout('internal-error'):
             traceback.print_exc(file=sys.stdout)
     finally:
+        logger.log('debug', "completed partition {}".format(index))
         return diags
 
 
