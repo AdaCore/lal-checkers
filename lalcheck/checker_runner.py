@@ -58,6 +58,11 @@ parser.add_argument('--log', metavar="CATEGORIES", type=str,
                         CheckerResults.HIGH
                     ),
                     help='Categories separated by semicolons.')
+parser.add_argument('--log-to-file', metavar=("FILE", "CATEGORIES"), nargs=2,
+                    type=str, default=[], action='append',
+                    help='The first argument is the file name in which to log.'
+                         ' The second argument is a list of categories '
+                         'separated by semicolons.')
 
 parser.add_argument('--codepeer-output', action='store_true')
 parser.add_argument('--export-schedule', type=str)
@@ -111,8 +116,37 @@ def sort_files_by_line_count(filenames):
     return [f for f, l in file_lines]
 
 
+def clear_file(fname):
+    """
+    Erases all of the content of the given file.
+
+    :param str fname: The path to the file to clear.
+    """
+    with open(fname, 'w+'):
+        pass
+
+
 def set_logger(args):
-    logger.set_logger(logger.Logger.with_std_output(args.log.split(';')))
+    filters = {f: sys.stdout for f in args.log.split(';')}
+
+    for filenames_categories in args.log_to_file:
+        # filenames_categories is the flattened list
+        # [file_1, cats_1, file_2, cats_2, ...]
+
+        unflattened = [
+            filenames_categories[i:i+2]
+            for i in range(0, len(filenames_categories), 2)
+        ]
+        # unflattened is the list:
+        # [(file_1, cats_1), (file_2, cats_2), ...]
+
+        for fname, categories in unflattened:
+            clear_file(fname)
+            log_file = open(fname, 'a')  # file will be closed upon destruction
+            for category in categories.split(';'):
+                filters[category] = log_file
+
+    logger.set_logger(logger.Logger(filters))
 
 
 def import_checker(module_path):

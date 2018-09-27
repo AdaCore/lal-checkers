@@ -34,6 +34,7 @@ class Logger(object):
         output = self.filters.get(category)
         if output is not None:
             output.write(msg)
+            output.flush()
 
     def log_stdout(self, category):
         """
