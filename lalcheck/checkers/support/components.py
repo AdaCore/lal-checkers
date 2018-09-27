@@ -341,5 +341,6 @@ class AbstractAnalyser(Task):
             log('timings', "Analysis of {} took {}s.".format(
                 self.analysis_file, end_t - start_t
             ))
+            log('progress', 'analyzed {}'.format(self.analysis_file))
 
         return {'res': res}

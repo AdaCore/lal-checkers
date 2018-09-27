@@ -54,7 +54,7 @@ checkers_group.add_argument('--checkers', metavar='CHECKERS', action='append',
                                            'semicolons.')
 
 parser.add_argument('--log', metavar="CATEGORIES", type=str,
-                    default="error;internal-error;diag-{}".format(
+                    default="progress;error;internal-error;diag-{}".format(
                         CheckerResults.HIGH
                     ),
                     help='Categories separated by semicolons.')
