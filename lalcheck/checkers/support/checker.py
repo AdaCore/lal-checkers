@@ -8,7 +8,9 @@ from collections import namedtuple
 
 
 ProviderConfig = namedtuple(
-    'ProviderConfig', ['project_file', 'scenario_vars', 'provider_files']
+    'ProviderConfig', [
+        'project_file', 'scenario_vars', 'provider_files', 'target'
+    ]
 )
 
 
@@ -26,7 +28,8 @@ def create_provider(provider_config):
     else:
         return ProjectProvider(
             provider_config.project_file,
-            provider_config.scenario_vars
+            provider_config.scenario_vars,
+            provider_config.target
         )
 
 

@@ -14,7 +14,7 @@ import traceback
 import time
 
 ProjectProvider = namedtuple(
-    'ProjectProvider', ['project_file', 'scenario_vars']
+    'ProjectProvider', ['project_file', 'scenario_vars', 'target']
 )
 AutoProvider = namedtuple(
     'AutoProvider', ['files']
@@ -84,8 +84,9 @@ class AnalysisContextCreator(Task):
             )
         else:
             provider = lal2basic.lal.UnitProvider.for_project(
-                self.provider_config.project_file,
-                dict(self.provider_config.scenario_vars)
+                project_file=self.provider_config.project_file,
+                scenario_vars=dict(self.provider_config.scenario_vars),
+                target=self.provider_config.target
             )
         return {'ctx': lal2basic.lal.AnalysisContext(unit_provider=provider)}
 

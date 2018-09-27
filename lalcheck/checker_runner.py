@@ -33,6 +33,9 @@ provider_group.add_argument('--provider-files', default=None,
 
 parser.add_argument('-X', action='append', metavar='VAR=STR', type=str,
                     default=[])
+parser.add_argument('--target', default=None, metavar="TARGET", type=str,
+                    help="The target to use. Overrides the one given in the "
+                         "project file, if any.")
 
 files_group = parser.add_mutually_exclusive_group(required=True)
 files_group.add_argument('--files-from', metavar='FILE_PATH', type=str)
@@ -243,7 +246,7 @@ def get_working_checkers(args):
 def create_provider_config(args, analysis_files):
     """
     Creates a ProviderConfig object using the switches have been passed
-    as argument, among "-P", "-X", "--provider-files[-from]".
+    as argument, among "-P", "-X", "--target", "--provider-files[-from]".
 
     Note that if the "--provider-files[-from]" switches have not been
     specified, it uses the set of files to analyze as provider files.
@@ -257,18 +260,24 @@ def create_provider_config(args, analysis_files):
     provider_files = set(commands_from_file_or_list(
         args.provider_files_from, args.provider_files
     ) or [])
+    target = args.target
 
     # Make sure that files to analyze are part of the auto provider.
     provider_files.update(analysis_files)
 
     if project_file is None and len(scenario_vars) > 0:
-        logger.log('info', "warning: use of scenario vars without a "
-                           "project file.")
+        logger.log('error', "warning: use of scenario vars without a "
+                            "project file.")
+
+    if project_file is None and target is not None:
+        logger.log('error', "warning: specifying a target without a "
+                            "project file.")
 
     return ProviderConfig(
         project_file=project_file,
         scenario_vars=tuple(scenario_vars.iteritems()),
-        provider_files=tuple(provider_files)
+        provider_files=tuple(provider_files),
+        target=target
     )
 
 
