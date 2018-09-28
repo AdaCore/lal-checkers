@@ -820,6 +820,11 @@ class SparseArray(AbstractDomain):
         else:
             self._join_elem = self._join_elem_imprecise
 
+        # The singleton element representing the concrete empty array.
+        # (not to mix up with the empty element (bottom) representing no
+        # concrete array.
+        self.empty = [(self.index_dom.bottom, self.elem_dom.top)]
+
     def build(self, elems):
         assert self.le(elems, self.top)
         return elems
