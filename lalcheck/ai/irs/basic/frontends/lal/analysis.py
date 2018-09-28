@@ -229,6 +229,11 @@ def _is_up_level_local_decl(decl, subp):
         return False
 
 
+def _is_concrete_object_decl(node):
+    return (node.is_a(lal.ObjectDecl)
+            and not node.parent.is_a(lal.GenericFormalObjDecl))
+
+
 def traverse_unit(unit, config=_default_configuration):
     """
     Analyzes the given compilation unit using the given analysis configuration.
@@ -294,7 +299,7 @@ def traverse_unit(unit, config=_default_configuration):
             elif node.is_a(lal.Identifier):
                 ref = _get_ref_decl(node)
 
-                if ref is not None and ref.is_a(lal.ObjectDecl):
+                if ref is not None and _is_concrete_object_decl(ref):
                     if global_var_predicate(ref, subp):
                         # For now, "globals" are only the variables that
                         # are defined in an up-level procedure.
