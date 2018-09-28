@@ -210,6 +210,25 @@ def _not_implemented(*_):
     raise NotImplementedError
 
 
+def new_universe_interpretation():
+    """
+    Returns a new instance of a type interpretation that uses the Universe
+    domain.
+
+    :rtype: TypeInterpretation
+    """
+    dom = domains.Universe()
+
+    def not_implemented(*_):
+        return dom.top
+
+    @def_provider_builder
+    def provider(_):
+        pass
+
+    return TypeInterpretation(dom, provider, not_implemented)
+
+
 @type_interpreter
 def default_boolean_interpreter(tpe):
     if tpe.is_a(types.Boolean):
@@ -1012,20 +1031,7 @@ def default_modeled_interpreter(inner):
 @type_interpreter
 def default_unknown_interpreter(tpe):
     if tpe.is_a(types.Unknown):
-        dom = domains.Universe()
-
-        def not_implemented(*_):
-            return dom.top
-
-        @def_provider_builder
-        def provider(_):
-            pass
-
-        return TypeInterpretation(
-            dom,
-            provider,
-            not_implemented
-        )
+        return new_universe_interpretation()
 
 
 @memoizing_type_interpreter
