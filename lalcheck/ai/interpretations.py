@@ -332,6 +332,12 @@ def default_int_range_interpreter(tpe):
 
 
 @type_interpreter
+def default_real_range_interpreter(tpe):
+    if tpe.is_a(types.RealRange):
+        return new_universe_interpretation()
+
+
+@type_interpreter
 def default_enum_interpreter(tpe):
     if tpe.is_a(types.Enum):
         elems = set(tpe.lits)
@@ -1041,6 +1047,7 @@ def default_type_interpreter():
         default_boolean_interpreter |
         default_char_interpreter(default_int_range_interpreter) |
         default_int_range_interpreter |
+        default_real_range_interpreter |
         default_enum_interpreter |
         custom_pointer_interpreter |
         default_product_interpreter(default_type_interpreter) |

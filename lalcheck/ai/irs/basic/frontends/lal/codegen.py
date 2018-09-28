@@ -13,7 +13,7 @@ from utils import (
     StackType, PointerType, ExtendedCallReturnType,
     ValueHolder, record_fields, proc_parameters, get_field_info,
     is_array_type_decl, is_record_field, is_access_to_subprogram,
-    closest, get_subp_identity, is_access_attribute
+    closest, get_subp_identity, is_access_attribute, eval_as_real
 )
 
 _lal_op_type_to_symbol = {
@@ -2579,6 +2579,13 @@ def gen_ir(ctx, subp, typer, subpdata):
                 orig_node=expr
             )
 
+        elif expr.is_a(lal.RealLiteral):
+            return [], irt.Lit(
+                eval_as_real(expr),
+                type_hint=expr.p_expression_type,
+                orig_node=expr
+            )
+
         elif expr.is_a(lal.NullLiteral):
             return [], irt.Lit(
                 access_paths.Null(),
@@ -3309,11 +3316,24 @@ class ConvertUniversalTypes(IRImplicitVisitor):
     def is_integer_type(self, tpe):
         """
         Returns True if the given type denotes an integer type declaration.
-        :param lal.BaseTypeDecl tpe:
+        :type tpe: lal.BaseTypeDecl
         :rtype: bool
         """
         try:
             return self.typer.get(tpe).is_a(types.IntRange)
+        except Transformer.TransformationFailure:
+            return False
+
+    def is_real_type(self, tpe):
+        """
+        Returns True iff the given type denotes a real type declaration
+        (floating point or fixed point type).
+
+        :type tpe: lal.BaseTypeDecl
+        :rtype: bool
+        """
+        try:
+            return self.typer.get(tpe).is_a(types.RealRange)
         except Transformer.TransformationFailure:
             return False
 
@@ -3329,6 +3349,8 @@ class ConvertUniversalTypes(IRImplicitVisitor):
         """
         if universal_tpe == self.evaluator.universal_int:
             return self.is_integer_type(tpe)
+        elif universal_tpe == self.evaluator.universal_real:
+            return self.is_real_type(tpe)
         else:
             raise NotImplementedError
 
@@ -3342,6 +3364,8 @@ class ConvertUniversalTypes(IRImplicitVisitor):
         """
         if universal_tpe == self.evaluator.universal_int:
             return self.evaluator.int
+        elif universal_tpe == self.evaluator.universal_real:
+            return self.evaluator.float
         else:
             raise NotImplementedError
 

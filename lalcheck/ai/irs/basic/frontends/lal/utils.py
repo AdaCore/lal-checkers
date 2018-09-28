@@ -53,6 +53,20 @@ def is_access_attribute(attribute_text):
     return attribute_text in ('access', 'address', 'unrestricted_access')
 
 
+def eval_as_real(node):
+    """
+    Evaluates the given libadalang node to a real value.
+
+    :type node: lal.AdaNode
+    :rtype: float
+    """
+    try:
+        # todo: use p_eval_as_real once it is available libadalang.
+        return float(node.text)
+    except ValueError:
+        raise NotImplementedError
+
+
 class ValueHolder(object):
     """
     Holds a value.
@@ -354,11 +368,12 @@ class ConstExprEvaluator(IRImplicitVisitor):
         (ops.GET_LAST, 1): lambda x: x.last
     }
 
-    def __init__(self, bool_type, int_type, char_type, u_int_type,
-                 u_real_type):
+    def __init__(self, bool_type, int_type, float_type, char_type,
+                 u_int_type, u_real_type):
         """
         :param lal.AdaNode bool_type: The standard boolean type.
         :param lal.AdaNode int_type: The standard int type.
+        :param lal.AdaNode float_type: The standard float type.
         :param lal.AdaNode char_type: The standard char type.
         :param lal.AdaNode u_int_type: The standard universal int type.
         :param lal.AdaNode u_real_type: The standard universal real type.
@@ -366,6 +381,7 @@ class ConstExprEvaluator(IRImplicitVisitor):
         super(ConstExprEvaluator, self).__init__()
         self.bool = bool_type
         self.int = int_type
+        self.float = float_type
         self.char = char_type
         self.universal_int = u_int_type
         self.universal_real = u_real_type

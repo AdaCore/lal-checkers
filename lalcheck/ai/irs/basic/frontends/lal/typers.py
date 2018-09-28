@@ -4,7 +4,7 @@ from lalcheck.ai.utils import Transformer
 
 from utils import (
     StackType, PointerType, ExtendedCallReturnType,
-    record_fields, is_array_type_decl
+    record_fields, is_array_type_decl, eval_as_real
 )
 
 
@@ -20,6 +20,11 @@ def _eval_as_int(x):
         return x.p_eval_as_int
     except (lal.PropertyError, lal.NativeException):
         return None
+
+
+_eval_as_real = (
+    Transformer.as_transformer(eval_as_real).catch(NotImplementedError)
+)
 
 
 @types.delegating_typer
@@ -41,6 +46,53 @@ def int_range_typer():
         return types.IntRange(*xs)
 
     return get_operands >> (_eval_as_int & _eval_as_int) >> to_int_range
+
+
+@types.delegating_typer
+def real_range_typer():
+    """
+    Returns a typer for real type declarations.
+
+    Note that this typer is very basic and ignores the delta (in fixed point
+    type declarations) and digits.
+
+    Also, it may conservatively fall back to the range -inf .. inf if it cannot
+    parse the actual range.
+
+    :rtype: types.Typer[lal.AdaNode]
+    """
+
+    @Transformer.as_transformer
+    def get_real_type_def(hint):
+        if hint.is_a(lal.TypeDecl):
+            if hint.f_type_def.is_a(lal.FloatingPointDef,
+                                    lal.DecimalFixedPointDef):
+                return hint.f_type_def
+
+    @Transformer.as_transformer
+    def get_operands(real_def):
+        if real_def.f_range is not None:
+            rng = real_def.f_range.f_range
+            return rng.f_left, rng.f_right
+
+    @Transformer.as_transformer
+    def infinite_range(_):
+        return float('-inf'), float('inf')
+
+    @types.Typer
+    def to_real_range(xs):
+        return types.RealRange(*xs)
+
+    get_specified_range = (
+        get_operands >>
+        ((_eval_as_real & _eval_as_real) | infinite_range)
+    )
+
+    return (
+        get_real_type_def >>
+        (get_specified_range | infinite_range) >>
+        to_real_range
+    )
 
 
 @types.delegating_typer
@@ -422,6 +474,7 @@ def default_typer(ctx, fallback_typer):
         typr = (none_typer |
                 std_typer |
                 int_range_typer |
+                real_range_typer |
                 int_mod_typer |
                 enum_typer |
                 access_typer |

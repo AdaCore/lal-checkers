@@ -44,6 +44,14 @@ class IntRange(Type):
         self.frm, self.to = frm, to
 
 
+class RealRange(Type):
+    """
+    Represents a real range.
+    """
+    def __init__(self, frm, to):
+        self.frm, self.to = frm, to
+
+
 class ASCIICharacter(IntRange):
     """
     Represents an ASCII Character.

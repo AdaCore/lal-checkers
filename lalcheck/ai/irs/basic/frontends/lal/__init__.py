@@ -39,9 +39,14 @@ class ExtractionContext(object):
             lambda x: x.is_a(lal.TypeDecl) and x.f_name.text == "Character"
         )
 
+        float_type = dummy.p_standard_unit.root.find(
+            lambda x: x.is_a(lal.TypeDecl) and x.f_name.text == "Float"
+        )
+
         self.evaluator = utils.ConstExprEvaluator(
             dummy.p_bool_type,
             dummy.p_int_type,
+            float_type,
             char_type,
             dummy.p_universal_int_type,
             dummy.p_universal_real_type
