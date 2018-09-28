@@ -2370,7 +2370,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                 return transform_expr(decl.f_type_def.f_range.f_range)
         elif decl.is_a(lal.SubtypeDecl):
             constr = decl.f_subtype.f_constraint
-            if constr.is_a(lal.RangeConstraint):
+            if constr is not None and constr.is_a(lal.RangeConstraint):
                 return transform_expr(constr.f_range.f_range)
 
         return unimplemented_expr(expr)
