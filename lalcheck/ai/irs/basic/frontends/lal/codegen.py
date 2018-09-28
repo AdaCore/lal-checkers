@@ -1118,6 +1118,16 @@ def gen_ir(ctx, subp, typer, subpdata):
         """
         return irt.FunCall(op, [lhs, rhs], type_hint=ctx.evaluator.bool)
 
+    def gen_for_condition_fallback(exception, iter_var, iter_expr, iter_type):
+        """
+        The fallback function for transformation of for conditions.
+
+        :type exception: Exception
+        :param lal.AdaNode iter_expr: The node that failed to be generated.
+        """
+        print_warning(iter_expr.text, exception)
+        return [], irt.Lit(lits.TRUE, type_hint=ctx.evaluator.bool)
+
     def gen_for_condition(iter_var, iter_expr, iter_type):
         """
         Generate the condition (I in E) or (I of E) where I is the iteration
@@ -3050,10 +3060,9 @@ def gen_ir(ctx, subp, typer, subpdata):
                 mode=Mode.Local
             ).get()
 
-            pre_stmts, cond = gen_for_condition(
-                var_expr,
-                spec.f_iter_expr,
-                spec.f_loop_type
+            pre_stmts, cond = try_gen(
+                gen_for_condition, gen_for_condition_fallback,
+                var_expr, spec.f_iter_expr, spec.f_loop_type
             )
 
             exit_label = irt.LabelStmt(fresh_name('exit_for_loop'))
