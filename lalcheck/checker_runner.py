@@ -1,10 +1,9 @@
 import argparse
 import importlib
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count
 from itertools import izip_longest
 from functools import partial
 from collections import defaultdict
-import signal
 import traceback
 import sys
 
@@ -14,6 +13,7 @@ from lalcheck.checkers.support.checker import (
 from lalcheck.tools.digraph import Digraph
 from lalcheck.tools.dot_printer import gen_dot, DataPrinter
 from lalcheck.tools.scheduler import Scheduler
+from lalcheck.tools.parallel_tools import parallel_map
 from lalcheck.tools import logger
 
 parser = argparse.ArgumentParser(description='lal-checker runner.')
@@ -594,33 +594,15 @@ def do_all(args, diagnostic_action):
         )
     )
 
-    # To handle Keyboard interrupt, the child processes must inherit the
-    # SIG_IGN (ignore signal) handler from the parent process. (see
-    # https://stackoverflow.com/a/35134329)
-    orig_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    p = Pool(args.j, maxtasksperchild=1)
-
-    # Restore the original handler of the parent process.
-    signal.signal(signal.SIGINT, orig_handler)
-
-    all_diags = p.map_async(
-        partial(do_partition, args, provider_config, checkers),
-        enumerate(partitions),
-        chunksize=1
+    all_diags = parallel_map(
+        process_count=args.j,
+        target=partial(do_partition, args, provider_config, checkers),
+        elements=enumerate(partitions)
     )
-
-    # Keyboard interrupts are ignored if we use wait() or get() without any
-    # timeout argument. By using this loop, we mimic the behavior of an
-    # infinite timeout but allow keyboard interrupts to go through.
-    while not all_diags.ready():
-        all_diags.wait(1)
-
-    p.close()
-    p.join()
 
     reports = []
 
-    for diags in all_diags.get():
+    for diags in all_diags:
         for diag in diags:
             if diagnostic_action == 'log':
                 logger.log('diag-{}'.format(diag[3]), report_diag(args, diag))
