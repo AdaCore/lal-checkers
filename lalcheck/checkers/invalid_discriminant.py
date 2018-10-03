@@ -6,7 +6,8 @@ from lalcheck.ai.irs.basic.purpose import ExistCheck
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import (
-    AbstractSemanticsChecker, DiagnosticPosition
+    AbstractSemanticsChecker, DiagnosticPosition,
+    abstract_semantics_checker_keepalive
 )
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.checkers.support.kinds import DiscriminantCheck
@@ -142,6 +143,8 @@ def check_variants(prog, model, merge_pred_builder):
 
 
 def find_invalid_accesses(analysis):
+    abstract_semantics_checker_keepalive()
+
     # Collect assume statements that have an ExistCheck purpose.
     exist_checks = collect_assumes_with_purpose(analysis.cfg, ExistCheck)
 

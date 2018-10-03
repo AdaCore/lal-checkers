@@ -10,7 +10,7 @@ from __future__ import (absolute_import, division, print_function)
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
 from lalcheck.checkers.support.checker import (
-    SyntacticChecker, DiagnosticPosition
+    SyntacticChecker, DiagnosticPosition, syntactic_checker_keepalive
 )
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.kinds import TestAlwaysFalse
@@ -35,6 +35,8 @@ class Results(SyntacticChecker.Results):
 
 
 def find_same_tests(unit):
+    syntactic_checker_keepalive(unit)
+
     def list_tests(ifnode):
         """
         List all the tests of `ifnode`.

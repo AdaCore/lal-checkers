@@ -19,20 +19,131 @@ def _remove_tmpdir_env_vars():
             del os.environ[env_var]
 
 
-def _target_proxy(target, arg, result_queue):
+_keep_alive_fun = None
+
+
+def keepalive(seconds, timeout_cause=None):
+    """
+    Function to call to communicate to the process driver that this thread has
+    not yet timed out and must stay alive for at least the given number of
+    seconds. Moreover, a cause can be given such that if this process times
+    out, the driver can react appropriately (e.g. retrying without the element
+    that caused the timeout).
+
+    :param float seconds: The minimal number of seconds that this process
+        should stay alive before timing out. A negative amount indicates that
+        this process should never timeout.
+
+    :param object timeout_cause: An object representing the cause of the
+        timeout.
+    """
+    if _keep_alive_fun is not None:
+        _keep_alive_fun(seconds, timeout_cause)
+
+
+def _target_proxy(target, arg, result_queue, timeout_queue, timeout_factor):
     """
     A wrapper of the actual target. Takes care of placing its return value
-    in the result_queue.
+    in the result_queue and setting the keepalive function for this process.
 
     :param (object)->object target: The actual target function.
     :param object arg: The argument to the function.
     :param queues.Queue result_queue: The queue containing the results of each
         worker.
+    :param queues.Queue timeout_queue: The queue that this worker uses to
+        communicate its timeout barriers.
+    :param float timeout_factor:
     """
+    def keepalive_fun(x, timeout_cause=None):
+        timeout_queue.put((timeout_factor * x, timeout_cause))
+
+    global _keep_alive_fun
+    _keep_alive_fun = keepalive_fun
+
     result_queue.put(target(arg))
 
 
-def parallel_map(process_count, target, elements):
+class TimedProcess(object):
+    """
+    Wraps a process that can timeout.
+
+    The process is supposed to use the timeout_queue to communicate timeout
+    information (delta and cause). For example, a process that places the
+    element (2, 'some_cause') in the queue indicates that this process should
+    timeout in 2 seconds and that if it does, 'some_cause' is the cause of the
+    timeout.
+
+    Previous timeout information is ignored when a new element is placed in the
+    queue (unless it's too late).
+
+    Typically, the processes will not use the timeout_queue object directly,
+    but will call the keepalive function. (see keepalive).
+    """
+    def __init__(self, timeout_queue, process):
+        """
+        :param queues.Queue timeout_queue: The queue used to communicate
+            timeout information.
+        :param Process process: The process that is wrapped.
+        """
+        self.timeout_queue = timeout_queue
+        self.process = process
+        self.last_update = time.time()
+        self.timeout_info = (2, None)
+
+    def start(self):
+        """
+        Starts this process.
+        """
+        self.process.start()
+
+    def terminate(self):
+        """
+        Terminates this process. (sends it the SIGTERM signal).
+        """
+        self.process.terminate()
+
+    def is_alive(self):
+        """
+        Returns True iff this process is still alive (i.e. is in state
+        'started')
+
+        :rtype: bool
+        """
+        return self.process.is_alive()
+
+    def check_timeout_and_get_cause(self):
+        """
+        Returns a pair which first element is True iff this process has timed
+        out according to the timeout information it provided. If it is the
+        case, the second element represents the cause of the timeout.
+
+        :rtype: (bool, object)
+        """
+        self._read_timeout_info()
+
+        timeout_delta, timeout_cause = self.timeout_info
+
+        if timeout_delta >= 0:
+            if time.time() - self.last_update > timeout_delta:
+                self.timeout_info = (-1, None)
+                return True, timeout_cause
+
+        return False, None
+
+    def _read_timeout_info(self):
+        """
+        Reads timeout information from the timeout_queue.
+        """
+        try:
+            while True:
+                self.timeout_info = self.timeout_queue.get_nowait()
+                self.last_update = time.time()
+        except queues.Empty:
+            pass
+
+
+def parallel_map(process_count, target, elements, timeout_factor=1.0,
+                 timeout_callback=None):
     """
     Performs a map across several processes.
 
@@ -40,6 +151,10 @@ def parallel_map(process_count, target, elements):
         simultaneously.
     :param (object)->object target: The mapping function.
     :param iterable[object] elements: The elements to map.
+    :param float timeout_factor: The factor to multiply processes' timeout
+        deltas with.
+    :param (object)->None | None timeout_callback: The function to call
+        if a process times out. It is called with the cause of the timeout.
     :rtype: list[object]
     """
 
@@ -63,17 +178,28 @@ def parallel_map(process_count, target, elements):
         for _ in range(process_count - len(processes)):
             if len(elements) > 0:
                 elem = elements.pop(0)
-                new_process = Process(
+                timeout_queue = m.Queue()
+                new_process = TimedProcess(timeout_queue, Process(
                     target=_target_proxy,
-                    args=(target, elem, result_queue)
-                )
+                    args=(target, elem, result_queue, timeout_queue,
+                          timeout_factor)
+                ))
                 processes.append(new_process)
                 new_process.start()
+
+    def terminate_timed_out_proccesses():
+        for proc in processes:
+            has_timed_out, timeout_cause = proc.check_timeout_and_get_cause()
+            if has_timed_out:
+                proc.terminate()
+                if timeout_callback:
+                    timeout_callback(timeout_cause)
 
     refill_workers()
 
     while len(processes) > 0:
         time.sleep(1)
+        terminate_timed_out_proccesses()
         processes = [p for p in processes if p.is_alive()]
         refill_workers()
 

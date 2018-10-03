@@ -18,7 +18,8 @@ from __future__ import (absolute_import, division, print_function)
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
 from lalcheck.checkers.support.checker import (
-    SyntacticChecker, DiagnosticPosition, create_provider
+    SyntacticChecker, DiagnosticPosition, create_provider,
+    syntactic_checker_keepalive
 )
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.kinds import CodeDuplicated
@@ -67,6 +68,9 @@ def find_duplicate_branches(config, unit):
         check.
     :rtype: Results
     """
+
+    syntactic_checker_keepalive(unit)
+
     def same_tokens(left, right):
         """
         Returns whether left and right contain tokens that are structurally

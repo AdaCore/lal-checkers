@@ -2,9 +2,10 @@ import argparse
 from components import (
     ProjectProvider, AutoProvider, ModelConfig
 )
-from utils import closest_enclosing
+from utils import closest_enclosing, token_count
 import libadalang as lal
 from collections import namedtuple
+from lalcheck.tools.parallel_tools import keepalive
 
 
 ProviderConfig = namedtuple(
@@ -257,3 +258,17 @@ class SyntacticChecker(Checker):
     @classmethod
     def get_arg_parser(cls):
         return argparse.ArgumentParser()
+
+
+def syntactic_checker_keepalive(unit):
+    # Based on empirical testing. For ~5000 tokens, the syntactic checkers
+    # take ~1sec on a good cpu.
+    keepalive(token_count(unit.root) / 5000.0, unit.filename)
+
+
+def abstract_semantics_checker_keepalive():
+    # Those are extremely fast as they simply perform some trivial checks on
+    # results of the analysis at a few interesting nodes in the CFG of a
+    # subprogram. Typically, they will take < 0.001 seconds for a single
+    # subprogram. Therefore, we safely use a 1 second timeout.
+    keepalive(1)

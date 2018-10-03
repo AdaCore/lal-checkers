@@ -4,7 +4,8 @@ from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import (
-    AbstractSemanticsChecker, DiagnosticPosition
+    AbstractSemanticsChecker, DiagnosticPosition,
+    abstract_semantics_checker_keepalive
 )
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.checkers.support.kinds import DeadCode as KindDeadCode
@@ -132,6 +133,8 @@ def _node_start_pos(x):
 
 
 def find_dead_code(analysis):
+    abstract_semantics_checker_keepalive()
+
     nodes_with_origin = [
         (
             n,

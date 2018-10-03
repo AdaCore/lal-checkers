@@ -6,7 +6,8 @@ from lalcheck.ai.irs.basic.purpose import DerefCheck
 from lalcheck.ai.irs.basic.tools import PrettyPrinter
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import (
-    AbstractSemanticsChecker, DiagnosticPosition
+    AbstractSemanticsChecker, DiagnosticPosition,
+    abstract_semantics_checker_keepalive
 )
 from lalcheck.checkers.support.components import AbstractSemantics
 from lalcheck.checkers.support.kinds import AccessCheck
@@ -133,6 +134,8 @@ def check_derefs(prog, model, merge_pred_builder):
 
 
 def find_null_derefs(analysis):
+    abstract_semantics_checker_keepalive()
+
     # Collect assume statements that have a DerefCheck purpose.
     deref_checks = collect_assumes_with_purpose(analysis.cfg, DerefCheck)
 

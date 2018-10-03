@@ -4,10 +4,14 @@ import lalcheck.ai.interpretations as interps
 import lalcheck.ai.irs.basic.analyses.abstract_semantics as abstract_analysis
 import lalcheck.ai.irs.basic.frontends.lal as lal2basic
 import lalcheck.ai.irs.basic.tools as irtools
+from lalcheck.ai.irs.basic.visitors import count as ircount
 from lalcheck.ai.utils import dataclass
+
+from lalcheck.checkers.support.utils import token_count
 
 from lalcheck.tools.scheduler import Task, Requirement
 from lalcheck.tools.logger import log, log_stdout
+from lalcheck.tools.parallel_tools import keepalive
 
 import sys
 import traceback
@@ -118,6 +122,12 @@ class LALAnalyser(Task):
     def provides(self):
         return {'res': AnalysisUnit(self.provider_config, self.filename)}
 
+    def _keepalive(self):
+        # Libadalang is pretty fast at parsing and will probably never get
+        # stuck at this stage, so we let it do its thing for at least 10
+        # seconds.
+        keepalive(10, self.filename)
+
     def run(self, ctx):
         try:
             unit = ctx.get_from_file(self.filename)
@@ -150,9 +160,17 @@ class IRGenerator(Task):
     def provides(self):
         return {'res': IRTrees(self.provider_config, self.filename)}
 
+    def _keepalive(self, root):
+        # Based on empirical testing. For ~1500 tokens, IR generation takes
+        # ~1sec on a good cpu. We add 10 seconds for libadalang to perform
+        # name resolution.
+        keepalive(token_count(root) / 1500.0 + 10, self.filename)
+
     def run(self, ctx, unit):
         irtree = None
         if unit is not None:
+            self._keepalive(unit.root)
+
             log('info', 'Transforming {}'.format(self.filename))
             try:
                 start_t = time.clock()
@@ -237,9 +255,16 @@ class ModelGenerator(Task):
                 name
             ))
 
+    def _keepalive(self):
+        # Model generation is generally pretty fast and should not get stuck.
+        # Therefore, we let it run for a safe amount of time, depending on the
+        # number of files.
+        keepalive(len(self.filenames))
+
     def run(self, **kwargs):
         ctx = kwargs['ctx']
         res = None
+        self._keepalive()
         try:
             progs = [
                 prog
@@ -304,6 +329,15 @@ class AbstractAnalyser(Task):
             )
         }
 
+    def _keepalive(self, prog):
+        # Based on empirical testing. In most cases, for ~2000 IR nodes,
+        # analysis takes ~1sec on a good cpu. However, depending on the
+        # cyclomatic complexity of the subprogram, it can take in some cases
+        # a lot more than that. Therefore, we say that it can take a maximum of
+        # 40 seconds for ~2000 IR nodes.
+        # todo: design some heuristics to evaluate complexity of an IR program.
+        keepalive(ircount(prog) / 50.0, self.analysis_file)
+
     def run(self, ir, model_and_merge_pred):
         res = []
         if ir is not None and model_and_merge_pred is not None:
@@ -314,6 +348,7 @@ class AbstractAnalyser(Task):
             start_t = time.clock()
 
             for prog in ir:
+                self._keepalive(prog)
                 fun = prog.data.fun_id
                 subp_start_t = time.clock()
 
