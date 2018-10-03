@@ -10,7 +10,7 @@ from __future__ import (absolute_import, division, print_function)
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
 from lalcheck.checkers.support.checker import (
-    SyntacticChecker, DiagnosticPosition
+    SyntacticChecker, DiagnosticPosition, syntactic_checker_keepalive
 )
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.kinds import SameOperands as KindSameOperands
@@ -36,6 +36,8 @@ class Results(SyntacticChecker.Results):
 
 
 def find_same_operands(unit):
+    syntactic_checker_keepalive(unit)
+
     def same_tokens(left, right):
         """
         Returns whether left and right contain tokens that are structurally

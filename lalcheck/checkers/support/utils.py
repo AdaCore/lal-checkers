@@ -125,6 +125,17 @@ def tokens_info(node):
     return tuple((t.kind, t.text) for t in relevant_tokens(node))
 
 
+def token_count(node):
+    """
+    Returns the number of tokens in the given node, discarding empty trivia
+    tokens.
+
+    :type node: lal.AdaNode
+    :rtype: int
+    """
+    return sum(1 for t in node.tokens if not t.is_trivia)
+
+
 def format_text_for_output(text, max_char_count=40, ellipsis='...'):
     """
     Formats the given text so that it can be included in an output message.

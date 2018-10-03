@@ -10,7 +10,7 @@ from __future__ import (absolute_import, division, print_function)
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
 from lalcheck.checkers.support.checker import (
-    SyntacticChecker, DiagnosticPosition
+    SyntacticChecker, DiagnosticPosition, syntactic_checker_keepalive
 )
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.kinds import SameOperands
@@ -40,6 +40,8 @@ class Results(SyntacticChecker.Results):
 
 
 def find_same_logic(unit):
+    syntactic_checker_keepalive(unit)
+
     def list_operands(binop):
         """
         List all the sub-operands of `binop`, as long as they have the same

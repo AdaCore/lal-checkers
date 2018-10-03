@@ -2,7 +2,8 @@ from lalcheck.ai.irs.basic.analyses import abstract_semantics
 from lalcheck.ai.irs.basic.purpose import PredeterminedCheck
 from lalcheck.ai.utils import dataclass
 from lalcheck.checkers.support.checker import (
-    AbstractSemanticsChecker, DiagnosticPosition, create_provider
+    AbstractSemanticsChecker, DiagnosticPosition, create_provider,
+    abstract_semantics_checker_keepalive
 )
 from lalcheck.checkers.support.components import AbstractSemantics, ModelConfig
 from lalcheck.checkers.support.kinds import TestAlwaysTrue, TestAlwaysFalse
@@ -65,6 +66,8 @@ def _contains(node, other):
 
 
 def find_predetermined_tests(analysis, config):
+    abstract_semantics_checker_keepalive()
+
     # Collect assume statements that have a PredeterminedCheck purpose.
     predetermined_checks = collect_assumes_with_purpose(
         analysis.cfg,

@@ -151,3 +151,16 @@ def findall(node, predicate):
     for x in node.children():
         res.extend(findall(x, predicate))
     return res
+
+
+def count(node):
+    """
+    Returns the total number of nodes inside the given root node.
+
+    :type node: tree.Node
+    :rtype: int
+    """
+    res = 1
+    for child in node.children():
+        res += count(child)
+    return res

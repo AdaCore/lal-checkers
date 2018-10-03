@@ -13,7 +13,7 @@ from lalcheck.checkers.support.checker import (
 from lalcheck.tools.digraph import Digraph
 from lalcheck.tools.dot_printer import gen_dot, DataPrinter
 from lalcheck.tools.scheduler import Scheduler
-from lalcheck.tools.parallel_tools import parallel_map
+from lalcheck.tools.parallel_tools import parallel_map, keepalive
 from lalcheck.tools import logger
 
 parser = argparse.ArgumentParser(description='lal-checker runner.')
@@ -76,6 +76,11 @@ parser.add_argument('--partition-size', default=10, type=int,
 parser.add_argument('-j', default=1, type=int,
                     help='The number of process to spawn in parallel, each'
                          'of which deals with a single partition at a time.')
+parser.add_argument('--timeout-factor', default=10.0, type=float,
+                    help="This allows processes to live longer than the "
+                         "expected timeout. You may increase this number on "
+                         "slower machines to ensure that processes are not "
+                         "killed too early.")
 
 
 BUILT_IN_CHECKERS_FORMAT = 'lalcheck.checkers.{}'
@@ -461,6 +466,22 @@ def print_checkers_help(checkers):
             print('\n')
 
 
+def on_timeout(file_cause):
+    """
+    Function that will be called if one of the partition times out.
+
+    :param string file_cause: The filename of the file that caused the time
+        out. We know that the cause will be a file in this case because that
+        is how checkers are using the timeout mechanism.
+    """
+    if file_cause is not None:
+        error_msg = "process timed out due to file {}.".format(file_cause)
+    else:
+        error_msg = "process timed out."
+
+    logger.log('error', error_msg)
+
+
 def do_partition(args, provider_config, checkers, partition):
     """
     Runs the checkers on a single partition of the whole set of files.
@@ -475,6 +496,7 @@ def do_partition(args, provider_config, checkers, partition):
     :rtype: list[(DiagnosticPosition, str, MessageKind, str)]
     """
     set_logger(args)
+    keepalive(2)
 
     diags = []
     index, files = partition
@@ -597,7 +619,9 @@ def do_all(args, diagnostic_action):
     all_diags = parallel_map(
         process_count=args.j,
         target=partial(do_partition, args, provider_config, checkers),
-        elements=enumerate(partitions)
+        elements=enumerate(partitions),
+        timeout_factor=args.timeout_factor,
+        timeout_callback=on_timeout
     )
 
     reports = []

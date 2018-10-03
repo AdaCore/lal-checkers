@@ -10,7 +10,7 @@ from __future__ import (absolute_import, division, print_function)
 import libadalang as lal
 from lalcheck.ai.utils import dataclass, map_nonable
 from lalcheck.checkers.support.checker import (
-    SyntacticChecker, DiagnosticPosition
+    SyntacticChecker, DiagnosticPosition, syntactic_checker_keepalive
 )
 from lalcheck.checkers.support.components import AnalysisUnit
 from lalcheck.checkers.support.kinds import TestAlwaysTrue
@@ -37,6 +37,8 @@ class Results(SyntacticChecker.Results):
 
 
 def find_bad_unequals(unit):
+    syntactic_checker_keepalive(unit)
+
     def is_literal(expr):
         if expr.is_a(lal.Identifier):
             try:
