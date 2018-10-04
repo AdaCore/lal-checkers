@@ -28,7 +28,7 @@ def keepalive(seconds, timeout_cause=None):
     not yet timed out and must stay alive for at least the given number of
     seconds. Moreover, a cause can be given such that if this process times
     out, the driver can react appropriately (e.g. retrying without the element
-    that caused the timeout).
+    that caused the timeout) using the provided 'readjust' function.
 
     :param float seconds: The minimal number of seconds that this process
         should stay alive before timing out. A negative amount indicates that
@@ -79,13 +79,16 @@ class TimedProcess(object):
     Typically, the processes will not use the timeout_queue object directly,
     but will call the keepalive function. (see keepalive).
     """
-    def __init__(self, timeout_queue, process):
+    def __init__(self, timeout_queue, element, process):
         """
         :param queues.Queue timeout_queue: The queue used to communicate
             timeout information.
+        :param object element: The element that this process takes care of
+            transforming.
         :param Process process: The process that is wrapped.
         """
         self.timeout_queue = timeout_queue
+        self.element = element
         self.process = process
         self.last_update = time.time()
         self.timeout_info = (2, None)
@@ -142,8 +145,12 @@ class TimedProcess(object):
             pass
 
 
+def _default_readjust(elem, cause):
+    return None
+
+
 def parallel_map(process_count, target, elements, timeout_factor=1.0,
-                 timeout_callback=None):
+                 timeout_callback=None, readjust=_default_readjust):
     """
     Performs a map across several processes.
 
@@ -155,6 +162,11 @@ def parallel_map(process_count, target, elements, timeout_factor=1.0,
         deltas with.
     :param (object)->None | None timeout_callback: The function to call
         if a process times out. It is called with the cause of the timeout.
+    :param (object, object)->object|None readjust: The readjusting function,
+        used to refine an element of the collection to map when its
+        transformation failed. Once refined, the transformation is retried.
+        This function can return None to indicate that no further tries should
+        be attempted.
     :rtype: list[object]
     """
 
@@ -179,7 +191,7 @@ def parallel_map(process_count, target, elements, timeout_factor=1.0,
             if len(elements) > 0:
                 elem = elements.pop(0)
                 timeout_queue = m.Queue()
-                new_process = TimedProcess(timeout_queue, Process(
+                new_process = TimedProcess(timeout_queue, elem, Process(
                     target=_target_proxy,
                     args=(target, elem, result_queue, timeout_queue,
                           timeout_factor)
@@ -187,7 +199,7 @@ def parallel_map(process_count, target, elements, timeout_factor=1.0,
                 processes.append(new_process)
                 new_process.start()
 
-    def terminate_timed_out_proccesses():
+    def handle_timedout_processes():
         for proc in processes:
             has_timed_out, timeout_cause = proc.check_timeout_and_get_cause()
             if has_timed_out:
@@ -195,11 +207,15 @@ def parallel_map(process_count, target, elements, timeout_factor=1.0,
                 if timeout_callback:
                     timeout_callback(timeout_cause)
 
+                readjusted_element = readjust(proc.element, timeout_cause)
+                if readjusted_element is not None:
+                    elements.insert(0, readjusted_element)
+
     refill_workers()
 
     while len(processes) > 0:
         time.sleep(1)
-        terminate_timed_out_proccesses()
+        handle_timedout_processes()
         processes = [p for p in processes if p.is_alive()]
         refill_workers()
 

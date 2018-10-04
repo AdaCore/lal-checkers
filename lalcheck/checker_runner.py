@@ -6,6 +6,7 @@ from functools import partial
 from collections import defaultdict
 import traceback
 import sys
+import os
 
 from lalcheck.checkers.support.checker import (
     Checker, CheckerResults, ProviderConfig
@@ -529,6 +530,40 @@ def do_partition(args, provider_config, checkers, partition):
         return diags
 
 
+def same_file(a_name, b_name):
+    """
+    Returns True iff both path refer to the same file.
+    :type a_name: str
+    :type b_name: str
+    :rtype: bool
+    """
+    try:
+        return os.path.samefile(a_name, b_name)
+    except OSError:
+        return False
+
+
+def readjust_partition(partition, cause):
+    """
+    The readjusting function, to use by the parallel mapper. The cause is
+    either None, or a filename. It it's a filename, we simply return a copy
+    of the old partition, without that file. If don't get a precise cause
+    (i.e. None), we simply give up on the whole partition, which is done by
+    returning None.
+
+    :param (int, list[str]) partition: The index of the partition as well as
+        the list of files that make up the partition.
+    :param str|None cause: The file to remove from the partition, if any.
+    :rtype: (int, list[str]) | None
+    """
+    if cause is None:
+        return None
+
+    idx, files = partition
+
+    return idx, [f for f in files if not same_file(f, cause)]
+
+
 def do_all(args, diagnostic_action):
     """
     Main routine of the driver. Uses the user-provided arguments to run
@@ -621,7 +656,8 @@ def do_all(args, diagnostic_action):
         target=partial(do_partition, args, provider_config, checkers),
         elements=enumerate(partitions),
         timeout_factor=args.timeout_factor,
-        timeout_callback=on_timeout
+        timeout_callback=on_timeout,
+        readjust=readjust_partition
     )
 
     reports = []
