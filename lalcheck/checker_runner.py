@@ -113,7 +113,12 @@ def sort_files_by_line_count(filenames):
     """
     Sorts the given list of files in descending order according to the number
     of lines in each file (returns a new list).
+
+    :type filenames: list[str] | None
     """
+    if filenames is None:
+        return []
+
     file_lines = [(f, get_line_count(f)) for f in filenames]
     file_lines.sort(key=lambda x: x[1], reverse=True)
     return [f for f, l in file_lines]
