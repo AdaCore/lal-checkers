@@ -3,7 +3,9 @@ from lalcheck.ai import types
 from lalcheck.ai.constants import lits, ops, access_paths
 from lalcheck.ai.irs.basic import tree as irt, purpose
 from lalcheck.ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
-from lalcheck.ai.utils import KeyCounter, Transformer, profile, unzip
+from lalcheck.ai.utils import (
+    KeyCounter, Transformer, profile, unzip, put_on_top
+)
 from lalcheck.tools.logger import log_stdout
 from funcy.calc import memoize
 
@@ -2985,9 +2987,8 @@ def gen_ir(ctx, subp, typer, subpdata):
         elif stmt.is_a(lal.LoopStmt):
             exit_label = irt.LabelStmt(fresh_name('exit_loop'))
 
-            loop_stack.append((stmt, exit_label))
-            loop_stmts = transform_stmts(stmt.f_stmts)
-            loop_stack.pop()
+            with put_on_top(loop_stack, (stmt, exit_label)):
+                loop_stmts = transform_stmts(stmt.f_stmts)
 
             return [irt.LoopStmt(loop_stmts, orig_node=stmt), exit_label]
 
@@ -3021,9 +3022,8 @@ def gen_ir(ctx, subp, typer, subpdata):
 
             exit_label = irt.LabelStmt(fresh_name('exit_while_loop'))
 
-            loop_stack.append((stmt, exit_label))
-            loop_stmts = transform_stmts(stmt.f_stmts)
-            loop_stack.pop()
+            with put_on_top(loop_stack, (stmt, exit_label)):
+                loop_stmts = transform_stmts(stmt.f_stmts)
 
             return [irt.LoopStmt(
                 cond_pre_stmts +
@@ -3074,9 +3074,8 @@ def gen_ir(ctx, subp, typer, subpdata):
 
             exit_label = irt.LabelStmt(fresh_name('exit_for_loop'))
 
-            loop_stack.append((stmt, exit_label))
-            loop_stmts = transform_stmts(stmt.f_stmts)
-            loop_stack.pop()
+            with put_on_top(loop_stack, (stmt, exit_label)):
+                loop_stmts = transform_stmts(stmt.f_stmts)
 
             return pre_stmts + [irt.AssumeStmt(cond), irt.LoopStmt(
                 loop_stmts

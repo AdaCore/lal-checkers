@@ -428,3 +428,14 @@ def profile(use_name=None):
         return f
 
     return do
+
+
+def put_on_top(stack, elem):
+    class Context(object):
+        def __enter__(self):
+            stack.append(elem)
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            stack.pop()
+
+    return Context()
