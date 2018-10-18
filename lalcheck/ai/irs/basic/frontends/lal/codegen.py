@@ -1181,8 +1181,8 @@ def gen_ir(ctx, subp, typer, subpdata):
             :param lal.Expr rhs_expr: The expression for the higher bound.
             :rtype: (list[irt.Stmt], irt.Expr)
             """
-            lhs_pre_stmts, lhs_ir_expr = transform_expr(lhs_expr)
-            rhs_pre_stmts, rhs_ir_expr = transform_expr(rhs_expr)
+            lhs_pre_stmts, lhs_ir_expr = transform_and_store_expr(lhs_expr)
+            rhs_pre_stmts, rhs_ir_expr = transform_and_store_expr(rhs_expr)
             return lhs_pre_stmts + rhs_pre_stmts, build_range_condition(
                 lhs_ir_expr, rhs_ir_expr
             )
@@ -1211,13 +1211,13 @@ def gen_ir(ctx, subp, typer, subpdata):
             raise NotImplementedError("Cannot transform type reference")
 
         def gen_when_array_range(array_expr, dimension):
-            pre_stmts, expr = transform_expr(array_expr)
+            pre_stmts, expr = transform_and_store_expr(array_expr)
             return pre_stmts, build_relational(
                 ops.InRangeName(dimension), iter_var, expr
             )
 
         def gen_when_array_values(array_expr):
-            pre_stmts, expr = transform_expr(array_expr)
+            pre_stmts, expr = transform_and_store_expr(array_expr)
             return pre_stmts, build_relational(
                 ops.IN_VALUES_OF, iter_var, expr
             )
@@ -2377,6 +2377,18 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         return unimplemented_expr(expr)
 
+    def transform_and_store_expr(expr):
+        """
+        Transforms the given expression and returns a variable that contains
+        its value.
+
+        :param lal.Expr expr: An arbitrary expression.
+        :rtype: irt.Identifier
+        """
+        expr_pre_stmts, transformed_expr = transform_expr(expr)
+        tmp = new_expression_replacing_var("tmp", expr)
+        return expr_pre_stmts + [irt.AssignStmt(tmp, transformed_expr)], tmp
+
     @profile()
     def transform_expr(expr):
         """
@@ -3046,17 +3058,29 @@ def gen_ir(ctx, subp, typer, subpdata):
             #
             # Basic:
             # ----------------
-            # assume(I in E)
             # loop:
+            #   assume(I in E)
             #   S;
             #
             # Where "I in E" is transformed into the adequate expression. For
             # example, when E is a range indication, "I in L .. R" would be
-            # "I >= L && I <= R".
+            # "I >= L && I <= R". Moreover, the bounds of the loop are
+            # evaluated once and before the loop execution, to preserve the
+            # semantics of Ada (Ada 95 RM - Chapter 5.5), e.g:
+            #
+            # for I in F(X) .. G(X) loop
+            #    S;
+            # end loop;
+            #
+            # Basic:
+            # ---------------
+            # tmp1 = F(X)
+            # tmp2 = G(X)
+            # loop:
+            #    assume (I >= tmp1 && I <= tmp2)
+            #    S;
             #
             # For now, only a few subsets of for loops are handled.
-            # todo: handle "for x in X'Range" where X is an array.
-            # todo: handle "for x of ..." pattern.
 
             spec = stmt.f_spec
             loop_var = spec.f_var_decl.f_id
@@ -3067,7 +3091,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                 mode=Mode.Local
             ).get()
 
-            pre_stmts, cond = try_gen(
+            cond_pre_stmts, cond = try_gen(
                 gen_for_condition, gen_for_condition_fallback,
                 var_expr, spec.f_iter_expr, spec.f_loop_type
             )
@@ -3077,8 +3101,8 @@ def gen_ir(ctx, subp, typer, subpdata):
             with put_on_top(loop_stack, (stmt, exit_label)):
                 loop_stmts = transform_stmts(stmt.f_stmts)
 
-            return pre_stmts + [irt.AssumeStmt(cond), irt.LoopStmt(
-                loop_stmts
+            return cond_pre_stmts + [irt.LoopStmt(
+                [irt.AssumeStmt(cond)] + loop_stmts
             ), exit_label]
 
         elif stmt.is_a(lal.Label):

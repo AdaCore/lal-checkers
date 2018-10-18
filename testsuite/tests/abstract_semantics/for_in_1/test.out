@@ -17,140 +17,214 @@
         "trace:": [
           "assign0", 
           "assign1", 
-          "assume0", 
-          "loop_start0", 
           "start0"
-        ], 
+        ],
         "values": {
-          "I": "[0, 10]", 
-          "S": "[-2147483648, 2147483647]"
-        }
-      }
-    ], 
-    "assume0": [
-      {
-        "trace:": [
-          "assign0", 
-          "assume0", 
-          "start0"
-        ], 
-        "values": {
-          "I": "[0, 10]", 
+          "I": "[-2147483648, 2147483647]",
           "S": "[0, 0]"
         }
       }
-    ], 
+    ],
+    "assign2": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "start0"
+        ],
+        "values": {
+          "I": "[-2147483648, 2147483647]",
+          "S": "[0, 0]"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "loop_start0",
+          "start0"
+        ],
+        "values": {
+          "I": "[0, 10]",
+          "S": "[-2147483648, 2147483647]"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "loop_start0",
+          "start0"
+        ],
+        "values": {
+          "I": "[0, 10]",
+          "S": "[-2147483648, 2147483647]"
+        }
+      }
+    ],
     "loop_join0": [
       {
         "trace:": [
-          "assign0", 
-          "assign1", 
-          "assume0", 
-          "loop_join0", 
-          "loop_start0", 
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "loop_join0",
+          "loop_start0",
           "start0"
-        ], 
+        ],
         "values": {
-          "I": "[0, 10]", 
+          "I": "[-2147483648, 2147483647]",
           "S": "[-2147483648, 2147483647]"
         }
       }
-    ], 
+    ],
     "loop_start0": [
       {
         "trace:": [
-          "assign0", 
-          "assign1", 
-          "assume0", 
-          "loop_start0", 
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "loop_start0",
           "start0"
-        ], 
+        ],
         "values": {
-          "I": "[0, 10]", 
+          "I": "[-2147483648, 2147483647]",
           "S": "[-2147483648, 2147483647]"
         }
       }
-    ], 
+    ],
     "start0": [
       {
         "trace:": [
           "start0"
-        ], 
+        ],
         "values": {
-          "I": "[-2147483648, 2147483647]", 
+          "I": "[-2147483648, 2147483647]",
           "S": "[-2147483648, 2147483647]"
         }
       }
     ]
-  }, 
+  },
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0", 
+          "assign0",
           "start0"
-        ], 
+        ],
         "values": {
-          "I": "[-2147483648, 2147483647]", 
+          "I": "[-2147483648, 2147483647]",
           "S": "[0, 0]"
         }
       }
-    ], 
+    ],
     "assign1": [
       {
         "trace:": [
-          "assign0", 
-          "assign1", 
-          "assume0", 
-          "loop_start0", 
+          "assign0",
+          "assign1",
           "start0"
-        ], 
+        ],
         "values": {
-          "I": "[0, 10]", 
-          "S": "[-2147483648, 2147483647]"
-        }
-      }
-    ], 
-    "assume0": [
-      {
-        "trace:": [
-          "assign0", 
-          "assume0", 
-          "start0"
-        ], 
-        "values": {
-          "I": "[0, 10]", 
+          "I": "[-2147483648, 2147483647]",
           "S": "[0, 0]"
         }
       }
-    ], 
-    "loop_join0": [
+    ],
+    "assign2": [
       {
         "trace:": [
-          "assign0", 
-          "assign1", 
-          "assume0", 
-          "loop_join0", 
-          "loop_start0", 
+          "assign0",
+          "assign1",
+          "assign2",
           "start0"
-        ], 
+        ],
         "values": {
-          "I": "[0, 10]", 
+          "I": "[-2147483648, 2147483647]",
+          "S": "[0, 0]"
+        }
+      }
+    ],
+    "assign3": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "loop_start0",
+          "start0"
+        ],
+        "values": {
+          "I": "[0, 10]",
           "S": "[-2147483648, 2147483647]"
         }
       }
-    ], 
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "loop_start0",
+          "start0"
+        ],
+        "values": {
+          "I": "[0, 10]",
+          "S": "[-2147483648, 2147483647]"
+        }
+      }
+    ],
+    "loop_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "loop_join0",
+          "loop_start0",
+          "start0"
+        ],
+        "values": {
+          "I": "[-2147483648, 2147483647]",
+          "S": "[-2147483648, 2147483647]"
+        }
+      }
+    ],
     "loop_start0": [
       {
         "trace:": [
-          "assign0", 
-          "assign1", 
-          "assume0", 
-          "loop_start0", 
+          "assign0",
+          "assign1",
+          "assign2",
+          "assign3",
+          "assume0",
+          "loop_start0",
           "start0"
-        ], 
+        ],
         "values": {
-          "I": "[0, 10]", 
+          "I": "[-2147483648, 2147483647]",
           "S": "[-2147483648, 2147483647]"
         }
       }

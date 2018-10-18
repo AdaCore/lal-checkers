@@ -1,7 +1,7 @@
 Program:
   read(My_Array#1)
-  assume(InValuesOf(E#2, My_Array#1))
+  tmp0#2 = My_Array#1
   loop:
-
+    assume(InValuesOf(E#3, tmp0#2))
   exit_for_loop0:
   end:
