@@ -289,9 +289,7 @@
 263:25: operands of '=' are identical
 264:20: (potential) invalid field 'Sloc'
 264:29: (potential) invalid field 'Sloc'
-2660:13: '(Shdr.Sh_Flags and (SHF_ALLOC or SHF_...' is always false
 2660:14: (potential) null dereference of 'Shdr'
-2665:13: unreachable code (until line 2689)
 2749:10: (potential) assertion failure
 275:16: (potential) precondition failure
 2770:30: (potential) null dereference of 'Addr_Info'
