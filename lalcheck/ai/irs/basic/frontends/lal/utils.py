@@ -342,11 +342,15 @@ class ConstExprEvaluator(IRImplicitVisitor):
             self.last = last
 
     Ops = {
-        (ops.AND, 2): lambda x, y: ConstExprEvaluator.from_bool(
-            ConstExprEvaluator.to_bool(x) and ConstExprEvaluator.to_bool(y)
+        (ops.AND, 2): lambda x, y: x & y if type(x) == type(y) == int else (
+            ConstExprEvaluator.from_bool(
+                ConstExprEvaluator.to_bool(x) and ConstExprEvaluator.to_bool(y)
+            )
         ),
-        (ops.OR, 2): lambda x, y: ConstExprEvaluator.from_bool(
-            ConstExprEvaluator.to_bool(x) or ConstExprEvaluator.to_bool(y)
+        (ops.OR, 2): lambda x, y: x | y if type(x) == type(y) == int else (
+            ConstExprEvaluator.from_bool(
+                ConstExprEvaluator.to_bool(x) or ConstExprEvaluator.to_bool(y)
+            )
         ),
 
         (ops.NEQ, 2): lambda x, y: ConstExprEvaluator.from_bool(x != y),
