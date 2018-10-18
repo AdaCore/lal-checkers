@@ -125,14 +125,12 @@
 1544:30: (potential) invalid field 'Basic_Block_Has_Code'
 1544:30: (potential) null dereference of 'Get_SCI (S_SCO, Tag)'
 1561:21: (potential) null dereference of 'Line'
-1564:7: (potential) null dereference of 'CS'
 156:17: (potential) null dereference of 'Report'
 1587:13: (potential) null dereference of 'SCIA'
 1588:13: (potential) null dereference of 'Process'
 1590:23: (potential) null dereference of 'Map'
 159:17: (potential) null dereference of 'Report'
 160:13: (potential) null dereference of 'File.Ehdr'
-1612:16: (potential) assertion failure
 1613:13: (potential) null dereference of 'New_SCI'
 1614:13: (potential) null dereference of 'Process'
 1637:19: (potential) assertion failure
@@ -285,34 +283,21 @@
 258:34: (potential) invalid field 'Call_Sloc'
 259:10: (potential) assertion failure
 260:16: (potential) precondition failure
-2615:10: (potential) invalid field 'LI'
-2615:10: (potential) null dereference of 'Get_File (Main_Source)'
-2615:10: (potential) null dereference of 'Get_File (Main_Source)'
 261:30: (potential) invalid field 'Symbol_Name'
 261:45: (potential) invalid field 'Symbol_Name'
-2626:7: (potential) invalid field 'LI'
-2626:7: (potential) null dereference of 'Get_File (Main_Source)'
-2627:7: (potential) invalid field 'Main_Source'
-2627:7: (potential) null dereference of 'Get_File (ALI_Index)'
 263:10: (potential) assertion failure
 263:25: operands of '=' are identical
-2644:7: (potential) assertion failure
 264:20: (potential) invalid field 'Sloc'
 264:29: (potential) invalid field 'Sloc'
 2660:13: '(Shdr.Sh_Flags and (SHF_ALLOC or SHF_...' is always false
 2660:14: (potential) null dereference of 'Shdr'
-2664:13: (potential) assertion failure
 2665:13: unreachable code (until line 2689)
-2671:16: (potential) assertion failure
-2686:25: (potential) null dereference of 'SCOUE.File_Name'
-2712:10: (potential) assertion failure
 2749:10: (potential) assertion failure
 275:16: (potential) precondition failure
 2770:30: (potential) null dereference of 'Addr_Info'
 2772:14: (potential) invalid field 'Is_Non_Empty'
 2775:30: (potential) invalid field 'Sloc'
 277:16: (potential) precondition failure
-277:47: (potential) null dereference of 'CS'
 2783:16: (potential) assertion failure
 279:10: (potential) assertion failure
 27:7: (potential) assertion failure
@@ -322,7 +307,6 @@
 2828:21: (potential) invalid field 'Subprogram_DIE_CU'
 282:38: (potential) null dereference of 'M2'
 2832:19: (potential) invalid field 'DIE_CU'
-2839:19: (potential) assertion failure
 283:19: (potential) null dereference of 'Diff_Exec'
 283:20: (potential) null dereference of 'M1'
 283:29: (potential) null dereference of 'M2'
@@ -336,7 +320,6 @@
 2863:39: (potential) invalid field 'Section_LS'
 2864:20: (potential) invalid field 'Section_Content'
 2864:20: (potential) invalid field 'Section_Content'
-2867:19: (potential) assertion failure
 287:13: (potential) invalid field 'Disc'
 287:13: (potential) null dereference of 'L'
 2884:20: (potential) null dereference of 'Exec'
@@ -345,15 +328,12 @@
 2896:50: (potential) null dereference of 'Sym'
 2896:50: (potential) null dereference of 'Sym.Symbol_Name'
 289:27: (potential) null dereference of 'Context.Exe_File'
-2907:19: (potential) assertion failure
 2908:32: (potential) invalid field 'Section_Sec_Idx'
 2908:32: (potential) null dereference of 'Sec'
 290:26: (potential) null dereference of 'Exe_File'
 2914:19: (potential) invalid field 'Section_Sec_Idx'
 2915:26: (potential) invalid field 'Section_Content'
-2922:19: (potential) assertion failure
 292:7: (potential) assertion failure
-2930:19: (potential) assertion failure
 2940:10: (potential) null dereference of 'Exec'
 295:14: (potential) null dereference of 'File.Ehdr'
 2965:14: (potential) null dereference of 'D_Occ'
@@ -481,8 +461,7 @@
 39:14: (potential) null dereference of 'L'
 39:22: (potential) null dereference of 'R'
 402:54: (potential) precondition failure
-404:7: assertion failure
-404:7: unreachable code (until line 677)
+404:7: (potential) assertion failure
 4050:49: (potential) invalid field 'Section_Sec_Idx'
 4050:49: (potential) null dereference of 'Sec'
 4055:15: (potential) invalid field 'Section_Name'
@@ -551,6 +530,7 @@
 4667:37: (potential) invalid field 'Sloc'
 4667:37: (potential) null dereference of 'Next_Line_Addr'
 467:18: (potential) null dereference of 'Output'
+469:19: (potential) null dereference of 'Line'
 469:21: (potential) null dereference of 'Output'
 4704:39: (potential) null dereference of 'Selected'
 4711:42: (potential) null dereference of 'Selected'
@@ -611,12 +591,11 @@
 540:20: (potential) null dereference of 'Get (Element (Cur))'
 548:23: (potential) null dereference of 'Exec.File'
 556:35: (potential) invalid field 'Executed'
-557:10: (potential) assertion failure
 557:35: (potential) invalid field 'Line_Executed'
 557:35: (potential) null dereference of 'S_SCI'
-563:13: (potential) assertion failure
 565:10: (potential) null dereference of 'Info'
 566:38: (potential) null dereference of 'SCI'
+576:25: 'Valid' is always true
 580:44: (potential) invalid field 'Stats'
 589:15: (potential) null dereference of 'Exec'
 58:26: (potential) null dereference of 'Exec'
@@ -625,6 +604,7 @@
 594:10: (potential) null dereference of 'TP'
 594:10: (potential) null dereference of 'TP.Current_Subp'
 595:23: (potential) null dereference of 'DS_Top'
+595:31: (potential) null dereference of 'Annotation.Message'
 599:16: (potential) null dereference of 'DS_Top'
 606:14: (potential) null dereference of 'TP'
 606:14: (potential) null dereference of 'TP.Routine_Tags.Element (Tag)'
