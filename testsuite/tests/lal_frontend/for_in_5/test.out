@@ -4,13 +4,15 @@ Program:
   C#3 = 4
   D#4 = 5
   S#5 = 0
-  assume(&&(>=(I#6, +(A#1, B#2)), <=(I#6, +(C#3, D#4))))
+  tmp0#6 = +(A#1, B#2)
+  tmp1#7 = +(C#3, D#4)
   loop:
-    S#5 = +(S#5, I#6)
+    assume(&&(>=(I#8, tmp0#6), <=(I#8, tmp1#7)))
+    S#5 = +(S#5, I#8)
     split:
-      assume(==(I#6, C#3))
+      assume(==(I#8, C#3))
       goto exit_for_loop0
     |:
-      assume(!(==(I#6, C#3)))
+      assume(!(==(I#8, C#3)))
   exit_for_loop0:
   end:
