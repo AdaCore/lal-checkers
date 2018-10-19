@@ -1,4 +1,4 @@
 Program:
-  read(x#1)
+  x#1 = Input()
   x#1 = 40
   end:

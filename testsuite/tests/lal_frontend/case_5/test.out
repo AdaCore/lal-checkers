@@ -1,6 +1,6 @@
 Program:
-  read(expr_kind#1)
-  read(is_op#2)
+  expr_kind#1 = Input()
+  is_op#2 = Input()
   split:
     assume(||(==(expr_kind#1, BinExpr), ==(expr_kind#1, UnExpr)))
     is_op#2 = True

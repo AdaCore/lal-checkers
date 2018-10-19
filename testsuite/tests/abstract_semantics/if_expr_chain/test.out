@@ -4,929 +4,929 @@
       {
         "trace:": [
           "assign0", 
-          "assume0", 
-          "read0", 
-          "read1", 
-          "read2", 
-          "read3", 
           "start0"
         ], 
         "values": {
-          "C1": "{True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign1",
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{True}",
-          "C3": "{False, True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assign2": [
       {
         "trace:": [
-          "assign2",
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assign3": [
       {
         "trace:": [
-          "assign3",
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assign4": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assign4",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
+          "x": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign5": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign5", 
+          "assume1", 
+          "assume2", 
+          "start0"
+        ], 
+        "values": {
+          "C1": "{False}", 
+          "C2": "{True}", 
+          "C3": "{False, True}", 
+          "x": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign6": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign6", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
+          "start0"
+        ], 
+        "values": {
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{True}", 
+          "x": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign7": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign7", 
+          "assume1", 
+          "assume3", 
+          "assume5", 
+          "start0"
+        ], 
+        "values": {
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False}", 
+          "x": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign8": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign5", 
+          "assign6", 
+          "assign7", 
+          "assign8", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "assume5", 
+          "split_join0", 
+          "split_join1", 
+          "split_join2", 
+          "start0"
+        ], 
+        "values": {
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[1, 4]"
         }
       }
-    ],
+    ], 
     "assume0": [
       {
         "trace:": [
-          "assume0",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume1": [
       {
         "trace:": [
-          "assume1",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume2": [
       {
         "trace:": [
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
+          "assume2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{True}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume3": [
       {
         "trace:": [
-          "assume1",
-          "assume3",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
+          "assume3", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume4": [
       {
         "trace:": [
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume5": [
       {
         "trace:": [
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
+          "assume3", 
+          "assume5", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
-    "read0": [
-      {
-        "trace:": [
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      }
-    ],
-    "read1": [
-      {
-        "trace:": [
-          "read0",
-          "read1",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      }
-    ],
-    "read2": [
-      {
-        "trace:": [
-          "read0",
-          "read1",
-          "read2",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      }
-    ],
-    "read3": [
-      {
-        "trace:": [
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      }
-    ],
+    ], 
     "split_join0": [
       {
         "trace:": [
-          "assign2",
-          "assign3",
-          "assume1",
-          "assume3",
-          "assume4",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign6", 
+          "assign7", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
+          "assume5", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "split_join1": [
       {
         "trace:": [
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign5", 
+          "assign6", 
+          "assign7", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "assume5", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "split_join2": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign5", 
+          "assign6", 
+          "assign7", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "assume5", 
+          "split_join0", 
+          "split_join1", 
+          "split_join2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
     ]
-  },
+  }, 
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0",
-          "assume0",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign1",
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{True}",
-          "C3": "{False, True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assign2": [
       {
         "trace:": [
-          "assign2",
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assign3": [
       {
         "trace:": [
-          "assign3",
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assign4": [
       {
         "trace:": [
-          "assign0",
-          "assign4",
-          "assume0",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
+          "x": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign5": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign5", 
+          "assume1", 
+          "assume2", 
+          "start0"
+        ], 
+        "values": {
+          "C1": "{False}", 
+          "C2": "{True}", 
+          "C3": "{False, True}", 
+          "x": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign6": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign6", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
+          "start0"
+        ], 
+        "values": {
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{True}", 
+          "x": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign7": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign7", 
+          "assume1", 
+          "assume3", 
+          "assume5", 
+          "start0"
+        ], 
+        "values": {
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False}", 
+          "x": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign8": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign8", 
+          "assume0", 
+          "split_join2", 
+          "start0"
+        ], 
+        "values": {
+          "C1": "{True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[1, 1]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign1",
-          "assign4",
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join1",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign5", 
+          "assign8", 
+          "assume1", 
+          "assume2", 
+          "split_join1", 
+          "split_join2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{True}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{True}", 
+          "C3": "{False, True}", 
           "x": "[2, 2]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign2",
-          "assign4",
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign6", 
+          "assign8", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
+          "split_join0", 
+          "split_join1", 
+          "split_join2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{True}", 
           "x": "[3, 3]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign3",
-          "assign4",
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign7", 
+          "assign8", 
+          "assume1", 
+          "assume3", 
+          "assume5", 
+          "split_join0", 
+          "split_join1", 
+          "split_join2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False}", 
           "x": "[4, 4]"
         }
       }
-    ],
+    ], 
     "assume0": [
       {
         "trace:": [
-          "assume0",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume1": [
       {
         "trace:": [
-          "assume1",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume2": [
       {
         "trace:": [
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
+          "assume2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{True}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume3": [
       {
         "trace:": [
-          "assume1",
-          "assume3",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
+          "assume3", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume4": [
       {
         "trace:": [
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "assume5": [
       {
         "trace:": [
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume1", 
+          "assume3", 
+          "assume5", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
-    "read0": [
-      {
-        "trace:": [
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      }
-    ],
-    "read1": [
-      {
-        "trace:": [
-          "read0",
-          "read1",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      }
-    ],
-    "read2": [
-      {
-        "trace:": [
-          "read0",
-          "read1",
-          "read2",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      }
-    ],
-    "read3": [
-      {
-        "trace:": [
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "start0"
-        ],
-        "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
-          "x": "[-2147483648, 2147483647]"
-        }
-      }
-    ],
+    ], 
     "split_join0": [
       {
         "trace:": [
-          "assign2",
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign6", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{True}", 
           "x": "[-2147483648, 2147483647]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign3",
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign7", 
+          "assume1", 
+          "assume3", 
+          "assume5", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "split_join1": [
       {
         "trace:": [
-          "assign1",
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign5", 
+          "assume1", 
+          "assume2", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{True}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign2",
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign6", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{True}", 
           "x": "[-2147483648, 2147483647]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign3",
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign7", 
+          "assume1", 
+          "assume3", 
+          "assume5", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "split_join2": [
       {
         "trace:": [
-          "assign0",
-          "assume0",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "split_join2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign1",
-          "assume1",
-          "assume2",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join1",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign5", 
+          "assume1", 
+          "assume2", 
+          "split_join1", 
+          "split_join2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{True}",
-          "C3": "{False, True}",
+          "C1": "{False}", 
+          "C2": "{True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign2",
-          "assume1",
-          "assume3",
-          "assume4",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign6", 
+          "assume1", 
+          "assume3", 
+          "assume4", 
+          "split_join0", 
+          "split_join1", 
+          "split_join2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{True}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{True}", 
           "x": "[-2147483648, 2147483647]"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign3",
-          "assume1",
-          "assume3",
-          "assume5",
-          "read0",
-          "read1",
-          "read2",
-          "read3",
-          "split_join0",
-          "split_join1",
-          "split_join2",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign7", 
+          "assume1", 
+          "assume3", 
+          "assume5", 
+          "split_join0", 
+          "split_join1", 
+          "split_join2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False}",
-          "C2": "{False}",
-          "C3": "{False}",
+          "C1": "{False}", 
+          "C2": "{False}", 
+          "C3": "{False}", 
           "x": "[-2147483648, 2147483647]"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "C1": "{False, True}",
-          "C2": "{False, True}",
-          "C3": "{False, True}",
+          "C1": "{False, True}", 
+          "C2": "{False, True}", 
+          "C3": "{False, True}", 
           "x": "[-2147483648, 2147483647]"
         }
       }

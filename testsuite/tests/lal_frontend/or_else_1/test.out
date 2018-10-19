@@ -1,7 +1,7 @@
 Program:
-  read(C1#1)
-  read(C2#2)
-  read(x#3)
+  C1#1 = Input()
+  C2#2 = Input()
+  x#3 = Input()
   split:
     assume(C1#1)
     tmp0#4 = True

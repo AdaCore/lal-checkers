@@ -3,66 +3,66 @@
     "assign0": [
       {
         "trace:": [
-          "assign0",
-          "read0",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
           "x": "[any]"
         }
       }
-    ],
-    "read0": [
+    ], 
+    "assign1": [
       {
         "trace:": [
-          "read0",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
           "x": "[any]"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
           "x": "[any]"
         }
       }
     ]
-  },
+  }, 
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0",
-          "read0",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
           "x": "[any]"
         }
       }
-    ],
-    "read0": [
+    ], 
+    "assign1": [
       {
         "trace:": [
-          "read0",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
           "x": "[any]"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
           "x": "[any]"
         }

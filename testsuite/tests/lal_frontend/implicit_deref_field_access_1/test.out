@@ -1,6 +1,6 @@
 Program:
-  read(r#1)
-  read(x#2)
+  r#1 = Input()
+  x#2 = Input()
   assume(!=(Get_0(r#1), null))
   x#2 = Get_0(*(Get_0(r#1), $stack#3))
   end:

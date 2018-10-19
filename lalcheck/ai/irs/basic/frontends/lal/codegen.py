@@ -410,6 +410,14 @@ def gen_ir(ctx, subp, typer, subpdata):
                 """
                 self.defining_name = defining_name
 
+            def type(self):
+                """
+                The type of the variable represented by this handle.
+
+                :rtype: lal.BaseTypeDecl
+                """
+                raise NotImplementedError
+
             def havoc(self, **data):
                 """
                 Returns a list of statements which, when executed, destroys
@@ -419,13 +427,16 @@ def gen_ir(ctx, subp, typer, subpdata):
                     statements.
                 :rtype: list[irt.Stmt]
                 """
-                raise NotImplementedError
+                dest, expr = self.gen_dest(
+                    irt.FunCall(ops.INPUT, [], type_hint=self.type())
+                )
+                return [irt.AssignStmt(dest, expr, **data)]
 
             def get(self, **data):
                 """
                 Returns an expression which holds the value of the variable.
-                :param **object data: The data to attach to the expression.
 
+                :param **object data: The data to attach to the expression.
                 :rtype: irt.Expr | irt.Identifier
                 """
                 raise NotImplementedError
@@ -438,7 +449,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                 :param irt.Expr expr: The expression to assign
                 :param **object data: User data to attach to the generated
                     object.
-                :rtype: (irt.Expr, irt.Expr)
+                :rtype: (irt.Identifier, irt.Expr)
                 """
                 raise NotImplementedError
 
@@ -468,11 +479,8 @@ def gen_ir(ctx, subp, typer, subpdata):
                 StorageManager.VariableHandle.__init__(self, defining_name)
                 self.var = var
 
-            def havoc(self, read_orig_node, **id_data):
-                # todo: remove read statements all together.
-                return [
-                    irt.ReadStmt(self.get(**id_data), orig_node=read_orig_node)
-                ]
+            def type(self):
+                return self.var.data.type_hint
 
             def get(self, **data):
                 return irt.Identifier(
@@ -501,8 +509,8 @@ def gen_ir(ctx, subp, typer, subpdata):
                 self.var_index = var_index
                 self.type_hint = type_hint
 
-            def havoc(self, **data):
-                raise NotImplementedError
+            def type(self):
+                return self.type_hint
 
             def get(self, **data):
                 return irt.FunCall(
@@ -549,8 +557,8 @@ def gen_ir(ctx, subp, typer, subpdata):
                 self.address_var = address_var
                 self.type_hint = type_hint
 
-            def havoc(self, **data):
-                raise NotImplementedError
+            def type(self):
+                return self.type_hint
 
             def get(self, **data):
                 address_expr = self.address_var.get()
@@ -614,8 +622,8 @@ def gen_ir(ctx, subp, typer, subpdata):
                 self.orig_handle = orig_handle
                 self.standin_handle = standin_handle
 
-            def havoc(self, **data):
-                return self.standin_handle.read(**data)
+            def type(self):
+                return self.orig_handle.type()
 
             def get(self, **data):
                 return self.standin_handle.get(**data)

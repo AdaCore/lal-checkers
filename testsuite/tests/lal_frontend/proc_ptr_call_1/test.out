@@ -1,6 +1,7 @@
 Program:
-  P#1 = Subp_<SubpBody ["F"] 4:4-7:10>(Var_1($stack#2))
-  assume(!=(P#1, null))
-  ret0#3 = Call(P#1, Offset_3($stack#2))
-  $stack#2 = CopyOffset($stack#2, Get_0(ret0#3))
+  $stack#1 = Updated_1($stack#1, Input())
+  P#2 = Subp_<SubpBody ["F"] 4:4-7:10>(Var_1($stack#1))
+  assume(!=(P#2, null))
+  ret0#3 = Call(P#2, Offset_3($stack#1))
+  $stack#1 = CopyOffset($stack#1, Get_0(ret0#3))
   end:

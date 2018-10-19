@@ -3,170 +3,205 @@
     "assign0": [
       {
         "trace:": [
-          "assign0",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "Y": "{0x00000001}"
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
+          "Y": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assume0",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[2, 2]'}, 0)",
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
+          "Y": "{0x00000001}"
+        }
+      }
+    ], 
+    "assign2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({1: '[2, 2]'}, 0)", 
           "Y": "{null}"
         }
       }
-    ],
+    ], 
     "assume0": [
       {
         "trace:": [
-          "assign0",
-          "assume0",
+          "assign0", 
+          "assign1", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[2, 2]'}, 0)",
+          "$stack": "({1: '[2, 2]'}, 0)", 
           "Y": "{0x00000001}"
         }
       }
-    ],
+    ], 
     "assume1": [
       {
         "trace:": [
-          "assign0",
-          "assume1",
+          "assign0", 
+          "assign1", 
+          "assume1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)",
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
           "Y": "{0x00000001}"
         }
       }
-    ],
+    ], 
     "split_join0": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assume0",
-          "assume1",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
+          "assume1", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)",
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
           "Y": "{0x00000001, null}"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
+          "$stack": "({}, 0)", 
           "Y": "{[all-path]}"
         }
       }
     ]
-  },
+  }, 
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "Y": "{0x00000001}"
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
+          "Y": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assume0",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[2, 2]'}, 0)",
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
+          "Y": "{0x00000001}"
+        }
+      }
+    ], 
+    "assign2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({1: '[2, 2]'}, 0)", 
           "Y": "{null}"
         }
       }
-    ],
+    ], 
     "assume0": [
       {
         "trace:": [
-          "assign0",
-          "assume0",
+          "assign0", 
+          "assign1", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[2, 2]'}, 0)",
+          "$stack": "({1: '[2, 2]'}, 0)", 
           "Y": "{0x00000001}"
         }
       }
-    ],
+    ], 
     "assume1": [
       {
         "trace:": [
-          "assign0",
-          "assume1",
+          "assign0", 
+          "assign1", 
+          "assume1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)",
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
           "Y": "{0x00000001}"
         }
       }
-    ],
+    ], 
     "split_join0": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assume0",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[2, 2]'}, 0)",
+          "$stack": "({1: '[2, 2]'}, 0)", 
           "Y": "{null}"
         }
-      },
+      }, 
       {
         "trace:": [
-          "assign0",
-          "assume1",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assume1", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)",
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
           "Y": "{0x00000001}"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
+          "$stack": "({}, 0)", 
           "Y": "{[all-path]}"
         }
       }

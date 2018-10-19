@@ -4,155 +4,155 @@
       {
         "trace:": [
           "assign0", 
-          "assume0", 
-          "read0", 
           "start0"
-        ],
-        "values": {
-          "P": "{Subprogram <SubpBody [\"Test\"] 1:1-7:10> capturing ()}"
-        }
-      }
-    ],
-    "assume0": [
-      {
-        "trace:": [
-          "assume0",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "P": "{null}"
-        }
-      }
-    ],
-    "assume1": [
-      {
-        "trace:": [
-          "assume1",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "P": "{[non-null]}"
-        }
-      }
-    ],
-    "read0": [
-      {
-        "trace:": [
-          "read0",
-          "start0"
-        ],
+        ], 
         "values": {
           "P": "{[all-path]}"
         }
       }
-    ],
-    "split_join0": [
+    ], 
+    "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assume0",
-          "assume1",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assume0", 
           "start0"
-        ],
+        ], 
+        "values": {
+          "P": "{Subprogram <SubpBody [\"Test\"] 1:1-7:10> capturing ()}"
+        }
+      }
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume0", 
+          "start0"
+        ], 
+        "values": {
+          "P": "{null}"
+        }
+      }
+    ], 
+    "assume1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume1", 
+          "start0"
+        ], 
         "values": {
           "P": "{[non-null]}"
         }
       }
-    ],
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assume0", 
+          "assume1", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "P": "{[non-null]}"
+        }
+      }
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
           "P": "{[all-path]}"
         }
       }
     ]
-  },
+  }, 
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0",
-          "assume0",
-          "read0",
+          "assign0", 
           "start0"
-        ],
-        "values": {
-          "P": "{Subprogram <SubpBody [\"Test\"] 1:1-7:10> capturing ()}"
-        }
-      }
-    ],
-    "assume0": [
-      {
-        "trace:": [
-          "assume0",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "P": "{null}"
-        }
-      }
-    ],
-    "assume1": [
-      {
-        "trace:": [
-          "assume1",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "P": "{[non-null]}"
-        }
-      }
-    ],
-    "read0": [
-      {
-        "trace:": [
-          "read0",
-          "start0"
-        ],
+        ], 
         "values": {
           "P": "{[all-path]}"
         }
       }
-    ],
-    "split_join0": [
+    ], 
+    "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assume0",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
           "P": "{Subprogram <SubpBody [\"Test\"] 1:1-7:10> capturing ()}"
         }
-      },
+      }
+    ], 
+    "assume0": [
       {
         "trace:": [
-          "assume1",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assume0", 
           "start0"
-        ],
+        ], 
+        "values": {
+          "P": "{null}"
+        }
+      }
+    ], 
+    "assume1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assume1", 
+          "start0"
+        ], 
         "values": {
           "P": "{[non-null]}"
         }
       }
-    ],
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assume0", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "P": "{Subprogram <SubpBody [\"Test\"] 1:1-7:10> capturing ()}"
+        }
+      }, 
+      {
+        "trace:": [
+          "assign0", 
+          "assume1", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "P": "{[non-null]}"
+        }
+      }
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
           "P": "{[all-path]}"
         }

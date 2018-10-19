@@ -3,703 +3,703 @@
     "assign0": [
       {
         "trace:": [
-          "assign0",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Init}"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Init}"
         }
       }
-    ],
+    ], 
     "assign2": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Finalize}",
-          "state": "{Do_Stuff_1}"
+          "new_state": "{Do_Stuff_1}", 
+          "state": "{Init}"
         }
       }
-    ],
+    ], 
     "assign3": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
-        }
-      }
-    ],
-    "assume0": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
-        }
-      }
-    ],
-    "assume1": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Init}"
-        }
-      }
-    ],
-    "assume2": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_1, Do_Stuff_2}"
-        }
-      }
-    ],
-    "assume3": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Finalize}", 
           "state": "{Do_Stuff_1}"
         }
       }
-    ],
-    "assume4": [
+    ], 
+    "assign4": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_2, Init}"
-        }
-      }
-    ],
-    "assume5": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "assume5",
-          "loop_join0",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Finalize}"
-        }
-      }
-    ],
-    "loop_join0": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_join0",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
-    ],
-    "loop_start0": [
+    ], 
+    "assume0": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
-    ],
-    "read0": [
+    ], 
+    "assume1": [
       {
         "trace:": [
-          "assign0",
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Init}"
         }
       }
-    ],
+    ], 
+    "assume2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1, Do_Stuff_2}"
+        }
+      }
+    ], 
+    "assume3": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1}"
+        }
+      }
+    ], 
+    "assume4": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_2, Init}"
+        }
+      }
+    ], 
+    "assume5": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "assume5", 
+          "loop_join0", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Finalize}"
+        }
+      }
+    ], 
+    "loop_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_join0", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
+        }
+      }
+    ], 
+    "loop_start0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
+        }
+      }
+    ], 
     "split_join0": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
-    ],
+    ], 
     "split_join1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
     ]
-  },
+  }, 
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Init}"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Init}"
         }
       }
-    ],
+    ], 
     "assign2": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Finalize}",
-          "state": "{Do_Stuff_1}"
+          "new_state": "{Do_Stuff_1}", 
+          "state": "{Init}"
         }
       }
-    ],
+    ], 
     "assign3": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
-        }
-      }
-    ],
-    "assume0": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
-        }
-      }
-    ],
-    "assume1": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Init}"
-        }
-      }
-    ],
-    "assume2": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_1, Do_Stuff_2}"
-        }
-      }
-    ],
-    "assume3": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Finalize}", 
           "state": "{Do_Stuff_1}"
         }
       }
-    ],
-    "assume4": [
+    ], 
+    "assign4": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_2, Init}"
-        }
-      }
-    ],
-    "assume5": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "assume5",
-          "loop_join0",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Finalize}"
-        }
-      }
-    ],
-    "loop_join0": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_join0",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
-          "start0"
-        ],
-        "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }
-    ],
-    "loop_start0": [
+    ], 
+    "assume0": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
-          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
-    ],
-    "read0": [
+    ], 
+    "assume1": [
       {
         "trace:": [
-          "assign0",
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Init}"
         }
       }
-    ],
+    ], 
+    "assume2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1, Do_Stuff_2}"
+        }
+      }
+    ], 
+    "assume3": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1}"
+        }
+      }
+    ], 
+    "assume4": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_2, Init}"
+        }
+      }
+    ], 
+    "assume5": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "assume5", 
+          "loop_join0", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Finalize}"
+        }
+      }
+    ], 
+    "loop_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_join0", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
+        }
+      }
+    ], 
+    "loop_start0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
+          "start0"
+        ], 
+        "values": {
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
+          "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
+        }
+      }
+    ], 
     "split_join0": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
-    ],
+    ], 
     "split_join1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "assume2",
-          "assume3",
-          "assume4",
-          "loop_start0",
-          "read0",
-          "split_join0",
-          "split_join1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "assume3", 
+          "assume4", 
+          "loop_start0", 
+          "split_join0", 
+          "split_join1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Do_Stuff_1, Do_Stuff_2, Init}"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}",
+          "new_state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}", 
           "state": "{Do_Stuff_1, Do_Stuff_2, Finalize, Init}"
         }
       }

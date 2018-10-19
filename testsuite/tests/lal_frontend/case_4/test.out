@@ -1,6 +1,6 @@
 Program:
-  read(x#1)
-  read(y#2)
+  x#1 = Input()
+  y#2 = Input()
   split:
     assume(&&(>=(x#1, 0), <=(x#1, 2147483647)))
     y#2 = 43

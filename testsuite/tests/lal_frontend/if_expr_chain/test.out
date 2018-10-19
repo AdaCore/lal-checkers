@@ -1,8 +1,8 @@
 Program:
-  read(x#1)
-  read(C1#2)
-  read(C2#3)
-  read(C3#4)
+  x#1 = Input()
+  C1#2 = Input()
+  C2#3 = Input()
+  C3#4 = Input()
   split:
     assume(C1#2)
     tmp0#5 = 1

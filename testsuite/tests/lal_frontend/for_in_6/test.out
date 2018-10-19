@@ -1,5 +1,5 @@
 Program:
-  read(My_Array#1)
+  My_Array#1 = Input()
   X#2 = 0
   tmp0#3 = My_Array#1
   loop:

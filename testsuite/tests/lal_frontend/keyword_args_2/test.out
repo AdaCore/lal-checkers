@@ -1,5 +1,5 @@
 Program:
-  read(A#1)
+  A#1 = Input()
   ret0#2 = <SubpBody ["F"] 2:4-6:10>(1, 13, A#1)
   A#1 = Get_0(ret0#2)
   R#3 = Get_1(ret0#2)

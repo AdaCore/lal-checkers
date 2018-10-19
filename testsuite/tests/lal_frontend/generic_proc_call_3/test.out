@@ -1,5 +1,6 @@
 Program:
   $stack#1 = Updated_1($stack#1, 0)
+  $stack#1 = Updated_2($stack#1, Input())
   ret0#2 = <SubpBody ["Find"] 8:4-12:13>(Var_1($stack#1), Var_2($stack#1), Offset_3($stack#1))
   $stack#1 = CopyOffset($stack#1, Get_0(ret0#2))
   end:

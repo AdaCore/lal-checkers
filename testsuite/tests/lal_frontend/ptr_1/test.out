@@ -1,7 +1,7 @@
 Program:
-  read(x#1)
+  x#1 = Input()
   $stack#2 = Updated_2($stack#2, 0)
-  read(b#3)
+  b#3 = Input()
   split:
     assume(b#3)
     x#1 = Var_2($stack#2)

@@ -1,5 +1,5 @@
 Program:
-  read(x#1)
+  x#1 = Input()
   y#2 = 0
   split:
     assume(==(x#1, null))

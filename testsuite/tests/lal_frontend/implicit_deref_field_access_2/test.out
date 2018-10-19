@@ -1,5 +1,5 @@
 Program:
-  read(a#1)
+  a#1 = Input()
   assume(!=(Get_0(a#1), null))
   assume(!=(Get_0(*(Get_0(a#1), $stack#2)), null))
   assume(!=(Get_0(*(Get_0(*(Get_0(a#1), $stack#2)), $stack#2)), null))

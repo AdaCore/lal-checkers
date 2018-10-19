@@ -1,29 +1,29 @@
 {
   "always": [
     {
-      "kind": true,
+      "kind": true, 
       "traces": [
         [
-          "assign0",
-          "assign1",
-          "assume0",
-          "assume1",
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
+          "assume1", 
           "start0"
         ]
       ]
     }
-  ],
+  ], 
   "le_t_eq_v": [
     {
-      "kind": true,
+      "kind": true, 
       "traces": [
         [
-          "assign0",
-          "assign1",
-          "assume0",
-          "assume1",
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
+          "assume1", 
           "start0"
         ]
       ]

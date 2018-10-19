@@ -1,10 +1,10 @@
 Program:
-  read(C1#1)
-  read(C2#2)
-  read(C3#3)
-  read(C4#4)
-  read(C5#5)
-  read(x#6)
+  C1#1 = Input()
+  C2#2 = Input()
+  C3#3 = Input()
+  C4#4 = Input()
+  C5#5 = Input()
+  x#6 = Input()
   split:
     assume(C1#1)
     split:
