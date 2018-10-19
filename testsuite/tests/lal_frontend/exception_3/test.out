@@ -1,0 +1,8 @@
+Program:
+  $stack#1 = Updated_1($stack#1, Input())
+  Y#2 = Var_1($stack#1)
+  split:
+    $stack#1 = Updated($stack#1, Y#2, 12)
+  |:
+    $stack#1 = Input()
+  end:

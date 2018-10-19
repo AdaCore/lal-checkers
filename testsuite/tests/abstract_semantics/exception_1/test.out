@@ -1,0 +1,162 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[3, 3]"
+        }
+      }
+    ], 
+    "assign2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign2", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign3": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign2", 
+          "assign3", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[2, 2]"
+        }
+      }
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[2, 3]"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "X": "[-2147483648, 2147483647]"
+        }
+      }
+    ]
+  }, 
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[3, 3]"
+        }
+      }
+    ], 
+    "assign2": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign2", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[-2147483648, 2147483647]"
+        }
+      }
+    ], 
+    "assign3": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign2", 
+          "assign3", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[2, 2]"
+        }
+      }
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[3, 3]"
+        }
+      }, 
+      {
+        "trace:": [
+          "assign0", 
+          "assign2", 
+          "assign3", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "X": "[2, 2]"
+        }
+      }
+    ], 
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ], 
+        "values": {
+          "X": "[-2147483648, 2147483647]"
+        }
+      }
+    ]
+  }
+}

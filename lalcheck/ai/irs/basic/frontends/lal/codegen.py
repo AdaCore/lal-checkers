@@ -12,7 +12,7 @@ from funcy.calc import memoize
 from utils import (
     Mode,
     NotConstExprError,
-    StackType, PointerType, ExtendedCallReturnType,
+    StackType, PointerType, ExtendedCallReturnType, collect_assigned_variables,
     ValueHolder, record_fields, proc_parameters, get_field_info,
     is_array_type_decl, is_record_field, is_access_to_subprogram,
     closest, get_subp_identity, is_access_attribute, eval_as_real
@@ -2923,12 +2923,11 @@ def gen_ir(ctx, subp, typer, subpdata):
                 )[0]
 
         elif stmt.is_a(lal.DeclBlock):
-            decls = transform_decls(stmt.f_decls.f_decls)
-            stmts = transform_stmts(stmt.f_stmts.f_stmts)
-            return decls + stmts
+            return (transform_decls(stmt.f_decls.f_decls) +
+                    transform_handled_stmts(stmt.f_stmts))
 
         elif stmt.is_a(lal.BeginBlock):
-            return transform_stmts(stmt.f_stmts.f_stmts)
+            return transform_handled_stmts(stmt.f_stmts)
 
         elif stmt.is_a(lal.IfStmt):
             # If statements are transformed as such:
@@ -3279,6 +3278,79 @@ def gen_ir(ctx, subp, typer, subpdata):
                 print_warning(stmt.text, e)
         return res
 
+    def transform_handled_stmts(handled_stmts):
+        """
+        Transforms a handled statements node as such:
+        Ada:
+        ----------------
+        begin
+           BEGIN_BODY
+        exception
+           when A =>
+              A_BODY
+           when B =>
+              B_BODY
+        end;
+
+        Basic IR:
+        ----------------
+        split:
+            [BEGIN_BODY]
+        |:
+            [havoc all variables that are assigned in BEGIN_BODY]
+            split:
+                [A_BODY]
+            |:
+                [B_BODY]
+
+
+        :type handled_stmts: lal.HandledStmts
+        :rtype: list[irt.Stmt]
+        """
+        body_stmts = transform_stmts(handled_stmts.f_stmts)
+        handlers = handled_stmts.f_exceptions
+
+        if handlers is None or len(handlers) == 0:
+            return body_stmts
+
+        # Find the variables that are assigned in the handled stmts.
+        # Discard synthetic variables as they are only local to the
+        # transformation of a statement/expression and will not be referred
+        # afterwards anymore.
+        handles = [
+            stores.lookup_normal(var)
+            for var in collect_assigned_variables(body_stmts)
+            if not purpose.SyntheticVariable.is_purpose_of(var)
+        ]
+
+        # Generate havoc statements for these variables.
+        havocs = [
+            stmt
+            for handle in handles
+            if handle is not None
+            for stmt in handle.havoc()
+        ]
+
+        # Transform the statements inside each handler.
+        handlers_stmts = [
+            transform_stmts(handler.f_stmts)
+            for handler in handlers
+        ]
+
+        # Generate the split over the different exception handlers.
+        handler_code = (
+            handlers_stmts[0]
+            if len(handlers_stmts) == 1
+            else [irt.SplitStmt(handlers_stmts, orig_node=handlers)]
+        )
+
+        return [
+            irt.SplitStmt([
+                body_stmts,
+                havocs + handler_code
+            ])
+        ]
+
     def transform_expr_function_body(expr):
         """
         Generate the body of this subprogram when it is an expression
@@ -3305,7 +3377,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         :rtype: list[irt.Stmt]
         """
         return (transform_decls(subp.f_decls.f_decls) +
-                transform_stmts(subp.f_stmts.f_stmts))
+                transform_handled_stmts(subp.f_stmts))
 
     # Generate function body statements. Subp may be an expression function or
     # a normal subprogram.

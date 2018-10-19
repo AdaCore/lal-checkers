@@ -1,0 +1,8 @@
+Program:
+  X#1 = Input()
+  split:
+    X#1 = 3
+  |:
+    X#1 = Input()
+    X#1 = 2
+  end:

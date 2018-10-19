@@ -1,0 +1,13 @@
+Program:
+  X#1 = Input()
+  X#1 = 3
+  Y#2 = X#1
+  split:
+    Y#2 = +(Y#2, 1)
+  |:
+    Y#2 = Input()
+    split:
+      X#1 = 41
+    |:
+      X#1 = 59
+  end:

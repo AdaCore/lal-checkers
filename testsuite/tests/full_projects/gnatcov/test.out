@@ -593,7 +593,6 @@
 557:35: (potential) null dereference of 'S_SCI'
 565:10: (potential) null dereference of 'Info'
 566:38: (potential) null dereference of 'SCI'
-576:25: 'Valid' is always true
 580:44: (potential) invalid field 'Stats'
 589:15: (potential) null dereference of 'Exec'
 58:26: (potential) null dereference of 'Exec'
