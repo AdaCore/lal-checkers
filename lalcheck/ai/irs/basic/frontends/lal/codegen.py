@@ -659,7 +659,8 @@ def gen_ir(ctx, subp, typer, subpdata):
                 return [irt.AssignStmt(dest, updated_expr)]
 
         def __init__(self):
-            self.vars = {}
+            self.vars = {}  # map from defining name to variable handle.
+            self.normal_vars = {}  # map from ir var to normal variable handle.
             self.var_index = 0
             self.substs = []
 
@@ -678,11 +679,13 @@ def gen_ir(ctx, subp, typer, subpdata):
                 assert defining_name is not None
                 name = defining_name.text
 
-            var = self.NormalVariableHandle(defining_name, irt.Variable(
+            ir_var = irt.Variable(
                 name,
                 index=self.var_index,
                 **data
-            ))
+            )
+            var = self.NormalVariableHandle(defining_name, ir_var)
+            self.normal_vars[ir_var] = var
 
             self.var_index += 1
 
@@ -784,6 +787,16 @@ def gen_ir(ctx, subp, typer, subpdata):
             :rtype: VariableHandle | object
             """
             return self.vars.get(defining_name, default)
+
+        def lookup_normal(self, var, default=None):
+            """
+            Finds the variable handle for the given IR Variable object.
+            :param irt.Variable var: The IR Variable to look for.
+            :param object | None default: The value to return if the lookup
+                fails.
+            :rtype: VariableHandle | object
+            """
+            return self.normal_vars.get(var, default)
 
         def current_index(self):
             """
