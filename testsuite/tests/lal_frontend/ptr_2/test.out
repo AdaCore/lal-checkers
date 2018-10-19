@@ -1,5 +1,6 @@
 Program:
-  read(x#1)
-  read(b#2)
-  x#1 = Get_0(Var_2($stack#3))
+  x#1 = Input()
+  $stack#2 = Updated_2($stack#2, Input())
+  b#3 = Input()
+  x#1 = Get_0(Var_2($stack#2))
   end:

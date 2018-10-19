@@ -3,289 +3,289 @@
     "assign0": [
       {
         "trace:": [
-          "assign0",
-          "read0",
-          "read1",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "b": "{False, True}",
+          "$stack": "({}, 0)", 
+          "b": "{False, True}", 
           "x": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({3: '([1, 1], [2, 2])'}, 0)",
-          "b": "{False, True}",
+          "$stack": "({}, 0)", 
+          "b": "{False, True}", 
           "x": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign2": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({3: '([1, 1], [2, 2])'}, 0)",
-          "b": "{False, True}",
-          "x": "{Get_0(0x00000003)}"
+          "$stack": "({}, 0)", 
+          "b": "{False, True}", 
+          "x": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign3": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({3: '([1, 1], [2, 2])'}, 0)",
-          "b": "{False, True}",
-          "x": "{Get_0(0x00000003)}"
+          "$stack": "({3: '([1, 1], [2, 2])'}, 0)", 
+          "b": "{False, True}", 
+          "x": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign4": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assign4",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({8: '([24, 24], [52, 52])', 3: '([1, 1], [2, 2])'}, 0)",
-          "b": "{False, True}",
+          "$stack": "({3: '([1, 1], [2, 2])'}, 0)", 
+          "b": "{False, True}", 
           "x": "{Get_0(0x00000003)}"
         }
       }
-    ],
+    ], 
     "assign5": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assign4",
-          "assign5",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign5", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({8: '([24, 24], [52, 52])', 3: '([1, 1], [1, 1])'}, 0)",
-          "b": "{False, True}",
+          "$stack": "({3: '([1, 1], [2, 2])'}, 0)", 
+          "b": "{False, True}", 
           "x": "{Get_0(0x00000003)}"
         }
       }
-    ],
-    "read0": [
+    ], 
+    "assign6": [
       {
         "trace:": [
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign5", 
+          "assign6", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "b": "{False, True}",
-          "x": "{[all-path]}"
+          "$stack": "({8: '([24, 24], [52, 52])', 3: '([1, 1], [2, 2])'}, 0)", 
+          "b": "{False, True}", 
+          "x": "{Get_0(0x00000003)}"
         }
       }
-    ],
-    "read1": [
+    ], 
+    "assign7": [
       {
         "trace:": [
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign5", 
+          "assign6", 
+          "assign7", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "b": "{False, True}",
-          "x": "{[all-path]}"
+          "$stack": "({8: '([24, 24], [52, 52])', 3: '([1, 1], [1, 1])'}, 0)", 
+          "b": "{False, True}", 
+          "x": "{Get_0(0x00000003)}"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "b": "{False, True}",
+          "$stack": "({}, 0)", 
+          "b": "{False, True}", 
           "x": "{[all-path]}"
         }
       }
     ]
-  },
+  }, 
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0",
-          "read0",
-          "read1",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "b": "{False, True}",
+          "$stack": "({}, 0)", 
+          "b": "{False, True}", 
           "x": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({3: '([1, 1], [2, 2])'}, 0)",
-          "b": "{False, True}",
+          "$stack": "({}, 0)", 
+          "b": "{False, True}", 
           "x": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign2": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({3: '([1, 1], [2, 2])'}, 0)",
-          "b": "{False, True}",
-          "x": "{Get_0(0x00000003)}"
+          "$stack": "({}, 0)", 
+          "b": "{False, True}", 
+          "x": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign3": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({3: '([1, 1], [2, 2])'}, 0)",
-          "b": "{False, True}",
-          "x": "{Get_0(0x00000003)}"
+          "$stack": "({3: '([1, 1], [2, 2])'}, 0)", 
+          "b": "{False, True}", 
+          "x": "{[all-path]}"
         }
       }
-    ],
+    ], 
     "assign4": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assign4",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({8: '([24, 24], [52, 52])', 3: '([1, 1], [2, 2])'}, 0)",
-          "b": "{False, True}",
+          "$stack": "({3: '([1, 1], [2, 2])'}, 0)", 
+          "b": "{False, True}", 
           "x": "{Get_0(0x00000003)}"
         }
       }
-    ],
+    ], 
     "assign5": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assign4",
-          "assign5",
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign5", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({8: '([24, 24], [52, 52])', 3: '([1, 1], [1, 1])'}, 0)",
-          "b": "{False, True}",
+          "$stack": "({3: '([1, 1], [2, 2])'}, 0)", 
+          "b": "{False, True}", 
           "x": "{Get_0(0x00000003)}"
         }
       }
-    ],
-    "read0": [
+    ], 
+    "assign6": [
       {
         "trace:": [
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign5", 
+          "assign6", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "b": "{False, True}",
-          "x": "{[all-path]}"
+          "$stack": "({8: '([24, 24], [52, 52])', 3: '([1, 1], [2, 2])'}, 0)", 
+          "b": "{False, True}", 
+          "x": "{Get_0(0x00000003)}"
         }
       }
-    ],
-    "read1": [
+    ], 
+    "assign7": [
       {
         "trace:": [
-          "read0",
-          "read1",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assign5", 
+          "assign6", 
+          "assign7", 
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "b": "{False, True}",
-          "x": "{[all-path]}"
+          "$stack": "({8: '([24, 24], [52, 52])', 3: '([1, 1], [1, 1])'}, 0)", 
+          "b": "{False, True}", 
+          "x": "{Get_0(0x00000003)}"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "$stack": "({}, 0)",
-          "b": "{False, True}",
+          "$stack": "({}, 0)", 
+          "b": "{False, True}", 
           "x": "{[all-path]}"
         }
       }

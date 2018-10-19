@@ -1,24 +1,24 @@
 {
   "always": [
     {
-      "precise": true,
+      "precise": true, 
       "trace": [
-        "assign0",
-        "assign1",
-        "assume0",
-        "read0",
+        "assign0", 
+        "assign1", 
+        "assign2", 
+        "assume0", 
         "start0"
       ]
     }
-  ],
+  ], 
   "le_t_eq_v": [
     {
-      "precise": true,
+      "precise": true, 
       "trace": [
-        "assign0",
-        "assign1",
-        "assume0",
-        "read0",
+        "assign0", 
+        "assign1", 
+        "assign2", 
+        "assume0", 
         "start0"
       ]
     }

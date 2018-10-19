@@ -3,288 +3,288 @@
     "assign0": [
       {
         "trace:": [
-          "assign0",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
+          "x": "[0, 0]", 
           "y": "[-1000, 1000]"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assume0",
-          "read0",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
-          "y": "[51, 1000]"
+          "x": "[0, 0]", 
+          "y": "[-1000, 1000]"
         }
       }
-    ],
+    ], 
     "assign2": [
       {
         "trace:": [
-          "assign0",
-          "assign2",
-          "assume1",
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
-          "y": "[-1000, 50]"
-        }
-      }
-    ],
-    "assign3": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assign3",
-          "assume0",
-          "assume1",
-          "read0",
-          "split_join0",
-          "start0"
-        ],
-        "values": {
-          "x": "[-1, 1]",
-          "y": "[-1000, 1000]"
-        }
-      }
-    ],
-    "assume0": [
-      {
-        "trace:": [
-          "assign0",
-          "assume0",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "x": "[0, 0]",
+          "x": "[0, 0]", 
           "y": "[51, 1000]"
         }
       }
-    ],
-    "assume1": [
+    ], 
+    "assign3": [
       {
         "trace:": [
-          "assign0",
-          "assume1",
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign3", 
+          "assume1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
+          "x": "[0, 0]", 
           "y": "[-1000, 50]"
         }
       }
-    ],
-    "read0": [
+    ], 
+    "assign4": [
       {
         "trace:": [
-          "assign0",
-          "read0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "assume0", 
+          "assume1", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
+          "x": "[-1, 1]", 
           "y": "[-1000, 1000]"
         }
       }
-    ],
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assume0", 
+          "start0"
+        ], 
+        "values": {
+          "x": "[0, 0]", 
+          "y": "[51, 1000]"
+        }
+      }
+    ], 
+    "assume1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assume1", 
+          "start0"
+        ], 
+        "values": {
+          "x": "[0, 0]", 
+          "y": "[-1000, 50]"
+        }
+      }
+    ], 
     "split_join0": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assign2",
-          "assume0",
-          "assume1",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume0", 
+          "assume1", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
+          "x": "[0, 0]", 
           "y": "[-1000, 1000]"
         }
       }
-    ],
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[-1000, 1000]",
+          "x": "[-1000, 1000]", 
           "y": "[-1000, 1000]"
         }
       }
     ]
-  },
+  }, 
   "le_t_eq_v": {
     "assign0": [
       {
         "trace:": [
-          "assign0",
+          "assign0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
+          "x": "[0, 0]", 
           "y": "[-1000, 1000]"
         }
       }
-    ],
+    ], 
     "assign1": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assume0",
-          "read0",
+          "assign0", 
+          "assign1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
-          "y": "[51, 1000]"
-        }
-      }
-    ],
-    "assign2": [
-      {
-        "trace:": [
-          "assign0",
-          "assign2",
-          "assume1",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "x": "[0, 0]",
-          "y": "[-1000, 50]"
-        }
-      }
-    ],
-    "assign3": [
-      {
-        "trace:": [
-          "assign0",
-          "assign1",
-          "assign3",
-          "assume0",
-          "read0",
-          "split_join0",
-          "start0"
-        ],
-        "values": {
-          "x": "[1, 1]",
-          "y": "[51, 1000]"
-        }
-      },
-      {
-        "trace:": [
-          "assign0",
-          "assign2",
-          "assign3",
-          "assume1",
-          "read0",
-          "split_join0",
-          "start0"
-        ],
-        "values": {
-          "x": "[-1, -1]",
-          "y": "[-1000, 50]"
-        }
-      }
-    ],
-    "assume0": [
-      {
-        "trace:": [
-          "assign0",
-          "assume0",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "x": "[0, 0]",
-          "y": "[51, 1000]"
-        }
-      }
-    ],
-    "assume1": [
-      {
-        "trace:": [
-          "assign0",
-          "assume1",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "x": "[0, 0]",
-          "y": "[-1000, 50]"
-        }
-      }
-    ],
-    "read0": [
-      {
-        "trace:": [
-          "assign0",
-          "read0",
-          "start0"
-        ],
-        "values": {
-          "x": "[0, 0]",
+          "x": "[0, 0]", 
           "y": "[-1000, 1000]"
         }
       }
-    ],
-    "split_join0": [
+    ], 
+    "assign2": [
       {
         "trace:": [
-          "assign0",
-          "assign1",
-          "assume0",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
+          "x": "[0, 0]", 
           "y": "[51, 1000]"
         }
-      },
+      }
+    ], 
+    "assign3": [
       {
         "trace:": [
-          "assign0",
-          "assign2",
-          "assume1",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assign3", 
+          "assume1", 
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[0, 0]",
+          "x": "[0, 0]", 
           "y": "[-1000, 50]"
         }
       }
-    ],
+    ], 
+    "assign4": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign4", 
+          "assume0", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "x": "[1, 1]", 
+          "y": "[51, 1000]"
+        }
+      }, 
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign3", 
+          "assign4", 
+          "assume1", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "x": "[-1, -1]", 
+          "y": "[-1000, 50]"
+        }
+      }
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assume0", 
+          "start0"
+        ], 
+        "values": {
+          "x": "[0, 0]", 
+          "y": "[51, 1000]"
+        }
+      }
+    ], 
+    "assume1": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assume1", 
+          "start0"
+        ], 
+        "values": {
+          "x": "[0, 0]", 
+          "y": "[-1000, 50]"
+        }
+      }
+    ], 
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assume0", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "x": "[0, 0]", 
+          "y": "[51, 1000]"
+        }
+      }, 
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign3", 
+          "assume1", 
+          "split_join0", 
+          "start0"
+        ], 
+        "values": {
+          "x": "[0, 0]", 
+          "y": "[-1000, 50]"
+        }
+      }
+    ], 
     "start0": [
       {
         "trace:": [
           "start0"
-        ],
+        ], 
         "values": {
-          "x": "[-1000, 1000]",
+          "x": "[-1000, 1000]", 
           "y": "[-1000, 1000]"
         }
       }

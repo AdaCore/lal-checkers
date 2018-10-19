@@ -31,6 +31,8 @@ STRING = 'String'
 
 IN_VALUES_OF = 'InValuesOf'
 
+INPUT = "Input"
+
 
 class _IndexedName(object):
     def __init__(self, index, frmt):

@@ -1,4 +1,6 @@
 Program:
-  ret0#1 = <SubpBody ["F"] 10:4-13:10>(Var_1($stack#2), Var_2($stack#2), Offset_3($stack#2))
-  $stack#2 = CopyOffset($stack#2, Get_0(ret0#1))
+  $stack#1 = Updated_1($stack#1, Input())
+  $stack#1 = Updated_2($stack#1, Input())
+  ret0#2 = <SubpBody ["F"] 10:4-13:10>(Var_1($stack#1), Var_2($stack#1), Offset_3($stack#1))
+  $stack#1 = CopyOffset($stack#1, Get_0(ret0#2))
   end:

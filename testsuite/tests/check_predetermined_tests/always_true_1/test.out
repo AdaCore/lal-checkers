@@ -1,37 +1,37 @@
 {
   "always": [
     {
-      "kind": true,
+      "kind": true, 
       "traces": [
         [
-          "assign0",
-          "assume0",
-          "assume1",
-          "assume2",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assume0", 
+          "assume1", 
+          "assume2", 
+          "split_join0", 
           "start0"
         ]
       ]
     }
-  ],
+  ], 
   "le_t_eq_v": [
     {
-      "kind": true,
+      "kind": true, 
       "traces": [
         [
-          "assign0",
-          "assume0",
-          "assume2",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assign1", 
+          "assume0", 
+          "assume2", 
+          "split_join0", 
           "start0"
-        ],
+        ], 
         [
-          "assume1",
-          "assume2",
-          "read0",
-          "split_join0",
+          "assign0", 
+          "assume1", 
+          "assume2", 
+          "split_join0", 
           "start0"
         ]
       ]

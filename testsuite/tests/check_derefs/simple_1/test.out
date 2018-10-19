@@ -1,30 +1,30 @@
 {
   "always": [
     {
-      "precise": false,
+      "precise": false, 
       "trace": [
-        "assign0",
-        "assign1",
-        "assign2",
-        "assume0",
-        "assume1",
-        "assume2",
-        "read0",
-        "split_join0",
+        "assign0", 
+        "assign1", 
+        "assign2", 
+        "assign3", 
+        "assume0", 
+        "assume1", 
+        "assume2", 
+        "split_join0", 
         "start0"
       ]
     }
-  ],
+  ], 
   "le_t_eq_v": [
     {
-      "precise": true,
+      "precise": true, 
       "trace": [
-        "assign0",
-        "assign1",
-        "assume1",
-        "assume2",
-        "read0",
-        "split_join0",
+        "assign0", 
+        "assign1", 
+        "assign2", 
+        "assume1", 
+        "assume2", 
+        "split_join0", 
         "start0"
       ]
     }

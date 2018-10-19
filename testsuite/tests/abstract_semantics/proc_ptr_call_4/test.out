@@ -7,8 +7,8 @@
           "start0"
         ], 
         "values": {
-          "$stack": "({}, 0)", 
-          "Y": "[1, 1]", 
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
+          "Y": "[-2147483648, 2147483647]", 
           "Z": "{False, True}"
         }
       }
@@ -18,11 +18,10 @@
         "trace:": [
           "assign0", 
           "assign1", 
-          "read0", 
           "start0"
         ], 
         "values": {
-          "$stack": "({}, 0)", 
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
           "Y": "[1, 1]", 
           "Z": "{False, True}"
         }
@@ -34,25 +33,43 @@
           "assign0", 
           "assign1", 
           "assign2", 
-          "read0", 
           "start0"
         ], 
         "values": {
-          "$stack": "({1: '[12, 14]'}, 0)", 
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
           "Y": "[1, 1]", 
           "Z": "{False, True}"
         }
       }
     ], 
-    "read0": [
+    "assign3": [
       {
         "trace:": [
           "assign0", 
-          "read0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
           "start0"
         ], 
         "values": {
-          "$stack": "({}, 0)", 
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "assign4": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({1: '[12, 14]'}, 0)", 
           "Y": "[1, 1]", 
           "Z": "{False, True}"
         }
@@ -79,8 +96,8 @@
           "start0"
         ], 
         "values": {
-          "$stack": "({}, 0)", 
-          "Y": "[1, 1]", 
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
+          "Y": "[-2147483648, 2147483647]", 
           "Z": "{False, True}"
         }
       }
@@ -90,11 +107,10 @@
         "trace:": [
           "assign0", 
           "assign1", 
-          "read0", 
           "start0"
         ], 
         "values": {
-          "$stack": "({}, 0)", 
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
           "Y": "[1, 1]", 
           "Z": "{False, True}"
         }
@@ -106,25 +122,43 @@
           "assign0", 
           "assign1", 
           "assign2", 
-          "read0", 
           "start0"
         ], 
         "values": {
-          "$stack": "({1: '[12, 14]'}, 0)", 
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
           "Y": "[1, 1]", 
           "Z": "{False, True}"
         }
       }
     ], 
-    "read0": [
+    "assign3": [
       {
         "trace:": [
           "assign0", 
-          "read0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
           "start0"
         ], 
         "values": {
-          "$stack": "({}, 0)", 
+          "$stack": "({1: '[-2147483648, 2147483647]'}, 0)", 
+          "Y": "[1, 1]", 
+          "Z": "{False, True}"
+        }
+      }
+    ], 
+    "assign4": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assign4", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({1: '[12, 14]'}, 0)", 
           "Y": "[1, 1]", 
           "Z": "{False, True}"
         }

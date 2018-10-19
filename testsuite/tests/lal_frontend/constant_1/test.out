@@ -1,5 +1,5 @@
 Program:
-  read(x#1)
+  x#1 = Input()
   split:
     assume(True)
     x#1 = 1

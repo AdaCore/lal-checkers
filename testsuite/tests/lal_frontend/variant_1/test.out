@@ -1,7 +1,7 @@
 Program:
   tmp0#1 = Updated_2(Updated_0(tmp0#1, 600), True)
   x#2 = tmp0#1
-  read(res#3)
+  res#3 = Input()
   assume(&&(>=(Get_0(x#2), 0), <=(Get_0(x#2), 500)))
   assume(&&(>=(Get_0(x#2), 0), <=(Get_0(x#2), 250)))
   res#3 = Get_1(x#2)

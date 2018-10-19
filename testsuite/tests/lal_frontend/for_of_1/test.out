@@ -1,5 +1,5 @@
 Program:
-  read(My_Array#1)
+  My_Array#1 = Input()
   tmp0#2 = My_Array#1
   loop:
     assume(InValuesOf(E#3, tmp0#2))
