@@ -110,6 +110,15 @@ class PythonDriver(TestDriver):
         else:
             return [self.py_file]
 
+    def test_orig_dir(self, *args):
+        """
+        Build a path under the original directory of this testcase.
+
+        :param *str args: Path components.
+        :rtype: str
+        """
+        return os.path.join(self.test_env['test_dir'], *args)
+
     def test_working_dir(self, *args):
         """
         Build a path under the temporary directory created for this testcase.
@@ -143,6 +152,25 @@ class PythonDriver(TestDriver):
             # Because of wrapping in the YAML file, we can get multi-line
             # strings, which is not valid for comments.
             self.expect_failure_comment = comment.replace('\n', ' ').strip()
+
+    def read_file(self, filename):
+        """
+        Return the content of `filename`.
+        :type filename: str
+        :rtype: str
+        """
+        with open(filename, 'r') as f:
+            return f.read()
+
+    def write_file(self, filename, content):
+        """
+        Writes `content` to `filename`.
+
+        :type filename: str
+        :type content: str
+        """
+        with open(filename, 'w') as f:
+            f.write(content)
 
     def set_result_status(self, failed, message=''):
         """
@@ -189,9 +217,20 @@ class PythonDriver(TestDriver):
         diff = fileutils.diff(self.test_working_dir(self.expected_file),
                               self.test_working_dir(self.out_file))
 
+        rewrite = (self.global_env['options'].rewrite
+                   and not self.expect_failure)
+
         # Determine the status of this test, ignoring expected failure (for
         # now).
         if diff:
+            if rewrite:
+                new_baseline = self.read_file(
+                    self.test_working_dir(self.out_file)
+                )
+                self.write_file(
+                    self.test_orig_dir(self.expected_file), new_baseline
+                )
+
             self.result.actual_output += diff
             failed = True
             message = 'diff in output'
