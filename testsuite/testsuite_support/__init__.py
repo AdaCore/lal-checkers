@@ -13,3 +13,8 @@ class Testsuite(BaseTestsuite):
         self.main.add_option(
             '--with-python', default=None,
             help='If provided, use as the Python interpreter in testcases.')
+
+        self.main.add_option(
+            '--rewrite', '-r', action='store_true',
+            help="Rewrite test baselines according to current output."
+        )
