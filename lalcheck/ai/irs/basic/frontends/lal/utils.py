@@ -321,6 +321,29 @@ def is_array_type_decl(tpe):
     return False
 
 
+def collect_assigned_variables(nodes):
+    """
+    Returns the set of IR variables that appear on the left-hand side of
+    an assign statement inside the given list of nodes and their children.
+
+    :param nodes: list[irt.Node]
+    :rtype: set[irt.Variable]
+    """
+    assigned_vars = set()
+
+    class Visitor(IRImplicitVisitor):
+        def visit_assign(self, assign):
+            # Add the variable to the set but do not recursively traverse the
+            # RHS since it cannot contain further assignments.
+            assigned_vars.add(assign.id.var)
+
+    v = Visitor()
+    for node in nodes:
+        node.visit(v)
+
+    return assigned_vars
+
+
 ADA_TRUE = 'True'
 ADA_FALSE = 'False'
 
