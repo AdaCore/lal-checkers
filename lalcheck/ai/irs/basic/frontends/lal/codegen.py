@@ -1670,7 +1670,10 @@ def gen_ir(ctx, subp, typer, subpdata):
         Generates the actual destination for a dereference expression.
         Example:
 
-        E.g. x.all := 2 becomes $stack = Updated($stack, x, 2)
+        E.g. x.all := 2 becomes:
+
+        assume(x != null)
+        $stack = Updated($stack, x, 2)
 
         :param lal.Expr prefix: The expression to dereference ("x" in the
             example).
@@ -1684,6 +1687,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         :rtype: list[irt.Stmt], (irt.Identifier, irt.Expr)
         """
         prefix_pre_stmts, prefix_expr = transform_expr(prefix)
+        prefix_pre_stmts.append(gen_non_null_assume(prefix_expr))
 
         return prefix_pre_stmts, (stack, irt.FunCall(
             ops.UPDATED,

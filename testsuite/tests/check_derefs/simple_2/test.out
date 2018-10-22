@@ -1,0 +1,24 @@
+{
+  "always": [
+    {
+      "precise": true, 
+      "trace": [
+        "assign0", 
+        "assume0", 
+        "assume1", 
+        "start0"
+      ]
+    }
+  ], 
+  "le_t_eq_v": [
+    {
+      "precise": true, 
+      "trace": [
+        "assign0", 
+        "assume0", 
+        "assume1", 
+        "start0"
+      ]
+    }
+  ]
+}

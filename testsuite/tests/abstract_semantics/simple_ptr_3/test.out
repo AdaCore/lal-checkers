@@ -62,10 +62,27 @@
           "assign2", 
           "assign3", 
           "assign4", 
+          "assume0", 
           "start0"
         ], 
         "values": {
           "$stack": "({2: '([3, 3], [2, 2])'}, 0)", 
+          "x": "{Get_0(0x00000002)}"
+        }
+      }
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '([1, 1], [2, 2])'}, 0)", 
           "x": "{Get_0(0x00000002)}"
         }
       }
@@ -145,10 +162,27 @@
           "assign2", 
           "assign3", 
           "assign4", 
+          "assume0", 
           "start0"
         ], 
         "values": {
           "$stack": "({2: '([3, 3], [2, 2])'}, 0)", 
+          "x": "{Get_0(0x00000002)}"
+        }
+      }
+    ], 
+    "assume0": [
+      {
+        "trace:": [
+          "assign0", 
+          "assign1", 
+          "assign2", 
+          "assign3", 
+          "assume0", 
+          "start0"
+        ], 
+        "values": {
+          "$stack": "({2: '([1, 1], [2, 2])'}, 0)", 
           "x": "{Get_0(0x00000002)}"
         }
       }
