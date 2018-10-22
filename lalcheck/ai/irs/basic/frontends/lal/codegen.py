@@ -1637,6 +1637,34 @@ def gen_ir(ctx, subp, typer, subpdata):
             orig_node=orig_node
         )]
 
+    def gen_non_null_assume(nullable_expr, is_check=True):
+        """
+        Returns a statement assuming that the given expression is not null.
+
+        :param irt.Expr nullable_expr: The expression that might be null.
+        :param bool is_check: If this is True, the generated assume statement
+            carries a DerefCheck purpose.
+        :rtype: irt.AssumeStmt
+        """
+        tpe = nullable_expr.data.type_hint
+        assumed_expr = irt.FunCall(
+            ops.NEQ,
+            [
+                nullable_expr,
+                irt.Lit(lits.NULL, type_hint=tpe)
+            ],
+            param_types=[tpe, tpe],
+            type_hint=ctx.evaluator.bool
+        )
+
+        if is_check:
+            return irt.AssumeStmt(
+                assumed_expr,
+                purpose=purpose.DerefCheck(nullable_expr)
+            )
+        else:
+            return irt.AssumeStmt(assumed_expr)
+
     def gen_dereference_dest(prefix, prefix_type, dest, dest_type, expr):
         """
         Generates the actual destination for a dereference expression.
@@ -2196,18 +2224,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             # Transform the expression being dereferenced and build the
             # assume expression stating that the prefix is not null.
             prefix_pre_stmts, prefix_expr = transform_expr(prefix)
-            assumed_expr = irt.FunCall(
-                ops.NEQ,
-                [
-                    prefix_expr,
-                    irt.Lit(lits.NULL, type_hint=prefix.p_expression_type)
-                ],
-                type_hint=ctx.evaluator.bool
-            )
-            prefix_pre_stmts.append(irt.AssumeStmt(
-                assumed_expr,
-                purpose=purpose.DerefCheck(prefix_expr)
-            ))
+            prefix_pre_stmts.append(gen_non_null_assume(prefix_expr))
 
             builder = CallExprBuilder(orig_node, ops.CALL, type_hint)
             builder.add_argument(subp_type, (prefix_pre_stmts, prefix_expr))
@@ -2274,25 +2291,12 @@ def gen_ir(ctx, subp, typer, subpdata):
         # Transform the expression being dereferenced and build the
         # assume expression stating that the expr is not null.
         expr_pre_stmts, expr = transform_expr(derefed_expr)
-        assumed_expr = irt.FunCall(
-            ops.NEQ,
-            [
-                expr,
-                irt.Lit(
-                    lits.NULL,
-                    type_hint=derefed_expr.p_expression_type
-                )
-            ],
-            type_hint=derefed_expr.p_bool_type
-        )
+        expr_pre_stmts.append(gen_non_null_assume(expr))
 
         # Build the assume statement as mark it as a deref check, so as
         # to inform deref checkers that this assume statement was
         # introduced for that purpose.
-        return expr_pre_stmts + [irt.AssumeStmt(
-            assumed_expr,
-            purpose=purpose.DerefCheck(expr)
-        )], irt.FunCall(
+        return expr_pre_stmts, irt.FunCall(
             ops.DEREF,
             [expr, stack],
             type_hint=deref_type,
@@ -2703,13 +2707,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                     # the pointer is not null (we know that because it should
                     # have been an access on a local variable).
                     ret = new_expression_replacing_var("ptr", expr)
-                    tpe = expr.p_expression_type
-                    return [irt.AssumeStmt(irt.FunCall(
-                        ops.NEQ,
-                        [ret, irt.Lit(lits.NULL, type_hint=tpe)],
-                        param_types=[tpe, tpe],
-                        type_hint=ctx.evaluator.bool
-                    ))], ret
+                    return [gen_non_null_assume(ret, False)], ret
             elif attribute_text == 'result':
                 return substitutions[expr.f_prefix.p_referenced_decl, 'result']
             elif attribute_text == 'old':
