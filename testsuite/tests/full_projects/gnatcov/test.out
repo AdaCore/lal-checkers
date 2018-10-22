@@ -54,6 +54,7 @@
 1278:23: (potential) null dereference of 'Get_Shdr (Exec.Elf_File,Sym.St_Shndx)'
 127:10: (potential) assertion failure
 127:28: (potential) null dereference of 'File.Ehdr'
+127:28: (potential) null dereference of 'File.Ehdr'
 1287:10: (potential) assertion failure
 129:7: (potential) null dereference of 'Cmd'
 1302:41: (potential) invalid field 'Lines'
@@ -121,6 +122,7 @@
 1518:16: (potential) invalid field 'Lines'
 1518:16: (potential) null dereference of 'Ctx.Subprg'
 151:15: (potential) null dereference of 'Stream.S'
+151:15: (potential) null dereference of 'Stream.S'
 153:7: (potential) assertion failure
 1544:30: (potential) invalid field 'Basic_Block_Has_Code'
 1544:30: (potential) null dereference of 'Get_SCI (S_SCO, Tag)'
@@ -185,8 +187,10 @@
 2048:16: (potential) invalid field 'Handler_Range'
 204:19: (potential) invalid field 'Section_Content'
 2059:10: (potential) null dereference of 'Last_Line'
+2059:10: (potential) null dereference of 'Last_Line'
 2069:30: (potential) null dereference of 'Last_Line'
 2070:13: (potential) invalid field 'Is_Non_Empty'
+2070:13: (potential) null dereference of 'Last_Line'
 2070:13: (potential) null dereference of 'Last_Line'
 2073:16: (potential) invalid field 'Lines'
 2073:16: (potential) null dereference of 'Subprg'
@@ -205,6 +209,7 @@
 211:13: (potential) null dereference of 'I_Ranges'
 2130:16: (potential) invalid field 'Lines'
 2130:16: (potential) invalid field 'Lines'
+2130:16: (potential) null dereference of 'Subprg'
 2130:16: (potential) null dereference of 'Subprg'
 2130:16: (potential) null dereference of 'Subprg'
 216:7: (potential) assertion failure
@@ -367,6 +372,7 @@
 314:16: (potential) invalid field 'Section_Sec_Idx'
 314:16: (potential) null dereference of 'Sec'
 314:18: (potential) null dereference of 'Line_Info.SCOs'
+314:7: (potential) null dereference of 'To_Unsigned_8_Acc (Addr)'
 315:23: (potential) invalid field 'Section_Content'
 316:14: (potential) null dereference of 'File.Ehdr'
 3185:19: (potential) assertion failure
@@ -458,6 +464,7 @@
 3972:19: (potential) null dereference of 'Sec'
 39:14: (potential) null dereference of 'L'
 39:22: (potential) null dereference of 'R'
+39:7: (potential) null dereference of 'Res'
 402:54: (potential) precondition failure
 404:7: (potential) assertion failure
 4050:49: (potential) invalid field 'Section_Sec_Idx'
@@ -536,6 +543,7 @@
 471:16: (potential) invalid field 'Stats'
 471:16: (potential) null dereference of 'FI'
 471:16: (potential) null dereference of 'FI'
+471:16: (potential) null dereference of 'FI'
 471:38: (potential) invalid field 'Stats'
 471:38: (potential) null dereference of 'FI'
 4733:32: (potential) invalid field 'Symbol_Name'
@@ -544,6 +552,7 @@
 4735:50: (potential) null dereference of 'Symbol.Symbol_Name'
 473:16: (potential) invalid field 'Stats'
 473:16: (potential) invalid field 'Stats'
+473:16: (potential) null dereference of 'FI'
 473:16: (potential) null dereference of 'FI'
 473:16: (potential) null dereference of 'FI'
 473:32: (potential) invalid field 'Stats'
