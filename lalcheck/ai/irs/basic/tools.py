@@ -296,7 +296,7 @@ class Models(visitors.Visitor):
     relevant), how an operation must be interpreted (i.e. a binary addition),
     etc.
     """
-    def __init__(self, typer, type_interpreter, external_def_provider=None):
+    def __init__(self, typer, type_interpreter, *external_def_providers):
         """
         :param lalcheck.types.Typer[T] typer: The typer that maps type hints
             to lalcheck types.
@@ -304,12 +304,12 @@ class Models(visitors.Visitor):
         :param lalcheck.types.TypeInterpreter type_interpreter: The type
             interpreter that maps lalcheck types to interpretations.
 
-        :param function external_def_provider:
-            An external def provider builder.
+        :param *function external_def_providers: External def provider
+            builders.
         """
         self.typer = typer
         self.type_interpreter = type_interpreter
-        self.external_def_provider = external_def_provider
+        self.external_def_providers = external_def_providers
 
     def _type_of(self, hint):
         """
@@ -395,13 +395,12 @@ class Models(visitors.Visitor):
         @Transformer.make_memoizing
         @Transformer.from_transformer_builder
         def provider():
-            aggregate_provider = Transformer.first_of(
-                *(p(provider) for p in def_provider_builders)
+            all_providers = (
+                tuple(def_provider_builders) + self.external_def_providers
             )
-            return (aggregate_provider
-                    if self.external_def_provider is None
-                    else (aggregate_provider |
-                          self.external_def_provider(provider)))
+            return Transformer.first_of(
+                *(p(provider) for p in all_providers)
+            )
         return provider
 
     def of(self, *programs):

@@ -34,18 +34,23 @@ def do_analysis(checker,
     test_program = find_test_program(progs, test_subprogram_name)
 
     call_strategies = {
-        'unknown': abstract_semantics.UnknownTargetCallStrategy(),
-        'topdown': abstract_semantics.TopDownCallStrategy(
-            progs,
-            lambda p: model[p],
-            lambda: pred
+        'unknown': (
+            (abstract_semantics.UnknownTargetCallStrategy().as_def_provider(),)
+        ),
+        'topdown': (
+            abstract_semantics.TopDownCallStrategy(
+                progs,
+                lambda p: model[p],
+                lambda: pred
+            ).as_def_provider(),
+            abstract_semantics.UnknownTargetCallStrategy().as_def_provider()
         )
     }
 
     model_builder = Models(
         typers[typer],
         default_type_interpreter,
-        call_strategies[call_strategy_name].as_def_provider()
+        *call_strategies[call_strategy_name]
     )
 
     model = model_builder.of(*progs)
