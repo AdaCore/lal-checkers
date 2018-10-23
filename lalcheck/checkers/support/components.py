@@ -231,13 +231,15 @@ class ModelGenerator(Task):
             raise LookupError('Uknown type interpreter {}'.format(name))
 
     @staticmethod
-    def get_call_strategy_for(name, progs, model_getter, mpb_getter):
+    def get_call_strategies_for(name, progs, model_getter, mpb_getter):
+        unknown_call_strat = (abstract_analysis.UnknownTargetCallStrategy()
+                              .as_def_provider())
         if name == 'topdown':
             return abstract_analysis.TopDownCallStrategy(
                 progs, model_getter, mpb_getter
-            )
+            ).as_def_provider(), unknown_call_strat
         elif name == 'unknown':
-            return abstract_analysis.UnknownTargetCallStrategy()
+            return unknown_call_strat,
         else:
             raise LookupError('Unknown call strategy {}'.format(name))
 
@@ -278,12 +280,12 @@ class ModelGenerator(Task):
                 self.get_type_interpreter_for(
                     self.model_config.type_interpreter
                 ),
-                self.get_call_strategy_for(
+                *self.get_call_strategies_for(
                     self.model_config.call_strategy,
                     progs,
                     lambda p: models[p],
                     lambda: merge_pred_builder
-                ).as_def_provider()
+                )
             )
             models = modeler.of(*progs)
             merge_pred_builder = self.get_merge_pred_builder_for(
