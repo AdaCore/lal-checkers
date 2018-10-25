@@ -471,7 +471,24 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
     # the transfer function
     transfer_func = _VarTracker(var_set, vars_domain, evaluator, solver)
 
-    def transfer(new_states, node, inputs):
+    def transfer(states, node, inputs):
+        """
+        Applies the transfer function to the given nodes using the abstract
+        domain element that represents an over-approximation of the states at
+        the program points that precede it.
+
+        Returns a new element of the abstract domain, representing the state
+        at this node after the application of the transfer function.
+
+        :param dict[Digraph.Node, object] states: The state at each program
+            point.
+        :param Digraph.Node node: The node on which to apply the transfer
+            function.
+        :param object inputs: The element of the abstract domain that
+            represents the state of all the predecessors combined.
+        :rtype: object
+        """
+
         transferred = (
             (
                 trace,
@@ -492,20 +509,63 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
 
         if node.data.is_widening_point:
             if do_widen(visit_counter.get_incr(node)):
-                output = lat.update(new_states[node], output, True)
+                output = lat.update(states[node], output, True)
 
         return output
 
-    def it(states):
-        new_states = states.copy()
+    def iterate_once(states, nodes):
+        """
+        Perform one iteration over the system of data-flow equations associated
+        with the given subset of nodes.
 
-        for node in non_roots:
-            new_states[node] = transfer(new_states, node, reduce(
+        This procedure updates "states" in-place.
+
+        :param dict[Digraph.Node, object] states: The state at each program
+            point.
+        :param iterable[Digraph.Node] nodes: The subset of the nodes to
+            consider for the iteration.
+        """
+        for node in nodes:
+            states[node] = transfer(states, node, reduce(
                 lat.join,
-                (new_states[anc] for anc in cfg.ancestors(node))
+                (states[anc] for anc in cfg.ancestors(node))
             ))
 
-        return new_states
+    def is_eq(last, current):
+        """
+        Given two dictionaries describing the state at each program point,
+        returns True iff the state at each program point in `last` is equal
+        to the state at *those* program points in `current`.
+
+        :param dict[Digraph.Node, object] last: The last state (possibly
+            containing less nodes than current).
+        :param dict[Digraph.Node, object] current: The current state.
+        :rtype: bool
+        """
+        for n, x in last.iteritems():
+            if not lat.eq(x, current[n]):
+                return False
+        return True
+
+    def fix(states, nodes):
+        """
+        Solve the data-flow equations on the given subset of nodes of the CFG.
+        Finds a fix-point by successive iterations.
+
+        This procedure updates "states" in-place.
+
+        :param dict[Digraph.Node, object] states: The state at each program
+            point.
+        :param iterable[Digraph.Node] nodes: The subset of the nodes to
+            consider for the fix-point.
+        """
+        last = {n: states[n] for n in nodes}
+        iterate_once(states, nodes)
+
+        # loop until the current state is equivalent to the last one.
+        while not is_eq(last, states):
+            last = {n: states[n] for n in nodes}
+            iterate_once(states, nodes)
 
     # initial state of the variables at the entry of the program
     init_vars = tuple(
@@ -517,21 +577,17 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
         for i in range(last_index + 1)
     )
 
-    # initial state at the the entry of the program
+    # initial state to use at the entry of the program
     init_lat = lat.build([(trace_domain.bottom, init_vars)])
 
-    # last state of the program (all program points)
-    last = concat_dicts(
+    # initial state at each program point the program
+    states = concat_dicts(
         {n: transfer({}, n, init_lat) for n in roots},
         {n: lat.bottom for n in non_roots}
     )
 
-    # current state of the program (all program points)
-    result = it(last)
-
-    # find a fix-point.
-    while any(not lat.eq(x, result[i]) for i, x in last.iteritems()):
-        last, result = result, it(result)
+    # Find a fix-point.
+    fix(states, non_roots)
 
     formatted_results = {
         node: {
@@ -540,7 +596,7 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
             }
             for trace, values in state
         }
-        for node, state in result.iteritems()
+        for node, state in states.iteritems()
     }
 
     return AnalysisResults(
