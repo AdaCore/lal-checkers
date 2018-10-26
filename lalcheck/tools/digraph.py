@@ -46,6 +46,22 @@ class Digraph(object):
         def __repr__(self):
             return "({} -> {})".format(repr(self.frm), repr(self.to))
 
+    class HierarchicalOrdering(object):
+        """
+        Represents a hierarchical ordering of a graph. It is constructed
+        from an iterable of elements, where an element is either a node of the
+        original graph, or a hierarchical ordering itself.
+        """
+        def __init__(self, elements):
+            """
+            :param iterable elements: The elements of this ordering.
+            """
+            self.elements = elements
+
+        def __iter__(self):
+            for elem in self.elements:
+                yield (elem, isinstance(elem, Digraph.Node))
+
     def __init__(self, nodes, edges):
         """
         Constructs a new digraph from the given iterable of nodes and edges.

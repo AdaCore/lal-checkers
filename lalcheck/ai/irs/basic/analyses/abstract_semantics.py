@@ -513,7 +513,7 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
 
         return output
 
-    def iterate_once(states, nodes):
+    def iterate_once(states, ordering):
         """
         Perform one iteration over the system of data-flow equations associated
         with the given subset of nodes.
@@ -522,14 +522,18 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
 
         :param dict[Digraph.Node, object] states: The state at each program
             point.
-        :param iterable[Digraph.Node] nodes: The subset of the nodes to
-            consider for the iteration.
+        :param Digraph.HierarchicalOrdering ordering: The ordering, describing:
+            - The order in which to apply the transfer functions to each node.
+            - The subset of program points to consider in this iteration.
         """
-        for node in nodes:
-            states[node] = transfer(states, node, reduce(
-                lat.join,
-                (states[anc] for anc in cfg.ancestors(node))
-            ))
+        for elem, is_node in ordering:
+            if is_node:
+                states[elem] = transfer(states, elem, reduce(
+                    lat.join,
+                    (states[anc] for anc in cfg.ancestors(elem))
+                ))
+            else:
+                fix(states, elem)
 
     def is_eq(last, current):
         """
@@ -547,7 +551,23 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
                 return False
         return True
 
-    def fix(states, nodes):
+    def sub_states(states, ordering):
+        """
+        Creates a copy of the given "states" dictionary which contains entries
+        only for the nodes that are given by the first level of the ordering
+        (i.e. from the current component).
+
+        :type states: dict[Digraph.Node, object]
+        :type ordering: Digraph.HierarchicalOrdering
+        :rtype: dict[Digraph.Node, object]
+        """
+        return {
+            elem: states[elem]
+            for elem, is_node in ordering
+            if is_node
+        }
+
+    def fix(states, ordering):
         """
         Solve the data-flow equations on the given subset of nodes of the CFG.
         Finds a fix-point by successive iterations.
@@ -556,16 +576,17 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
 
         :param dict[Digraph.Node, object] states: The state at each program
             point.
-        :param iterable[Digraph.Node] nodes: The subset of the nodes to
-            consider for the fix-point.
+        :param Digraph.HierarchicalOrdering ordering: The ordering, describing:
+            - The order in which to apply the transfer functions to each node.
+            - The subset of program points for which to find a fix-point.
         """
-        last = {n: states[n] for n in nodes}
-        iterate_once(states, nodes)
+        last = sub_states(states, ordering)
+        iterate_once(states, ordering)
 
         # loop until the current state is equivalent to the last one.
         while not is_eq(last, states):
-            last = {n: states[n] for n in nodes}
-            iterate_once(states, nodes)
+            last = sub_states(states, ordering)
+            iterate_once(states, ordering)
 
     # initial state of the variables at the entry of the program
     init_vars = tuple(
@@ -587,7 +608,7 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
     )
 
     # Find a fix-point.
-    fix(states, non_roots)
+    fix(states, Digraph.HierarchicalOrdering(non_roots))
 
     formatted_results = {
         node: {
