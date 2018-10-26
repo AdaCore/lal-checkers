@@ -24,9 +24,6 @@ class Digraph(object):
             self.name = name
             self.data = Bunch(**data)
 
-        def __hash__(self):
-            return self.data.__hash__()
-
         def __repr__(self):
             return "{}{}".format(self.name, repr(self.data))
 
