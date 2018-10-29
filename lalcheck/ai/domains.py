@@ -966,6 +966,18 @@ class SparseArray(AbstractDomain):
                     res.append(meet)
         return res
 
+    def update(self, a, b, widen=False):
+        if widen:
+            if self.eq(a, b):
+                return a
+            else:
+                # todo: we could be more precise on the widening by first
+                # trying to detect if a specific element of the array could be
+                # widened.
+                return self.top
+        else:
+            return self.join(a, b)
+
     def le(self, a, b):
         return all(
             any(
