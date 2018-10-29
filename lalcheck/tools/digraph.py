@@ -63,6 +63,29 @@ class Digraph(object):
             for elem in self.elements:
                 yield (elem, isinstance(elem, Digraph.Node))
 
+        def iter_nodes(self):
+            """
+            Iterates over all the nodes that compose this hierarchical
+            ordering.
+
+            :rtype: iterable[Digraph.Node]
+            """
+            for elem, is_node in self:
+                if is_node:
+                    yield elem
+                else:
+                    for x in elem.iter_nodes():
+                        yield x
+
+        def flatten(self):
+            """
+            Returns a new hierarchical ordering which is composed of the same
+            nodes as this one, but which is flat.
+
+            :rtype: Digraph.HierarchicalOrdering
+            """
+            return Digraph.HierarchicalOrdering(tuple(self.iter_nodes()))
+
     def __init__(self, nodes, edges):
         """
         Constructs a new digraph from the given iterable of nodes and edges.
@@ -195,3 +218,11 @@ class Digraph(object):
             )
             for scc in self.strongly_connected_components()
         ))
+
+    def flat_topological_ordering(self):
+        """
+        Returns a flat topological ordering of this graph.
+
+        :rtype: Digraph.HierarchicalOrdering
+        """
+        return self.weak_topological_ordering().flatten()

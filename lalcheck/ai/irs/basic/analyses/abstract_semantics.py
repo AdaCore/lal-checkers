@@ -608,7 +608,7 @@ def compute_semantics(prog, prog_model, merge_pred_builder, arg_values=None):
     )
 
     # Find a fix-point.
-    fix(states, Digraph.HierarchicalOrdering(non_roots))
+    fix(states, cfg.subgraph(non_roots).flat_topological_ordering())
 
     formatted_results = {
         node: {
