@@ -74,14 +74,23 @@ parser.add_argument('--partition-size', default=10, type=int,
                     help='The amount of files that will be batched in a'
                          'partition. A higher number means less computing'
                          'time, but more memory consumption.')
-parser.add_argument('-j', default=1, type=int,
-                    help='The number of process to spawn in parallel, each'
-                         'of which deals with a single partition at a time.')
 parser.add_argument('--timeout-factor', default=10.0, type=float,
                     help="This allows processes to live longer than the "
                          "expected timeout. You may increase this number on "
                          "slower machines to ensure that processes are not "
                          "killed too early.")
+
+process_group = parser.add_mutually_exclusive_group(required=False)
+
+process_group.add_argument('-j', default=1, type=int,
+                           help='The number of process to spawn in parallel, '
+                                'each of which deals with a single partition '
+                                'at a time.')
+
+process_group.add_argument('--no-multiprocessing', action="store_true",
+                           help=argparse.SUPPRESS)
+# Run everything on the main process and never use the python multiprocessing
+# package. Note that the timeout mechanism cannot work in this mode.
 
 
 BUILT_IN_CHECKERS_FORMAT = 'lalcheck.checkers.{}'
@@ -651,14 +660,21 @@ def do_all(args, diagnostic_action):
         )
     )
 
-    all_diags = parallel_map(
-        process_count=args.j,
-        target=partial(do_partition, args, provider_config, checkers),
-        elements=enumerate(partitions),
-        timeout_factor=args.timeout_factor,
-        timeout_callback=on_timeout,
-        readjust=readjust_partition
-    )
+    if args.no_multiprocessing:
+        all_diags = []
+        for element in enumerate(partitions):
+            all_diags.append(
+                do_partition(args, provider_config, checkers, element)
+            )
+    else:
+        all_diags = parallel_map(
+            process_count=args.j,
+            target=partial(do_partition, args, provider_config, checkers),
+            elements=enumerate(partitions),
+            timeout_factor=args.timeout_factor,
+            timeout_callback=on_timeout,
+            readjust=readjust_partition
+        )
 
     reports = []
 
