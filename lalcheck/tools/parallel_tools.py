@@ -1,5 +1,22 @@
 from multiprocessing import Process, Manager, queues
+import os
 import time
+
+
+# The environment variables that are tried by the tempfile package to decide
+# where to create its temporary files/directories.
+_tmpdir_env_vars = ['TMPDIR', 'TEMP', 'TMP']
+
+
+def _remove_tmpdir_env_vars():
+    """
+    Removes from the environment the variables designating directories which
+    the tempfile package uses to decide where to store its temporary files and
+    directories
+    """
+    for env_var in _tmpdir_env_vars:
+        if env_var in os.environ:
+            del os.environ[env_var]
 
 
 def _target_proxy(target, arg, result_queue):
@@ -25,6 +42,16 @@ def parallel_map(process_count, target, elements):
     :param iterable[object] elements: The elements to map.
     :rtype: list[object]
     """
+
+    # The multiprocessing package creates multiple temporary files/directories
+    # using the tempfile python package. However, this package uses environment
+    # variables such as TMPDIR, TEMP and TMP to decide where to create its
+    # temporary files. A consequence of that is that if such a variable is in
+    # the environment and designates a directory which path is too long, some
+    # procedures in the multiprocessing package will fail, such as binding an
+    # AF_UNIX socket to a that path, since its max length is 108 characters.
+    _remove_tmpdir_env_vars()
+
     m = Manager()
 
     processes = []
