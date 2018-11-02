@@ -21,7 +21,6 @@
 1149:72: (potential) null dereference of 'LI'
 1151:7: (potential) assertion failure
 1164:7: (potential) assertion failure
-1166:19: 'SCOs = null' is always true
 1174:27: (potential) null dereference of 'SCOs'
 117:10: (potential) null dereference of 'Process'
 117:19: (potential) null dereference of 'IE.Name'
@@ -501,6 +500,8 @@
 4122:24: (potential) null dereference of 'Symbol.Symbol_Name'
 413:15: (potential) null dereference of 'Output'
 4140:32: (potential) null dereference of 'Symbol'
+4150:23: (potential) invalid field 'Section_Content'
+4151:16: (potential) null dereference of 'I_Ranges'
 415:18: (potential) null dereference of 'Output'
 417:36: (potential) null dereference of 'LI'
 4180:11: (potential) null dereference of 'Exec'
