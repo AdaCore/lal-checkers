@@ -114,6 +114,7 @@
 148:18: (potential) null dereference of 'Report'
 148:56: (potential) null dereference of 'Info'
 149:16: (potential) assertion failure
+149:16: (potential) precondition failure
 149:18: (potential) null dereference of 'Parser'
 149:23: (potential) null dereference of 'Report'
 1512:16: (potential) invalid field 'Lines'
@@ -123,6 +124,7 @@
 1518:16: (potential) null dereference of 'Ctx.Subprg'
 151:15: (potential) null dereference of 'Stream.S'
 151:15: (potential) null dereference of 'Stream.S'
+152:16: (potential) precondition failure
 153:7: (potential) assertion failure
 1544:30: (potential) invalid field 'Basic_Block_Has_Code'
 1544:30: (potential) null dereference of 'Get_SCI (S_SCO, Tag)'
@@ -132,25 +134,36 @@
 1588:13: (potential) null dereference of 'Process'
 1590:23: (potential) null dereference of 'Map'
 159:17: (potential) null dereference of 'Report'
+160:10: (potential) precondition failure
+160:10: (potential) precondition failure
 160:13: (potential) null dereference of 'File.Ehdr'
 1613:13: (potential) null dereference of 'New_SCI'
 1614:13: (potential) null dereference of 'Process'
+161:10: (potential) precondition failure
+162:10: (potential) precondition failure
 1637:19: (potential) assertion failure
 1652:29: (potential) null dereference of 'Exe'
+165:10: (potential) precondition failure
 1663:19: (potential) null dereference of 'Exe'
 1668:26: (potential) invalid field 'Section_Content'
 1668:26: (potential) null dereference of 'Sec'
 1669:19: (potential) invalid field 'Decision_BDD'
 1669:19: (potential) invalid field 'Decision_BDD'
+166:10: (potential) precondition failure
 166:17: (potential) null dereference of 'Position.Buffer'
 1690:22: (potential) assertion failure
 1691:22: (potential) assertion failure
+169:13: (potential) precondition failure
 169:14: (potential) null dereference of 'Info'
+170:13: (potential) precondition failure
 1728:38: (potential) null dereference of 'Unit_Filename'
+172:13: (potential) precondition failure
 1755:20: (potential) invalid field 'Degraded_Origins'
 1755:20: (potential) invalid field 'Degraded_Origins'
 175:14: (potential) null dereference of 'F.Filename'
+175:16: (potential) precondition failure
 175:45: (potential) null dereference of 'File.Ehdr'
+176:16: (potential) precondition failure
 1783:21: (potential) invalid field 'Dominant'
 178:17: (potential) null dereference of 'Context.Trace_File'
 179:27: (potential) null dereference of 'Exe'
@@ -247,6 +260,8 @@
 2351:20: (potential) invalid field 'D_Kind'
 2360:22: (potential) invalid field 'S_Kind'
 2375:7: (potential) assertion failure
+237:13: (potential) precondition failure
+238:13: (potential) precondition failure
 238:31: (potential) invalid field 'Section_Name'
 238:31: (potential) null dereference of 'Section.Section_Name'
 238:33: (potential) null dereference of 'Context.Exe_File'
@@ -701,8 +716,11 @@
 911:19: (potential) null dereference of 'Parser.Arg_Callback'
 931:19: (potential) invalid field 'Outcome_Taken'
 93:23: (potential) null dereference of 'HW_Trigger_Arg'
+95:10: (potential) precondition failure
 95:36: (potential) invalid field 'Section_Name'
 95:36: (potential) null dereference of 'Section'
 95:36: (potential) null dereference of 'Section.Section_Name'
+96:10: (potential) precondition failure
+97:10: (potential) precondition failure
 990:19: (potential) assertion failure
 996:13: (potential) invalid field 'Dest'
