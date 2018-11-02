@@ -31,17 +31,26 @@ def collect_assumes_with_purpose(cfg, purpose_type):
     ]
 
 
-def orig_text_matches(expr, texts):
+def orig_bool_expr_statically_equals(expr, values):
     """
-    Returns True iff the given expression has an orig_node which textual
-    representation matches one of the given ones.
+    Returns True iff the given expression has an orig_node which is a valid
+    Ada static expression which evaluates to one of the given boolean values.
 
-    :param lalcheck.ai.irs.basic.tree.Expr expr: The expression to consider
-    :param iterable[str] texts: The texts to match.
+    :param lalcheck.ai.irs.basic.tree.Expr expr: The expression to consider.
+    :param iterable[bool] values: A sequence of boolean values.
     :rtype: bool
     """
-    return ('orig_node' in expr.data
-            and expr.data.orig_node.text.lower() in texts)
+    if 'orig_node' not in expr.data:
+        return False
+
+    try:
+        if not expr.data.orig_node.p_is_static_expr:
+            return False
+
+        value = expr.data.orig_node.p_eval_as_int
+        return any(value == int(v) for v in values)
+    except (lal.PropertyError, lal.NativeException):
+        return False
 
 
 def eval_expr_at(analysis, node, expr):
