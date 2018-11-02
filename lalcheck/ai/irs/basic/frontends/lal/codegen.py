@@ -2706,7 +2706,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             elif is_access_attribute(attribute_text):
                 try:
                     return [], gen_access_path(expr.f_prefix)
-                except AccessingUnspilledVar:
+                except (AccessingUnspilledVar, NotImplementedError):
                     # The best thing we can do in this case is to assume that
                     # the pointer is not null (we know that because it should
                     # have been an access on a local variable).
