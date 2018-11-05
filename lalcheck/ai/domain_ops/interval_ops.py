@@ -756,11 +756,16 @@ def lit(domain):
         """
         :param int val: The concrete integer to represent.
 
-        :return: The singleton interval containing the given value
+        :return: The singleton interval containing the given value. If the
+            given value does not fit in the range of the intervals domain, it
+            is wrapped around until it does.
 
         :rtype: (int, int)
         """
-        return domain.build(val)
+        low, high = domain.top
+        size = high - low + 1
+        x = ((val - low) % size) + low
+        return domain.build(x)
 
     return do
 
