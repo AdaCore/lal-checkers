@@ -579,7 +579,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                     type_hint=stack.data.type_hint,
                     param_types=_deref_assign_param_types(
                         address_expr.data.type_hint,
-                        expr.data.type_hint
+                        self.type_hint
                     ),
                     **data
                 )
@@ -3576,7 +3576,7 @@ class ConvertUniversalTypes(IRImplicitVisitor):
         # However when it does, it must have an "expected_type" argument,
         # coming from one of the above visits.
         if len(expected_type) == 1:
+            tpe = expected_type[0]
             if self.has_universal_type(ident.var):
-                ident.var.data = ident.var.data.copy(
-                    type_hint=expected_type[0]
-                )
+                ident.var.data = ident.var.data.copy(type_hint=tpe)
+                ident.data = ident.data.copy(type_hint=tpe)
