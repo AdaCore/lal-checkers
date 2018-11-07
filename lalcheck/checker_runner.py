@@ -11,6 +11,7 @@ import os
 from lalcheck.checkers.support.checker import (
     Checker, CheckerResults, ProviderConfig
 )
+from lalcheck.checkers.support.components import AnalysisOfFile
 from lalcheck.tools.digraph import Digraph
 from lalcheck.tools.dot_printer import gen_dot, DataPrinter
 from lalcheck.tools.scheduler import Scheduler
@@ -492,6 +493,17 @@ def on_timeout(file_cause):
     logger.log('error', error_msg)
 
 
+def on_subgoal_achieved(subgoal):
+    """
+    Function that will be called as soon as a subgoal is achieved in during
+    the execution of the schedule.
+
+    :type subgoal: object
+    """
+    if isinstance(subgoal, AnalysisOfFile):
+        logger.log('progress', 'analyzed {}'.format(subgoal.filename))
+
+
 def do_partition(args, provider_config, checkers, partition):
     """
     Runs the checkers on a single partition of the whole set of files.
@@ -525,7 +537,7 @@ def do_partition(args, provider_config, checkers, partition):
                 schedule, "{}{}".format(args.export_schedule, index)
             )
 
-        for checker_result in schedule.run().values():
+        for checker_result in schedule.run(on_subgoal_achieved).values():
             for program_result in checker_result:
                 for diag in program_result.diagnostics:
                     report = program_result.diag_report(diag)

@@ -1,5 +1,7 @@
 from lalcheck.ai.utils import dataclass
 
+from collections import Counter
+
 
 class Task(object):
     def __eq__(self, other):
@@ -10,17 +12,30 @@ class Task(object):
 
     def requires(self):
         """
-        :rtype: dict[str, Requirement]: The results that this tasks requires,
-            as a dictionary from requirement to name.
+        Returns the results that this tasks requires, as a dictionary from
+        requirement to name.
+
+        :rtype: dict[str, Requirement]
         """
         raise NotImplementedError
 
     def provides(self):
         """
-        :rtype: dict[str, Requirement]: The results that this tasks provides,
-            as a dictionary from name to requirements.
+        Return the results that this tasks provides, as a dictionary from name
+        to requirements.
+
+        :rtype: dict[str, Requirement]:
         """
         raise NotImplementedError
+
+    def contributes_to(self):
+        """
+        Returns an iterable of subgoals which this task contributes to
+        achieving. A subgoal can be any Python object.
+
+        :rtype: iterable[object]
+        """
+        return []
 
     def run(self, **kwargs):
         """
@@ -84,11 +99,29 @@ class Schedule(object):
         self.batches = batches
         self.spec = spec
 
-    def run(self):
+    def run(self, on_subgoal_achieved=None):
         """
         Runs the schedule.
+
+        :param (object)->None | None on_subgoal_achieved: The function to call
+            back as soon as a subgoal is achieved. It is called with the
+            achieved subgoal as argument.
+
         :rtype: dict[str, object]
         """
+        # Find all the subgoals that exist for all the tasks to be ran, and
+        # map them to their number of occurrences. Each time a task that
+        # contributes to a certain subgoal is executed, the counter for this
+        # subgoal will be decremented. As soon as it reaches 0, the callback
+        # provided through `on_subgoal_achieved` will be called with this
+        # subgoal.
+        subgoals = Counter(
+            subgoal
+            for tasks in self.batches
+            for task in tasks
+            for subgoal in task.contributes_to()
+        )
+
         acc = {}
         for batch in self.batches:
             for task in batch:
@@ -99,6 +132,12 @@ class Schedule(object):
                 task_res = task.run(**kwargs)
                 for name, prov in task.provides().iteritems():
                     acc[prov] = task_res[name]
+
+                for subgoal in task.contributes_to():
+                    subgoals[subgoal] -= 1
+                    if subgoals[subgoal] == 0:
+                        if on_subgoal_achieved is not None:
+                            on_subgoal_achieved(subgoal)
 
         return {
             name: acc[req]

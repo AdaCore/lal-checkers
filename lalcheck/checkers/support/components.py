@@ -13,6 +13,7 @@ from lalcheck.tools.scheduler import Task, Requirement
 from lalcheck.tools.logger import log, log_stdout
 from lalcheck.tools.parallel_tools import keepalive
 
+import os
 import sys
 import traceback
 import time
@@ -27,6 +28,22 @@ ModelConfig = namedtuple(
     'ModelConfig', ['typer', 'type_interpreter', 'call_strategy',
                     'merge_predicate_builder']
 )
+
+
+@dataclass
+class AnalysisOfFile(object):
+    """
+    Represents a subgoal stating that a certain file has been successfully
+    analyzed.
+    """
+    def __init__(self, filename):
+        """
+        :param str filename: The path to the file to analyze.
+        """
+        # Store a canonical representation of the given file, so that subgoals
+        # created with different relative paths to the same file end up being
+        # equivalent.
+        self.filename = os.path.abspath(filename)
 
 
 @Requirement.as_requirement
@@ -121,6 +138,9 @@ class LALAnalyser(Task):
 
     def provides(self):
         return {'res': AnalysisUnit(self.provider_config, self.filename)}
+
+    def contributes_to(self):
+        yield AnalysisOfFile(self.filename)
 
     def _keepalive(self):
         # Libadalang is pretty fast at parsing and will probably never get
@@ -331,6 +351,9 @@ class AbstractAnalyser(Task):
             )
         }
 
+    def contributes_to(self):
+        yield AnalysisOfFile(self.analysis_file)
+
     def _keepalive(self, prog):
         # Based on empirical testing. In most cases, for ~2000 IR nodes,
         # analysis takes ~1sec on a good cpu. However, depending on the
@@ -379,6 +402,5 @@ class AbstractAnalyser(Task):
             log('timings', "Analysis of {} took {}s.".format(
                 self.analysis_file, end_t - start_t
             ))
-            log('progress', 'analyzed {}'.format(self.analysis_file))
 
         return {'res': res}
