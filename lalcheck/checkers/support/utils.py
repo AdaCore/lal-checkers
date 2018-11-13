@@ -44,7 +44,7 @@ def orig_bool_expr_statically_equals(expr, values):
         return False
 
     try:
-        if not expr.data.orig_node.p_is_static_expr():
+        if not expr.data.orig_node.p_is_static_expr(True):
             return False
 
         value = expr.data.orig_node.p_eval_as_int
