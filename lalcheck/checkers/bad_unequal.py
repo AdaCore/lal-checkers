@@ -42,7 +42,7 @@ def find_bad_unequals(unit):
     def is_literal(expr):
         if expr.is_a(lal.Identifier):
             try:
-                ref = expr.p_xref
+                ref = expr.p_xref()
                 return (ref is not None
                         and ref.p_basic_decl.is_a(lal.EnumLiteralDecl))
             except lal.PropertyError:
