@@ -139,7 +139,7 @@ class RecordField(object):
         :param lal.Identifier name: The identifier to test.
         :rtype: bool
         """
-        return name.p_xref() == self.name
+        return name.p_xref(True) == self.name
 
     def field_type_expr(self):
         """
@@ -276,7 +276,7 @@ def get_field_info(field_id):
         field.
     :rtype: RecordField
     """
-    ref = field_id.p_referenced_decl()
+    ref = field_id.p_referenced_decl(True)
     record_decl = closest(ref, lal.TypeDecl)
 
     return next(
@@ -292,7 +292,7 @@ def is_record_field(ident):
     :param lal.Identifier ident: The identifier to check.
     :rtype: bool
     """
-    ref = ident.p_referenced_decl()
+    ref = ident.p_referenced_decl(True)
     return (ref is not None and
             ref.is_a(lal.ComponentDecl, lal.DiscriminantSpec))
 

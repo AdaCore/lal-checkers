@@ -1256,7 +1256,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                 and iter_expr.f_op.is_a(lal.OpDoubleDot)):
             return gen_when_range_exprs(iter_expr.f_left, iter_expr.f_right)
         else:
-            ref = iter_expr.p_referenced_decl()
+            ref = iter_expr.p_referenced_decl(True)
             if ref.is_a(lal.BaseTypeDecl):
                 # iterating over a (sub)type
                 return gen_when_type_reference(ref)
@@ -1337,9 +1337,9 @@ def gen_ir(ctx, subp, typer, subpdata):
                 )
 
             if (choice.is_a(lal.Identifier)
-                    and choice.p_referenced_decl().is_a(lal.SubtypeDecl)):
+                    and choice.p_referenced_decl(True).is_a(lal.SubtypeDecl)):
                 try:
-                    actual_type = typer.get(choice.p_referenced_decl())
+                    actual_type = typer.get(choice.p_referenced_decl(True))
                     if actual_type.is_a(types.IntRange):
                         return gen_range(
                             actual_type.frm, actual_type.to,
@@ -1733,7 +1733,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         """
 
         if dest.is_a(lal.Identifier, lal.DefiningName):
-            ref = dest.p_xref() if dest.is_a(lal.Identifier) else dest
+            ref = dest.p_xref(True) if dest.is_a(lal.Identifier) else dest
 
             var = stores.get(ref)
             if var is not None:
@@ -1779,11 +1779,11 @@ def gen_ir(ctx, subp, typer, subpdata):
             return prefix_pre_stmts + exist_stmts + pre_stmts, ret
 
         elif dest.is_a(lal.CallExpr):
-            if dest.f_name.p_referenced_decl().is_a(lal.TypeDecl):
+            if dest.f_name.p_referenced_decl(True).is_a(lal.TypeDecl):
                 # type conversion
                 cast_pre_stmts, cast_expr = gen_cast_expr(
                     expr,
-                    dest.f_name.p_referenced_decl(),
+                    dest.f_name.p_referenced_decl(True),
                     dest
                 )
                 ret_pre_stmts, ret = gen_actual_dest(
@@ -1848,7 +1848,7 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         info = get_field_info(field)
         all_fields = record_fields(
-            closest(field.p_referenced_decl(), lal.TypeDecl)
+            closest(field.p_referenced_decl(True), lal.TypeDecl)
         )
 
         res = []
@@ -1921,7 +1921,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         """
 
         if expr.is_a(lal.Identifier):
-            decl = expr.p_referenced_decl()
+            decl = expr.p_referenced_decl(True)
             if decl.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
                 # Access on subprogram. Generate a function call which name
                 # carries information on the subprogram that is accessed,
@@ -1953,11 +1953,11 @@ def gen_ir(ctx, subp, typer, subpdata):
                 )
             else:
                 # Access on variable
-                ref = expr.p_xref()
+                ref = expr.p_xref(True)
 
                 if ref in substitutions:
                     expr = substitutions[ref][1].data.orig_node
-                    ref = expr.p_xref()
+                    ref = expr.p_xref(True)
 
                 var = stores.get(ref)
                 if var is not None:
@@ -2116,7 +2116,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             if designator is None:
                 arg_index = i
             else:
-                arg_index = param_index[designator.p_xref()]
+                arg_index = param_index[designator.p_xref(True)]
 
             ordered_args[arg_index] = expr
 
@@ -2188,7 +2188,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             return unimplemented_expr(orig_node)
 
         if prefix.is_a(lal.Identifier, lal.DottedName):
-            ref = prefix.p_referenced_decl()
+            ref = prefix.p_referenced_decl(True)
             if ref is not None and ref.is_a(lal.BaseSubpBody,
                                             lal.BasicSubpDecl,
                                             lal.SubpBodyStub):
@@ -2208,7 +2208,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                     proc_parameters(ref),
                     prefix,
                     args,
-                    prefix.p_is_dot_call()
+                    prefix.p_is_dot_call(True)
                 )
 
                 for param, arg_expr in param_args:
@@ -2414,7 +2414,7 @@ def gen_ir(ctx, subp, typer, subpdata):
         :param lal.Expr expr: The expression to transform.
         :rtype: irt.Expr
         """
-        decl = expr.p_referenced_decl()
+        decl = expr.p_referenced_decl(True)
 
         if decl.is_a(lal.BaseSubpBody, lal.ClassicSubpDecl):
             return gen_call_expr(expr, [], expr.p_expression_type, expr)
@@ -2587,7 +2587,7 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
-            ref = expr.p_xref()
+            ref = expr.p_xref(True)
             if ref is None:
                 return unimplemented_expr(expr)
             elif ref in substitutions:
@@ -2744,16 +2744,16 @@ def gen_ir(ctx, subp, typer, subpdata):
                     return [gen_non_null_assume(ret, False)], ret
             elif attribute_text == 'result':
                 return substitutions[
-                    expr.f_prefix.p_referenced_decl(),
+                    expr.f_prefix.p_referenced_decl(True),
                     'result'
                 ]
             elif attribute_text == 'old':
                 return substitutions[
-                    expr.f_prefix.p_referenced_decl(),
+                    expr.f_prefix.p_referenced_decl(True),
                     'old'
                 ]
             elif attribute_text == 'image':
-                if expr.f_prefix.p_referenced_decl() == expr.p_int_type:
+                if expr.f_prefix.p_referenced_decl(True) == expr.p_int_type:
                     arg_pre_stmts, arg_expr = transform_expr(
                         expr.f_args[0].f_r_expr
                     )
@@ -3168,7 +3168,7 @@ def gen_ir(ctx, subp, typer, subpdata):
             return [labels[stmt.f_decl]]
 
         elif stmt.is_a(lal.GotoStmt):
-            label = labels[stmt.f_label_name.p_referenced_decl()]
+            label = labels[stmt.f_label_name.p_referenced_decl(True)]
             return [irt.GotoStmt(label, orig_node=stmt)]
 
         elif stmt.is_a(lal.NamedStmt):
@@ -3198,7 +3198,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                 # loop stack.
                 exited_loop = loop_stack[-1]
             else:
-                named_loop_decl = stmt.f_loop_name.p_referenced_decl()
+                named_loop_decl = stmt.f_loop_name.p_referenced_decl(True)
                 ref_loop = named_loop_decl.parent.f_stmt
                 # Find the exit label corresponding to the exited loop.
                 exited_loop = next(
