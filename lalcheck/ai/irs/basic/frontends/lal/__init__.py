@@ -107,13 +107,13 @@ class ExtractionContext(object):
         )
 
         type_models = {
-            aspect.parent.parent.parent: aspect.f_expr.p_referenced_decl()
+            aspect.parent.parent.parent: aspect.f_expr.p_referenced_decl(True)
             for aspect in model_ofs
             if aspect.parent.parent.parent.is_a(lal.TypeDecl, lal.SubtypeDecl)
         }
 
         fun_models = {
-            aspect.parent.parent.parent: aspect.f_expr.p_referenced_decl()
+            aspect.parent.parent.parent: aspect.f_expr.p_referenced_decl(True)
             for aspect in model_ofs
             if aspect.parent.parent.parent.is_a(lal.SubpDecl)
         }
