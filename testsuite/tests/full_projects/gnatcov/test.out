@@ -70,12 +70,14 @@
 1332:19: (potential) assertion failure
 1339:28: (potential) null dereference of 'D_Occ'
 133:20: (potential) null dereference of 'File.Ehdr'
+134:10: (potential) assertion failure
 1350:13: (potential) null dereference of 'SCI'
 135:60: (potential) null dereference of 'Exec'
 1376:33: (potential) invalid field 'Operands'
 1377:36: (potential) invalid field 'Operands'
 1377:36: (potential) invalid field 'Operands'
 1377:36: (potential) invalid field 'Operands'
+138:31: (potential) null dereference of 'Mem'
 1390:41: (potential) null dereference of 'Exec.File'
 1391:10: (potential) assertion failure
 1391:10: (potential) assertion failure
@@ -87,6 +89,7 @@
 1414:39: (potential) invalid field 'C_SCO'
 141:18: (potential) null dereference of 'Symbols.To_String (User_Loc.Name)'
 1423:10: (potential) assertion failure
+142:43: (potential) null dereference of 'Mem'
 142:49: (potential) null dereference of 'Tag'
 1432:46: (potential) invalid field 'Basic_Block_Has_Code'
 1433:53: (potential) invalid field 'Executed'
@@ -107,6 +110,7 @@
 146:10: (potential) precondition failure
 146:16: (potential) null dereference of 'Report'
 1476:19: (potential) null dereference of 'Default_SCIs (CP_SCI.Kind)'
+147:43: (potential) null dereference of 'Mem'
 148:10: (potential) precondition failure
 148:16: (potential) assertion failure
 148:18: (potential) null dereference of 'Report'
@@ -125,6 +129,7 @@
 152:16: (potential) precondition failure
 1544:30: (potential) invalid field 'Basic_Block_Has_Code'
 1544:30: (potential) null dereference of 'Get_SCI (S_SCO, Tag)'
+154:43: (potential) null dereference of 'Mem'
 1561:21: (potential) null dereference of 'Line'
 156:17: (potential) null dereference of 'Report'
 1587:13: (potential) null dereference of 'SCIA'
@@ -141,6 +146,7 @@
 1637:19: (potential) assertion failure
 1652:29: (potential) null dereference of 'Exe'
 165:10: (potential) precondition failure
+165:49: (potential) null dereference of 'File.Ehdr'
 1663:19: (potential) null dereference of 'Exe'
 1668:26: (potential) invalid field 'Section_Content'
 1668:26: (potential) null dereference of 'Sec'
@@ -174,6 +180,7 @@
 193:41: (potential) precondition failure
 1943:10: (potential) null dereference of 'Symtab_Shdr'
 195:10: (potential) assertion failure
+195:21: (potential) precondition failure
 1961:10: (potential) invalid field 'Parent'
 1964:24: (potential) invalid field 'C_SCO'
 196:17: (potential) null dereference of 'Output'
@@ -186,6 +193,7 @@
 2007:35: (potential) invalid field 'Sloc'
 200:26: (potential) null dereference of 'File.Ehdr'
 2012:39: (potential) invalid field 'Disc'
+2019:48: (potential) invalid field 'Disc'
 201:27: (potential) null dereference of 'Context.Exe_File'
 2021:16: (potential) assertion failure
 2024:16: (potential) assertion failure
@@ -199,6 +207,7 @@
 2059:10: (potential) null dereference of 'Last_Line'
 2059:10: (potential) null dereference of 'Last_Line'
 2069:30: (potential) null dereference of 'Last_Line'
+206:31: (potential) null dereference of 'File.Ehdr'
 2070:13: (potential) invalid field 'Is_Non_Empty'
 2070:13: (potential) null dereference of 'Last_Line'
 2070:13: (potential) null dereference of 'Last_Line'
@@ -250,7 +259,9 @@
 232:49: (potential) invalid field 'Sloc'
 233:16: (potential) invalid field 'Section_LS'
 233:16: (potential) invalid field 'Section_LS'
+233:21: (potential) precondition failure
 233:26: (potential) null dereference of 'Prg'
+233:50: (potential) null dereference of 'Shdr'
 234:10: (potential) invalid field 'Section_Content'
 234:7: (potential) assertion failure
 2351:20: (potential) invalid field 'D_Kind'
@@ -262,7 +273,6 @@
 238:31: (potential) invalid field 'Section_Name'
 238:31: (potential) null dereference of 'Section.Section_Name'
 238:33: (potential) null dereference of 'Context.Exe_File'
-239:11: (potential) null dereference of 'Shdr'
 2408:43: (potential) null dereference of 'Dir'
 2416:29: (potential) null dereference of 'Filenames.Last_Element'
 2418:21: (potential) invalid field 'S_Kind'
@@ -309,11 +319,13 @@
 2660:14: (potential) null dereference of 'Shdr'
 2749:10: (potential) assertion failure
 275:16: (potential) precondition failure
+276:29: (potential) precondition failure
 2770:30: (potential) null dereference of 'Addr_Info'
 2772:14: (potential) invalid field 'Is_Non_Empty'
 2775:30: (potential) invalid field 'Sloc'
 277:16: (potential) precondition failure
 2783:16: (potential) assertion failure
+278:29: (potential) precondition failure
 279:10: (potential) assertion failure
 27:7: (potential) assertion failure
 2800:16: (potential) invalid field 'Decision_BDD'
@@ -375,6 +387,7 @@
 305:34: (potential) null dereference of 'Line'
 305:37: (potential) invalid field 'Symbol_Name'
 305:37: (potential) null dereference of 'Sym.Symbol_Name'
+307:21: (potential) precondition failure
 3084:22: (potential) assertion failure
 309:7: (potential) null dereference of 'Result'
 30:10: (potential) null dereference of 'Line'

@@ -1637,6 +1637,20 @@ def gen_ir(ctx, subp, typer, subpdata):
             orig_node=orig_node
         )]
 
+    def gen_cast_expr(expr, tpe, orig_node):
+        """
+        Generates the expression that casts the given expression to the given
+        libadalang type.
+
+        :type expr: irt.Expr
+        :type tpe: lal.BaseTypeDecl
+        :rtype: (list[irt.Stmt], irt.Expr)
+        """
+        # todo: implement cast
+        return [], irt.FunCall(
+            ops.INPUT, [], type_hint=tpe, orig_node=orig_node
+        )
+
     def gen_non_null_assume(nullable_expr, is_check=True):
         """
         Returns a statement assuming that the given expression is not null.
@@ -1767,7 +1781,16 @@ def gen_ir(ctx, subp, typer, subpdata):
         elif dest.is_a(lal.CallExpr):
             if dest.f_name.p_referenced_decl().is_a(lal.TypeDecl):
                 # type conversion
-                return unimplemented_dest(dest)
+                cast_pre_stmts, cast_expr = gen_cast_expr(
+                    expr,
+                    dest.f_name.p_referenced_decl(),
+                    dest
+                )
+                ret_pre_stmts, ret = gen_actual_dest(
+                    dest.f_suffix[0].f_r_expr,
+                    cast_expr
+                )
+                return cast_pre_stmts + ret_pre_stmts, ret
 
             prefix_pre_stmts, prefix_expr = transform_expr(dest.f_name)
 
@@ -2221,6 +2244,13 @@ def gen_ir(ctx, subp, typer, subpdata):
                 builder.add_contracts(*retrieve_function_contracts(ctx, ref))
 
                 return builder.build()
+            elif ref is not None and ref.is_a(lal.TypeDecl):
+                # type conversion
+                arg_pre_stmts, arg_expr = transform_expr(args[0].f_r_expr)
+                cast_pre_stmts, cast_expr = gen_cast_expr(
+                    arg_expr, ref, orig_node
+                )
+                return arg_pre_stmts + cast_pre_stmts, cast_expr
 
         if is_access_to_subprogram(prefix.p_expression_type):
             subp_type = prefix.p_expression_type.f_type_def
