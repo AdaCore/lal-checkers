@@ -226,4 +226,9 @@ def parallel_map(process_count, target, elements, timeout_factor=1.0,
     except queues.Empty:
         pass
 
+    try:
+        m.shutdown()
+    except WindowsError:
+        pass  # Deliberately ignore this error, assume OS will kill it anyway.
+
     return results
