@@ -96,7 +96,7 @@ def _base_accessed_var(expr):
     :rtype: lal.DefiningName
     """
     if expr.is_a(lal.Identifier):
-        return expr.p_xref
+        return expr.p_xref()
     elif expr.is_a(lal.DottedName):
         return _base_accessed_var(expr.f_prefix)
     elif (expr.is_a(lal.AttributeRef)
@@ -169,7 +169,7 @@ def _solve_renamings(ref):
     try:
         while ref.is_a(lal.SubpRenamingDecl):
             renamed = ref.f_renames.f_renamed_object
-            ref = renamed.p_referenced_decl
+            ref = renamed.p_referenced_decl()
             if ref is None or ref == old_ref:
                 return None
             old_ref = ref
@@ -190,7 +190,7 @@ def _get_ref_decl(node):
     :rtype: lal.BasicDecl|None
     """
     try:
-        return node.p_referenced_decl
+        return node.p_referenced_decl()
     except lal.PropertyError:
         return None
 
@@ -287,7 +287,7 @@ def traverse_unit(unit, config=_default_configuration):
 
                     if ref is not None:
                         if _is_concrete_object_decl(ref):
-                            inst_data.explicit_global_vars.add(actual.p_xref)
+                            inst_data.explicit_global_vars.add(actual.p_xref())
                         elif ref.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
                             inst_data.out_calls.add(get_subp_identity(ref))
 
@@ -303,7 +303,7 @@ def traverse_unit(unit, config=_default_configuration):
                     if global_var_predicate(ref, subp):
                         # For now, "globals" are only the variables that
                         # are defined in an up-level procedure.
-                        subpdata[subp].explicit_global_vars.add(node.p_xref)
+                        subpdata[subp].explicit_global_vars.add(node.p_xref())
             elif node.is_a(lal.AttributeRef) and config.discover_spills:
                 if is_access_attribute(node.f_attribute.text.lower()):
                     accessed = _base_accessed_var(node.f_prefix)

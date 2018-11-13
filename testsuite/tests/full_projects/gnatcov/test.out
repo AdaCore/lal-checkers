@@ -70,7 +70,6 @@
 1332:19: (potential) assertion failure
 1339:28: (potential) null dereference of 'D_Occ'
 133:20: (potential) null dereference of 'File.Ehdr'
-134:10: (potential) assertion failure
 1350:13: (potential) null dereference of 'SCI'
 135:60: (potential) null dereference of 'Exec'
 1376:33: (potential) invalid field 'Operands'
@@ -124,7 +123,6 @@
 151:15: (potential) null dereference of 'Stream.S'
 151:15: (potential) null dereference of 'Stream.S'
 152:16: (potential) precondition failure
-153:7: (potential) assertion failure
 1544:30: (potential) invalid field 'Basic_Block_Has_Code'
 1544:30: (potential) null dereference of 'Get_SCI (S_SCO, Tag)'
 1561:21: (potential) null dereference of 'Line'
