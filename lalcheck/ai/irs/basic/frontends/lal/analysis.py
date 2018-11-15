@@ -306,7 +306,8 @@ def traverse_unit(unit, config=_default_configuration):
                         elif ref.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
                             inst_data.out_calls.add(get_subp_identity(ref))
 
-        elif node.is_a(lal.BasePackageDecl):
+        elif node.is_a(lal.BasePackageDecl, lal.PackageBody,
+                       lal.GenericPackageDecl, lal.PackageBodyStub):
             subp = None
         elif subp is not None:
             if node.is_a(lal.ObjectDecl, lal.ParamSpec):
@@ -341,7 +342,9 @@ def traverse_unit(unit, config=_default_configuration):
                     # property cannot use it anyway.
                     ref = _get_ref_decl(node)
 
-                    if ref is not None and node.p_is_call:
+                    if ref is not None and ref.is_a(lal.BaseSubpBody,
+                                                    lal.BasicSubpDecl,
+                                                    lal.SubpBodyStub):
                         actual = _solve_renamings(ref)
                         if actual is not None:
                             subpdata[subp].out_calls.add(
