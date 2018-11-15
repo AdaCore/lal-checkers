@@ -234,6 +234,19 @@ def _is_concrete_object_decl(node):
             and not node.parent.is_a(lal.GenericFormalObjDecl))
 
 
+def is_expr(node):
+    """
+    Returns True iff the given node is part of an expression.
+
+    :type node: lal.AdaNode
+    :rtype: bool
+    """
+    try:
+        return node.p_expression_type is not None
+    except lal.PropertyError:
+        return False
+
+
 def traverse_unit(unit, config=_default_configuration):
     """
     Analyzes the given compilation unit using the given analysis configuration.
@@ -296,7 +309,7 @@ def traverse_unit(unit, config=_default_configuration):
         elif subp is not None:
             if node.is_a(lal.ObjectDecl, lal.ParamSpec):
                 subpdata[subp].local_vars.update(node.f_ids)
-            elif node.is_a(lal.Identifier):
+            elif node.is_a(lal.Identifier) and is_expr(node):
                 ref = _get_ref_decl(node)
 
                 if ref is not None and _is_concrete_object_decl(ref):
