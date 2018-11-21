@@ -139,6 +139,10 @@ class LALAnalyser(Task):
     def provides(self):
         return {'res': AnalysisUnit(self.provider_config, self.filename)}
 
+    def comparison_key(self):
+        return (hash(LALAnalyser.__name__) +
+                hash(os.path.basename(self.filename)))
+
     def contributes_to(self):
         yield AnalysisOfFile(self.filename)
 
@@ -350,6 +354,10 @@ class AbstractAnalyser(Task):
                 self.analysis_file
             )
         }
+
+    def comparison_key(self):
+        return (hash(AbstractAnalyser.__name__) +
+                hash(os.path.basename(self.analysis_file)))
 
     def contributes_to(self):
         yield AnalysisOfFile(self.analysis_file)
