@@ -18,7 +18,7 @@ def _eval_as_int(x):
     """
     try:
         return x.p_eval_as_int
-    except (lal.PropertyError, lal.NativeException):
+    except (lal.PropertyError, lal.NativeException, OSError):
         return None
 
 

@@ -49,7 +49,7 @@ def orig_bool_expr_statically_equals(expr, values):
 
         value = expr.data.orig_node.p_eval_as_int
         return any(value == int(v) for v in values)
-    except (lal.PropertyError, lal.NativeException):
+    except (lal.PropertyError, lal.NativeException, OSError):
         return False
 
 
