@@ -554,12 +554,18 @@ def do_partition(args, provider_config, checkers, partition):
 def same_file(a_name, b_name):
     """
     Returns True iff both path refer to the same file.
+
+    Note: does not use os.path.samefile because this function is not
+    implemented on Windows in Python 2.7. Instead, uses an ad-hoc mechanism
+    based on the absolute paths of the files.
+
     :type a_name: str
     :type b_name: str
     :rtype: bool
     """
     try:
-        return os.path.samefile(a_name, b_name)
+        return (os.path.normpath(os.path.normcase(os.path.abspath(a_name))) ==
+                os.path.normpath(os.path.normcase(os.path.abspath(b_name))))
     except OSError:
         return False
 
