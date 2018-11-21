@@ -28,6 +28,21 @@ class Task(object):
         """
         raise NotImplementedError
 
+    def comparison_key(self):
+        """
+        Return an integer that identifies this task, such that it can be used
+        to create an ordering of a collection of tasks.
+
+        Note that for two tasks A and B, if key(A) - key(B) consistently takes
+        the same sign across different runs, then these two tasks will always
+        have the same relative ordering across several runs. In other words, A
+        will always be placed before B if key(A) < key(B), and always after if
+        key(A) > key(B). (The ordering is undefined if key(A) == key(B).)
+
+        :rtype: int
+        """
+        return 0
+
     def contributes_to(self):
         """
         Returns an iterable of subgoals which this task contributes to
@@ -124,7 +139,11 @@ class Schedule(object):
 
         acc = {}
         for batch in self.batches:
-            for task in batch:
+            # Sort the batch so as to guarantee the same task execution order
+            # across several runs if the same configuration is used.
+            sorted_batch = sorted(batch, key=lambda t: t.comparison_key())
+
+            for task in sorted_batch:
                 kwargs = {
                     name: acc[req]
                     for name, req in task.requires().iteritems()
