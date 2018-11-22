@@ -228,7 +228,7 @@ def parallel_map(process_count, target, elements, timeout_factor=1.0,
 
     try:
         m.shutdown()
-    except WindowsError:
+    except OSError:
         pass  # Deliberately ignore this error, assume OS will kill it anyway.
 
     return results
