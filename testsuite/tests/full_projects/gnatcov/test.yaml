@@ -1,1 +1,2 @@
 driver: python
+expect_failure: External gnatcov sources needed.
