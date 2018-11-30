@@ -75,7 +75,7 @@ parser.add_argument('--partition-size', default=10, type=int,
                     help='The amount of files that will be batched in a'
                          'partition. A higher number means less computing'
                          'time, but more memory consumption.')
-parser.add_argument('--timeout-factor', default=10.0, type=float,
+parser.add_argument('--timeout-factor', default=20.0, type=float,
                     help="This allows processes to live longer than the "
                          "expected timeout. You may increase this number on "
                          "slower machines to ensure that processes are not "
