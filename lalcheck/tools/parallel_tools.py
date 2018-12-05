@@ -202,7 +202,7 @@ def parallel_map(process_count, target, elements, timeout_factor=1.0,
     def handle_timedout_processes():
         for proc in processes:
             has_timed_out, timeout_cause = proc.check_timeout_and_get_cause()
-            if False:
+            if has_timed_out:
                 proc.terminate()
                 if timeout_callback:
                     timeout_callback(timeout_cause)
