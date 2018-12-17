@@ -1304,7 +1304,7 @@ class AccessPathsLattice(AbstractDomain):
 
         def __or__(self, other):
             if (isinstance(other, AccessPathsLattice.Null) or
-                    isinstance(other, AccessPathsLattice.BottomValue)):
+                    isinstance(other, AccessPathsLattice.NoPath)):
                 return self
             else:
                 return AccessPathsLattice.AllPath()
