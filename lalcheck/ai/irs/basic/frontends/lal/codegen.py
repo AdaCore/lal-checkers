@@ -2295,7 +2295,10 @@ def gen_ir(ctx, subp, typer, subpdata):
 
             return builder.build()
 
-        return unimplemented_expr(orig_node)
+        if orig_node.is_a(lal.Expr):
+            return unimplemented_expr(orig_node)
+
+        unimplemented(orig_node)
 
     def transform_dereference(derefed_expr, deref_type, deref_orig):
         """
