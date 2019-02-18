@@ -1,5 +1,5 @@
 Program:
   X#1 = 0
-  ret0#2 = <SubpBody ["Foo"] 4:5-7:13>(Input())
+  ret0#2 = <SubpBody ["Foo"] 2:5-5:13>(Input())
   X#1 = Input()
   end:

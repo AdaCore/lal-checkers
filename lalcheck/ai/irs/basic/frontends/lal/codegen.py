@@ -2751,10 +2751,9 @@ def gen_ir(ctx, subp, typer, subpdata):
                     'result'
                 ]
             elif attribute_text == 'old':
-                return substitutions[
-                    expr.f_prefix.p_referenced_decl(True),
-                    'old'
-                ]
+                sub_key = (expr.f_prefix.p_referenced_decl(True), 'old')
+                if sub_key in substitutions:
+                    return substitutions[sub_key]
             elif attribute_text == 'image':
                 if expr.f_prefix.p_referenced_decl(True) == expr.p_int_type:
                     arg_pre_stmts, arg_expr = transform_expr(
