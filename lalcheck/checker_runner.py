@@ -442,8 +442,9 @@ def report_diag(args, report):
         )
 
 
-def list_categories(checkers):
+def list_categories(args, checkers):
     """
+    :param argparse.Namespace args: The command-line arguments.
     :param list[(Checker, list[str])] checkers: The checkers for which
         to output information about the kind of messages they can output.
     """
@@ -454,10 +455,11 @@ def list_categories(checkers):
             kinds_map[kind].append(checker)
 
     for kind, checkers in kinds_map.iteritems():
-        print("{} ({}) - {}".format(
+        print("{}{} - {} - {}".format(
             kind.name(),
-            ", ".join(c.name() for c in checkers),
-            kind.description()
+            " (LAL checker)" if args.codepeer_output else "",
+            kind.description(),
+            ", ".join(c.name() for c in checkers)
         ))
 
 
@@ -664,7 +666,7 @@ def do_all(args, diagnostic_action):
         sys.exit(1)
 
     if args.list_categories:
-        list_categories(checkers)
+        list_categories(args, checkers)
     if args.checkers_help:
         print_checkers_help(checkers)
 
