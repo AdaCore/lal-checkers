@@ -1,5 +1,5 @@
 Program:
   R#1 = Input()
-  ret0#2 = <SubpBody ["F"] 2:4-5:10>(R#1, 0, 3)
+  ret0#2 = <SubpBody ["F"] test.adb:2:4-5:10>(R#1, 0, 3)
   R#1 = Get_0(ret0#2)
   end:

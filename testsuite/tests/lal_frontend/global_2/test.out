@@ -1,6 +1,6 @@
 Program:
   $stack#1 = Updated_2($stack#1, X_orig#2)
-  ret0#3 = <SubpBody ["F"] 2:4-5:10>(Var_2($stack#1), Offset_3($stack#1))
+  ret0#3 = <SubpBody ["F"] test.adb:2:4-5:10>(Var_2($stack#1), Offset_3($stack#1))
   $stack#1 = CopyOffset($stack#1, Get_0(ret0#3))
   end:
   X_orig#2 = Get_2($stack#1)

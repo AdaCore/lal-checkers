@@ -72,7 +72,7 @@
         "values": {
           "$stack": "({1: '[-2147483648, 2147483647]', 2: '[-2147483648, 2147483647]'}, 0)", 
           "B": "{True}", 
-          "P": "{Subprogram <SubpBody [\"F\"] 6:4-9:10> capturing (0x00000001)}"
+          "P": "{Subprogram <SubpBody [\"F\"] test.adb:6:4-9:10> capturing (0x00000001)}"
         }
       }
     ], 
@@ -90,7 +90,7 @@
         "values": {
           "$stack": "({1: '[-2147483648, 2147483647]', 2: '[-2147483648, 2147483647]'}, 0)", 
           "B": "{False}", 
-          "P": "{Subprogram <SubpBody [\"G\"] 11:4-15:10> capturing (0x00000001, 0x00000002)}"
+          "P": "{Subprogram <SubpBody [\"G\"] test.adb:11:4-15:10> capturing (0x00000001, 0x00000002)}"
         }
       }
     ], 
@@ -145,7 +145,7 @@
         "values": {
           "$stack": "({1: '[-2147483648, 2147483647]', 2: '[-2147483648, 2147483647]'}, 0)", 
           "B": "{False, True}", 
-          "P": "{Subprogram <SubpBody [\"F\"] 6:4-9:10> capturing (0x00000001), Subprogram <SubpBody [\"G\"] 11:4-15:10> capturing (0x00000001, 0x00000002)}"
+          "P": "{Subprogram <SubpBody [\"F\"] test.adb:6:4-9:10> capturing (0x00000001), Subprogram <SubpBody [\"G\"] test.adb:11:4-15:10> capturing (0x00000001, 0x00000002)}"
         }
       }
     ], 
@@ -235,7 +235,7 @@
         "values": {
           "$stack": "({1: '[-2147483648, 2147483647]', 2: '[-2147483648, 2147483647]'}, 0)", 
           "B": "{True}", 
-          "P": "{Subprogram <SubpBody [\"F\"] 6:4-9:10> capturing (0x00000001)}"
+          "P": "{Subprogram <SubpBody [\"F\"] test.adb:6:4-9:10> capturing (0x00000001)}"
         }
       }
     ], 
@@ -253,7 +253,7 @@
         "values": {
           "$stack": "({1: '[-2147483648, 2147483647]', 2: '[-2147483648, 2147483647]'}, 0)", 
           "B": "{False}", 
-          "P": "{Subprogram <SubpBody [\"G\"] 11:4-15:10> capturing (0x00000001, 0x00000002)}"
+          "P": "{Subprogram <SubpBody [\"G\"] test.adb:11:4-15:10> capturing (0x00000001, 0x00000002)}"
         }
       }
     ], 
@@ -306,7 +306,7 @@
         "values": {
           "$stack": "({1: '[-2147483648, 2147483647]', 2: '[-2147483648, 2147483647]'}, 0)", 
           "B": "{True}", 
-          "P": "{Subprogram <SubpBody [\"F\"] 6:4-9:10> capturing (0x00000001)}"
+          "P": "{Subprogram <SubpBody [\"F\"] test.adb:6:4-9:10> capturing (0x00000001)}"
         }
       }, 
       {
@@ -323,7 +323,7 @@
         "values": {
           "$stack": "({1: '[-2147483648, 2147483647]', 2: '[-2147483648, 2147483647]'}, 0)", 
           "B": "{False}", 
-          "P": "{Subprogram <SubpBody [\"G\"] 11:4-15:10> capturing (0x00000001, 0x00000002)}"
+          "P": "{Subprogram <SubpBody [\"G\"] test.adb:11:4-15:10> capturing (0x00000001, 0x00000002)}"
         }
       }
     ], 

@@ -20,7 +20,7 @@
           "start0"
         ], 
         "values": {
-          "P": "{Subprogram <SubpBody [\"Test\"] 1:1-7:10> capturing ()}"
+          "P": "{Subprogram <SubpBody [\"Test\"] test.adb:1:1-7:10> capturing ()}"
         }
       }
     ], 
@@ -95,7 +95,7 @@
           "start0"
         ], 
         "values": {
-          "P": "{Subprogram <SubpBody [\"Test\"] 1:1-7:10> capturing ()}"
+          "P": "{Subprogram <SubpBody [\"Test\"] test.adb:1:1-7:10> capturing ()}"
         }
       }
     ], 
@@ -133,7 +133,7 @@
           "start0"
         ], 
         "values": {
-          "P": "{Subprogram <SubpBody [\"Test\"] 1:1-7:10> capturing ()}"
+          "P": "{Subprogram <SubpBody [\"Test\"] test.adb:1:1-7:10> capturing ()}"
         }
       }, 
       {

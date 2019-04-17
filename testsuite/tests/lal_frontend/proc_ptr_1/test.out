@@ -1,5 +1,5 @@
 Program:
   $stack#1 = Updated_1($stack#1, Input())
-  P#2 = Subp_<SubpBody ["F"] 4:4-7:10>(Var_1($stack#1))
+  P#2 = Subp_<SubpBody ["F"] test.adb:4:4-7:10>(Var_1($stack#1))
   $stack#1 = Updated_1($stack#1, 21)
   end:

@@ -1,4 +1,4 @@
 Program:
   P#1 = Input()
-  R#2 = <SubpBody ["Get_E"] 11:7-14:17>(P#1)
+  R#2 = <SubpBody ["Get_E"] test.adb:11:7-14:17>(P#1)
   end:

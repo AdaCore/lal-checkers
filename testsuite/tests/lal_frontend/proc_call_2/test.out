@@ -1,6 +1,6 @@
 Program:
   tmp0#1 = Updated_2(Updated_1(Updated_0(tmp0#1, 2), 3), 12)
   p#2 = tmp0#1
-  ret0#3 = <SubpBody ["F"] 8:4-11:10>(Get_0(p#2))
+  ret0#3 = <SubpBody ["F"] test.adb:8:4-11:10>(Get_0(p#2))
   p#2 = Updated_0(p#2, Get_0(ret0#3))
   end:
