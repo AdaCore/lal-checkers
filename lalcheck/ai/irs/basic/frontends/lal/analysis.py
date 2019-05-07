@@ -174,7 +174,8 @@ def _solve_renamings(ref):
                 return None
             old_ref = ref
 
-        if ref.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
+        if ref.is_a(lal.BaseSubpBody, lal.BasicSubpDecl,
+                    lal.GenericSubpInstantiation):
             return ref
     except lal.PropertyError:
         return None
@@ -327,7 +328,9 @@ def traverse_unit(unit, config=_default_configuration):
                     accessed = _base_accessed_var(node.f_prefix)
                     if accessed is not None:
                         ref_decl = accessed.p_basic_decl
-                        if ref_decl.is_a(lal.BasicSubpDecl, lal.BaseSubpBody):
+                        if ref_decl.is_a(lal.BasicSubpDecl,
+                                         lal.BaseSubpBody,
+                                         lal.GenericSubpInstantiation):
                             # Access is done on a subprogram.
                             subpdata[subp].out_calls.add(
                                 get_subp_identity(ref_decl)
@@ -342,9 +345,9 @@ def traverse_unit(unit, config=_default_configuration):
                     # property cannot use it anyway.
                     ref = _get_ref_decl(node)
 
-                    if ref is not None and ref.is_a(lal.BaseSubpBody,
-                                                    lal.BasicSubpDecl,
-                                                    lal.SubpBodyStub):
+                    if ref is not None and ref.is_a(
+                            lal.BaseSubpBody, lal.BasicSubpDecl,
+                            lal.SubpBodyStub, lal.GenericSubpInstantiation):
                         actual = _solve_renamings(ref)
                         if actual is not None:
                             subpdata[subp].out_calls.add(

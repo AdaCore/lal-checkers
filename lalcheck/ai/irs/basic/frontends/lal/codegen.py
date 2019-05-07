@@ -1922,6 +1922,9 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         if expr.is_a(lal.Identifier):
             decl = expr.p_referenced_decl(True)
+            if decl.is_a(lal.GenericSubpInstantiation):
+                decl = decl.p_designated_subp
+
             if decl.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
                 # Access on subprogram. Generate a function call which name
                 # carries information on the subprogram that is accessed,
@@ -2189,12 +2192,16 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         if prefix.is_a(lal.Identifier, lal.DottedName):
             ref = prefix.p_referenced_decl(True)
+
             if ref is not None and ref.is_a(lal.BaseSubpBody,
                                             lal.BasicSubpDecl,
-                                            lal.SubpBodyStub):
+                                            lal.SubpBodyStub,
+                                            lal.GenericSubpInstantiation):
                 # The call target is statically known.
-
                 called_name = ref
+                if ref.is_a(lal.GenericSubpInstantiation):
+                    ref = ref.p_designated_subp
+                    called_name = ref
                 if ref.is_a(lal.BasicSubpDecl):
                     try:
                         body = ref.p_body_part
@@ -2202,6 +2209,7 @@ def gen_ir(ctx, subp, typer, subpdata):
                             called_name = body
                     except lal.PropertyError:
                         pass
+
                 builder = CallExprBuilder(orig_node, called_name, type_hint)
 
                 param_args = zip_with_params(
