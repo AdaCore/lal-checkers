@@ -1,2 +1,3 @@
 driver: python
 helper: test_violated_contracts.py
+expect_failure: Waiting for LAL commit 038c6a1 to be merged on stable.
