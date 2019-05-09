@@ -48,6 +48,10 @@ files_group.add_argument('--list-categories', action='store_true',
                               'the subset of checkers that can actually '
                               'output this message kind; a description of '
                               'this message kind')
+files_group.add_argument('--list-categories-with-debts', action='store_true',
+                         help='Like --list-categories, but display an '
+                              'additional column indicating the expected '
+                              'remediation effort.')
 files_group.add_argument('--checkers-help', action='store_true',
                          help='Prints a help message for each checker '
                               'passed through --checkers of --checkers-from.')
@@ -442,11 +446,12 @@ def report_diag(args, report):
         )
 
 
-def list_categories(args, checkers):
+def list_categories(args, checkers, with_depts):
     """
     :param argparse.Namespace args: The command-line arguments.
     :param list[(Checker, list[str])] checkers: The checkers for which
         to output information about the kind of messages they can output.
+    :param bool with_depts: Whether to print the remediation effort.
     """
     kinds_map = defaultdict(list)
 
@@ -455,11 +460,12 @@ def list_categories(args, checkers):
             kinds_map[kind].append(checker)
 
     for kind, checkers in kinds_map.iteritems():
-        print("{}{} - {} - {}".format(
+        print("{}{} - {} - {}{}".format(
             kind.name(),
             " (LAL checker)" if args.codepeer_output else "",
             kind.description(),
-            ", ".join(c.name() for c in checkers)
+            ", ".join(c.name() for c in checkers),
+            " - {}".format("EASY") if with_depts else ""
         ))
 
 
@@ -665,8 +671,8 @@ def do_all(args, diagnostic_action):
         logger.log('error', 'Some checkers could not be loaded, exiting.')
         sys.exit(1)
 
-    if args.list_categories:
-        list_categories(args, checkers)
+    if args.list_categories or args.list_categories_with_debts:
+        list_categories(args, checkers, args.list_categories_with_debts)
     if args.checkers_help:
         print_checkers_help(checkers)
 
