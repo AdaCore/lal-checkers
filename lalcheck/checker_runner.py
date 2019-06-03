@@ -465,7 +465,8 @@ def list_categories(args, checkers, with_depts):
             " (LAL checker)" if args.codepeer_output else "",
             kind.description(),
             ", ".join(c.name() for c in checkers),
-            " - {}".format("EASY") if with_depts else ""
+            " - {}".format("MEDIUM")
+            if with_depts or args.codepeer_output else ""
         ))
 
 
