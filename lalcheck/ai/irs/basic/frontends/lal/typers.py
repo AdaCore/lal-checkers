@@ -3,8 +3,8 @@ from lalcheck.ai import types
 from lalcheck.ai.utils import Transformer
 
 from utils import (
-    StackType, PointerType, ExtendedCallReturnType,
-    record_fields, is_array_type_decl, eval_as_real
+    StackType, PointerType, ExtendedCallReturnType, get_array_index_types,
+    record_fields, is_array_type_decl, eval_as_real,
 )
 
 
@@ -331,7 +331,7 @@ def array_typer(indices_typer, component_typer):
     def get_array_attributes(hint):
         if is_array_type_decl(hint):
             return (
-                hint.f_type_def.f_indices.f_list,
+                get_array_index_types(hint.f_type_def),
                 hint.f_type_def.f_component_type.f_type_expr
             )
 

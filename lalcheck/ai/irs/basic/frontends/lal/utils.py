@@ -321,6 +321,22 @@ def is_array_type_decl(tpe):
     return False
 
 
+def get_array_index_types(array_def):
+    """
+    Given an array type definition, returns a tuple containing the type
+    expression of all its indices.
+
+    :param lal.ArrayTypeDef array_def: The array type of which to retrieve
+        the type of the indices.
+    :rtype: tuple[lal.SubtypeIndication]
+    """
+    indices = array_def.f_indices
+    return (
+        tuple(indices.f_list) if indices.is_a(lal.ConstrainedArrayIndices)
+        else tuple(tpe.f_subtype_indication for tpe in indices.f_types)
+    )
+
+
 def collect_assigned_variables(nodes):
     """
     Returns the set of IR variables that appear on the left-hand side of

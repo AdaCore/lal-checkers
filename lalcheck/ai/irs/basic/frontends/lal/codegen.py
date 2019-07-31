@@ -4,7 +4,7 @@ from lalcheck.ai.constants import lits, ops, access_paths
 from lalcheck.ai.irs.basic import tree as irt, purpose
 from lalcheck.ai.irs.basic.visitors import ImplicitVisitor as IRImplicitVisitor
 from lalcheck.ai.utils import (
-    KeyCounter, Transformer, profile, unzip, put_on_top
+    KeyCounter, Transformer, profile, unzip, put_on_top,
 )
 from lalcheck.tools.logger import log_stdout
 from funcy.calc import memoize
@@ -15,7 +15,8 @@ from utils import (
     StackType, PointerType, ExtendedCallReturnType, collect_assigned_variables,
     ValueHolder, record_fields, proc_parameters, get_field_info,
     is_array_type_decl, is_record_field, is_access_to_subprogram,
-    closest, get_subp_identity, is_access_attribute, eval_as_real
+    closest, get_subp_identity, is_access_attribute, eval_as_real,
+    get_array_index_types
 )
 
 _lal_op_type_to_symbol = {
@@ -105,7 +106,7 @@ def _array_access_param_types(array_type_decl):
     :rtype: tuple[lal.BaseTypeDecl]
     """
     array_def = array_type_decl.f_type_def
-    index_types = tuple(array_def.f_indices.f_list)
+    index_types = get_array_index_types(array_def)
     return (array_type_decl,) + index_types
 
 
@@ -119,7 +120,7 @@ def _array_assign_param_types(array_type_decl):
     """
     array_def = array_type_decl.f_type_def
     component_type = array_def.f_component_type.f_type_expr
-    index_types = tuple(array_def.f_indices.f_list)
+    index_types = get_array_index_types(array_def)
     return (array_type_decl, component_type) + index_types
 
 
@@ -2298,7 +2299,7 @@ def gen_ir(ctx, subp, typer, subpdata):
 
             builder.add_argument(arr_type, transform_expr(prefix))
 
-            for idx_type, arg in zip(arr_type.f_indices.f_list, args):
+            for idx_type, arg in zip(get_array_index_types(arr_type), args):
                 builder.add_argument(idx_type, transform_expr(arg.f_r_expr))
 
             return builder.build()
