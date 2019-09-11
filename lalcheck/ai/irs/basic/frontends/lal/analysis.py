@@ -96,7 +96,7 @@ def _base_accessed_var(expr):
     :rtype: lal.DefiningName
     """
     if expr.is_a(lal.Identifier):
-        return expr.p_xref(True)
+        return expr.p_referenced_defining_name(True)
     elif expr.is_a(lal.DottedName):
         return _base_accessed_var(expr.f_prefix)
     elif (expr.is_a(lal.AttributeRef)
@@ -302,7 +302,7 @@ def traverse_unit(unit, config=_default_configuration):
                     if ref is not None:
                         if _is_concrete_object_decl(ref):
                             inst_data.explicit_global_vars.add(
-                                actual.p_xref(True)
+                                actual.p_referenced_defining_name(True)
                             )
                         elif ref.is_a(lal.BaseSubpBody, lal.BasicSubpDecl):
                             inst_data.out_calls.add(get_subp_identity(ref))
@@ -321,7 +321,7 @@ def traverse_unit(unit, config=_default_configuration):
                         # For now, "globals" are only the variables that
                         # are defined in an up-level procedure.
                         subpdata[subp].explicit_global_vars.add(
-                            node.p_xref(True)
+                            node.p_referenced_defining_name(True)
                         )
             elif node.is_a(lal.AttributeRef) and config.discover_spills:
                 if is_access_attribute(node.f_attribute.text.lower()):

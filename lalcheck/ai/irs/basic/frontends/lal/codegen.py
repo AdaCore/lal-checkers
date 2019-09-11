@@ -1734,7 +1734,9 @@ def gen_ir(ctx, subp, typer, subpdata):
         """
 
         if dest.is_a(lal.Identifier, lal.DefiningName):
-            ref = dest.p_xref(True) if dest.is_a(lal.Identifier) else dest
+            ref = (dest.p_referenced_defining_name(True)
+                   if dest.is_a(lal.Identifier) else
+                   dest)
 
             var = stores.get(ref)
             if var is not None:
@@ -1957,11 +1959,11 @@ def gen_ir(ctx, subp, typer, subpdata):
                 )
             else:
                 # Access on variable
-                ref = expr.p_xref(True)
+                ref = expr.p_referenced_defining_name(True)
 
                 if ref in substitutions:
                     expr = substitutions[ref][1].data.orig_node
-                    ref = expr.p_xref(True)
+                    ref = expr.p_referenced_defining_name(True)
 
                 var = stores.get(ref)
                 if var is not None:
@@ -2120,7 +2122,9 @@ def gen_ir(ctx, subp, typer, subpdata):
             if designator is None:
                 arg_index = i
             else:
-                arg_index = param_index[designator.p_xref(True)]
+                arg_index = param_index[
+                    designator.p_referenced_defining_name(True)
+                ]
 
             ordered_args[arg_index] = expr
 
@@ -2599,7 +2603,7 @@ def gen_ir(ctx, subp, typer, subpdata):
 
         elif expr.is_a(lal.Identifier):
             # Transform the identifier according what it refers to.
-            ref = expr.p_xref(True)
+            ref = expr.p_referenced_defining_name(True)
             if ref is None:
                 return unimplemented_expr(expr)
             elif ref in substitutions:

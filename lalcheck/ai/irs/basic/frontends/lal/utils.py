@@ -139,7 +139,7 @@ class RecordField(object):
         :param lal.Identifier name: The identifier to test.
         :rtype: bool
         """
-        return name.p_xref(True) == self.name
+        return name.p_referenced_defining_name(True) == self.name
 
     def field_type_expr(self):
         """
