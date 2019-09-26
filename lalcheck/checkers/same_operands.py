@@ -79,7 +79,7 @@ def find_same_operands(unit):
         :param lal.TypeDecl decl: The type decl to check.
         :rtype: bool
         """
-        return decl.p_is_float_type
+        return decl.p_is_float_type()
 
     def is_simple_nan_check(binop):
         """
