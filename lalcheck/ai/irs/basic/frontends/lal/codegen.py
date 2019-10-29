@@ -2484,27 +2484,32 @@ def gen_ir(ctx, subp, typer, subpdata):
                 return transform_short_circuit_ops(expr)
             else:
                 iop = transform_operator(expr.f_op, 2)
-                if iop is not None:
-                    lhs_pre_stmts, lhs = transform_expr(expr.f_left)
-                    rhs_pre_stmts, rhs = transform_expr(expr.f_right)
-
-                    return lhs_pre_stmts + rhs_pre_stmts, irt.FunCall(
-                        transform_operator(expr.f_op, 2),
+                lhs_pre_stmts, lhs = transform_expr(expr.f_left)
+                rhs_pre_stmts, rhs = transform_expr(expr.f_right)
+                return (
+                    lhs_pre_stmts + rhs_pre_stmts,
+                    new_expression_replacing_var("unimpl_binop", expr)
+                    if iop is None else irt.FunCall(
+                        iop,
                         [lhs, rhs],
                         type_hint=expr.p_expression_type,
                         orig_node=expr
                     )
+                )
 
         elif expr.is_a(lal.UnOp):
             iop = transform_operator(expr.f_op, 1)
-            if iop is not None:
-                inner_pre_stmts, inner_expr = transform_expr(expr.f_expr)
-                return inner_pre_stmts, irt.FunCall(
-                    transform_operator(expr.f_op, 1),
+            inner_pre_stmts, inner_expr = transform_expr(expr.f_expr)
+            return (
+                inner_pre_stmts,
+                new_expression_replacing_var("unimpl_unop", expr)
+                if iop is None else irt.FunCall(
+                    iop,
                     [inner_expr],
                     type_hint=expr.p_expression_type,
                     orig_node=expr
                 )
+            )
 
         elif expr.is_a(lal.CallExpr):
             return gen_call_expr(
