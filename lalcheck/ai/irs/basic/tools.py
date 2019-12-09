@@ -151,6 +151,10 @@ class CFGBuilder(visitors.ImplicitVisitor):
     - 'node': the corresponding IR node which this CFG node was built from,
       or None.
     """
+    NOT_VISITED = object()
+    BEING_VISITED = object()
+    ALREADY_VISITED = object()
+
     def __init__(self):
         self.nodes = None
         self.edges = None
@@ -171,6 +175,13 @@ class CFGBuilder(visitors.ImplicitVisitor):
         """
         return isinstance(node, LabelStmt)
 
+    def outs(self, node):
+        """
+        :return: The directly reachable nodes from the given node
+        :rtype: iterable[Digraph.Node]
+        """
+        return (e.to for e in self.edges if e.frm == node)
+
     def compute_reachable_nodes(self, start, reachables):
         """
         Computes the set of nodes that are reachable from the given "start"
@@ -183,17 +194,40 @@ class CFGBuilder(visitors.ImplicitVisitor):
         :param set[Digraph.Node] reachables: The set of nodes that are found
             reachable so far.
         """
-        def outs(node):
-            """
-            :return: The directly reachable nodes from the given node
-            :rtype: iterable[Digraph.Node]
-            """
-            return (e.to for e in self.edges if e.frm == node)
-
         reachables.add(start)
-        for node in outs(start):
+        for node in self.outs(start):
             if node not in reachables:
                 self.compute_reachable_nodes(node, reachables)
+
+    def post_process_cfg(self, start):
+        """
+        Routine for post processing the resulting control-flow graph. Basically
+        perform a depth-first search from the given `start` node to find out
+        the reachables nodes and the widening points.
+
+        Returns a map that indicates for each node if it is reachable or not
+        (i.e. maps to CFGBuilder.ALREADY_VISITED or CFGBuilder.NOT_VISITED).
+
+        :type start: Digraph.Node
+        :rtype: map[Digraph.Node, object]
+        """
+        state = defaultdict(lambda: CFGBuilder.NOT_VISITED)
+
+        def inner(start):
+            state[start] = CFGBuilder.BEING_VISITED
+
+            for node in self.outs(start):
+                node_state = state[node]
+                if node_state == CFGBuilder.NOT_VISITED:
+                    inner(node)
+                elif node_state == CFGBuilder.BEING_VISITED:
+                    # Found a back edge, mark `node` as a widening point.
+                    node.data = node.data.copy(is_widening_point=True)
+
+            state[start] = CFGBuilder.ALREADY_VISITED
+
+        inner(start)
+        return state
 
     def visit_program(self, prgm):
         self.nodes = []
@@ -212,13 +246,19 @@ class CFGBuilder(visitors.ImplicitVisitor):
                 if edge.frm == self.labels[label]
             ])
 
-        # Compute reachable nodes
-        reachables = set()
-        self.compute_reachable_nodes(start, reachables)
+        # Post process the CFG to find infer widening points and compute
+        # the set of reachable nodes.
+        visit_results = self.post_process_cfg(start)
 
         # Remove all nodes and edges that are not reachable
-        self.nodes = [n for n in self.nodes if n in reachables]
-        self.edges = [e for e in self.edges if e.frm in reachables]
+        self.nodes = [
+            n for n in self.nodes
+            if visit_results[n] != CFGBuilder.NOT_VISITED
+        ]
+        self.edges = [
+            e for e in self.edges
+            if visit_results[e.frm] != CFGBuilder.NOT_VISITED
+        ]
 
         return Digraph([start] + self.nodes, self.edges)
 
@@ -233,7 +273,7 @@ class CFGBuilder(visitors.ImplicitVisitor):
         return join
 
     def visit_loop(self, loopstmt, start):
-        loop_start = self.build_node("loop_start", is_widening_point=True)
+        loop_start = self.build_node("loop_start")
 
         end = self.visit_stmts(loopstmt.stmts, loop_start)
         join = self.build_node("loop_join")
@@ -270,10 +310,10 @@ class CFGBuilder(visitors.ImplicitVisitor):
             cur = stmt.visit(self, cur)
         return cur
 
-    def build_node(self, name, is_widening_point=False, orig_node=None):
+    def build_node(self, name, orig_node=None):
         return Digraph.Node(
             name=self.fresh(name),
-            is_widening_point=is_widening_point,
+            is_widening_point=False,
             node=orig_node
         )
 
