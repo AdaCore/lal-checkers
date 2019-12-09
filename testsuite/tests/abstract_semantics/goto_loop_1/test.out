@@ -1,0 +1,158 @@
+{
+  "always": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "X": "[0, 0]"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "X": "[-2147483646, 1000000]"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "X": "[-2147483647, 999999]"
+        }
+      }
+    ],
+    "assume1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "start0"
+        ],
+        "values": {
+          "X": "[1000000, 1000000]"
+        }
+      }
+    ],
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "X": "[1000000, 1000000]"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "X": "[-2147483648, 2147483647]"
+        }
+      }
+    ]
+  },
+  "le_t_eq_v": {
+    "assign0": [
+      {
+        "trace:": [
+          "assign0",
+          "start0"
+        ],
+        "values": {
+          "X": "[0, 0]"
+        }
+      }
+    ],
+    "assign1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "X": "[-2147483646, 1000000]"
+        }
+      }
+    ],
+    "assume0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "start0"
+        ],
+        "values": {
+          "X": "[-2147483647, 999999]"
+        }
+      }
+    ],
+    "assume1": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "start0"
+        ],
+        "values": {
+          "X": "[1000000, 1000000]"
+        }
+      }
+    ],
+    "split_join0": [
+      {
+        "trace:": [
+          "assign0",
+          "assign1",
+          "assume0",
+          "assume1",
+          "split_join0",
+          "start0"
+        ],
+        "values": {
+          "X": "[1000000, 1000000]"
+        }
+      }
+    ],
+    "start0": [
+      {
+        "trace:": [
+          "start0"
+        ],
+        "values": {
+          "X": "[-2147483648, 2147483647]"
+        }
+      }
+    ]
+  }
+}
